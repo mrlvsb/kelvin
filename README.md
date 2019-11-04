@@ -1,6 +1,6 @@
-# Caliber
+# Kelvin
 
-Caliber - The Ultimate Code Examinator
+Kelvin - The Ultimate Code Examinator
 
 ## Implementation
 
