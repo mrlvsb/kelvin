@@ -19,8 +19,13 @@ class Sandbox:
     def system_path(self, path):
         return os.path.join(os.path.join(self.path, 'box'), path)
 
-    def run(self, cmd):
-        p = subprocess.Popen(shlex.split("isolate -s --run --processes=100 -e -- " + cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    def run(self, cmd, env=None):
+        if not env:
+            env = {}
+
+        env_str = " ".join([shlex.quote(f"-E{k}={v}") for k, v in env.items()])
+
+        p = subprocess.Popen(shlex.split(f"isolate -s --run --processes=100 {env_str} -e -- {cmd}"), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.wait() # TODO: may not work!
 
         return {
@@ -29,19 +34,29 @@ class Sandbox:
             'stderr': p.stderr.read().decode('utf-8'),
         }
 
+    def open(self, path, mode='r'):
+        return open(self.system_path(path), mode)
+
     def run_check(self, cmd):
         ret = self.run(cmd)
         if ret['exit_code'] != 0:
             raise "failed to execute:" + cmd
         return ret
 
+    def compile(self, params = []):
+        sources = [os.path.relpath(p, self.path + '/box') for p in glob.glob(self.system_path('*.c'))]
+        # TODO: params formatting is not secure!
+        return self.run("/usr/bin/gcc {} -o main -g {}".format(" ".join(sources), " ".join(params)))
+
+
 class GccPipeline:
-    def __init__(self, tpl, gcc_params=""):
+    def __init__(self, tpl, gcc_params=[]):
         self.gcc_params = gcc_params
         self.tpl = tpl
 
     def run(self, sandbox):
-        gcc_result = sandbox.run("/usr/bin/gcc main.c -o main -g " + self.gcc_params)
+        # TODO: params formatting is not secure!
+        gcc_result = sandbox.compile(self.gcc_params)
 
         tests = []
         tpl = self.tpl
@@ -54,7 +69,6 @@ class GccPipeline:
             test_stdin = os.path.join(tpl, f"{test_name}.in")
             print(test_stdin)
             if os.path.exists(test_stdin):
-                print("openin")
                 args['stdin'] = open(test_stdin, "r")
             
             p = subprocess.Popen(shlex.split("isolate -M /tmp/meta --processes=5 -s --run -- ./main"), stdout=subprocess.PIPE, stderr=subprocess.PIPE, **args)
@@ -66,7 +80,6 @@ class GccPipeline:
             meta = {}
             with open('/tmp/meta') as f:
                 for line in f:
-                    print('"{}"'.format(line))
                     key, val = line.split(':', 1)
                     key = key.strip().replace('-', '')
                     val = val.strip()
@@ -87,6 +100,50 @@ class GccPipeline:
             "gcc": gcc_result,
             "tests": tests,
         }
+
+class Mallocer:
+    wrapper = """
+#include <stdio.h>
+#include <memory.h>
+#include <stdlib.h>
+
+static int failed;
+static int fail_at = -1;
+
+void *__real_malloc(size_t size);
+void* __wrap_malloc (size_t c) {
+  if(fail_at == -1) {
+    char *env = getenv("__MALLOC_FAIL");
+    if(env) {
+      fail_at = atoi(env);
+    }
+  }
+
+  if(failed >= fail_at) {
+    return NULL;
+  }
+  failed++;
+
+  return __real_malloc (c);
+}
+    """
+
+    def __init__(self, tpl):
+        self.tpl = tpl
+
+    def run(self, sandbox: Sandbox):
+        with sandbox.open("__malloc.c", "w") as f:
+            f.write(self.wrapper)
+
+        gcc_result = sandbox.compile(["-Wl,--wrap=malloc"])
+
+
+        return {
+            "gcc": gcc_result,
+            "tests": [],
+        }
+        
+
 
 class DownloadPipe:
     def run(self, sandbox: Sandbox):
@@ -114,7 +171,8 @@ class Command(BaseCommand):
         pipeline = [
             ('download', DownloadPipe()),
             ('normal run', GccPipeline(tpl)),
-            ('run with sanitizer', GccPipeline(tpl, '-fsanitize=address -fsanitize=bounds -fsanitize=undefined')),
+            ('run with sanitizer', GccPipeline(tpl, ['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])),
+            ('malloc fail tester', Mallocer(tpl)),
         ]
         
         for name, pipe in pipeline:
@@ -122,10 +180,6 @@ class Command(BaseCommand):
             if res:
                 result.append({'name': name, **res})
         
-
-        #from pprint import pprint
-        #pprint(result)
-
         submit.points = 0
         submit.max_points = 0
         for i in result:
