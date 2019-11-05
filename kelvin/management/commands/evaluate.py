@@ -10,6 +10,71 @@ import tarfile
 from kelvin.models import Submit
 import json
 
+def env_build(env):
+    if not env:
+        env = {}
+
+    return " ".join([shlex.quote(f"-E{k}={v}") for k, v in env.items()])
+
+class Test:
+    def __init__(self, name):
+        self.name = name
+        self.stdin = None
+        self.stdout = None
+        self.exit_code = 0
+
+class Evaluation:
+    def __init__(self, source, sandbox):
+        self.source = source
+        self.sandbox = sandbox
+        self.tests = self.load_tests()
+
+    def load_tests(self):
+        tests = []
+        for out in glob.glob(os.path.join(self.source, '*.out')):
+            test_name = os.path.basename(re.sub('.out$', '', out))
+
+            t = Test(test_name)
+            t.stdout = out
+
+            stdin_path = os.path.join(self.source, f"{test_name}.in")
+            if os.path.exists(stdin_path):
+                t.stdin = stdin_path
+            
+            tests.append(t)
+        return tests
+
+    def evaluate(self, test: Test, args=None, env=None):
+        args = {}
+        if test.stdin:
+            args['stdin'] = open(test.stdin, "r")
+        
+        p = subprocess.Popen(shlex.split(f"isolate -M /tmp/meta --processes=5 -s --run {env_build(env)} -- ./main"), stdout=subprocess.PIPE, stderr=subprocess.PIPE, **args)
+        p.wait()
+
+        stdout = p.stdout.read().decode('utf-8')
+        expected = open(test.stdout).read()
+
+        meta = {}
+        with open('/tmp/meta') as f:
+            for line in f:
+                key, val = line.split(':', 1)
+                key = key.strip().replace('-', '')
+                val = val.strip()
+
+                if key != 'exitcode':
+                    meta[key] = val
+
+        return {**{
+            'name': test.name,
+            'stdout': stdout,
+            'stderr': p.stderr.read().decode('utf-8'),
+            'expected': expected,
+            'exit_code': p.returncode,
+            'success': stdout == expected
+        }, **meta}
+
+
 
 class Sandbox:
     def __init__(self):
@@ -20,12 +85,7 @@ class Sandbox:
         return os.path.join(os.path.join(self.path, 'box'), path)
 
     def run(self, cmd, env=None):
-        if not env:
-            env = {}
-
-        env_str = " ".join([shlex.quote(f"-E{k}={v}") for k, v in env.items()])
-
-        p = subprocess.Popen(shlex.split(f"isolate -s --run --processes=100 {env_str} -e -- {cmd}"), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(shlex.split(f"isolate -s --run --processes=100 {env_build(env)} -e -- {cmd}"), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.wait() # TODO: may not work!
 
         return {
@@ -50,55 +110,20 @@ class Sandbox:
 
 
 class GccPipeline:
-    def __init__(self, tpl, gcc_params=[]):
+    def __init__(self, gcc_params=[]):
         self.gcc_params = gcc_params
-        self.tpl = tpl
 
-    def run(self, sandbox):
+    def run(self, evaluation):
         # TODO: params formatting is not secure!
-        gcc_result = sandbox.compile(self.gcc_params)
+        gcc_result = evaluation.sandbox.compile(self.gcc_params)
 
-        tests = []
-        tpl = self.tpl
-        for out in glob.glob(os.path.join(tpl, '*.out')):
-            print(out);
-            test_name = os.path.basename(re.sub('.out$', '', out))
-
-            args = {}
-
-            test_stdin = os.path.join(tpl, f"{test_name}.in")
-            print(test_stdin)
-            if os.path.exists(test_stdin):
-                args['stdin'] = open(test_stdin, "r")
-            
-            p = subprocess.Popen(shlex.split("isolate -M /tmp/meta --processes=5 -s --run -- ./main"), stdout=subprocess.PIPE, stderr=subprocess.PIPE, **args)
-            p.wait()
-
-            stdout = p.stdout.read().decode('utf-8')
-            expected = open(out).read()
-
-            meta = {}
-            with open('/tmp/meta') as f:
-                for line in f:
-                    key, val = line.split(':', 1)
-                    key = key.strip().replace('-', '')
-                    val = val.strip()
-
-                    if key != 'exitcode':
-                        meta[key] = val
-
-            tests.append({**{
-                'name': test_name,
-                'stdout': stdout,
-                'stderr': p.stderr.read().decode('utf-8'),
-                'expected': expected,
-                'exit_code': p.returncode,
-                'success': stdout == expected
-            }, **meta})
-
+        results = []
+        for test in evaluation.tests:
+            results.append(evaluation.evaluate(test))
+           
         return {
             "gcc": gcc_result,
-            "tests": tests,
+            "tests": results,
         }
 
 class Mallocer:
@@ -128,30 +153,32 @@ void* __wrap_malloc (size_t c) {
 }
     """
 
-    def __init__(self, tpl):
-        self.tpl = tpl
-
-    def run(self, sandbox: Sandbox):
-        with sandbox.open("__malloc.c", "w") as f:
+    def run(self, evaluation):
+        with evaluation.sandbox.open("__malloc.c", "w") as f:
             f.write(self.wrapper)
 
-        gcc_result = sandbox.compile(["-Wl,--wrap=malloc"])
+        gcc_result = evaluation.sandbox.compile(["-Wl,--wrap=malloc"])
 
+        results = []
+        for test in evaluation.tests:
+            for i in range(10):
+                env = {'__MALLOC_FAIL': i}
+                results.append(evaluation.evaluate(test, env=env))
 
         return {
             "gcc": gcc_result,
-            "tests": [],
+            "tests": results,
         }
         
 
 
 class DownloadPipe:
-    def run(self, sandbox: Sandbox):
+    def run(self, evaluation):
         src = 'submit'
-        if tarfile.is_tarfile(sandbox.system_path(src)):
-            sandbox.run_check('tar -xf {}'.format(src))
+        if tarfile.is_tarfile(evaluation.sandbox.system_path(src)):
+            evaluation.sandbox.run_check('tar -xf {}'.format(src))
         else:
-            sandbox.run_check('/bin/mv {} main.c'.format(src))
+            evaluation.sandbox.run_check('/bin/mv {} main.c'.format(src))
 
 
 class Command(BaseCommand):
@@ -166,17 +193,19 @@ class Command(BaseCommand):
         result = []
 
         sandbox = Sandbox()
+        evaluation = Evaluation(tpl, sandbox)
+
         copyfile(submit.source.path, os.path.join(sandbox.path, "box/submit"))
 
         pipeline = [
             ('download', DownloadPipe()),
-            ('normal run', GccPipeline(tpl)),
-            ('run with sanitizer', GccPipeline(tpl, ['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])),
-            ('malloc fail tester', Mallocer(tpl)),
+            ('normal run', GccPipeline()),
+            ('run with sanitizer', GccPipeline(['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])),
+            ('malloc fail tester', Mallocer()),
         ]
         
         for name, pipe in pipeline:
-            res = pipe.run(sandbox)
+            res = pipe.run(evaluation)
             if res:
                 result.append({'name': name, **res})
         
