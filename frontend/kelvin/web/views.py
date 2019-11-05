@@ -84,7 +84,7 @@ def task_detail(request, id, submit_id=None):
     ).order_by('-id')
 
 
-    if not submit_id:
+    if not submit_id and submits:
         submit_id = submits[0].id
 
     assignment = None
@@ -94,11 +94,18 @@ def task_detail(request, id, submit_id=None):
     except FileNotFoundError:
         pass
 
-    return render(request, "task_detail.html", {**{
+
+    data = {
         'task': task,
         'submits': submits,
         'assignment': markdown2.markdown(assignment, extras=["fenced-code-blocks"]) if assignment else ""
-    }, **get(submit_id)})
+    }
+
+    if submit_id:
+        data = {**data, **get(submit_id)}
+
+    print(data)
+    return render(request, "task_detail.html", data)
 
 @login_required()
 def ll(request):

@@ -1,3 +1,4 @@
+{% if submit %}
 <div class="card mb-3">
     <div class="card-header">
         <h5>Submit #{{ submit.id }}</h5>
@@ -88,3 +89,5 @@
         <pre>{{ submit.result }}</pre>
     </div>
 </div>
+
+{% endif %}
