@@ -12,6 +12,7 @@ from pygments.formatters import HtmlFormatter
 import markdown2
 
 from kelvin.models import Submit, Class, Task
+from api.models import UserToken
 from kelvin.settings import BASE_DIR
 
 
@@ -110,3 +111,13 @@ def task_detail(request, id, submit_id=None):
 @login_required()
 def ll(request):
     return HttpResponse("In login.")
+
+def script(request):
+    data = {
+        "token": UserToken.objects.get(user__id=request.user.id).token,
+    }
+    return render(request, "install.sh", data, "text/x-shellscript")
+
+def uprpy(request):
+    with open(os.path.join(BASE_DIR, "../../scripts/submit.py")) as f:
+        return HttpResponse(f.read(), 'text/x-python')

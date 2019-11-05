@@ -18,4 +18,17 @@
         {% endfor %}
     </table>
 {% endfor %}
+
+<h2>Submit script</h2>
+Installation:
+
+<pre>
+$ wget {{request.scheme}}://{{request.META.HTTP_HOST}}{% url 'install.sh' %} | sh
+</pre>
+
+Submit:
+<pre>
+$ upr submit task_name file.c
+</pre>
+
 {% endblock %}
