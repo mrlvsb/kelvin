@@ -118,5 +118,5 @@ def script(request, token):
     return render(request, "install.sh", data, "text/x-shellscript")
 
 def uprpy(request):
-    with open(os.path.join(BASE_DIR, "../../scripts/submit.py")) as f:
+    with open(os.path.join(BASE_DIR, "scripts/submit.py")) as f:
         return HttpResponse(f.read(), 'text/x-python')
