@@ -15,7 +15,7 @@ from kelvin.models import Submit, Class, Task
 from api.models import UserToken
 from kelvin.settings import BASE_DIR
 
-
+@login_required()
 def index(request):
     result = []
     classess = Class.objects.filter(students__pk=request.user.id)
@@ -50,7 +50,7 @@ def index(request):
         'classess': result,
     })
 
-
+@login_required()
 def get(id):
     submit = Submit.objects.get(id=id)
 
@@ -72,11 +72,11 @@ def get(id):
     }
     return data
 
-
+@login_required()
 def detail(request, id):
     return render(request, "detail.html", get(id))
 
-
+@login_required()
 def task_detail(request, id, submit_id=None):
     task = Task.objects.get(id=id)
     submits = Submit.objects.filter(
@@ -112,6 +112,7 @@ def task_detail(request, id, submit_id=None):
 def ll(request):
     return HttpResponse("In login.")
 
+@login_required()
 def script(request):
     data = {
         "token": UserToken.objects.get(user__id=request.user.id).token,
