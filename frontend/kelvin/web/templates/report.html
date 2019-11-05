@@ -1,0 +1,90 @@
+<div class="card mb-3">
+    <div class="card-header">
+        <h5>Submit #{{ submit.id }}</h5>
+    </div>
+    <div class="card-body">
+        {{ source|safe }}
+    </div>
+</div>
+
+
+
+{% for result in results %}
+<div class="card mb-3">
+    <div class="card-header">
+        <h5>{{ result.name }}</h5>
+    </div>
+    <div class="card-body">
+        <pre>{{ result.gcc.stderr }}</pre>
+    </div>
+
+    {% for test in result.tests %}
+    <div class="card mb-3 mx-3 {% if test.success%}border-success{%else%}border-danger{%endif%}">
+        <div class="card-header {% if test.success%}bg-success{%else%}bg-danger{%endif%}">
+            <h5>
+                {{ test.name }}
+                <div class="float-right">
+                    {{ test.time }}s, {{ test.maxrss|filesizeformat }}
+                </div>
+            </h5>
+            
+        </div>
+        <div class="card-body">
+            {% if test.stdin %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    stdin
+                </div>
+                <div class="card-body">
+                    <pre>{{ test.stdin }}</pre>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if test.stdout %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    stdout
+                </div>
+                <div class="card-body">
+                    <pre>{{ test.stdout }}</pre>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if not test.success and test.expected %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    expected
+                </div>
+                <div class="card-body">
+                    <pre>{{ test.expected }}</pre>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if test.stderr %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    stderr
+                </div>
+                <div class="card-body">
+                    <pre>{{ test.stderr }}</pre>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+{% endfor %}
+
+<div class="card mb-3">
+    <div class="card-header">
+        <h5>Raw output</h5>
+    </div>
+    <div class="card-body">
+        <pre>{{ submit.result }}</pre>
+    </div>
+</div>

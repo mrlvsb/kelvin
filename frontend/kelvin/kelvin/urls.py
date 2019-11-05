@@ -25,4 +25,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     #path('accounts/login/', MyLoginView.as_view()),
     path('accounts/login/', auth_views.LoginView.as_view()),
+    path('api/', include('api.urls')),
 ]

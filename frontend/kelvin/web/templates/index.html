@@ -1,0 +1,21 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+{% for node in classess %}
+    <h2>{{ node.class.name }}</h2>
+
+    <table class="table table-sm">
+        {% for task in node.tasks  %}
+        <tr>
+            <td><a href="{% url 'task_detail' task.id %}">{{ task.name }}</a></td>
+            <td>
+                {% if task.points is not None and task.max_points is not None %}
+                {{ task.points }} / {{ task.max_points }}
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endfor %}
+{% endblock %}

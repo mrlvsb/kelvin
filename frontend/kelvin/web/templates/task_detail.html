@@ -1,0 +1,29 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="card mb-3">
+    <div class="card-header">
+        <h5>{{ task.name }}</h5>
+    </div>
+    <div class="card-body">
+        {{ assignment|safe }}
+    </div>
+</div>
+
+
+<!--
+<ul>
+    {% for submit in submits %}
+    <li>
+        <a href="{% url 'task_detail' task.id submit.id %}">
+            {{ submit.id }}
+        </a>
+        {{ submit.evaluated_points }}
+        {{ submit.points }}
+    </li>
+    {% endfor %}
+</ul>
+-->
+
+{% include "report.html" %}
+{% endblock %}

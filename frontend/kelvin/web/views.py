@@ -1,16 +1,105 @@
+import json
+import os
+
 from django.shortcuts import render
-
 from django.http import HttpResponse
-
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 
+from pygments import highlight
+from pygments.lexers import CLexer
+from pygments.formatters import HtmlFormatter
+import markdown2
+
+from kelvin.models import Submit, Class, Task
+from kelvin.settings import BASE_DIR
+
 
 def index(request):
-    return HttpResponse("Hello, world. You're at the kelvin index.")
+    result = []
+    classess = Class.objects.filter(students__pk=request.user.id)
+    
+    for clazz in classess:
+        tasks = []
+        for task in clazz.tasks.all().order_by('-id'):
+            last_submit = Submit.objects.filter(
+                task__id=task.id,
+                student__id=request.user.id,
+            ).last()
 
+            data = {
+                'id': task.id,
+                'name': task.name,
+                'points': None,
+                'max_points': None,
+            }
+
+            if last_submit:
+                data['points'] = last_submit.points
+                data['max_points'] = last_submit.max_points
+
+            tasks.append(data)
+
+        result.append({
+            'class': clazz,
+            'tasks': tasks,
+        })
+
+    return render(request, 'index.html', {
+        'classess': result,
+    })
+
+
+def get(id):
+    submit = Submit.objects.get(id=id)
+
+    source = ""
+    with open(submit.source.path) as f:
+        source = f.read()
+
+    results = []
+    try:
+        results = json.loads(submit.result)
+    except json.JSONDecodeError as e:
+        # TODO: show error
+        pass
+
+    data = {
+        "submit": submit,
+        "results": results,
+        "source": highlight(source, CLexer(), HtmlFormatter()),
+    }
+    return data
+
+
+def detail(request, id):
+    return render(request, "detail.html", get(id))
+
+
+def task_detail(request, id, submit_id=None):
+    task = Task.objects.get(id=id)
+    submits = Submit.objects.filter(
+        student__pk=request.user.id,
+        task__pk=id,
+    ).order_by('-id')
+
+
+    if not submit_id:
+        submit_id = submits[0].id
+
+    assignment = None
+    try:
+        with open(os.path.join(BASE_DIR, "tasks/{}/readme.md".format(id))) as f:
+            assignment = f.read()
+    except FileNotFoundError:
+        pass
+
+    return render(request, "task_detail.html", {**{
+        'task': task,
+        'submits': submits,
+        'assignment': markdown2.markdown(assignment, extras=["fenced-code-blocks"]) if assignment else ""
+    }, **get(submit_id)})
 
 @login_required()
 def ll(request):
     return HttpResponse("In login.")
-
