@@ -41,7 +41,7 @@ class GccPipeline:
         self.tpl = tpl
 
     def run(self, sandbox):
-        gcc_result = sandbox.run_check("/usr/bin/gcc main.c -o main -g " + self.gcc_params)
+        gcc_result = sandbox.run("/usr/bin/gcc main.c -o main -g " + self.gcc_params)
 
         tests = []
         tpl = self.tpl
@@ -66,7 +66,8 @@ class GccPipeline:
             meta = {}
             with open('/tmp/meta') as f:
                 for line in f:
-                    key, val = line.split(':')
+                    print('"{}"'.format(line))
+                    key, val = line.split(':', 1)
                     key = key.strip().replace('-', '')
                     val = val.strip()
 
