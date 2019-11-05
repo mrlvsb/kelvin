@@ -48,9 +48,9 @@ def index(request):
 
     return render(request, 'index.html', {
         'classess': result,
+        'token': UserToken.objects.get(user__id=request.user.id).token,
     })
 
-@login_required()
 def get(id):
     submit = Submit.objects.get(id=id)
 
@@ -105,17 +105,15 @@ def task_detail(request, id, submit_id=None):
     if submit_id:
         data = {**data, **get(submit_id)}
 
-    print(data)
     return render(request, "task_detail.html", data)
 
 @login_required()
 def ll(request):
     return HttpResponse("In login.")
 
-@login_required()
-def script(request):
+def script(request, token):
     data = {
-        "token": UserToken.objects.get(user__id=request.user.id).token,
+        "token": token,
     }
     return render(request, "install.sh", data, "text/x-shellscript")
 

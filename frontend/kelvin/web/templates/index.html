@@ -23,7 +23,7 @@
 Installation:
 
 <pre>
-$ wget {{request.scheme}}://{{request.META.HTTP_HOST}}{% url 'install.sh' %} | sh
+$ wget -q {{request.scheme}}://{{request.META.HTTP_HOST}}{% url 'install.sh' token %} -O - | sh
 </pre>
 
 Submit:
