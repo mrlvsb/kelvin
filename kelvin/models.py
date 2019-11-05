@@ -3,7 +3,7 @@ from django.conf import settings
 
 class Task(models.Model):
     name = models.CharField(max_length=60)
-    description = models.TextField()
+    code = models.CharField(max_length=60)
 
     def __str__(self):
         return self.name

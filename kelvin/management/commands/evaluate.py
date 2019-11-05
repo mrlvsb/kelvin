@@ -57,7 +57,7 @@ class GccPipeline:
                 print("openin")
                 args['stdin'] = open(test_stdin, "r")
             
-            p = subprocess.Popen(shlex.split("isolate -M /tmp/meta -s --run -- ./main"), stdout=subprocess.PIPE, stderr=subprocess.PIPE, **args)
+            p = subprocess.Popen(shlex.split("isolate -M /tmp/meta --processes=5 -s --run -- ./main"), stdout=subprocess.PIPE, stderr=subprocess.PIPE, **args)
             p.wait()
 
             stdout = p.stdout.read().decode('utf-8')
@@ -103,7 +103,7 @@ class Command(BaseCommand):
     def handle(self, *args, **opts):
         submit = Submit.objects.get(source=opts['submit_file'])
 
-        tpl = "tasks/{}".format(submit.task.id)
+        tpl = "tasks/{}".format(submit.task.code)
 
         result = []
 
@@ -111,20 +111,19 @@ class Command(BaseCommand):
         copyfile(submit.source.path, os.path.join(sandbox.path, "box/submit"))
 
         pipeline = [
-            DownloadPipe(),
-            GccPipeline(tpl),
-            GccPipeline(tpl, '-fsanitize=address -fsanitize=bounds -fsanitize=undefined'),
+            ('download', DownloadPipe()),
+            ('normal run', GccPipeline(tpl)),
+            ('run with sanitizer', GccPipeline(tpl, '-fsanitize=address -fsanitize=bounds -fsanitize=undefined')),
         ]
         
-        for i, pipe in enumerate(pipeline):
-            name = pipe.__class__.__name__ + str(i)
+        for name, pipe in pipeline:
             res = pipe.run(sandbox)
             if res:
                 result.append({'name': name, **res})
         
 
-        from pprint import pprint
-        pprint(result)
+        #from pprint import pprint
+        #pprint(result)
 
         submit.points = 0
         submit.max_points = 0

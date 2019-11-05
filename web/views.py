@@ -90,8 +90,8 @@ def task_detail(request, id, submit_id=None):
 
     assignment = None
     try:
-        with open(os.path.join(BASE_DIR, "tasks/{}/readme.md".format(id))) as f:
-            assignment = f.read()
+        with open(os.path.join(BASE_DIR, "tasks/{}/readme.md".format(task.code))) as f:
+            assignment = "\n".join(f.read().splitlines()[1:])
     except FileNotFoundError:
         pass
 
