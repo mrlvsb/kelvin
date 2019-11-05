@@ -1,0 +1,4 @@
+django==3.0b1                                                                                                                          
+pygments                                                                                                                               
+markdown2                                                                                                                              
+python-ldap
