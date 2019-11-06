@@ -46,7 +46,7 @@ def index(request):
             'tasks': tasks,
         })
 
-    return render(request, 'index.html', {
+    return render(request, 'web/index.html', {
         'classess': result,
         'token': UserToken.objects.get(user__id=request.user.id).token,
     })
@@ -74,7 +74,7 @@ def get(id):
 
 @login_required()
 def detail(request, id):
-    return render(request, "detail.html", get(id))
+    return render(request, 'web/detail.html', get(id))
 
 @login_required()
 def task_detail(request, id, submit_id=None):
@@ -105,11 +105,7 @@ def task_detail(request, id, submit_id=None):
     if submit_id:
         data = {**data, **get(submit_id)}
 
-    return render(request, "task_detail.html", data)
-
-@login_required()
-def ll(request):
-    return HttpResponse("In login.")
+    return render(request, 'web/task_detail.html', data)
 
 def script(request, token):
     data = {
