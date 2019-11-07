@@ -1,13 +1,16 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from common.models import Submit, Task
 from django.contrib.auth.models import User
 from django.urls import reverse
+from common.models import Submit, AssignedTask
 from .models import UserToken
+from django.db import transaction
+
 
 @csrf_exempt
-def submit(request, task_num):
+@transaction.atomic
+def submit(request, task_code):
     auth_header = request.headers.get('Authorization')
     if not auth_header:
         return HttpResponse(status=400)
@@ -20,7 +23,8 @@ def submit(request, task_num):
     s = Submit()
     s.source = request.FILES['solution']
     s.student = found_token.user
-    s.task = Task.objects.get(id=task_num)
+    s.assignment = AssignedTask.objects.get(task__code=task_code, clazz__students__id=found_token.user.id)
+    s.submit_num = Submit.objects.filter(assignment__id=s.assignment.id, student__id=found_token.user.id).count() + 1
     s.save()
    
     return HttpResponse('ok')

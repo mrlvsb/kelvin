@@ -3,7 +3,7 @@
 {% block content %}
 
 {% for node in classess %}
-    <h2>{{ node.class.name }}</h2>
+    <h2>{{ node.class }}</h2>
 
     <table class="table table-sm">
         {% for task in node.tasks  %}

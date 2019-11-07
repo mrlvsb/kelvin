@@ -5,6 +5,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
+from django.db.models import Count
 
 from pygments import highlight
 from pygments.lexers import CLexer
@@ -24,7 +25,7 @@ def index(request):
         tasks = []
         for task in clazz.tasks.all().order_by('-id'):
             last_submit = Submit.objects.filter(
-                task__id=task.id,
+                assignment__task__id=task.id,
                 student__id=request.user.id,
             ).last()
 
@@ -81,7 +82,7 @@ def task_detail(request, id, submit_id=None):
     task = Task.objects.get(id=id)
     submits = Submit.objects.filter(
         student__pk=request.user.id,
-        task__pk=id,
+        assignment__task__pk=id,
     ).order_by('-id')
 
 
@@ -107,11 +108,55 @@ def task_detail(request, id, submit_id=None):
 
     return render(request, 'web/task_detail.html', data)
 
+@login_required()
+def teacher_list(request):
+    classess = Class.objects.filter(teacher__pk=request.user.id)
+
+    result = []
+    for clazz in classess:
+        tasks = []
+        for task in clazz.tasks.all():
+            submits = Submit.objects.filter(student__id__in=clazz.students.all(), assignment__task_id=task.id)
+            results = []
+
+            for student in clazz.students.all().order_by('username'):
+                his_submits = Submit.objects.filter(student__id=student.id, assignment__task_id=task.id)
+
+                record = {
+                    'student': student,
+                    'submits': his_submits.count(),
+                    'points': 0,
+                    'max': 0,
+                }
+
+                try:
+                    last_submit = his_submits.latest('id')
+                    record['points'] = last_submit.points
+                    record['max_points'] = last_submit.max_points
+                except Submit.DoesNotExist:
+                    pass
+
+                results.append(record)
+
+            tasks.append({
+                'task': task,
+                'results': results,
+            })      
+
+        result.append({
+            'class': clazz,
+            'tasks': tasks,
+        })
+
+    return render(request, 'web/teacher.html', {
+        'classes': result,
+    })
+
 def script(request, token):
     data = {
         "token": token,
     }
-    return render(request, "install.sh", data, "text/x-shellscript")
+    return render(request, "web/install.sh", data, "text/x-shellscript")
 
 def uprpy(request):
     with open(os.path.join(BASE_DIR, "scripts/submit.py")) as f:

@@ -1,0 +1,31 @@
+{% include 'web/layout.html' %}
+
+{% block content %}
+{% for class in classes %}
+    <h2>{{ class.class.name }}</h2>
+    {% for task in class.tasks %}
+    <h3>{{ task.task.name }}</h3>
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Skóre</th>
+            </tr>
+        </thead>
+        {% for stud in task.results %}
+        <tr>
+            <td>
+                <a href="{% url 'task_detail' task.task.id %}">
+                    {{ stud.student }}
+                </a>
+            </td>
+            <td>{{ stud.points }} / {{ stud.max_points }}</td>
+        </tr>
+        {% endfor %}
+
+    
+    </table>
+    {% endfor %}
+
+{% endfor %}
+{% endblock %}
