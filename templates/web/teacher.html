@@ -15,9 +15,13 @@
         {% for stud in task.results %}
         <tr>
             <td>
-                <a href="{% url 'task_detail' task.task.id %}">
+                {% if stud.points %}
+                <a href="{% url 'task_detail' stud.student.username stud.assignment_id %}">
+                {% endif %}
                     {{ stud.student }}
+                {% if stud.points %}
                 </a>
+                {% endif %}
             </td>
             <td>{{ stud.points }} / {{ stud.max_points }}</td>
         </tr>

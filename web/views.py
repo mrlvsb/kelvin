@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime
 
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -12,26 +13,33 @@ from pygments.lexers import CLexer
 from pygments.formatters import HtmlFormatter
 import markdown2
 
-from common.models import Submit, Class, Task
+from common.models import Submit, Class, Task, AssignedTask
 from api.models import UserToken
 from kelvin.settings import BASE_DIR
 
+
+def is_teacher(request):
+    return request.user.groups.filter(name='teacher').exists()
+
+
 @login_required()
-def index(request):
+def student_index(request):
     result = []
-    classess = Class.objects.filter(students__pk=request.user.id)
+
+    now = datetime.now()
+    classess = Class.objects.current_semester().filter(students__pk=request.user.id)
     
     for clazz in classess:
         tasks = []
-        for task in clazz.tasks.all().order_by('-id'):
+        for assignment in AssignedTask.objects.filter(clazz_id=clazz.id).order_by('-id'):
             last_submit = Submit.objects.filter(
-                assignment__task__id=task.id,
+                assignment__id=assignment.id,
                 student__id=request.user.id,
             ).last()
 
             data = {
-                'id': task.id,
-                'name': task.name,
+                'id': assignment.id,
+                'name': assignment.task.name,
                 'points': None,
                 'max_points': None,
             }
@@ -52,9 +60,13 @@ def index(request):
         'token': UserToken.objects.get(user__id=request.user.id).token,
     })
 
-def get(id):
-    submit = Submit.objects.get(id=id)
+@login_required()
+def index(request):
+    if is_teacher(request):
+        return teacher_list(request)
+    return student_index(request)
 
+def get(submit):
     source = ""
     with open(submit.source.path) as f:
         source = f.read()
@@ -78,37 +90,41 @@ def detail(request, id):
     return render(request, 'web/detail.html', get(id))
 
 @login_required()
-def task_detail(request, id, submit_id=None):
-    task = Task.objects.get(id=id)
+def task_detail(request, assignment_id, submit_num=None, student_username=None):
     submits = Submit.objects.filter(
-        student__pk=request.user.id,
-        assignment__task__pk=id,
+        assignment__pk=assignment_id,
     ).order_by('-id')
 
+    if is_teacher(request):
+        submits = submits.filter(student__username=student_username)
+    else:
+        submits = submits.filter(student__pk=request.user.id)
 
-    if not submit_id and submits:
-        submit_id = submits[0].id
-
-    assignment = None
+    assignment = AssignedTask.objects.get(id=assignment_id)
+    text = None
     try:
-        with open(os.path.join(BASE_DIR, "tasks/{}/readme.md".format(task.code))) as f:
-            assignment = "\n".join(f.read().splitlines()[1:])
+        with open(os.path.join(BASE_DIR, "tasks/{}/readme.md".format(assignment.task.code))) as f:
+            text = "\n".join(f.read().splitlines()[1:])
     except FileNotFoundError:
         pass
 
-
     data = {
-        'task': task,
+        'task': assignment.task,
         'submits': submits,
-        'assignment': markdown2.markdown(assignment, extras=["fenced-code-blocks"]) if assignment else ""
+        'text': markdown2.markdown(text, extras=["fenced-code-blocks"]) if assignment else ""
     }
 
-    if submit_id:
-        data = {**data, **get(submit_id)}
+    current_submit = None
+    if submit_num:
+        current_submit = submits.get(submit_num=submit_num)
+    elif submits:
+        current_submit = submits[0]
+
+    if current_submit:
+        data = {**data, **get(current_submit)}
 
     return render(request, 'web/task_detail.html', data)
 
-@login_required()
 def teacher_list(request):
     classess = Class.objects.filter(teacher__pk=request.user.id)
 
@@ -123,6 +139,7 @@ def teacher_list(request):
                 his_submits = Submit.objects.filter(student__id=student.id, assignment__task_id=task.id)
 
                 record = {
+                    'assignment_id': task.id,
                     'student': student,
                     'submits': his_submits.count(),
                     'points': 0,

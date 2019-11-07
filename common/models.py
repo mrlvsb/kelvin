@@ -1,5 +1,16 @@
+from datetime import datetime
+
 from django.db import models
 from django.conf import settings
+
+
+class ClassManager(models.Manager):
+    def current_semester(self):
+        now = datetime.now()
+        return self.filter(
+            year=now.year,
+            winter=now.month >= 9
+        )
 
 
 class Task(models.Model):
@@ -18,6 +29,8 @@ class Class(models.Model):
     winter = models.BooleanField()
     day = models.CharField(max_length=5)
     time = models.TimeField()
+
+    objects = ClassManager()
 
     def __str__(self):
         return f"{self.code} {self.day} {self.time} {self.teacher.last_name if self.teacher else ''}"
