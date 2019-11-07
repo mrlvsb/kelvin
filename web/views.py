@@ -11,7 +11,7 @@ from pygments.lexers import CLexer
 from pygments.formatters import HtmlFormatter
 import markdown2
 
-from kelvin.models import Submit, Class, Task
+from common.models import Submit, Class, Task
 from api.models import UserToken
 from kelvin.settings import BASE_DIR
 

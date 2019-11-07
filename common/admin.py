@@ -1,5 +1,6 @@
 from django.contrib import admin
-import kelvin.models as models
+import common.models as models
+
 
 admin.site.register(models.Task)
 admin.site.register(models.Class)

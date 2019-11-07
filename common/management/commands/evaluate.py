@@ -7,7 +7,7 @@ import shlex
 import re
 import tarfile
 
-from kelvin.models import Submit
+from common.models import Submit
 import json
 
 def env_build(env):
