@@ -60,19 +60,17 @@ class MyLDAPBackend(BaseBackend):
     }
 
     def authenticate(self, request, username=None, password=None):
-        username = username.lower()
+        username = username.upper()
 
-        authenticated = ldap_auth(username, password)
-        if authenticated:
-            return self.get_user_or_create(username)
-        else:
-            return None
-
-    def get_user_or_create(self, username):
         try:
-            return User.objects.get(username=username)
+            user = User.objects.get(username=username)
+            authenticated = ldap_auth(username, password)
+            if authenticated:
+                return user
         except User.DoesNotExist:
-            return User.objects.create_user(username)
+            pass
+
+        return None
 
     def get_user(self, id):
         try:
