@@ -188,7 +188,7 @@ class Command(BaseCommand):
     def handle(self, *args, **opts):
         submit = Submit.objects.get(source=opts['submit_file'])
 
-        tpl = "tasks/{}".format(submit.task.code)
+        tpl = "tasks/{}".format(submit.assignment.task.code)
 
         result = []
 
