@@ -4,4 +4,4 @@ markdown2
 python-ldap
 git+https://github.com/trnila/django-rq
 six
-yaml
+pyyaml
