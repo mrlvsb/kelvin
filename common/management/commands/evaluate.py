@@ -24,6 +24,7 @@ class Command(BaseCommand):
             ('download', DownloadPipe()),
             ('normal run', GccPipeline()),
             ('run with sanitizer', GccPipeline(['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])),
+            ('random input generator', InputGeneratorPipe()),
             ('malloc fail tester', Mallocer()),
         ]
         

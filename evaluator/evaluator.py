@@ -6,6 +6,8 @@ import shlex
 import re
 import tarfile
 import json
+import yaml
+import tempfile
 
 def env_build(env):
     if not env:
@@ -41,7 +43,10 @@ class Evaluation:
             tests.append(t)
         return tests
 
-    def evaluate(self, test: Test, args=None, env=None):
+    def task_file(self, path):
+        return os.path.join(self.source, path)
+
+    def evaluate(self, test: Test, args=None, env=None, name=None):
         args = {}
         if test.stdin:
             args['stdin'] = open(test.stdin, "r")
@@ -63,7 +68,7 @@ class Evaluation:
                     meta[key] = val
 
         return {**{
-            'name': test.name,
+            'name': name if name else test.name,
             'stdout': stdout,
             'stderr': p.stderr.read().decode('utf-8'),
             'expected': expected,
@@ -100,8 +105,9 @@ class Sandbox:
             raise "failed to execute:" + cmd
         return ret
 
-    def compile(self, params = []):
-        sources = [os.path.relpath(p, self.path + '/box') for p in glob.glob(self.system_path('*.c'))]
+    def compile(self, params = [], sources=None):
+        if not sources:
+            sources = [os.path.relpath(p, self.path + '/box') for p in glob.glob(self.system_path('*.c'))]
         # TODO: params formatting is not secure!
         return self.run("/usr/bin/gcc {} -o main -g {}".format(" ".join(sources), " ".join(params)))
 
@@ -160,7 +166,7 @@ void* __wrap_malloc (size_t c) {
         for test in evaluation.tests:
             for i in range(10):
                 env = {'__MALLOC_FAIL': i}
-                results.append(evaluation.evaluate(test, env=env))
+                results.append(evaluation.evaluate(test, env=env, name=f"{test.name} fails at malloc call #{i+1}"))
 
         return {
             "gcc": gcc_result,
@@ -174,3 +180,75 @@ class DownloadPipe:
             evaluation.sandbox.run_check('tar -xf {}'.format(src))
         else:
             evaluation.sandbox.run_check('/bin/mv {} main.c'.format(src))
+
+class InputGeneratorPipe:
+    def __init__(self, path='input_generator.py', count=4):
+        self.gen_path = path
+        self.count = count
+
+
+    def run(self, evaluation):
+        gcc_result = evaluation.sandbox.compile(['-fsanitize=address'])
+        path = evaluation.task_file('input_generator.py')
+
+        results = []
+        for i in range(self.count):
+            with tempfile.NamedTemporaryFile() as stdin, tempfile.NamedTemporaryFile() as stdout:
+                p = subprocess.Popen(["python3", path], stdout=stdin)
+                p.wait()
+
+                stdin.seek(0)
+
+                p = subprocess.Popen([evaluation.task_file('solution')], stdin=stdin, stdout=stdout)
+                p.wait()
+
+                test = Test(f"random {i}")
+                test.stdin = stdin.name
+                test.stdout = stdout.name
+                results.append(evaluation.evaluate(test))
+            
+        
+        return {
+            'gcc': gcc_result,
+            'tests': results,
+        }
+
+
+if __name__ == "__main__":
+    import sys
+    sandbox = Sandbox()
+    evaluation = Evaluation(sys.argv[1], sandbox)
+
+    copyfile(sys.argv[2], os.path.join(sandbox.path, "box/submit"))
+
+    pipeline = [
+        ('download', DownloadPipe()),
+        #('normal run', GccPipeline()),
+        #('run with sanitizer', GccPipeline(['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])),
+        #('malloc fail tester', Mallocer()),
+        ('test', InputGeneratorPipe())
+    ]
+    
+    result = []
+    for name, pipe in pipeline:
+        res = pipe.run(evaluation)
+        if res:
+            result.append({'name': name, **res})
+    from pprint import pprint
+    #pprint(result)
+
+
+    for pipe in result:
+        print("====================================================")
+        print(pipe['name'].upper())
+        print("====================================================")
+        print(pipe['gcc']['stderr'])
+
+        for test in pipe['tests']:
+            print("[{}] {}".format('OK' if test['success'] else 'ERR', test['name']))
+            print(test['stdout'])
+            print(test['stderr'])
+            print(test['expected'])
+        
+    #x = yaml.load(open("tasks/hello_world/config.yml").read(), Loader=yaml.SafeLoader)
+    #print(x)
