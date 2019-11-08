@@ -213,6 +213,30 @@ class InputGeneratorPipe:
             'tests': results,
         }
 
+def evaluate(task_dir, submit_path):
+    sandbox = Sandbox()
+    evaluation = Evaluation(task_dir, sandbox)
+
+    copyfile(submit_path, os.path.join(sandbox.path, "box/submit"))
+
+    pipeline = [
+        ('download', DownloadPipe()),
+        ('normal run', GccPipeline()),
+        ('run with sanitizer', GccPipeline(['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])),
+        ('malloc fail tester', Mallocer()),
+        ('test', InputGeneratorPipe())
+    ]
+    
+    result = []
+    for name, pipe in pipeline:
+        res = pipe.run(evaluation)
+        if res:
+            result.append({'name': name, **res})
+
+    return result
+
+
+
 
 if __name__ == "__main__":
     import sys

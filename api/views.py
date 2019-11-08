@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -6,7 +7,19 @@ from django.urls import reverse
 from common.models import Submit, AssignedTask
 from .models import UserToken
 from django.db import transaction
+import django_rq
+from evaluator.evaluator import evaluate
 
+
+@django_rq.job
+def post(s: Submit):
+    result = evaluate(
+        "tasks/{}".format(s.assignment.task.code),
+        s.source.path,
+    )
+
+    s.result = json.dumps(result, indent=4)
+    s.save()
 
 @csrf_exempt
 @transaction.atomic
@@ -26,6 +39,8 @@ def submit(request, task_code):
     s.assignment = AssignedTask.objects.get(task__code=task_code, clazz__students__id=found_token.user.id)
     s.submit_num = Submit.objects.filter(assignment__id=s.assignment.id, student__id=found_token.user.id).count() + 1
     s.save()
+
+    django_rq.enqueue(post, s)
    
     return HttpResponse('ok')
         #request.build_absolute_uri(reverse('submit_detail', kwargs={'id': s.id}))
