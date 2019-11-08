@@ -1,0 +1,2 @@
+tests:
+  - exit_code: 42

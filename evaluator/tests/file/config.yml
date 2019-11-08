@@ -1,0 +1,4 @@
+tests:
+  - files:
+      - path: test.txt
+        expected: test.txt.expect

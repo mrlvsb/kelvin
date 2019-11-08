@@ -20,7 +20,11 @@ class Test:
         self.name = name
         self.stdin = None
         self.stdout = None
+        self.stderr = None
+        self.args = []
         self.exit_code = 0
+        self.files = []
+        self.check = None
 
 class Evaluation:
     def __init__(self, source, sandbox):
@@ -29,18 +33,39 @@ class Evaluation:
         self.tests = self.load_tests()
 
     def load_tests(self):
-        tests = []
-        for out in glob.glob(os.path.join(self.source, '*.out')):
-            test_name = os.path.basename(re.sub('.out$', '', out))
+        def create_test(name):
+            t = Test(name)
 
-            t = Test(test_name)
-            t.stdout = out
+            path = os.path.join(self.source, f"{name}.out")
+            if os.path.exists(path):
+                t.stdout = path
 
-            stdin_path = os.path.join(self.source, f"{test_name}.in")
+            stdin_path = os.path.join(self.source, f"{name}.in")
             if os.path.exists(stdin_path):
                 t.stdin = stdin_path
-            
-            tests.append(t)
+
+            return t
+
+        tests = []
+        for ext in ['out', 'err']:
+            for out in glob.glob(os.path.join(self.source, f"*.{ext}")):
+                test_name = os.path.basename(re.sub(f".{ext}$", '', out))
+                tests.append(create_test(test_name))
+
+        try:
+            with open(os.path.join(self.source, 'config.yml')) as f:
+                conf = yaml.load(f.read(), Loader=yaml.SafeLoader)
+
+                for test_conf in conf.get('tests', []):
+                    t = create_test(test_conf.get('name', f'test {len(tests)}'))
+                    t.exit_code = test_conf.get('exit_code', 0)
+                    t.args = test_conf.get('args', [])
+                    t.files = test_conf.get('files', [])
+
+                    tests.append(t)
+        except FileNotFoundError:
+            pass
+
         return tests
 
     def task_file(self, path):
@@ -51,11 +76,44 @@ class Evaluation:
         if test.stdin:
             args['stdin'] = open(test.stdin, "r")
         
-        p = subprocess.Popen(shlex.split(f"isolate -M /tmp/meta --processes=5 -s --run {env_build(env)} -- ./main"), stdout=subprocess.PIPE, stderr=subprocess.PIPE, **args)
+        p = subprocess.Popen(shlex.split(f"isolate -M /tmp/meta --processes=5 -s --run {env_build(env)} -- ./main") + test.args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **args)
         p.wait()
 
+        if test.stdin:
+            args['stdin'].close()
+
         stdout = p.stdout.read().decode('utf-8')
-        expected = open(test.stdout).read()
+        stderr = p.stderr.read().decode('utf-8')
+
+        p.stdout.close()
+        p.stderr.close()
+
+        success = True
+        expected = ""
+        if test.stdout:
+            with open(test.stdout) as f:
+                expected = f.read()
+            success &= stdout == expected
+
+        if test.stderr:
+            with open(test.stderr) as f:
+                expected = f.read()
+            success &= stdout == expected
+
+        files = []
+        for f in test.files:
+            with self.sandbox.open(f['path']) as cur, open(os.path.join(self.source, f['expected'])) as exp:
+                content = cur.read()
+                expected = exp.read()
+                files.append({
+                    'path': f['path'],
+                    'content': content,
+                    'expected': expected,
+                    'success': content == expected,
+                })
+
+                success &= content == expected
+
 
         meta = {}
         with open('/tmp/meta') as f:
@@ -64,16 +122,18 @@ class Evaluation:
                 key = key.strip().replace('-', '')
                 val = val.strip()
 
-                if key != 'exitcode':
+                if key == 'exitcode':
+                    meta['exit_code'] = int(val)
+                else:
                     meta[key] = val
 
         return {**{
             'name': name if name else test.name,
             'stdout': stdout,
-            'stderr': p.stderr.read().decode('utf-8'),
+            'stderr': stderr,
             'expected': expected,
-            'exit_code': p.returncode,
-            'success': stdout == expected
+            'success': success,
+            'files': files,
         }, **meta}
 
 
@@ -90,14 +150,22 @@ class Sandbox:
         p = subprocess.Popen(shlex.split(f"isolate -s --run --processes=100 {env_build(env)} -e -- {cmd}"), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.wait() # TODO: may not work!
 
-        return {
+        res = {
             'exit_code': p.returncode,
             'stdout': p.stdout.read().decode('utf-8'),
             'stderr': p.stderr.read().decode('utf-8'),
         }
 
+        p.stdout.close()
+        p.stderr.close()
+
+        return res
+
     def open(self, path, mode='r'):
         return open(self.system_path(path), mode)
+
+    def copy(self, local, box):
+        copyfile(local, self.system_path(box))
 
     def run_check(self, cmd):
         ret = self.run(cmd)
@@ -109,7 +177,7 @@ class Sandbox:
         if not sources:
             sources = [os.path.relpath(p, self.path + '/box') for p in glob.glob(self.system_path('*.c'))]
         # TODO: params formatting is not secure!
-        return self.run("/usr/bin/gcc {} -o main -g {}".format(" ".join(sources), " ".join(params)))
+        return self.run("/usr/bin/gcc {} -o main -g {} -lm".format(" ".join(sources), " ".join(params)))
 
 
 class GccPipeline:
@@ -222,9 +290,9 @@ def evaluate(task_dir, submit_path):
     pipeline = [
         ('download', DownloadPipe()),
         ('normal run', GccPipeline()),
-        ('run with sanitizer', GccPipeline(['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])),
-        ('malloc fail tester', Mallocer()),
-        ('test', InputGeneratorPipe())
+        #('run with sanitizer', GccPipeline(['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])),
+        #('malloc fail tester', Mallocer()),
+        #('test', InputGeneratorPipe())
     ]
     
     result = []
