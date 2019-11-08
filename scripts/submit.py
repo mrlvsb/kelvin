@@ -4,7 +4,7 @@ import sys
 import os
 import argparse
 
-API_URL = "http://127.0.0.1:8000/api/"
+API_URL = os.getenv("UPR_API", "https://upr.cs.vsb.cz/api/")
 
 def command_submit(args):
     token = None
