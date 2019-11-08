@@ -33,24 +33,34 @@ class Evaluation:
         self.tests = self.load_tests()
 
     def load_tests(self):
+        tests = {}
+
         def create_test(name):
+            if name in tests:
+                return tests[name]
+
             t = Test(name)
 
             path = os.path.join(self.source, f"{name}.out")
             if os.path.exists(path):
                 t.stdout = path
 
+            path = os.path.join(self.source, f"{name}.err")
+            if os.path.exists(path):
+                t.stderr = path
+
             stdin_path = os.path.join(self.source, f"{name}.in")
             if os.path.exists(stdin_path):
                 t.stdin = stdin_path
+                
 
+            tests[name] = t
             return t
 
-        tests = []
         for ext in ['out', 'err']:
             for out in glob.glob(os.path.join(self.source, f"*.{ext}")):
                 test_name = os.path.basename(re.sub(f".{ext}$", '', out))
-                tests.append(create_test(test_name))
+                create_test(test_name)
 
         try:
             with open(os.path.join(self.source, 'config.yml')) as f:
@@ -61,12 +71,10 @@ class Evaluation:
                     t.exit_code = test_conf.get('exit_code', 0)
                     t.args = test_conf.get('args', [])
                     t.files = test_conf.get('files', [])
-
-                    tests.append(t)
         except FileNotFoundError:
             pass
 
-        return tests
+        return tests.values()
 
     def task_file(self, path):
         return os.path.join(self.source, path)
@@ -98,7 +106,7 @@ class Evaluation:
         if test.stderr:
             with open(test.stderr) as f:
                 expected = f.read()
-            success &= stdout == expected
+            success &= stderr == expected
 
         files = []
         for f in test.files:
