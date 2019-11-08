@@ -86,10 +86,6 @@ def get(submit):
     return data
 
 @login_required()
-def detail(request, id):
-    return render(request, 'web/detail.html', get(id))
-
-@login_required()
 def task_detail(request, assignment_id, submit_num=None, student_username=None):
     submits = Submit.objects.filter(
         assignment__pk=assignment_id,
