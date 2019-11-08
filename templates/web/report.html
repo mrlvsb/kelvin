@@ -31,6 +31,16 @@
             
         </div>
         <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-2">Exit code</dt>
+                <dd class="col-sm-9">{{ test.exit_code }}</dd>
+
+                {% if test.message %}
+                <dt class="col-sm-2">Message</dt>
+                <dd class="col-sm-9">{{ test.message }}</dd>
+                {% endif %}
+            </dl>
+
             {% if test.stdin %}
             <div class="card mb-3">
                 <div class="card-header">
