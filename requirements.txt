@@ -1,5 +1,7 @@
-django==3.0b1                                                                                                                          
-pygments                                                                                                                               
-markdown2                                                                                                                              
+django==3.0b1
+pygments
+markdown2
 python-ldap
 git+https://github.com/trnila/django-rq
+six
+yaml
