@@ -4,7 +4,8 @@ import sys
 import os
 import argparse
 
-API_URL = os.getenv("UPR_API", "https://upr.cs.vsb.cz/api/")
+URL = os.getenv("UPR_URL", "https://upr.cs.vsb.cz")
+API_URL = URL + "/api/"
 
 def command_submit(args):
     token = None
@@ -32,12 +33,21 @@ def command_submit(args):
     else:
         print(res.text)
 
+def command_upgrade(args):
+    res = requests.get("{}/upr.py".format(URL))
+    if res.status_code == 200:
+        path = os.path.realpath(__file__)
+        with open(path, "w") as f:
+            f.write(res.text)
+
 par = argparse.ArgumentParser()
 cmds = par.add_subparsers(dest='action', required=True)
 
 p = cmds.add_parser('submit', help='submit solution to the task')
 p.add_argument('task', help='task name')
 p.add_argument('solution', help='location to source file(s)')
+
+cmds.add_parser('upgrade', help='upgrade this tool')
 
 args = par.parse_args()
 
