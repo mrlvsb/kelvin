@@ -101,17 +101,18 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         submits = submits.filter(student__pk=request.user.id)
 
     assignment = AssignedTask.objects.get(id=assignment_id)
-    text = None
+    text = ""
     try:
         with open(os.path.join(BASE_DIR, "tasks/{}/readme.md".format(assignment.task.code))) as f:
             text = "\n".join(f.read().splitlines()[1:])
+        text = markdown2.markdown(text, extras=["fenced-code-blocks"])
     except FileNotFoundError:
         pass
 
     data = {
         'task': assignment.task,
         'submits': submits,
-        'text': markdown2.markdown(text, extras=["fenced-code-blocks"]) if assignment else ""
+        'text': text,
     }
 
     current_submit = None
