@@ -78,12 +78,21 @@ class Test:
         self.files = []
         self.check = None
         self.filters = []
+        self.limits = {}
 
 class Evaluation:
     def __init__(self, source, sandbox):
         self.source = source
         self.sandbox = sandbox
         self.filters = []
+        self.limits = {
+            'wall-time': 0.5,
+            'time': 0,
+            'processes': 10,
+            'stack': 0,
+            'cg-mem': 5 * 1024 * 1024,
+            'fsize': 1024 * 1024,
+        }
         self.tests = self.load_tests()
 
     def load_tests(self):
@@ -124,6 +133,13 @@ class Evaluation:
                         n = f"{f}Filter"
                         self.filters.append(globals()[n]())
 
+                    for k, v in conf.get('limits', {}).items():
+                        if k not in self.limits:
+                            logging.error(f'unknown limit {k}')
+                        else:
+                            self.limits[k] = v
+
+
                     for test_conf in conf.get('tests', []):
                         t = create_test(test_conf.get('name', f'test {len(tests)}'))
                         t.exit_code = test_conf.get('exit_code', 0)
@@ -151,12 +167,14 @@ class Evaluation:
             args['stdin'].seek(0)
 
         cmd = ['./main'] + test.args
-        p = subprocess.Popen(shlex.split(f"isolate -M /tmp/meta --processes=5 -s --run {env_build(env)} --") + cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **args)
+        flags = " ".join([shlex.quote(f"--{k}={v}") for k, v in self.limits.items()])
+        p = subprocess.Popen(shlex.split(f"isolate -M /tmp/meta --cg {flags} -s --run {env_build(env)} --") + cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **args)
         p.wait()
 
         if test.stdin:
             args['stdin'].close()
 
+        result['exit_code'] = p.returncode
         result['stdout'] = p.stdout.read().decode('utf-8')
         result['stderr'] = p.stderr.read().decode('utf-8')
 
