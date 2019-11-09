@@ -351,18 +351,19 @@ class InputGeneratorPipe:
 
         results = []
         for i in range(self.count):
-            with tempfile.NamedTemporaryFile() as stdin, tempfile.NamedTemporaryFile() as stdout:
+            with tempfile.NamedTemporaryFile() as stdin, tempfile.NamedTemporaryFile() as stdout, tempfile.NamedTemporaryFile() as stderr:
                 p = subprocess.Popen(["python3", path], stdout=stdin)
                 p.wait()
 
                 stdin.seek(0)
 
-                p = subprocess.Popen([evaluation.task_file('solution')], stdin=stdin, stdout=stdout)
+                p = subprocess.Popen([evaluation.task_file('solution')], stdin=stdin, stdout=stdout, stderr=stderr)
                 p.wait()
 
                 test = Test(f"random {i}")
                 test.stdin = stdin.name
                 test.stdout = stdout.name
+                test.stderr = stderr.name
                 results.append(evaluation.evaluate(test))
             
         
