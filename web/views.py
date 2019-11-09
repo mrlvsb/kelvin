@@ -128,7 +128,7 @@ def teacher_list(request):
     result = []
     for clazz in classess:
         tasks = []
-        for task in clazz.tasks.all():
+        for task in clazz.tasks.all().order_by('-id'):
             submits = Submit.objects.filter(student__id__in=clazz.students.all(), assignment__task_id=task.id)
             results = []
 
