@@ -36,13 +36,13 @@ class LowerFilter:
 
 class TrailingSpacesFilter:
     def filter(self, s):
-        s = re.sub('^\s+', '', s)
-        s = re.sub('\s+$', '', s)
+        s = re.sub(r'^\s+', '', s)
+        s = re.sub(r'\s+$', '', s)
         return s
 
 class AllSpacesFilter:
     def filter(self, s):
-        s = re.sub('\s+', ' ', s, re.MULTILINE)
+        s = re.sub(r'\s+', ' ', s, re.MULTILINE)
         return s.strip()
 
 class StripFilter:
@@ -83,6 +83,7 @@ class Evaluation:
     def __init__(self, source, sandbox):
         self.source = source
         self.sandbox = sandbox
+        self.filters = []
         self.tests = self.load_tests()
 
     def load_tests(self):
@@ -119,20 +120,15 @@ class Evaluation:
             with open(os.path.join(self.source, 'config.yml')) as f:
                 conf = yaml.load(f.read(), Loader=yaml.SafeLoader)
                 if conf:
-                    filters = []
                     for f in conf.get('filters', []):
                         n = f"{f}Filter"
-                        filters.append(globals()[n]())
+                        self.filters.append(globals()[n]())
 
                     for test_conf in conf.get('tests', []):
                         t = create_test(test_conf.get('name', f'test {len(tests)}'))
                         t.exit_code = test_conf.get('exit_code', 0)
                         t.args = test_conf.get('args', [])
                         t.files = test_conf.get('files', [])
-                        t.filters += filters
-
-                    for k, t in tests.items():
-                        t.filters = filters + t.filters
         except FileNotFoundError:
             pass
 
@@ -145,6 +141,7 @@ class Evaluation:
         result = {
              'name': name if name else test.name,
              'success': True,
+             'fail_reason': [],
         }
 
         args = {}
@@ -166,22 +163,30 @@ class Evaluation:
         p.stdout.close()
         p.stderr.close()
 
+        filters = self.filters + test.filters
+
         if test.stdout:
             with open(test.stdout) as f:
                 result['stdout_expected'] = f.read()
-            result['success'] &= compare(result['stdout'], result['stdout_expected'], test.filters)
+            success = compare(result['stdout'], result['stdout_expected'], filters)
+            result['success'] &= success
+            if not success:
+                result['fail_reason'].append('stdout not matches')
 
         if test.stderr:
             with open(test.stderr) as f:
                 result['stderr_expected'] = f.read()
-            result['success'] &= compare(result['stderr'], result['stderr_expected'], test.filters)
+            success = compare(result['stderr'], result['stderr_expected'], filters)
+            result['success'] &= success
+            if not success:
+                result['fail_reason'].append('stderr not matches')
 
         result['files'] = []
         for f in test.files:
             with self.sandbox.open(f['path']) as cur, open(os.path.join(self.source, f['expected'])) as exp:
                 content = cur.read()
                 expected = exp.read()
-                same = compare(content, expected, test.filters)
+                same = compare(content, expected, filters)
 
                 result['files'].append({
                     'path': f['path'],
