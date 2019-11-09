@@ -20,15 +20,10 @@
 {% endfor %}
 
 <h2>Submit script</h2>
-Installation:
+Installation from terminal:
 
 <pre>
 $ wget -q {{request.scheme}}://{{request.META.HTTP_HOST}}{% url 'install.sh' token %} -O - | sh
-</pre>
-
-Submit:
-<pre>
-$ upr submit task_name file.c
 </pre>
 
 {% endblock %}
