@@ -107,7 +107,7 @@ class Evaluation:
         if test.stdin:
             args['stdin'] = open(test.stdin, "r")
 
-        cmd = ['./main'] + list(map(shlex.quote, test.args))
+        cmd = ['./main'] + test.args
         p = subprocess.Popen(shlex.split(f"isolate -M /tmp/meta --processes=5 -s --run {env_build(env)} --") + cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **args)
         p.wait()
 
@@ -350,7 +350,7 @@ def evaluate(task_dir, submit_path):
         ('normal run', GccPipeline()),
         ('run with sanitizer', GccPipeline(['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])),
         ('malloc fail tester', Mallocer()),
-        ('test', InputGeneratorPipe())
+        ('random inputs', InputGeneratorPipe())
     ]
     
     result = []
