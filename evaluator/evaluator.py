@@ -45,6 +45,10 @@ class AllSpacesFilter:
         s = re.sub('\s+', ' ', s, re.MULTILINE)
         return s.strip()
 
+class StripFilter:
+    def filter(self, s):
+        return s.strip()
+
 class TempFile:
     def __init__(self, suffix, dir):
         self.suffix = suffix
