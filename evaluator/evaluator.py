@@ -104,8 +104,11 @@ class Evaluation:
 
     def evaluate(self, test: Test, args=None, env=None, name=None):
         args = {}
+        stdin = ""
         if test.stdin:
             args['stdin'] = open(test.stdin, "r")
+            stdin = args['stdin'].read()
+            args['stdin'].seek(0)
 
         cmd = ['./main'] + test.args
         p = subprocess.Popen(shlex.split(f"isolate -M /tmp/meta --processes=5 -s --run {env_build(env)} --") + cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **args)
@@ -167,6 +170,7 @@ class Evaluation:
             'name': name if name else test.name,
             'stdout': stdout,
             'stderr': stderr,
+            'stdin': stdin,
             'expected': expected,
             'success': success,
             'files': files,
