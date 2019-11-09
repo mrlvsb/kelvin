@@ -10,6 +10,7 @@ import yaml
 import tempfile
 import random
 import string
+import logging
 
 def env_build(env):
     if not env:
@@ -136,12 +137,16 @@ class Evaluation:
     def task_file(self, path):
         return os.path.join(self.source, path)
 
-    def evaluate(self, test: Test, args=None, env=None, name=None):
+    def evaluate(self, test: Test, env=None, name=None):
+        result = {
+             'name': name if name else test.name,
+             'success': True,
+        }
+
         args = {}
-        stdin = ""
         if test.stdin:
             args['stdin'] = open(test.stdin, "r")
-            stdin = args['stdin'].read()
+            result['stdin'] = args['stdin'].read()
             args['stdin'].seek(0)
 
         cmd = ['./main'] + test.args
@@ -151,42 +156,39 @@ class Evaluation:
         if test.stdin:
             args['stdin'].close()
 
-        stdout = p.stdout.read().decode('utf-8')
-        stderr = p.stderr.read().decode('utf-8')
+        result['stdout'] = p.stdout.read().decode('utf-8')
+        result['stderr'] = p.stderr.read().decode('utf-8')
 
         p.stdout.close()
         p.stderr.close()
 
-        success = True
-        expected = ""
         if test.stdout:
             with open(test.stdout) as f:
-                expected = f.read()
-            success &= compare(stdout, expected, test.filters)
+                result['stdout_expected'] = f.read()
+            result['success'] &= compare(result['stdout'], result['stdout_expected'], test.filters)
 
         if test.stderr:
             with open(test.stderr) as f:
-                expected = f.read()
-            success &= compare(stderr, expected, test.filters)
+                result['stderr_expected'] = f.read()
+            result['success'] &= compare(result['stderr'], result['stderr_expected'], test.filters)
 
-        files = []
+        result['files'] = []
         for f in test.files:
             with self.sandbox.open(f['path']) as cur, open(os.path.join(self.source, f['expected'])) as exp:
                 content = cur.read()
                 expected = exp.read()
                 same = compare(content, expected, test.filters)
 
-                files.append({
+                result['files'].append({
                     'path': f['path'],
                     'content': content,
                     'expected': expected,
                     'success': same,
                 })
 
-                success &= same
+                result['success'] &= same
 
 
-        meta = {}
         with open('/tmp/meta') as f:
             for line in f:
                 key, val = line.split(':', 1)
@@ -194,26 +196,15 @@ class Evaluation:
                 val = val.strip()
 
                 if key == 'exitcode':
-                    meta['exit_code'] = int(val)
+                    result['exit_code'] = int(val)
                 else:
-                    meta[key] = val
+                    result[key] = val
 
-        cmd_txt = ' '.join(cmd)
+        result['command'] = ' '.join(cmd)
         if test.stdin:
-            cmd_txt += f' < {shlex.quote(os.path.basename(test.stdin))}'
+            result['command'] += f' < {shlex.quote(os.path.basename(test.stdin))}'
 
-        return {**{
-            'name': name if name else test.name,
-            'stdout': stdout,
-            'stderr': stderr,
-            'stdin': stdin,
-            'expected': expected,
-            'success': success,
-            'files': files,
-            'command': cmd_txt,
-        }, **meta}
-
-
+        return result
 
 class Sandbox:
     def __init__(self):
