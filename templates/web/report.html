@@ -32,15 +32,11 @@
             
         </div>
         <div class="card-body">
-            <dl class="row">
-                <dt class="col-sm-2">Exit code</dt>
-                <dd class="col-sm-9">{{ test.exit_code }}</dd>
-
-                {% if test.message %}
-                <dt class="col-sm-2">Message</dt>
-                <dd class="col-sm-9">{{ test.message }}</dd>
-                {% endif %}
-            </dl>
+<pre style="color: #e83e8c">
+$ {{ test.command }}{% if test.message%}{{ test.message }}{%endif%}
+$ echo $?  # exit code (return value from main)
+{{ test.exit_code }}
+</pre>
 
             {% if test.stdin %}
             <div class="card mb-3">

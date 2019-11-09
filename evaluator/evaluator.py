@@ -83,8 +83,9 @@ class Evaluation:
         args = {}
         if test.stdin:
             args['stdin'] = open(test.stdin, "r")
-        
-        p = subprocess.Popen(shlex.split(f"isolate -M /tmp/meta --processes=5 -s --run {env_build(env)} -- ./main") + test.args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **args)
+
+        cmd = ['./main'] + list(map(shlex.quote, test.args))
+        p = subprocess.Popen(shlex.split(f"isolate -M /tmp/meta --processes=5 -s --run {env_build(env)} --") + cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **args)
         p.wait()
 
         if test.stdin:
@@ -135,6 +136,10 @@ class Evaluation:
                 else:
                     meta[key] = val
 
+        cmd_txt = ' '.join(cmd)
+        if test.stdin:
+            cmd_txt += f' < {shlex.quote(os.path.basename(test.stdin))}'
+
         return {**{
             'name': name if name else test.name,
             'stdout': stdout,
@@ -142,6 +147,7 @@ class Evaluation:
             'expected': expected,
             'success': success,
             'files': files,
+            'command': cmd_txt,
         }, **meta}
 
 
