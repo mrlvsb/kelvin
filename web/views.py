@@ -139,8 +139,8 @@ def teacher_list(request):
                     'assignment_id': task.id,
                     'student': student,
                     'submits': his_submits.count(),
-                    'points': 0,
-                    'max': 0,
+                    'points': None,
+                    'max_points': None,
                 }
 
                 try:
