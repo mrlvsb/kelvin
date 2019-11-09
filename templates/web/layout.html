@@ -7,9 +7,13 @@
         <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     </head>
     <body>
-        <div class="page-header">
-            <h1><a href="/">Kelvin</a></h1>
-        </div>
+        <nav class="navbar navbar-light bg-light mb-2">
+            <a class="navbar-brand" href="/">Kelvin</a>
+
+            <div>
+                <a href="/accounts/logout/?next=/">Logout</a>
+            </div>
+        </nav>
 
         <div class="content container">
             {% block content %}{% endblock %}

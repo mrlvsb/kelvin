@@ -3,27 +3,40 @@
 {% block content %}
 
 {% for node in classess %}
-    <h2>{{ node.class }}</h2>
-
-    <table class="table table-sm">
-        {% for task in node.tasks  %}
-        <tr>
-            <td><a href="{% url 'task_detail' task.id %}">{{ task.name }}</a></td>
-            <td>
-                {% if task.points is not None and task.max_points is not None %}
-                {{ task.points }} / {{ task.max_points }}
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
+<div class="card mb-2">
+    <div class="card-header"><h5>{{ node.class }}</h5></div>
+    <div class="card-body"> 
+        <table class="table table-bordered table-sm table-hover">
+            <thead>
+                <tr>
+                    <th>Task</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            {% for task in node.tasks  %}
+            <tr>
+                <td><a href="{% url 'task_detail' task.id %}">{{ task.name }}</a></td>
+                <td>
+                    {% if task.points is not None and task.max_points is not None %}
+                    {{ task.points }} / {{ task.max_points }}
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
 {% endfor %}
 
-<h2>Submit script</h2>
-Installation from terminal:
+<div class="card">
+    <div class="card-header"><h5>Submit script</h5></div>
+    <div class="card-body">
+        Installation from terminal:
 
-<pre>
+        <pre>
 $ wget -q {{request.scheme}}://{{request.META.HTTP_HOST}}{% url 'install.sh' token %} -O - | sh
-</pre>
+        </pre>
+    </div>
+</div>
 
 {% endblock %}

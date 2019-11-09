@@ -23,7 +23,8 @@ from django.contrib.auth import views as auth_views
 urlpatterns = [
     path('', include('web.urls')),
     path('admin/', admin.site.urls),
-    #path('accounts/login/', MyLoginView.as_view()),
+    path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('accounts/login/', auth_views.LoginView.as_view()),
     path('api/', include('api.urls')),
+    path('django-rq/', include('django_rq.urls'))
 ]
