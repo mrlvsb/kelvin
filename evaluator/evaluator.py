@@ -8,12 +8,35 @@ import tarfile
 import json
 import yaml
 import tempfile
+import random
+import string
 
 def env_build(env):
     if not env:
         env = {}
 
     return " ".join([shlex.quote(f"-E{k}={v}") for k, v in env.items()])
+
+def rand_str(N):
+    return ''.join(random.choices(string.ascii_lowercase + string.digits, k=N))
+
+class TempFile:
+    def __init__(self, suffix, dir):
+        self.suffix = suffix
+        self.dir = dir
+        self.path = None
+        self.fd = None
+
+    def __enter__(self):
+        self.path = os.path.join(self.dir, f'{rand_str(5)}_{self.suffix}')
+        self.fd = open(self.path, 'w+')
+        return self.fd
+
+    def __exit__(self, type, value, traceback):
+        self.fd.close()
+        os.remove(self.path)
+
+
 
 class Test:
     def __init__(self, name):
@@ -157,7 +180,7 @@ class Sandbox:
         subprocess.check_call(["isolate", "--cleanup"])
         self.path = subprocess.check_output(["isolate", "--init", "--cg"]).decode('utf-8').strip()
 
-    def system_path(self, path):
+    def system_path(self, path=''):
         return os.path.join(os.path.join(self.path, 'box'), path)
 
     def run(self, cmd, env=None):
@@ -177,6 +200,9 @@ class Sandbox:
 
     def open(self, path, mode='r'):
         return open(self.system_path(path), mode)
+
+    def open_temporary(self, suffix):
+        return TempFile(suffix, self.system_path())
 
     def copy(self, local, box):
         copyfile(local, self.system_path(box))
@@ -203,7 +229,6 @@ class Sandbox:
         result = self.run(command)
         result['command'] = command
         return result
-
 
 class GccPipeline:
     def __init__(self, gcc_params=[]):
@@ -253,25 +278,26 @@ void* __wrap_malloc (size_t c) {
         self.max_fails = max_fails
 
     def run(self, evaluation):
-        with evaluation.sandbox.open("__malloc.c", "w") as f:
+        with evaluation.sandbox.open_temporary("malloc.c") as f:
             f.write(self.wrapper)
+            f.close()
 
-        gcc_result = evaluation.sandbox.compile(["-Wl,--wrap=malloc"])
+            gcc_result = evaluation.sandbox.compile(["-Wl,--wrap=malloc"])
 
-        results = []
-        for test in evaluation.tests:
-            for i in range(self.max_fails):
-                env = {'__MALLOC_FAIL': i}
-                result = evaluation.evaluate(test, env=env, name=f"{test.name} fails at malloc call #{i+1}")
-                results.append(result)
+            results = []
+            for test in evaluation.tests:
+                for i in range(self.max_fails):
+                    env = {'__MALLOC_FAIL': i}
+                    result = evaluation.evaluate(test, env=env, name=f"{test.name} fails at malloc call #{i+1}")
+                    results.append(result)
 
-                if result['success']:
-                    break
+                    if result['success']:
+                        break
 
-        return {
-            "gcc": gcc_result,
-            "tests": results,
-        }
+            return {
+                "gcc": gcc_result,
+                "tests": results,
+            }
         
 class DownloadPipe:
     def run(self, evaluation):
