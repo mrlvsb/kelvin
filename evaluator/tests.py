@@ -80,5 +80,13 @@ class TestStringMethods(unittest.TestCase):
             
         self.assertTrue("error: ld returned 1 exit status" in res['gcc']['stderr'])
 
+    def test_whitespace_end(self):
+        for t in ['whitespace_end', 'whitespace_all']:
+            res = self.evaluate(t)
+            self.assertTrue(res['success'])
+
+            
+    
+
 if __name__ == '__main__':
     unittest.main()

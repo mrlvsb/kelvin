@@ -20,6 +20,30 @@ def env_build(env):
 def rand_str(N):
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=N))
 
+def apply_filters(s, filters):
+    for f in filters:
+        s = f.filter(s)
+    return s
+
+def compare(actual, expected, filters):
+    return apply_filters(actual, filters) == apply_filters(expected, filters)
+
+
+class LowerFilter:
+    def filter(self, s):
+        return s.lower()
+
+class TrailingSpacesFilter:
+    def filter(self, s):
+        s = re.sub('^\s+', '', s)
+        s = re.sub('\s+$', '', s)
+        return s
+
+class AllSpacesFilter:
+    def filter(self, s):
+        s = re.sub('\s+', ' ', s, re.MULTILINE)
+        return s.strip()
+
 class TempFile:
     def __init__(self, suffix, dir):
         self.suffix = suffix
@@ -48,6 +72,7 @@ class Test:
         self.exit_code = 0
         self.files = []
         self.check = None
+        self.filters = []
 
 class Evaluation:
     def __init__(self, source, sandbox):
@@ -88,12 +113,21 @@ class Evaluation:
         try:
             with open(os.path.join(self.source, 'config.yml')) as f:
                 conf = yaml.load(f.read(), Loader=yaml.SafeLoader)
+                if conf:
+                    filters = []
+                    for f in conf.get('filters', []):
+                        n = f"{f}Filter"
+                        filters.append(globals()[n]())
 
-                for test_conf in conf.get('tests', []):
-                    t = create_test(test_conf.get('name', f'test {len(tests)}'))
-                    t.exit_code = test_conf.get('exit_code', 0)
-                    t.args = test_conf.get('args', [])
-                    t.files = test_conf.get('files', [])
+                    for test_conf in conf.get('tests', []):
+                        t = create_test(test_conf.get('name', f'test {len(tests)}'))
+                        t.exit_code = test_conf.get('exit_code', 0)
+                        t.args = test_conf.get('args', [])
+                        t.files = test_conf.get('files', [])
+                        t.filters += filters
+
+                    for k, t in tests.items():
+                        t.filters = filters + t.filters
         except FileNotFoundError:
             pass
 
@@ -128,26 +162,28 @@ class Evaluation:
         if test.stdout:
             with open(test.stdout) as f:
                 expected = f.read()
-            success &= stdout == expected
+            success &= compare(stdout, expected, test.filters)
 
         if test.stderr:
             with open(test.stderr) as f:
                 expected = f.read()
-            success &= stderr == expected
+            success &= compare(stderr, expected, test.filters)
 
         files = []
         for f in test.files:
             with self.sandbox.open(f['path']) as cur, open(os.path.join(self.source, f['expected'])) as exp:
                 content = cur.read()
                 expected = exp.read()
+                same = compare(content, expected, test.filters)
+
                 files.append({
                     'path': f['path'],
                     'content': content,
                     'expected': expected,
-                    'success': content == expected,
+                    'success': same,
                 })
 
-                success &= content == expected
+                success &= same
 
 
         meta = {}
