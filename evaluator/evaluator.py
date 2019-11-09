@@ -193,7 +193,7 @@ class Sandbox:
 
         if not flags:
             flags = []
-        flags = ['-g', '-lm', '-Wall', '-pedantic']       
+        flags = ['-g', '-lm', '-Wall', '-pedantic'] + flags
         
         command = '/usr/bin/gcc {sources} -o main {flags}'.format(
             sources=' '.join(map(shlex.quote, sources)),
@@ -315,9 +315,9 @@ def evaluate(task_dir, submit_path):
     pipeline = [
         ('download', DownloadPipe()),
         ('normal run', GccPipeline()),
-        #('run with sanitizer', GccPipeline(['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])),
-        #('malloc fail tester', Mallocer()),
-        #('test', InputGeneratorPipe())
+        ('run with sanitizer', GccPipeline(['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])),
+        ('malloc fail tester', Mallocer()),
+        ('test', InputGeneratorPipe())
     ]
     
     result = []
