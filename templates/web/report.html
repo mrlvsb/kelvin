@@ -1,7 +1,7 @@
 {% if submit %}
 <div class="card mb-3">
-    <div class="card-header">
-        <h5>Submit #{{ submit.submit_num }}</h5>
+    <div class="card-header text-{% if submit.points and submit.points == submit.max_points %}success{%else%}danger{%endif%}">
+        <h5>Submit #{{ submit.submit_num }} {%if submit.max_points %}({{ submit.points }} / {{ submit.max_points }}){%else%}evaluating...{%endif%} </h5>
     </div>
     <div class="card-body">
         {{ source|safe }}
