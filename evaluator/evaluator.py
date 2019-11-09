@@ -249,6 +249,9 @@ void* __wrap_malloc (size_t c) {
 }
     """
 
+    def __init__(self, max_fails=10):
+        self.max_fails = max_fails
+
     def run(self, evaluation):
         with evaluation.sandbox.open("__malloc.c", "w") as f:
             f.write(self.wrapper)
@@ -257,9 +260,13 @@ void* __wrap_malloc (size_t c) {
 
         results = []
         for test in evaluation.tests:
-            for i in range(10):
+            for i in range(self.max_fails):
                 env = {'__MALLOC_FAIL': i}
-                results.append(evaluation.evaluate(test, env=env, name=f"{test.name} fails at malloc call #{i+1}"))
+                result = evaluation.evaluate(test, env=env, name=f"{test.name} fails at malloc call #{i+1}")
+                results.append(result)
+
+                if result['success']:
+                    break
 
         return {
             "gcc": gcc_result,
