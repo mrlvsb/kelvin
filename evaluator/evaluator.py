@@ -181,11 +181,22 @@ class Sandbox:
             raise "failed to execute:" + cmd
         return ret
 
-    def compile(self, params = [], sources=None):
+    def compile(self, flags = None, sources=None):
         if not sources:
             sources = [os.path.relpath(p, self.path + '/box') for p in glob.glob(self.system_path('*.c'))]
-        # TODO: params formatting is not secure!
-        return self.run("/usr/bin/gcc {} -o main -g {} -lm".format(" ".join(sources), " ".join(params)))
+
+        if not flags:
+            flags = []
+        flags = ['-g', '-lm', '-Wall', '-pedantic']       
+        
+        command = '/usr/bin/gcc {sources} -o main {flags}'.format(
+            sources=' '.join(map(shlex.quote, sources)),
+            flags=' '.join(map(shlex.quote, flags))
+        ).strip()
+
+        result = self.run(command)
+        result['command'] = command
+        return result
 
 
 class GccPipeline:
