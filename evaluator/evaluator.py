@@ -322,17 +322,18 @@ void* __wrap_malloc (size_t c) {
             f.write(self.wrapper)
             f.close()
 
-            gcc_result = evaluation.sandbox.compile(["-Wl,--wrap=malloc"])
+            gcc_result = evaluation.sandbox.compile(["-Wl,--wrap=malloc", '-fsanitize=address'])
 
             results = []
             for test in evaluation.tests:
                 for i in range(self.max_fails):
                     env = {'__MALLOC_FAIL': i}
                     result = evaluation.evaluate(test, env=env, name=f"{test.name} fails at malloc call #{i+1}")
-                    results.append(result)
+                    if not result['success']:
+                        # TODO: detect kill from sanitizer
+                        result['success'] = result['exit_code'] != 0 and 'AddressSanitizer' not in result['stderr']
 
-                    if result['success']:
-                        break
+                    results.append(result)
 
             return {
                 "gcc": gcc_result,
