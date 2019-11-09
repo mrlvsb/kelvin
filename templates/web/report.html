@@ -33,7 +33,8 @@
         </div>
         <div class="card-body">
 <pre style="color: #e83e8c">
-$ {{ test.command }}{% if test.message%}{{ test.message }}{%endif%}
+$ {{ test.command }}{% if test.message %}
+{{ test.message }}{%endif%}
 $ echo $?  # exit code (return value from main)
 {{ test.exit_code }}
 </pre>
