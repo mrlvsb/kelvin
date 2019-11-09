@@ -55,19 +55,9 @@ $ echo $?  # exit code (return value from main)
                 <div class="card-header">
                     stdout
                 </div>
-                <div class="card-body">
-                    <pre>{{ test.stdout }}</pre>
-                </div>
-            </div>
-            {% endif %}
-
-            {% if not test.success and test.expected %}
-            <div class="card mb-3">
-                <div class="card-header">
-                    expected
-                </div>
-                <div class="card-body">
-                    <pre>{{ test.expected }}</pre>
+                <div class="card-body diff">
+                    <pre class="actual">{{ test.stdout }}</pre>
+                    <pre class="expected">{{ test.stdout_expected }}</pre>
                 </div>
             </div>
             {% endif %}
@@ -77,8 +67,9 @@ $ echo $?  # exit code (return value from main)
                 <div class="card-header">
                     stderr
                 </div>
-                <div class="card-body">
-                    <pre>{{ test.stderr }}</pre>
+                <div class="card-body diff">
+                    <pre class="actual">{{ test.stderr }}</pre>
+                    <pre class="expected">{{ test.stderr_expected }}</pre>
                 </div>
             </div>
             {% endif %}
@@ -99,3 +90,24 @@ $ echo $?  # exit code (return value from main)
 </div>
 
 {% endif %}
+
+<script>
+document.querySelectorAll('.diff').forEach(function(elem) {
+    let actual = elem.querySelector('.actual').textContent;
+    let expected = elem.querySelector('.expected').textContent;
+    let fragment = document.createDocumentFragment();
+
+    Diff.diffWords(actual, expected).forEach(function(part) {
+        let color = part.added ? 'green' : part.removed ? 'red' : 'black';
+        let span = document.createElement('pre');
+        span.style.display = 'inline'
+        span.style.color = color;
+        span.appendChild(document.createTextNode(part.value));
+        fragment.appendChild(span);
+    });
+
+    elem.querySelector('.actual').style.display = 'none';
+    elem.querySelector('.expected').style.display = 'none';
+    elem.appendChild(fragment);
+});
+</script>
