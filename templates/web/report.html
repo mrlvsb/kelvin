@@ -80,6 +80,7 @@ $ echo $?  # exit code (return value from main)
 </div>
 {% endfor %}
 
+{% if debug %}
 <div class="card mb-3">
     <div class="card-header">
         <h5>Raw output</h5>
@@ -88,6 +89,7 @@ $ echo $?  # exit code (return value from main)
         <pre>{{ submit.result }}</pre>
     </div>
 </div>
+{% endif %}
 
 {% endif %}
 
