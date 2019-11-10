@@ -52,5 +52,4 @@ def submit(request, task_code):
 
     django_rq.enqueue(post, s)
    
-    return HttpResponse('ok')
-        #request.build_absolute_uri(reverse('submit_detail', kwargs={'id': s.id}))
+    return HttpResponse(request.build_absolute_uri(reverse('task_detail', kwargs={'assignment_id': s.assignment.id})))
