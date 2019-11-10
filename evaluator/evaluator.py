@@ -374,7 +374,10 @@ class InputGeneratorPipe:
 
     def run(self, evaluation):
         gcc_result = evaluation.sandbox.compile(['-fsanitize=address'])
-        path = evaluation.task_file('input_generator.py')
+        path = evaluation.task_file(self.gen_path)
+
+        if not os.path.exists(path):
+            return
 
         results = []
         for i in range(self.count):
