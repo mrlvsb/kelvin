@@ -105,6 +105,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         with open(os.path.join(task_dir, "readme.md")) as f:
             text = "\n".join(f.read().splitlines()[1:])
         text = markdown2.markdown(text, extras=["fenced-code-blocks"])
+        text = text.replace('src="figures/', f'src="/static/tasks/{assignment.task.code}/figures/')
     except FileNotFoundError:
         pass
 
