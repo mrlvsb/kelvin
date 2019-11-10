@@ -1,5 +1,6 @@
 import json
 import os
+import glob
 from datetime import datetime
 
 from django.shortcuts import render
@@ -97,9 +98,11 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         submits = submits.filter(student__pk=request.user.id)
 
     assignment = AssignedTask.objects.get(id=assignment_id)
+
+    task_dir = os.path.join(BASE_DIR, "tasks", assignment.task.code)
     text = ""
     try:
-        with open(os.path.join(BASE_DIR, "tasks/{}/readme.md".format(assignment.task.code))) as f:
+        with open(os.path.join(task_dir, "readme.md")) as f:
             text = "\n".join(f.read().splitlines()[1:])
         text = markdown2.markdown(text, extras=["fenced-code-blocks"])
     except FileNotFoundError:
@@ -109,7 +112,29 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         'task': assignment.task,
         'submits': submits,
         'text': text,
+        'inputs': [],
     }
+
+    for test in glob.glob(os.path.join(task_dir, "*.in")):
+        name = os.path.basename(test).replace('.in', '')
+
+        stdin = ""
+        stdout = ""
+        try:
+            with open(test) as f:
+                stdin = f.read()
+
+            with open(os.path.join(task_dir, f"{name}.out")) as f:
+                stdout = f.read()
+        except FileNotFoundError:
+            pass      
+
+        data['inputs'].append({
+            'name': name,
+            'stdin': stdin,
+            'stdout': stdout,
+        })
+
 
     current_submit = None
     if submit_num:

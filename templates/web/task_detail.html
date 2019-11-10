@@ -12,6 +12,44 @@
 
 <div class="card mb-3">
     <div class="card-header">
+        <h5>Program test cases</h5>
+    </div>
+    <div class="card-body">
+        {% for input in inputs %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5>{{ input.name }}</h5>
+            </div>
+            <div class="card-body">
+                
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5>stdin</h5>
+                    </div>
+                    <div class="card-body">
+                        <pre>{{ input.stdin }}</pre>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5>stdout</h5>
+                    </div>
+                    <div class="card-body">
+                        <pre>{{ input.stdout }}</pre>
+                    </div>
+                </div>                
+            </div>
+        </div>
+        {% endfor %}
+        
+    </div>
+</div>
+    
+
+
+<div class="card mb-3">
+    <div class="card-header">
         <h5>Submit</h5>
     </div>
     <div class="card-body">
