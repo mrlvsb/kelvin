@@ -4,7 +4,7 @@
 
 <div class="card mb-3">
     <div class="card-header">
-        <ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist">
+        <ul class="nav nav-tabs card-header-tabs navbar-expand-lg" id="myTab" role="tablist">
             <li class="nav-item">
                 <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Assignment</a>
             </li>
@@ -27,6 +27,17 @@
             </li>
             {% endif %}
 
+            <li class="nav-item ml-auto">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <input type="file" name="{{ upload_form.solution.html_name }}" hidden id="upload-choose" onchange="form.submit()">
+                            <span class="btn btn-sm btn-primary" onclick="$('#upload-choose').click()">Upload</span>
+                        </form>
+                    </li>
+                </ul>
+            </li>
         </ul>
     </div>
     <div class="card-body">
