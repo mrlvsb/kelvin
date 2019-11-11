@@ -56,6 +56,12 @@
         <code>
             $ upr submit {{ task.code }} my_file.c
         </code>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ upload_form.solution }}
+            <input type="submit" class="btn btn-primary" value="Upload">
+        </form>
     </div>
 </div>
 

@@ -1,9 +1,10 @@
 import json
 import os
 import glob
+import django_rq
 from datetime import datetime
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
@@ -15,8 +16,10 @@ from pygments.formatters import HtmlFormatter
 import markdown2
 
 from common.models import Submit, Class, Task, AssignedTask
+from common.evaluate import evaluate_job
 from api.models import UserToken
 from kelvin.settings import BASE_DIR
+from .forms import UploadSolutionForm
 
 
 def is_teacher(request):
@@ -105,7 +108,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         with open(os.path.join(task_dir, "readme.md")) as f:
             text = "\n".join(f.read().splitlines()[1:])
         text = markdown2.markdown(text, extras=["fenced-code-blocks"])
-        text = text.replace('src="figures/', f'src="/static/tasks/{assignment.task.code}/figures/')
+        text = text.replace('src="figures/', f'src="https://upr.cs.vsb.cz/static/tasks/{assignment.task.code}/figures/')
     except FileNotFoundError:
         pass
 
@@ -146,6 +149,20 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
     if current_submit:
         data = {**data, **get(current_submit)}
 
+    if request.method == 'POST':
+        form = UploadSolutionForm(request.POST, request.FILES)
+        if form.is_valid():
+            s = Submit()
+            s.source = request.FILES['solution']
+            s.student = request.user
+            s.assignment = assignment
+            s.submit_num = Submit.objects.filter(assignment__id=s.assignment.id, student__id=request.user.id).count() + 1
+            s.save()
+            django_rq.enqueue(evaluate_job, s)
+            return redirect(request.path_info + '#result')
+    else:
+        form = UploadSolutionForm()
+    data['upload_form'] = form
     return render(request, 'web/task_detail.html', data)
 
 def teacher_list(request):

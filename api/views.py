@@ -1,4 +1,3 @@
-import json
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -9,27 +8,7 @@ from .models import UserToken
 from django.db import transaction
 import django_rq
 from evaluator.evaluator import evaluate
-
-
-@django_rq.job
-def post(s: Submit):
-    result = evaluate(
-        "tasks/{}".format(s.assignment.task.code),
-        s.source.path,
-    )
-
-    s.result = json.dumps(result, indent=4)
-
-    # calculate points
-    s.points = 0
-    s.max_points = 0
-    for i in result:
-        for test in i['tests']:
-            if test['success']:
-                s.points += 1
-            s.max_points += 1
-
-    s.save()
+from common.evaluate import evaluate_job
 
 @csrf_exempt
 @transaction.atomic
@@ -50,6 +29,6 @@ def submit(request, task_code):
     s.submit_num = Submit.objects.filter(assignment__id=s.assignment.id, student__id=found_token.user.id).count() + 1
     s.save()
 
-    django_rq.enqueue(post, s)
+    django_rq.enqueue(evaluate_job, s)
    
     return HttpResponse(request.build_absolute_uri(reverse('task_detail', kwargs={'assignment_id': s.assignment.id})))
