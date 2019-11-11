@@ -1,27 +1,42 @@
 {% extends 'web/layout.html' %}
 
 {% block content %}
-<div class="card mb-3">
-    <div class="card-header">
-        <h5>{{ task.name }}</h5>
-    </div>
-    <div class="card-body">
-        {{ text|safe }}
-    </div>
-</div>
 
 <div class="card mb-3">
     <div class="card-header">
-        <h5>Program test cases</h5>
+        <ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Assignment</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">Tests</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="contact-tab" data-toggle="tab" href="#contact" role="tab" aria-controls="contact" aria-selected="false">Source code</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-{% if submit.points and submit.points == submit.max_points %}success{%else%}danger{%endif%}" id="contact-tab" data-toggle="tab" href="#result" role="tab" aria-controls="contact" aria-selected="false">
+                    Result #{{ submit.submit_num }} 
+                    {%if submit.max_points %}({{ submit.points }} / {{ submit.max_points }}){%else%}evaluating...{%endif%}
+                </a>
+            </li>
+
+            {% if debug %}
+            <li class="nav-item">
+                <a class="nav-link" id="contact-tab" data-toggle="tab" href="#debug-json">Raw JSON</a>
+            </li>
+            {% endif %}
+
+        </ul>
     </div>
     <div class="card-body">
-        {% for input in inputs %}
-        <div class="card mb-3">
-            <div class="card-header">
-                <h5>{{ input.name }}</h5>
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+                {{ text|safe }}
             </div>
-            <div class="card-body">
-                
+            <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                {% for input in inputs %}
+                <h2>{{ input.name }}</h2>
                 <div class="card mb-3">
                     <div class="card-header">
                         <h5>stdin</h5>
@@ -39,16 +54,28 @@
                         <pre>{{ input.stdout }}</pre>
                     </div>
                 </div>                
+                {% endfor %}
             </div>
+
+            <div class="tab-pane fade" id="contact">
+                    {{ source|safe }}
+            </div>
+
+            <div class="tab-pane fade" id="result">
+                {% include "web/report.html" %}
+            </div>
+
+            {% if debug %}
+            <div class="tab-pane fade" id="debug-json">
+                <pre>{{ submit.result }}</pre>
+            </div>
+            {% endif %}
         </div>
-        {% endfor %}
-        
     </div>
-</div>
-    
+</div>   
 
 
-<div class="card mb-3">
+<div class="card mb-3 mt-2">
     <div class="card-header">
         <h5>Submit</h5>
     </div>
@@ -65,20 +92,4 @@
     </div>
 </div>
 
-
-<!--
-<ul>
-    {% for submit in submits %}
-    <li>
-        <a href="{% url 'task_detail' task.id submit.id %}">
-            {{ submit.id }}
-        </a>
-        {{ submit.evaluated_points }}
-        {{ submit.points }}
-    </li>
-    {% endfor %}
-</ul>
--->
-
-{% include "web/report.html" %}
 {% endblock %}
