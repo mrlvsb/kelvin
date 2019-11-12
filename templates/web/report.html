@@ -1,4 +1,6 @@
 {% if submit %}
+<input type="checkbox" id="checkbox-only-errors" checked> <label for="checkbox-only-errors">show only errors</label>
+
 {% for result in results %}
     <h5>{{ result.name }}</h5>
     <div class="card-body">
@@ -7,7 +9,7 @@
     </div>
 
     {% for test in result.tests %}
-    <div class="card mb-3 mx-3 {% if test.success%}border-success{%else%}border-danger{%endif%}">
+    <div class="card mb-3 mx-3 test-result {% if test.success%}border-success test-result-success{%else%}border-danger test-result-fail{%endif%}"{% if test.success%} hidden{% endif %}>
         <div class="card-header {% if test.success%}bg-success{%else%}bg-danger{%endif%}">
             <h5>
                 {{ test.name }}
@@ -67,12 +69,20 @@ $ echo $?  # exit code (return value from main)
 {% endif %}
 
 <script>
+document.getElementById('checkbox-only-errors').addEventListener('change', function() {
+    if(this.checked) {
+        document.querySelectorAll('.test-result-success').forEach(elem => elem.setAttribute('hidden', true))
+    } else {
+        document.querySelectorAll('.test-result').forEach(elem => elem.removeAttribute('hidden'))
+    }
+});
+
 document.querySelectorAll('.diff').forEach(function(elem) {
     let actual = elem.querySelector('.actual').textContent;
     let expected = elem.querySelector('.expected').textContent;
     let fragment = document.createDocumentFragment();
 
-    Diff.diffWords(actual, expected).forEach(function(part) {
+    Diff.diffLines(actual, expected).forEach(function(part) {
         let color = part.added ? 'green' : part.removed ? 'red' : 'black';
         let span = document.createElement('pre');
         span.style.display = 'inline'
