@@ -11,6 +11,7 @@
             <li class="nav-item">
                 <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">Tests</a>
             </li>
+            {% if submit %}
             <li class="nav-item">
                 <a class="nav-link" id="contact-tab" data-toggle="tab" href="#contact" role="tab" aria-controls="contact" aria-selected="false">Source code</a>
             </li>
@@ -25,6 +26,8 @@
             <li class="nav-item">
                 <a class="nav-link" id="contact-tab" data-toggle="tab" href="#debug-json">Raw JSON</a>
             </li>
+            {% endif %}
+
             {% endif %}
 
             <li class="nav-item ml-auto">
@@ -47,24 +50,42 @@
             </div>
             <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
                 {% for input in inputs %}
-                <h2>{{ input.name }}</h2>
+                <h2>{{ input.title }}</h2>
+
+                <code>$ ./main {{ input.escaped_args }}</code>
+    
+                {% if input.stdin %}
                 <div class="card mb-3">
                     <div class="card-header">
                         <h5>stdin</h5>
                     </div>
                     <div class="card-body">
-                        <pre>{{ input.stdin }}</pre>
+                        <pre>{{ input.stdin.read }}</pre>
                     </div>
                 </div>
+                {% endif %}
 
+                {% if input.stdout %}
                 <div class="card mb-3">
                     <div class="card-header">
                         <h5>stdout</h5>
                     </div>
                     <div class="card-body">
-                        <pre>{{ input.stdout }}</pre>
+                        <pre>{{ input.stdout.read }}</pre>
                     </div>
-                </div>                
+                </div>
+                {% endif %}
+
+                {% if input.stderr %}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5>stderr</h5>
+                    </div>
+                    <div class="card-body">
+                        <pre>{{ input.stderr.read }}</pre>
+                    </div>
+                </div>
+                {% endif %}
                 {% endfor %}
             </div>
 

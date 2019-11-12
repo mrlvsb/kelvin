@@ -65,6 +65,16 @@ class TempFile:
         self.fd.close()
         os.remove(self.path)
 
+class File:
+    def __init__(self, path):
+        self.path = path
+
+    def open(self, mode='r'):
+        return open(self.path)
+
+    def read(self):
+        with self.open() as f:
+            return f.read()
 
 
 class Test:
@@ -79,6 +89,12 @@ class Test:
         self.check = None
         self.filters = []
         self.limits = {}
+        self.title = None
+
+    @property
+    def escaped_args(self):
+        return " ".join(map(shlex.quote, self.args))
+
 
 class Evaluation:
     def __init__(self, source, sandbox):
@@ -106,15 +122,15 @@ class Evaluation:
 
             path = os.path.join(self.source, f"{name}.out")
             if os.path.exists(path):
-                t.stdout = path
+                t.stdout = File(path)
 
             path = os.path.join(self.source, f"{name}.err")
             if os.path.exists(path):
-                t.stderr = path
+                t.stderr = File(path)
 
             stdin_path = os.path.join(self.source, f"{name}.in")
             if os.path.exists(stdin_path):
-                t.stdin = stdin_path
+                t.stdin = File(stdin_path)
                 
 
             tests[name] = t
@@ -141,9 +157,10 @@ class Evaluation:
 
 
                     for test_conf in conf.get('tests', []):
-                        t = create_test(test_conf.get('name', f'test {len(tests)}'))
+                        t = create_test(str(test_conf.get('name', f'test {len(tests)}')))
+                        t.title = test_conf.get('title', t.name)
                         t.exit_code = test_conf.get('exit_code', 0)
-                        t.args = test_conf.get('args', [])
+                        t.args = [str(s) for s in test_conf.get('args', [])]
                         t.files = test_conf.get('files', [])
         except FileNotFoundError:
             pass
@@ -162,7 +179,7 @@ class Evaluation:
 
         args = {}
         if test.stdin:
-            args['stdin'] = open(test.stdin, "r")
+            args['stdin'] = test.stdin.open()
             result['stdin'] = args['stdin'].read()
             args['stdin'].seek(0)
 
@@ -184,7 +201,7 @@ class Evaluation:
         filters = self.filters + test.filters
 
         if test.stdout:
-            with open(test.stdout) as f:
+            with test.stdout.open() as f:
                 result['stdout_expected'] = f.read()
             success = compare(result['stdout'], result['stdout_expected'], filters)
             result['success'] &= success
@@ -192,7 +209,7 @@ class Evaluation:
                 result['fail_reason'].append('stdout not matches')
 
         if test.stderr:
-            with open(test.stderr) as f:
+            with test.stderr.open() as f:
                 result['stderr_expected'] = f.read()
             success = compare(result['stderr'], result['stderr_expected'], filters)
             result['success'] &= success
@@ -229,7 +246,7 @@ class Evaluation:
 
         result['command'] = ' '.join(cmd)
         if test.stdin:
-            result['command'] += f' < {shlex.quote(os.path.basename(test.stdin))}'
+            result['command'] += f' < {shlex.quote(os.path.basename(test.stdin.path))}'
 
         return result
 

@@ -20,6 +20,7 @@ from common.evaluate import evaluate_job
 from api.models import UserToken
 from kelvin.settings import BASE_DIR
 from .forms import UploadSolutionForm
+from evaluator.evaluator import Evaluation
 
 
 def is_teacher(request):
@@ -119,26 +120,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         'inputs': [],
     }
 
-    for test in glob.glob(os.path.join(task_dir, "*.in")):
-        name = os.path.basename(test).replace('.in', '')
-
-        stdin = ""
-        stdout = ""
-        try:
-            with open(test) as f:
-                stdin = f.read()
-
-            with open(os.path.join(task_dir, f"{name}.out")) as f:
-                stdout = f.read()
-        except FileNotFoundError:
-            pass      
-
-        data['inputs'].append({
-            'name': name,
-            'stdin': stdin,
-            'stdout': stdout,
-        })
-
+    data['inputs'] = Evaluation(task_dir, None).tests
 
     current_submit = None
     if submit_num:
