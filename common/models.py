@@ -21,7 +21,7 @@ class Task(models.Model):
         return self.name
 
 class Class(models.Model):
-    code = models.CharField(max_length=5)
+    code = models.CharField(max_length=20)
     teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
     students = models.ManyToManyField(settings.AUTH_USER_MODEL, 'students')
     tasks = models.ManyToManyField(Task, through='AssignedTask')
