@@ -16,6 +16,11 @@ On Debian/Ubuntu:
 libldap2-dev libsasl2-dev
 ```
 
+## Start worker
+```
+$ ./manage.py rqworker
+```
+
 ## How to create a new task
 
 1. Udelat novy adresar v /srv/kelvin/kelvin/tasks
