@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from fabric import task, Connection
 
-c = Connection("kelvin@kelvin")
+c = Connection("kelvin@upr.cs.vsb.cz")
 with c.cd("kelvin"):
     c.run("git stash")
     c.run("git pull")
