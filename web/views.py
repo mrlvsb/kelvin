@@ -24,7 +24,7 @@ from evaluator.evaluator import Evaluation
 
 
 def is_teacher(request):
-    return request.user.groups.filter(name='teacher').exists()
+    return request.user.groups.filter(name='teachers').exists()
 
 
 @login_required()

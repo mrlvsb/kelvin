@@ -8,8 +8,7 @@ class ClassAdmin(admin.ModelAdmin):
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "teacher":
-            kwargs["queryset"] = User.objects.filter(groups__name='teacher')
-        print(db_field.name)
+            kwargs["queryset"] = User.objects.filter(groups__name='teachers')
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
