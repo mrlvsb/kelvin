@@ -3,13 +3,20 @@ set -e
 # configure api token
 echo "{{ token }}" > ~/.upr-token
 
-# install pip3 dependency on requests
-if ! pip3 install --user requests; then
-    echo "pip3 command not found"
-    echo "try to install it"
-    echo " $ apt install python3-pip"
+if ! which python3 > /dev/null; then
+    echo "Python3 missing, please try to install it:"
+    echo "$ sudo apt install python3"
     exit 1
 fi
+
+# install pip3 as user if not present in the system
+if ! which pip3 > /dev/null; then
+    wget -q https://bootstrap.pypa.io/get-pip.py -O - | python3 - --user --no-warn-script-location
+    export PATH=$PATH:$HOME/.local/bin
+fi
+
+# install pip3 dependency on requests
+pip3 install --user --no-warn-script-location requests
 
 # download upr command
 mkdir -p ~/.local/bin
@@ -21,4 +28,3 @@ line='export PATH=$PATH:~/.local/bin'
 grep -qFx "$line" ~/.bashrc || echo "$line" >> ~/.bashrc
 
 echo "upr command installed"
-echo "open new terminal"
