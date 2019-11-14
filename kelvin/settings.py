@@ -137,3 +137,8 @@ RQ_QUEUES = {
         'DB': 0,
     }
 }
+
+try:
+    from .local_settings import *
+except ModuleNotFoundError:
+    pass
