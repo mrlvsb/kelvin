@@ -28,7 +28,6 @@ def command_submit(args):
     res = requests.post("{}submit/{}".format(API_URL, args.task), files=files, headers=headers)
     if res.status_code != 200:
         print("Error while submitting solution")
-        print(res)
         print(res.text)
     else:
         print(res.text)
@@ -41,7 +40,7 @@ def command_upgrade(args):
             f.write(res.text)
 
 par = argparse.ArgumentParser()
-cmds = par.add_subparsers(dest='action', required=True)
+cmds = par.add_subparsers(dest='action')
 
 p = cmds.add_parser('submit', help='submit solution to the task')
 p.add_argument('task', help='task name')
@@ -51,5 +50,8 @@ cmds.add_parser('upgrade', help='upgrade this tool')
 
 args = par.parse_args()
 
+
 if args.action:
     globals()["command_{}".format(args.action)](args)
+else:
+    par.print_help()
