@@ -161,7 +161,13 @@ class Evaluation:
                         t.title = test_conf.get('title', t.name)
                         t.exit_code = test_conf.get('exit_code', 0)
                         t.args = [str(s) for s in test_conf.get('args', [])]
-                        t.files = test_conf.get('files', [])
+                        files = test_conf.get('files', [])
+                        for f in files:
+                            t.files.append({
+                                'path': f['path'],
+                                'expected': File(os.path.join(self.source, f['expected'])),
+                            })
+
         except FileNotFoundError:
             pass
 
@@ -218,9 +224,9 @@ class Evaluation:
 
         result['files'] = []
         for f in test.files:
-            with self.sandbox.open(f['path']) as cur, open(os.path.join(self.source, f['expected'])) as exp:
+            with self.sandbox.open(f['path']) as cur:
                 content = cur.read()
-                expected = exp.read()
+                expected = f['expected'].read()
                 same = compare(content, expected, filters)
 
                 result['files'].append({
