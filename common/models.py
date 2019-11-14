@@ -33,7 +33,7 @@ class Class(models.Model):
     objects = ClassManager()
 
     def __str__(self):
-        return f"{self.code} {self.day} {self.time} {self.teacher.last_name if self.teacher else ''}"
+        return f"{self.code} {self.day} {self.time:%H:%M} {self.teacher.last_name if self.teacher else ''}"
 
     class Meta:
             verbose_name_plural = "classes"
