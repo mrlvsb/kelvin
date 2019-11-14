@@ -53,6 +53,9 @@
                 <h2>{{ input.title }}</h2>
 
                 <code>$ ./main {{ input.escaped_args }}</code>
+                {% if input.exit_code != 0 %}
+                <div class="text-muted">exit code: {{ input.exit_code }}</div>
+                {% endif %}
     
                 {% if input.stdin %}
                 <div class="card mb-3">
