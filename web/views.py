@@ -9,6 +9,7 @@ from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.db.models import Count
+from django.utils import timezone as tz
 
 from pygments import highlight
 from pygments.lexers import CLexer
@@ -48,6 +49,7 @@ def student_index(request):
                 'points': None,
                 'max_points': None,
                 'deadline': assignment.deadline,
+                'tznow': tz.now(),
             }
 
             if last_submit:
@@ -115,10 +117,13 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         pass
 
     data = {
+        # TODO: task and deadline can be combined into assignment ad deal with it in template
         'task': assignment.task,
+        'deadline': assignment.deadline,
         'submits': submits,
         'text': text,
         'inputs': [],
+        'tznow': tz.now(),
     }
 
     data['inputs'] = Evaluation(task_dir, None).tests

@@ -2,6 +2,13 @@
 
 {% block content %}
 
+{% comment %}
+TODO: Make it nicer with Bootstrap
+{% endcomment %}
+
+<h2>{{ task.name }}</h2>
+<h5>Deadline: {{ deadline|date:"G:H, d.m.Y" }}, Time remaining: {{ deadline|timeuntil:tznow }}</h5>
+
 <div class="card mb-3">
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs navbar-expand-lg" id="myTab" role="tablist">
