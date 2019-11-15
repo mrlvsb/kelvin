@@ -47,6 +47,7 @@ def student_index(request):
                 'name': assignment.task.name,
                 'points': None,
                 'max_points': None,
+                'deadline': assignment.deadline,
             }
 
             if last_submit:

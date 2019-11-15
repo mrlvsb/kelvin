@@ -10,12 +10,19 @@
             <thead>
                 <tr>
                     <th>Task</th>
+                    <th>Deadline</th>
                     <th>Score</th>
                 </tr>
             </thead>
             {% for task in node.tasks  %}
             <tr>
                 <td><a href="{% url 'task_detail' task.id %}">{{ task.name }}</a></td>
+                {% comment %}
+                TODO: Add remaining time to deadline by creating simple tag:
+                https://stackoverflow.com/questions/52296306/django-template-is-there-a-built-in-way-to-get-current-date-as-type-date-ins
+                https://docs.djangoproject.com/en/1.11/howto/custom-template-tags/#django.template.Library.simple_tag
+                {% endcomment %}
+                <td>{{ task.deadline|date:"G:H:s, d.m.Y" }}</td>
                 <td>
                     {% if task.points is not None and task.max_points is not None %}
                     {{ task.points }} / {{ task.max_points }}
