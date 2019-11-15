@@ -9,7 +9,7 @@ class Command(BaseCommand):
         parser.add_argument('year', help='academic year')
 
     def handle(self, *args, **opts):
-        label = 'komb_' + opts['year']
+        label = 'Komb ' + opts['year']
         try:
             clazz = Class.objects.get(code=label)
         except Class.DoesNotExist:
