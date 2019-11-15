@@ -12,7 +12,7 @@
     <div class="card mb-3 mx-3 test-result {% if test.success%}border-success test-result-success{%else%}border-danger test-result-fail{%endif%}"{% if test.success%} hidden{% endif %}>
         <div class="card-header {% if test.success%}bg-success{%else%}bg-danger{%endif%}">
             <h5>
-                {{ test.name }}
+                {{ test.title }}
                 <div class="float-right">
                     {{ test.time }}s, {{ test.maxrss|filesizeformat }}
                 </div>

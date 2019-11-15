@@ -89,11 +89,19 @@ class Test:
         self.check = None
         self.filters = []
         self.limits = {}
-        self.title = None
+        self._title = None
 
     @property
     def escaped_args(self):
         return " ".join(map(shlex.quote, self.args))
+
+    @property
+    def title(self):
+        return self._title if self._title else self.name
+    
+    @title.setter
+    def title(self, value):
+        self._title = value
 
 
 class Evaluation:
@@ -176,9 +184,10 @@ class Evaluation:
     def task_file(self, path):
         return os.path.join(self.source, path)
 
-    def evaluate(self, test: Test, env=None, name=None):
+    def evaluate(self, test: Test, env=None, title=None):
         result = {
-             'name': name if name else test.name,
+             'name': test.name,
+             'title': title if title else test.title,
              'success': True,
              'fail_reason': [],
         }
@@ -369,7 +378,7 @@ void* __wrap_malloc (size_t c) {
             for test in evaluation.tests:
                 for i in range(self.max_fails):
                     env = {'__MALLOC_FAIL': i}
-                    result = evaluation.evaluate(test, env=env, name=f"{test.name} fails at malloc call #{i+1}")
+                    result = evaluation.evaluate(test, env=env, title=f"{test.name} fails at malloc call #{i+1}")
                     if not result['success']:
                         # TODO: detect kill from sanitizer
                         result['success'] = result['exit_code'] != 0 and 'AddressSanitizer' not in result['stderr']
