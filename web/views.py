@@ -153,15 +153,15 @@ def teacher_list(request):
     result = []
     for clazz in classess:
         tasks = []
-        for task in clazz.tasks.all().order_by('-id'):
-            submits = Submit.objects.filter(student__id__in=clazz.students.all(), assignment__task_id=task.id)
+
+        for assignment in clazz.assignedtask_set.all().order_by('-id'):
             results = []
 
             for student in clazz.students.all().order_by('username'):
-                his_submits = Submit.objects.filter(student__id=student.id, assignment__task_id=task.id)
+                his_submits = Submit.objects.filter(student__id=student.id, assignment__id=assignment.id)
 
                 record = {
-                    'assignment_id': task.id,
+                    'assignment_id': assignment.id,
                     'student': student,
                     'submits': his_submits.count(),
                     'points': None,
@@ -178,7 +178,7 @@ def teacher_list(request):
                 results.append(record)
 
             tasks.append({
-                'task': task,
+                'task': assignment.task,
                 'results': results,
             })      
 
