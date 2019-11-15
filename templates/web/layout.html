@@ -14,7 +14,7 @@
             <a class="navbar-brand" href="/">Kelvin</a>
 
             <div>
-                <a href="/accounts/logout/?next=/">Logout</a>
+                {{ user.get_full_name }} ({{ user.username }}) <a href="/accounts/logout/?next=/">Logout</a>
             </div>
         </nav>
 
