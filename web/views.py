@@ -76,8 +76,11 @@ def index(request):
 
 def get(submit):
     source = ""
-    with open(submit.source.path) as f:
-        source = f.read()
+    try:
+        with open(submit.source.path) as f:
+            source = f.read()
+    except UnicodeDecodeError:
+        source = "-- source code contains binary data --"
 
     results = []
     try:
