@@ -6,3 +6,4 @@ git+https://github.com/trnila/django-rq
 six
 pyyaml
 fabric
+mosspy==1.0.4

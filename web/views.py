@@ -10,6 +10,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.db.models import Count
 from django.utils import timezone as tz
+from django.conf import settings
+
+import tempfile
+from django.db.models import Max, F
+from shutil import copyfile
+
+import mosspy
 
 from pygments import highlight
 from pygments.lexers import CLexer
@@ -188,6 +195,7 @@ def teacher_list(request):
 
             tasks.append({
                 'task': assignment.task,
+                'assignment': assignment,
                 'results': results,
             })      
 
@@ -199,6 +207,28 @@ def teacher_list(request):
     return render(request, 'web/teacher.html', {
         'classes': result,
     })
+
+@login_required
+def moss_check(request, assignment_id):
+    m = mosspy.Moss(settings.MOSS_USERID, "c")
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        processed = set()
+        submits = Submit.objects.filter(assignment_id=assignment_id).order_by('-submit_num')
+        for submit in submits:
+            if submit.student_id not in processed:
+                dst = os.path.join(temp_dir, f"{submit.student.username}.c")
+                copyfile(submit.source.path, dst)
+                m.addFile(dst)
+                print(dst)
+
+                processed.add(submit.student_id)
+
+        assignment = AssignedTask.objects.get(id=assignment_id)
+        assignment.moss_url = m.send()
+        assignment.save()
+
+        return redirect(assignment.moss_url)
 
 def script(request, token):
     data = {

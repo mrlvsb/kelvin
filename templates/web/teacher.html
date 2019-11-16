@@ -3,10 +3,16 @@
 {% block content %}
 {% for class in classes %}
 <div class="card mb-2">
-    <div class="card-header"><h5>{{ class.class }}</h5></div>
+    <div class="card-header">
+        <h5>{{ class.class }}</h5>
+    </div>
     <div class="card-body"> 
         {% for task in class.tasks %}
         <h3>{{ task.task.name }}</h3>
+        <a href="{% url 'moss_check' task.assignment.id %}" class="btn btn-secondary btn-sm">send to moss</a>
+        {% if task.assignment.moss_url %}
+        <a href="{{ task.assignment.moss_url }}">moss result</a>
+        {% endif %}
         <table class="table table-sm table-hover">
             <thead>
                 <tr>

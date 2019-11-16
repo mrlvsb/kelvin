@@ -44,6 +44,7 @@ class AssignedTask(models.Model):
     assigned = models.DateTimeField()
     deadline = models.DateTimeField()
     max_points = models.IntegerField()
+    moss_url = models.URLField(null=True)
 
     def __str__(self):
         return f"{self.task.name} {self.clazz}"
