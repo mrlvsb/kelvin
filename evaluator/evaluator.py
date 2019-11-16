@@ -233,19 +233,30 @@ class Evaluation:
 
         result['files'] = []
         for f in test.files:
-            with self.sandbox.open(f['path']) as cur:
-                content = cur.read()
-                expected = f['expected'].read()
-                same = compare(content, expected, filters)
+            try:
+                with self.sandbox.open(f['path']) as cur:
+                    content = cur.read()
+                    expected = f['expected'].read()
+                    same = compare(content, expected, filters)
 
+                    result['files'].append({
+                        'path': f['path'],
+                        'content': content,
+                        'expected': expected,
+                        'success': same,
+                    })
+
+                    result['success'] &= same
+            except FileNotFoundError as e:
                 result['files'].append({
                     'path': f['path'],
-                    'content': content,
-                    'expected': expected,
-                    'success': same,
+                    'expected': f['expected'].read(),
+                    'success': False,
+                    'error': 'file not found',
                 })
 
-                result['success'] &= same
+                result['success'] &= False
+
 
 
         with open('/tmp/meta') as f:
