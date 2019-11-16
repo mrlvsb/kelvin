@@ -17,11 +17,11 @@
             {% for stud in task.results %}
             <tr class="table-{% if stud.max_points and stud.points == stud.max_points %}success{% elif stud.points > 0 %}warning{% else %}danger{%endif%}">
                 <td>
-                    {% if stud.max_points %}
+                    {% if stud.submits %}
                     <a href="{% url 'task_detail' stud.student.username stud.assignment_id %}">
                     {% endif %}
                         {{ stud.student }}
-                    {% if stud.points %}
+                    {% if stud.submits %}
                     </a>
                     {% endif %}
                 </td>
