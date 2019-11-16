@@ -85,6 +85,10 @@ class TestStringMethods(unittest.TestCase):
             res = self.evaluate(t)
             self.assertTrue(res['success'])
 
+    def test_large_output(self):
+        s = Sandbox()
+        res = s.run("/bin/dd if=/dev/zero bs=64M count=1")
+        self.assertEqual(len(res['stdout']), 64 * 1024 * 1024)
             
     
 

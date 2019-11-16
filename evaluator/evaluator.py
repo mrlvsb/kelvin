@@ -12,6 +12,8 @@ import random
 import string
 import logging
 
+logger = logging.getLogger("evaluator")
+
 def env_build(env):
     if not env:
         env = {}
@@ -201,14 +203,14 @@ class Evaluation:
         cmd = ['./main'] + test.args
         flags = " ".join([shlex.quote(f"--{k}={v}") for k, v in self.limits.items()])
         p = subprocess.Popen(shlex.split(f"isolate -M /tmp/meta --cg {flags} -s --run {env_build(env)} --") + cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **args)
-        p.wait()
+        result['stdout'], result['stderr'] = p.communicate()
 
         if test.stdin:
             args['stdin'].close()
 
         result['exit_code'] = p.returncode
-        result['stdout'] = p.stdout.read().decode('utf-8')
-        result['stderr'] = p.stderr.read().decode('utf-8')
+        result['stdout'] = result['stdout'].decode('utf-8')
+        result['stderr'] = result['stderr'].decode('utf-8')
 
         p.stdout.close()
         p.stderr.close()
@@ -285,14 +287,18 @@ class Sandbox:
         return os.path.join(os.path.join(self.path, 'box'), path)
 
     def run(self, cmd, env=None):
-        p = subprocess.Popen(shlex.split(f"isolate -s --run --processes=100 {env_build(env)} -e -- {cmd}"), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        p.wait() # TODO: may not work!
+        isolation_cmd = f"isolate -s --run --processes=100 {env_build(env)} -e -- {cmd}"
+        logger.info(f"executing in isolation: {isolation_cmd}")
+
+        p = subprocess.Popen(shlex.split(isolation_cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
 
         res = {
             'exit_code': p.returncode,
-            'stdout': p.stdout.read().decode('utf-8'),
-            'stderr': p.stderr.read().decode('utf-8'),
+            'stdout': stdout.decode('utf-8'),
+            'stderr': stderr.decode('utf-8'),
         }
+        logger.info(f"exit_code: {p.returncode}")
 
         p.stdout.close()
         p.stderr.close()
@@ -449,26 +455,25 @@ def evaluate(task_dir, submit_path):
     sandbox = Sandbox()
     evaluation = Evaluation(task_dir, sandbox)
 
+    logger.info(f"evaluating {submit_path}")
     copyfile(submit_path, os.path.join(sandbox.path, "box/submit"))
 
     pipeline = [
         ('download', DownloadPipe()),
         ('normal run', GccPipeline()),
         ('run with sanitizer', GccPipeline(['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])),
-        ('malloc fail tester', Mallocer()),
-        ('random inputs', InputGeneratorPipe())
+        #('malloc fail tester', Mallocer()),
+        #('random inputs', InputGeneratorPipe())
     ]
     
     result = []
     for name, pipe in pipeline:
+        logger.info(f"executing {name}")
         res = pipe.run(evaluation)
         if res:
             result.append({'name': name, **res})
 
     return result
-
-
-
 
 if __name__ == "__main__":
     import sys
