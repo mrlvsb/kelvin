@@ -13,6 +13,8 @@ urlpatterns = [
 
     path('moss_send/<int:assignment_id>', views.moss_check, name='moss_check'),
 
+    path('submits', views.submits),
+
     path('install_<str:token>.sh', views.script, name='install.sh'),
     path('upr.py', views.uprpy, name='upr.py'),
 ]

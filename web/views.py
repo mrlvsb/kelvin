@@ -6,7 +6,7 @@ from datetime import datetime
 
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import LoginView
 from django.db.models import Count
 from django.utils import timezone as tz
@@ -31,9 +31,8 @@ from .forms import UploadSolutionForm
 from evaluator.evaluator import Evaluation
 
 
-def is_teacher(request):
-    return request.user.groups.filter(name='teachers').exists()
-
+def is_teacher(user):
+    return user.groups.filter(name='teachers').exists()
 
 @login_required()
 def student_index(request):
@@ -77,7 +76,7 @@ def student_index(request):
 
 @login_required()
 def index(request):
-    if is_teacher(request):
+    if is_teacher(request.user):
         return teacher_list(request)
     return student_index(request)
 
@@ -109,7 +108,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         assignment__pk=assignment_id,
     ).order_by('-id')
 
-    if is_teacher(request):
+    if is_teacher(request.user):
         submits = submits.filter(student__username=student_username)
     else:
         submits = submits.filter(student__pk=request.user.id)
@@ -229,6 +228,12 @@ def moss_check(request, assignment_id):
         assignment.save()
 
         return redirect(assignment.moss_url)
+
+@user_passes_test(is_teacher)
+def submits(request):
+    submits = Submit.objects.all().order_by('-id')[:100]
+    return render(request, "web/submits.html", {'submits': submits})
+
 
 def script(request, token):
     data = {
