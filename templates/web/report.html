@@ -38,7 +38,7 @@ $ echo $?  # exit code (return value from main)
             </div>
             {% endif %}
 
-            {% if test.stdout %}
+            {% if test.stdout or test.stdout_expected %}
             <div class="card mb-3">
                 <div class="card-header">
                     stdout
@@ -50,7 +50,7 @@ $ echo $?  # exit code (return value from main)
             </div>
             {% endif %}
 
-            {% if test.stderr %}
+            {% if test.stderr or test.stderr_expected %}
             <div class="card mb-3">
                 <div class="card-header">
                     stderr
