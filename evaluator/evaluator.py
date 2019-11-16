@@ -38,13 +38,13 @@ class LowerFilter:
 
 class TrailingSpacesFilter:
     def filter(self, s):
-        s = re.sub(r'^\s+', '', s)
-        s = re.sub(r'\s+$', '', s)
+        s = re.sub(r'^\s+', '', s, flags=re.MULTILINE)
+        s = re.sub(r'\s+$', '', s, flags=re.MULTILINE)
         return s
 
 class AllSpacesFilter:
     def filter(self, s):
-        s = re.sub(r'\s+', ' ', s, re.MULTILINE)
+        s = re.sub(r'\s+', ' ', s, flags=re.MULTILINE)
         return s.strip()
 
 class StripFilter:
