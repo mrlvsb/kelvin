@@ -61,6 +61,18 @@ $ echo $?  # exit code (return value from main)
                 </div>
             </div>
             {% endif %}
+
+            {% for file in test.files %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    {{ file.path }}
+                </div>
+                <div class="card-body diff">
+                    <pre class="actual">{{ file.content }}</pre>
+                    <pre class="expected">{{ file.expected }}</pre>
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
     {% endfor %}
