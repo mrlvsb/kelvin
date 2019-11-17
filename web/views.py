@@ -29,6 +29,7 @@ from api.models import UserToken
 from kelvin.settings import BASE_DIR
 from .forms import UploadSolutionForm
 from evaluator.evaluator import Evaluation
+from common.evaluate import get_meta
 
 
 def is_teacher(user):
@@ -120,7 +121,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
     try:
         with open(os.path.join(task_dir, "readme.md")) as f:
             text = "\n".join(f.read().splitlines()[1:])
-        text = markdown2.markdown(text, extras=["fenced-code-blocks"])
+        text = markdown2.markdown(text, extras=["fenced-code-blocks", "tables"])
         text = text.replace('src="figures/', f'src="https://upr.cs.vsb.cz/static/tasks/{assignment.task.code}/figures/')
     except FileNotFoundError:
         pass
@@ -135,7 +136,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         'tznow': tz.now(),
     }
 
-    data['inputs'] = Evaluation(task_dir, None).tests
+    data['inputs'] = Evaluation(task_dir, None, get_meta(request.user)).tests
 
     current_submit = None
     if submit_num:

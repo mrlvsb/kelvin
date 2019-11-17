@@ -7,7 +7,7 @@ class TestStringMethods(unittest.TestCase):
         s = Sandbox()
         s.copy(f'tests/{name}/submit.c', "main.c")
 
-        e = Evaluation(f'tests/{name}/', s)
+        e = Evaluation(f'tests/{name}/', s, {})
         r = GccPipeline().run(e)
 
         return r['tests'][0]
@@ -89,7 +89,11 @@ class TestStringMethods(unittest.TestCase):
         s = Sandbox()
         res = s.run("/bin/dd if=/dev/zero bs=64M count=1")
         self.assertEqual(len(res['stdout']), 64 * 1024 * 1024)
-            
+
+    def test_custom_check(self):
+        res = self.evaluate('custom_check')
+        self.assertTrue(res['processed'])
+        self.assertTrue(res['success'])
     
 
 if __name__ == '__main__':

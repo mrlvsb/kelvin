@@ -1,6 +1,9 @@
 import subprocess
 from shutil import copyfile
+import importlib.util
+import sys
 import os
+import io
 import glob
 import shlex
 import re
@@ -31,6 +34,15 @@ def apply_filters(s, filters):
 def compare(actual, expected, filters):
     return apply_filters(actual, filters) == apply_filters(expected, filters)
 
+
+def load_module(path):
+    module_name = "xyz"
+
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
 
 class LowerFilter:
     def filter(self, s):
@@ -72,6 +84,8 @@ class File:
         self.path = path
 
     def open(self, mode='r'):
+        if isinstance(self.path, io.StringIO):
+            return io.StringIO(self.path.getvalue())
         return open(self.path)
 
     def read(self):
@@ -92,6 +106,7 @@ class Test:
         self.filters = []
         self.limits = {}
         self._title = None
+        self.script = None
 
     @property
     def escaped_args(self):
@@ -107,7 +122,7 @@ class Test:
 
 
 class Evaluation:
-    def __init__(self, source, sandbox):
+    def __init__(self, source, sandbox, meta=None):
         self.source = source
         self.sandbox = sandbox
         self.filters = []
@@ -119,37 +134,45 @@ class Evaluation:
             'cg-mem': 5 * 1024 * 1024,
             'fsize': 1024 * 1024,
         }
-        self.tests = self.load_tests()
+        self.meta = meta if meta else {}
+        self.tests_dict = {}
+        self.File = File
+        self.load_tests()
+
+    @property
+    def tests(self):
+        return self.tests_dict.values()
+
+    def create_test(self, name):
+        if name in self.tests_dict:
+            return self.tests_dict[name]
+
+        t = Test(name)
+
+        path = os.path.join(self.source, f"{name}.out")
+        if os.path.exists(path):
+            t.stdout = File(path)
+
+        path = os.path.join(self.source, f"{name}.err")
+        if os.path.exists(path):
+            t.stderr = File(path)
+
+        stdin_path = os.path.join(self.source, f"{name}.in")
+        if os.path.exists(stdin_path):
+            t.stdin = File(stdin_path)
+
+        path = os.path.join(self.source, f"{name}.test.py")
+        if os.path.exists(path):
+            t.script = load_module(path)
+
+        self.tests_dict[name] = t
+        return t
 
     def load_tests(self):
-        tests = {}
-
-        def create_test(name):
-            if name in tests:
-                return tests[name]
-
-            t = Test(name)
-
-            path = os.path.join(self.source, f"{name}.out")
-            if os.path.exists(path):
-                t.stdout = File(path)
-
-            path = os.path.join(self.source, f"{name}.err")
-            if os.path.exists(path):
-                t.stderr = File(path)
-
-            stdin_path = os.path.join(self.source, f"{name}.in")
-            if os.path.exists(stdin_path):
-                t.stdin = File(stdin_path)
-                
-
-            tests[name] = t
-            return t
-
-        for ext in ['out', 'err']:
+        for ext in ['out', 'err', 'test.py']:
             for out in glob.glob(os.path.join(self.source, f"*.{ext}")):
                 test_name = os.path.basename(re.sub(f".{ext}$", '', out))
-                create_test(test_name)
+                self.create_test(test_name)
 
         try:
             with open(os.path.join(self.source, 'config.yml')) as f:
@@ -167,7 +190,7 @@ class Evaluation:
 
 
                     for test_conf in conf.get('tests', []):
-                        t = create_test(str(test_conf.get('name', f'test {len(tests)}')))
+                        t = self.create_test(str(test_conf.get('name', f'test {len(self.tests)}')))
                         t.title = test_conf.get('title', t.name)
                         t.exit_code = test_conf.get('exit_code', 0)
                         t.args = [str(s) for s in test_conf.get('args', [])]
@@ -181,7 +204,12 @@ class Evaluation:
         except FileNotFoundError:
             pass
 
-        return tests.values()
+        path = os.path.join(self.source, 'script.py')
+        if os.path.exists(path):
+            script = load_module(path)
+            generate_tests = getattr(script, 'gen_tests', None)
+            if generate_tests:
+                generate_tests(self)
 
     def task_file(self, path):
         return os.path.join(self.source, path)
@@ -275,6 +303,11 @@ class Evaluation:
         result['command'] = ' '.join(cmd)
         if test.stdin:
             result['command'] += f' < {shlex.quote(os.path.basename(test.stdin.path))}'
+
+        if test.script:
+            check = getattr(test.script, 'check', None)
+            if check:
+                result['success'] &= check(result, self)
 
         return result
 
@@ -451,9 +484,9 @@ class InputGeneratorPipe:
             'tests': results,
         }
 
-def evaluate(task_dir, submit_path):
+def evaluate(task_dir, submit_path, meta=None):
     sandbox = Sandbox()
-    evaluation = Evaluation(task_dir, sandbox)
+    evaluation = Evaluation(task_dir, sandbox, meta)
 
     logger.info(f"evaluating {submit_path}")
     copyfile(submit_path, os.path.join(sandbox.path, "box/submit"))
