@@ -42,9 +42,9 @@ class AssignedTask(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
     clazz = models.ForeignKey(Class, on_delete=models.CASCADE)
     assigned = models.DateTimeField()
-    deadline = models.DateTimeField()
+    deadline = models.DateTimeField(null=True, blank=True)
     max_points = models.IntegerField()
-    moss_url = models.URLField(null=True)
+    moss_url = models.URLField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.task.name} {self.clazz}"
