@@ -7,7 +7,9 @@ TODO: Make it nicer with Bootstrap
 {% endcomment %}
 
 <h2>{{ task.name }}</h2>
-<h5>Deadline: {{ deadline|date:"G:H, d.m.Y" }}, Time remaining: {{ deadline|timeuntil:tznow }}</h5>
+{% if deadline %}
+<h5>Deadline: {{ deadline|date:"G:i, d.m.Y" }}, Time remaining: {{ deadline|timeuntil:tznow }}</h5>
+{% endif %}
 
 <div class="card mb-3">
     <div class="card-header">
