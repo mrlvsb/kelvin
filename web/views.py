@@ -98,7 +98,7 @@ def get(submit):
     data = {
         "submit": submit,
         "results": results,
-        "source": highlight(source, CLexer(), HtmlFormatter()),
+        "source": highlight(source, CLexer(), HtmlFormatter(linenos='table', lineanchors='src', anchorlinenos=True)),
     }
     return data
 
