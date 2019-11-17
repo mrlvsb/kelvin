@@ -11,19 +11,19 @@ TODO: Make it nicer with Bootstrap
 
 <div class="card mb-3">
     <div class="card-header">
-        <ul class="nav nav-tabs card-header-tabs navbar-expand-lg" id="myTab" role="tablist">
+        <ul class="nav nav-tabs card-header-tabs navbar-expand-lg">
             <li class="nav-item">
-                <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Assignment</a>
+                <a class="nav-link active" data-toggle="tab" href="#tab_assignment">Assignment</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">Tests</a>
+                <a class="nav-link" data-toggle="tab" href="#tab_tests">Tests</a>
             </li>
             {% if submit %}
             <li class="nav-item">
-                <a class="nav-link" id="contact-tab" data-toggle="tab" href="#contact" role="tab" aria-controls="contact" aria-selected="false">Source code</a>
+                <a class="nav-link" data-toggle="tab" href="#tab_src">Source code</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link text-{% if submit.points and submit.points == submit.max_points %}success{%else%}danger{%endif%}" id="contact-tab" data-toggle="tab" href="#result" role="tab" aria-controls="contact" aria-selected="false">
+                <a class="nav-link text-{% if submit.points and submit.points == submit.max_points %}success{%else%}danger{%endif%}" data-toggle="tab" href="#tab_result">
                     Result #{{ submit.submit_num }} 
                     {%if submit.max_points %}({{ submit.points }} / {{ submit.max_points }}){%else%}evaluating...{%endif%}
                 </a>
@@ -31,7 +31,7 @@ TODO: Make it nicer with Bootstrap
 
             {% if debug %}
             <li class="nav-item">
-                <a class="nav-link" id="contact-tab" data-toggle="tab" href="#debug-json">Raw JSON</a>
+                <a class="nav-link" data-toggle="tab" href="#tab_json">Raw JSON</a>
             </li>
             {% endif %}
 
@@ -51,11 +51,11 @@ TODO: Make it nicer with Bootstrap
         </ul>
     </div>
     <div class="card-body">
-        <div class="tab-content" id="myTabContent">
-            <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+        <div class="tab-content">
+            <div class="tab-pane active" id="tab_assignment">
                 {{ text|safe }}
             </div>
-            <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+            <div class="tab-pane fade" id="tab_tests">
                 {% for input in inputs %}
                 <h2>{{ input.title }}</h2>
 
@@ -111,16 +111,16 @@ TODO: Make it nicer with Bootstrap
                 {% endfor %}
             </div>
 
-            <div class="tab-pane fade" id="contact">
+            <div class="tab-pane" id="tab_src">
                     {{ source|safe }}
             </div>
 
-            <div class="tab-pane fade" id="result">
+            <div class="tab-pane" id="tab_result">
                 {% include "web/report.html" %}
             </div>
 
             {% if debug %}
-            <div class="tab-pane fade" id="debug-json">
+            <div class="tab-pane fade" id="tab_json">
                 <pre>{{ submit.result }}</pre>
             </div>
             {% endif %}
