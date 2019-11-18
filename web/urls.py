@@ -11,6 +11,8 @@ urlpatterns = [
     path('task/<int:assignment_id>', views.task_detail, name='task_detail'),
     path('task/<int:assignment_id>/<int:submit_num>', views.task_detail, name='task_detail'),
 
+    path('teacher/task/<int:task_id>', views.teacher_task, name='teacher_task'),
+
     path('moss_send/<int:assignment_id>', views.moss_check, name='moss_check'),
 
     path('submits', views.submits),

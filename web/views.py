@@ -4,7 +4,7 @@ import glob
 import django_rq
 from datetime import datetime
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import LoginView
@@ -162,6 +162,32 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         form = UploadSolutionForm()
     data['upload_form'] = form
     return render(request, 'web/task_detail.html', data)
+
+
+@user_passes_test(is_teacher)
+def teacher_task(request, task_id):
+    task = get_object_or_404(Task, pk=task_id)
+
+    task_dir = os.path.join(BASE_DIR, "tasks", task.code)
+    text = ""
+    try:
+        with open(os.path.join(task_dir, "readme.md")) as f:
+            text = "\n".join(f.read().splitlines()[1:])
+        text = markdown2.markdown(text, extras=["fenced-code-blocks", "tables"])
+        text = text.replace('src="figures/', f'src="https://upr.cs.vsb.cz/static/tasks/{task.code}/figures/')
+    except FileNotFoundError:
+        pass
+
+    data = {
+        'task': task,
+        'text': text,
+        'inputs': [],
+    }
+
+    data['inputs'] = Evaluation(task_dir, None, get_meta(request.user)).tests
+
+    return render(request, 'web/task_detail.html', data)
+
 
 def teacher_list(request):
     classess = Class.objects.filter(teacher__pk=request.user.id)
