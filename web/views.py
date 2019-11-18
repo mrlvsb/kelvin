@@ -197,6 +197,7 @@ def teacher_list(request):
                 'task': assignment.task,
                 'assignment': assignment,
                 'results': results,
+                'tznow': tz.now(),
             })      
 
         result.append({

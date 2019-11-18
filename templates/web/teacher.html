@@ -9,6 +9,7 @@
     <div class="card-body"> 
         {% for task in class.tasks %}
         <h3>{{ task.task.name }}</h3>
+        <h5>Deadline: {{ task.assignment.deadline|date:"G:i, d.m.Y" }}, Time remaining: {{ task.assignment.deadline|timeuntil:task.tznow }}</h5>
         <a href="{% url 'moss_check' task.assignment.id %}" class="btn btn-secondary btn-sm">send to moss</a>
         {% if task.assignment.moss_url %}
         <a href="{{ task.assignment.moss_url }}">moss result</a>
