@@ -17,3 +17,6 @@ admin.site.register(models.Task)
 admin.site.register(models.Class, ClassAdmin)
 admin.site.register(models.Submit)
 admin.site.register(models.AssignedTask)
+
+admin.site.site_header = 'Kelvin administration'
+admin.site.site_title = 'Kelvin administration'
