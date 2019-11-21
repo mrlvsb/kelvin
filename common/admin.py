@@ -1,6 +1,6 @@
 from django.contrib import admin
 import common.models as models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.auth.admin import UserAdmin
 
 
@@ -15,11 +15,39 @@ class ClassAdmin(admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
+class ByTeacherFilter(admin.SimpleListFilter):
+    """
+    From: https://books.agiliq.com/projects/django-admin-cookbook/en/latest/filtering_calculated_fields.html
+    and https://stackoverflow.com/questions/880684/in-django-admin-how-to-filter-users-by-group
+    """
+    title = 'teacher'
+    parameter_name = 'teacher'
+
+    def lookups(self, request, model_admin):
+        teachers = User.objects.filter(groups__name='teachers')
+        items = ( (t.id, t.username) for t in teachers )
+
+        return tuple(items)
+
+    def queryset(self, request, queryset):
+        # If 'All' is chosen in the admin, self.value() is None
+        value = self.value()
+        if value:
+            return queryset.filter(clazz__teacher__pk=value)
+        else:
+            return queryset
+
+
 class AssignedTaskAdmin(admin.ModelAdmin):
-    list_filter = ('clazz', 'task',)
-    # FIXME: Probably doesn't work witk foreign keys
-    #list_filter = ('clazz', 'task',)
-    list_filter = ('task__name', 'clazz__teacher',)
+    # to see directly the teacher
+    list_display = admin.ModelAdmin.list_display + ('teacher_name',)
+
+    # to filter by teacher
+    list_filter = ('task__name', ByTeacherFilter)
+
+    def teacher_name(self, obj):
+        teacher = obj.clazz.teacher
+        return f'{teacher.get_full_name()} ({teacher.username})'
 
 
 class IsTeacherFilter(admin.SimpleListFilter):
@@ -54,6 +82,7 @@ class MyUserAdmin(UserAdmin):
 
     def is_teacher(self, obj):
         return obj.groups.filter(name='teachers').exists()
+
 
 admin.site.register(models.Task)
 admin.site.register(models.Class, ClassAdmin)
