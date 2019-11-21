@@ -30,10 +30,7 @@ class Command(BaseCommand):
                 class_in_db[c].time = s[7]
                 class_in_db[c].save()
 
-        for row in doc.xpath('//table[@class="dataTable"]//tr'):
-            if 'class' in row.attrib and 'rowClass1' == row.attrib['class']:
-                continue
-
+        for row in doc.xpath('//table[@class="dataTable"]//tr')[10:]:
             login = row.xpath('./td[2]/a/text()')[0].strip()
             email = row.xpath('./td[2]/a/@href')[0].replace('mailto:', '').strip()
             name = row.xpath('./td[3]/a/text()')[0].replace(', Ing.', '').replace(', Bc.', '')
@@ -47,17 +44,18 @@ class Command(BaseCommand):
                             raise "in multiple classess"
                         clazz = classes[i]
 
+            user = None
+            try:
+                user = User.objects.get(username=login)
+            except User.DoesNotExist:
+                user = User.objects.create_user(login.upper(), email)
+                user.first_name = firstname
+                user.last_name = lastname
+                user.save()
+    
             if clazz:
-                try:
-                    User.objects.get(username=login)
-                except User.DoesNotExist:
-                    print(f"Creating user {login.upper()}")
-                    user = User.objects.create_user(login.upper(), email)
-                    user.first_name = firstname
-                    user.last_name = lastname
-                    user.save()
-
-                    class_in_db[clazz].students.add(user)
+                class_in_db[clazz].students.add(user)
             else:
-                 print(login, email, firstname, lastname, clazz, " have no class")
+                print(login, email, firstname, lastname, clazz, " have no class")
+
 
