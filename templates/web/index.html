@@ -2,6 +2,13 @@
 
 {% block content %}
 
+{% comment %}
+<ul>
+  <li><a href="{% url 'project' 'normal' %}">Zadání projektu</a></li>
+  <li><a href="{% url 'project' 'bonus' %}">Zadání bonusového projektu</a></li>
+</ul>
+{% endcomment %}
+
 {% for node in classess %}
 <div class="card mb-2">
     <div class="card-header"><h5>{{ node.class }}</h5></div>

@@ -272,3 +272,11 @@ def script(request, token):
 def uprpy(request):
     with open(os.path.join(BASE_DIR, "scripts/submit.py")) as f:
         return HttpResponse(f.read(), 'text/x-python')
+
+@login_required
+def project(request, typ):
+    if typ not in ['normal', 'bonus']:
+        return HttpResponse(code=404)
+
+    with open(os.path.join(BASE_DIR, "projects", typ, "assigned", f"{request.user.username}.html")) as f:
+        return HttpResponse(f.read(), 'text/html')
