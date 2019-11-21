@@ -30,7 +30,10 @@ class Command(BaseCommand):
                 class_in_db[c].time = s[7]
                 class_in_db[c].save()
 
-        for row in doc.xpath('//table[@class="dataTable"]//tr')[10:]:
+        for row in doc.xpath('//table[@class="dataTable"]//tr'):
+            if 'class' in row.attrib and 'rowClass1' == row.attrib['class']:
+                continue
+
             login = row.xpath('./td[2]/a/text()')[0].strip()
             email = row.xpath('./td[2]/a/@href')[0].replace('mailto:', '').strip()
             name = row.xpath('./td[3]/a/text()')[0].replace(', Ing.', '').replace(', Bc.', '')
@@ -48,6 +51,7 @@ class Command(BaseCommand):
                 try:
                     User.objects.get(username=login)
                 except User.DoesNotExist:
+                    print(f"Creating user {login.upper()}")
                     user = User.objects.create_user(login.upper(), email)
                     user.first_name = firstname
                     user.last_name = lastname
