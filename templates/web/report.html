@@ -99,6 +99,9 @@ document.querySelectorAll('.diff').forEach(function(elem) {
         let span = document.createElement('pre');
         span.style.display = 'inline'
         span.style.color = color;
+        if(part.removed) {
+          span.style.textDecoration = 'line-through';
+        }
         span.appendChild(document.createTextNode(part.value));
         fragment.appendChild(span);
     });
