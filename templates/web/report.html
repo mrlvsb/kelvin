@@ -8,6 +8,7 @@
         <pre>{{ result.gcc.stderr }}</pre>
     </div>
 
+    {% if result.gcc.exit_code == 0 %}
     {% for test in result.tests %}
     <div class="card mb-3 mx-3 test-result {% if test.success%}border-success test-result-success{%else%}border-danger test-result-fail{%endif%}"{% if test.success%} hidden{% endif %}>
         <div class="card-header {% if test.success%}bg-success{%else%}bg-danger{%endif%}">
@@ -76,6 +77,7 @@ $ echo $?  # exit code (return value from main)
         </div>
     </div>
     {% endfor %}
+    {% endif %}
 {% endfor %}
 
 {% endif %}
