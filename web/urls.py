@@ -19,5 +19,5 @@ urlpatterns = [
 
     path('install_<str:token>.sh', views.script, name='install.sh'),
     path('upr.py', views.uprpy, name='upr.py'),
-    path('project/<str:typ>', views.project, name='project'),
+    path('project/<str:project_type>', views.project, name='project'),
 ]

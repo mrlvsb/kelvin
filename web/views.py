@@ -274,9 +274,9 @@ def uprpy(request):
         return HttpResponse(f.read(), 'text/x-python')
 
 @login_required
-def project(request, typ):
-    if typ not in ['normal', 'bonus']:
+def project(request, project_type):
+    if project_type not in ['normal', 'bonus']:
         return HttpResponse(code=404)
 
-    with open(os.path.join(BASE_DIR, "projects", typ, "assigned", f"{request.user.username}.html")) as f:
+    with open(os.path.join(BASE_DIR, "projects", project_type, "assigned", f"{request.user.username}.html")) as f:
         return HttpResponse(f.read(), 'text/html')
