@@ -8,7 +8,11 @@ TODO: Make it nicer with Bootstrap
 
 <h2>{{ task.name }}</h2>
 {% if deadline %}
-<h5>Deadline: {{ deadline|date:"G:i, d.m.Y" }}, Time remaining: {{ deadline|timeuntil:tznow }}</h5>
+<h6>Deadline: {{ deadline|date:"G:i, d.m.Y" }}, Time remaining: {{ deadline|timeuntil:tznow }}</h6>
+{% endif %}
+
+{% if submit %}
+<h6>Submit for student: {{ submit.student.get_full_name }} ({{ submit.student.username }})</h6>
 {% endif %}
 
 <div class="card mb-3">
