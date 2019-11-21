@@ -30,3 +30,9 @@ $ ./manage.py rqworker
 5. Nasledne dany task priradit na cviceni
 
 OPT: a obrazky se muzou davat treba do adresare figures
+
+## Task options in `config.yml`
+
+- filters:
+  - TrailingSpaces - Removes spaces at the end of each line
+  - Strip - stdout.strip()
