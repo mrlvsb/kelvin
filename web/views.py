@@ -1,6 +1,7 @@
 import json
 import os
 import glob
+import tarfile
 import django_rq
 from datetime import datetime
 
@@ -280,3 +281,25 @@ def project(request, project_type):
 
     with open(os.path.join(BASE_DIR, "projects", project_type, "assigned", f"{request.user.username}.html")) as f:
         return HttpResponse(f.read(), 'text/html')
+
+def get_last_submits(assignment_id):
+    processed = set()
+    submits = Submit.objects.filter(assignment_id=assignment_id).order_by('-submit_num')
+    for submit in submits:
+        if submit.student_id not in processed:            
+            yield (submit.student.username, submit.source.path)
+            processed.add(submit.student_id)
+
+@user_passes_test(is_teacher)
+def download_assignment_submits(request, assignment_id):
+    with tempfile.TemporaryFile(suffix=".tar.gz") as f:
+        with tarfile.open(fileobj=f, mode="w:gz") as tar:
+            for login, submit_file in get_last_submits(assignment_id):
+                print(login)
+                tar.add(submit_file, f"{login}.c")
+        
+        f.seek(0)
+        response = HttpResponse(f.read(), 'application/tar')
+        response['Content-Disposition'] = f'attachment; filename="submits.tar.gz"'
+        return response
+    
