@@ -107,6 +107,7 @@ class Test:
         self.limits = {}
         self._title = None
         self.script = None
+        self.stdio_max_bytes = 100 * 1024
 
     @property
     def escaped_args(self):
@@ -230,15 +231,19 @@ class Evaluation:
 
         cmd = ['./main'] + test.args
         flags = " ".join([shlex.quote(f"--{k}={v}") for k, v in self.limits.items()])
-        p = subprocess.Popen(shlex.split(f"isolate -M /tmp/meta --cg {flags} -s --run {env_build(env)} --") + cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **args)
+        isolate_cmd = shlex.split(f"isolate -M /tmp/meta --cg {flags} -s --run {env_build(env)} --") + cmd
+        logging.debug("executing in isolation: {}", isolate_cmd)
+        p = subprocess.Popen(isolate_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **args)
         result['stdout'], result['stderr'] = p.communicate()
 
         if test.stdin:
             args['stdin'].close()
 
         result['exit_code'] = p.returncode
-        result['stdout'] = result['stdout'].decode('utf-8')
-        result['stderr'] = result['stderr'].decode('utf-8')
+        result['stdout'] = result['stdout'][0:test.stdio_max_bytes].decode('utf-8')
+        result['stderr'] = result['stderr'][0:test.stdio_max_bytes].decode('utf-8')
+
+        print(len(result['stdout']))
 
         p.stdout.close()
         p.stderr.close()
