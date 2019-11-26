@@ -94,6 +94,12 @@ document.getElementById('checkbox-only-errors').addEventListener('change', funct
 document.querySelectorAll('.diff').forEach(function(elem) {
     let actual = elem.querySelector('.actual').textContent;
     let expected = elem.querySelector('.expected').textContent;
+
+    const limit_bytes = 1 * 1024;
+    if(actual.length > limit_bytes || expected.length > limit_bytes) {
+        return;
+    }
+
     let fragment = document.createDocumentFragment();
 
     Diff.diffLines(actual, expected).forEach(function(part) {
