@@ -89,6 +89,8 @@ def get(submit):
             source = f.read()
     except UnicodeDecodeError:
         source = "-- source code contains binary data --"
+    except FileNotFoundError:
+        source = "-- source code not found --"
 
     results = []
     try:
