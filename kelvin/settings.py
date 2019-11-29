@@ -147,6 +147,10 @@ LOGGING = {
         },
     },
     'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+        },
         'evaluator': {
             'handlers': ['console'],
             'level': 'DEBUG',
