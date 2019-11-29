@@ -243,8 +243,6 @@ class Evaluation:
         result['stdout'] = result['stdout'][0:test.stdio_max_bytes].decode('utf-8')
         result['stderr'] = result['stderr'][0:test.stdio_max_bytes].decode('utf-8')
 
-        print(len(result['stdout']))
-
         p.stdout.close()
         p.stderr.close()
 
