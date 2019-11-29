@@ -1,0 +1,14 @@
+{% extends 'web/layout.html' %}
+
+{% block content %}
+
+{% for submit in submits %}
+    <h1>
+        <a href="{% url 'task_detail' submit.submit.student.username submit.submit.assignment_id %}"  class="text-{% if submit.points and submit.points == submit.max_points %}success{%else%}danger{%endif%}">
+            {{submit.submit.student}} - {{ submit.submit.student.get_full_name }} ({{submit.submit.points}} / {{submit.submit.max_points}})
+        </a>
+    </h1>
+    {{ submit.source|safe }}
+{% endfor %}
+
+{% endblock %}
