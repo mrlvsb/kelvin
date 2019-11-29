@@ -16,6 +16,8 @@
         {% endif %}
         
         <a href="{% url 'download_assignment_submits' task.assignment.id %}">Download all</a>
+        <a href="{% url 'show_assignment_submits' task.assignment.id %}">Show all</a>
+        
         <table class="table table-sm table-hover">
             <thead>
                 <tr>

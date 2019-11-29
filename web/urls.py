@@ -18,6 +18,8 @@ urlpatterns = [
     path('submits', views.submits),
 
     path('assignment/download/<int:assignment_id>', views.download_assignment_submits, name='download_assignment_submits'),
+    path('assignment/show/<int:assignment_id>', views.show_assignment_submits, name='show_assignment_submits'),
+
 
     path('install_<str:token>.sh', views.script, name='install.sh'),
     path('upr.py', views.uprpy, name='upr.py'),

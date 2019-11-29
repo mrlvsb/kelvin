@@ -36,6 +36,18 @@ from common.evaluate import get_meta
 def is_teacher(user):
     return user.groups.filter(name='teachers').exists()
 
+def highlight_code(path):
+    source = ""
+    try:
+        with open(path) as f:
+            source = f.read()
+    except UnicodeDecodeError:
+        source = "-- source code contains binary data --"
+    except FileNotFoundError:
+        source = "-- source code not found --"
+
+    return highlight(source, CLexer(), HtmlFormatter(linenos='table', lineanchors='src', anchorlinenos=True))
+
 @login_required()
 def student_index(request):
     result = []
@@ -83,15 +95,6 @@ def index(request):
     return student_index(request)
 
 def get(submit):
-    source = ""
-    try:
-        with open(submit.source.path) as f:
-            source = f.read()
-    except UnicodeDecodeError:
-        source = "-- source code contains binary data --"
-    except FileNotFoundError:
-        source = "-- source code not found --"
-
     results = []
     try:
         results = json.loads(submit.result)
@@ -102,7 +105,7 @@ def get(submit):
     data = {
         "submit": submit,
         "results": results,
-        "source": highlight(source, CLexer(), HtmlFormatter(linenos='table', lineanchors='src', anchorlinenos=True)),
+        "source": highlight_code(submit.source.path),
     }
     return data
 
@@ -285,23 +288,38 @@ def project(request, project_type):
         return HttpResponse(f.read(), 'text/html')
 
 def get_last_submits(assignment_id):
+    submits = Submit.objects.filter(assignment_id=assignment_id).order_by('-submit_num', 'student_id')
+
+    result = []
     processed = set()
-    submits = Submit.objects.filter(assignment_id=assignment_id).order_by('-submit_num')
     for submit in submits:
         if submit.student_id not in processed:            
-            yield (submit.student.username, submit.source.path)
+            result.append(submit)
             processed.add(submit.student_id)
+
+    return result
 
 @user_passes_test(is_teacher)
 def download_assignment_submits(request, assignment_id):
     with tempfile.TemporaryFile(suffix=".tar.gz") as f:
         with tarfile.open(fileobj=f, mode="w:gz") as tar:
-            for login, submit_file in get_last_submits(assignment_id):
-                print(login)
-                tar.add(submit_file, f"{login}.c")
+            for submit in get_last_submits(assignment_id):
+                tar.add(submit.source.path, f"{submit.student.username}.c")
         
         f.seek(0)
         response = HttpResponse(f.read(), 'application/tar')
         response['Content-Disposition'] = f'attachment; filename="submits.tar.gz"'
         return response
     
+@user_passes_test(is_teacher)
+def show_assignment_submits(request, assignment_id):
+    submits = []
+    for submit in get_last_submits(assignment_id):
+        submits.append({
+            'submit': submit,
+            'source': highlight_code(submit.source.path),
+        })
+
+    return render(request, 'web/submits_show_source.html', {
+        'submits': submits,
+    })
