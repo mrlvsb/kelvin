@@ -1,5 +1,6 @@
 import json
 import os
+import io
 import glob
 import tarfile
 import django_rq
@@ -303,9 +304,23 @@ def get_last_submits(assignment_id):
 def download_assignment_submits(request, assignment_id):
     with tempfile.TemporaryFile(suffix=".tar.gz") as f:
         with tarfile.open(fileobj=f, mode="w:gz") as tar:
+            targets = []
             for submit in get_last_submits(assignment_id):
                 tar.add(submit.source.path, f"{submit.student.username}.c")
+                targets.append(submit.student.username)
         
+            template = f"""
+CC=-gcc
+all: {' '.join(targets)}
+
+clean:
+\trm -f {' '.join(targets)}
+            """
+
+            makefile = tarfile.TarInfo('Makefile')
+            makefile.size = len(template)
+            tar.addfile(makefile, fileobj=io.BytesIO(template.encode('utf-8')))
+
         f.seek(0)
         response = HttpResponse(f.read(), 'application/tar')
         response['Content-Disposition'] = f'attachment; filename="submits.tar.gz"'
