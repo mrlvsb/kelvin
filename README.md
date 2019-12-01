@@ -36,3 +36,9 @@ OPT: a obrazky se muzou davat treba do adresare figures
 - filters:
   - TrailingSpaces - Removes spaces at the end of each line
   - Strip - stdout.strip()
+
+## Reevaluate a submit
+
+```
+./manage.py reevaluate --id <submit-id>
+```
