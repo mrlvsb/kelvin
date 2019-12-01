@@ -83,13 +83,16 @@ $ echo $?  # exit code (return value from main)
 {% endif %}
 
 <script>
-document.getElementById('checkbox-only-errors').addEventListener('change', function() {
+var el = document.getElementById('checkbox-only-errors');
+if(el) {
+  el.addEventListener('change', function() {
     if(this.checked) {
         document.querySelectorAll('.test-result-success').forEach(elem => elem.setAttribute('hidden', true))
     } else {
         document.querySelectorAll('.test-result').forEach(elem => elem.removeAttribute('hidden'))
     }
-});
+  });
+}
 
 document.querySelectorAll('.diff').forEach(function(elem) {
     let actual = elem.querySelector('.actual').textContent;
