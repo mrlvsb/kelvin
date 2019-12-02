@@ -123,7 +123,10 @@ class Test:
 
 
 class Evaluation:
-    def __init__(self, source, sandbox, meta=None):
+    def __init__(self, source : str, sandbox, meta=None):
+        '''
+        source - path to task directory, TODO: rename to a meaningful thing ;-)
+        '''
         self.source = source
         self.sandbox = sandbox
         self.filters = []
@@ -488,6 +491,10 @@ class InputGeneratorPipe:
         }
 
 def evaluate(task_dir, submit_path, meta=None):
+    '''
+    Called by Django.
+    '''
+
     sandbox = Sandbox()
     evaluation = Evaluation(task_dir, sandbox, meta)
 
