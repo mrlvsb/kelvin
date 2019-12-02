@@ -75,7 +75,7 @@ class Evaluation:
         cmd = ['./main'] + test.args
         flags = " ".join([shlex.quote(f"--{k}={v}") for k, v in self.tests.limits.items()])
         isolate_cmd = shlex.split(f"isolate -M /tmp/meta --cg {flags} -s --run {env_build(env)} --") + cmd
-        logging.debug("executing in isolation: {}", isolate_cmd)
+        logger.debug("executing in isolation: %s", isolate_cmd)
         p = subprocess.Popen(isolate_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **args)
         result['stdout'], result['stderr'] = p.communicate()
 
@@ -163,6 +163,7 @@ class Sandbox:
         self.path = subprocess.check_output(["isolate", "--init", "--cg"]).decode('utf-8').strip()
 
     def system_path(self, path=''):
+
         return os.path.join(os.path.join(self.path, 'box'), path)
 
     def run(self, cmd, env=None):
@@ -249,7 +250,8 @@ if __name__ == "__main__":
     from pprint import pprint
     import shutil
 
-    logger.setLevel(logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG)
+
     parser = argparse.ArgumentParser()
     parser.add_argument('task_dir', help='path to directory with the task')
     parser.add_argument('solution', help='path to source code in .c or tar')
