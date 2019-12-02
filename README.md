@@ -13,7 +13,7 @@ Kelvin - The Ultimate Code Examinator
 On Debian/Ubuntu:
 
 ```
-libldap2-dev libsasl2-dev
+libldap2-dev libsasl2-dev libcap-dev
 ```
 
 ## Start worker
