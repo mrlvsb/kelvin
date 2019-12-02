@@ -7,7 +7,7 @@ class TestStringMethods(unittest.TestCase):
         s = Sandbox()
         s.copy(f'tests/{name}/submit.c', "main.c")
 
-        e = Evaluation(f'tests/{name}/', s, {})
+        e = Evaluation(f'tests/{name}/', '/tmp/kelvin', s)
         r = GccPipeline().run(e)
 
         return r['tests'][0]
@@ -66,7 +66,7 @@ class TestStringMethods(unittest.TestCase):
         s = Sandbox()
         s.copy(f'tests/warning.c', "main.c")
 
-        e = Evaluation('/xx', s)
+        e = Evaluation('/xx', '_', s)
         res = GccPipeline().run(e)
             
         self.assertTrue("implicit declaration of function ‘printf’" in res['gcc']['stderr'])
@@ -75,7 +75,7 @@ class TestStringMethods(unittest.TestCase):
         s = Sandbox()
         s.copy(f'tests/error.c', "main.c")
 
-        e = Evaluation('/xx', s)
+        e = Evaluation('/xx', '_', s)
         res = GccPipeline().run(e)
             
         self.assertTrue("error: ld returned 1 exit status" in res['gcc']['stderr'])

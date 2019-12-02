@@ -14,6 +14,7 @@ import tempfile
 import random
 import string
 import logging
+import evaluator.filters
 
 logger = logging.getLogger("evaluator")
 
@@ -26,13 +27,9 @@ def env_build(env):
 def rand_str(N):
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=N))
 
-def apply_filters(s, filters):
-    for f in filters:
-        s = f.filter(s)
-    return s
 
-def compare(actual, expected, filters):
-    return apply_filters(actual, filters) == apply_filters(expected, filters)
+def compare(actual, expected, used_filters):
+    return filters.apply_filters(actual, used_filters) == filters.apply_filters(expected, used_filters)
 
 
 def load_module(path):
@@ -43,25 +40,6 @@ def load_module(path):
     sys.modules[module_name] = module
     spec.loader.exec_module(module)
     return module
-
-class LowerFilter:
-    def filter(self, s):
-        return s.lower()
-
-class TrailingSpacesFilter:
-    def filter(self, s):
-        s = re.sub(r'^\s+', '', s, flags=re.MULTILINE)
-        s = re.sub(r'\s+$', '', s, flags=re.MULTILINE)
-        return s
-
-class AllSpacesFilter:
-    def filter(self, s):
-        s = re.sub(r'\s+', ' ', s, flags=re.MULTILINE)
-        return s.strip()
-
-class StripFilter:
-    def filter(self, s):
-        return s.strip()
 
 class TempFile:
     def __init__(self, suffix, dir):
@@ -140,7 +118,7 @@ class Evaluation:
         self.File = File
         self.load_tests()
 
-        os.makedirs(result_path)
+        #os.makedirs(result_path)
 
     @property
     def tests(self):
@@ -181,9 +159,8 @@ class Evaluation:
             with open(os.path.join(self.task_path, 'config.yml')) as f:
                 conf = yaml.load(f.read(), Loader=yaml.SafeLoader)
                 if conf:
-                    for f in conf.get('filters', []):
-                        n = f"{f}Filter"
-                        self.filters.append(globals()[n]())
+                    for filter_name in conf.get('filters', []):
+                        self.filters.append(filters.all_filters[filter_name.lower()]())
 
                     for k, v in conf.get('limits', {}).items():
                         if k not in self.limits:
