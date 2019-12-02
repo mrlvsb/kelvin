@@ -338,3 +338,24 @@ def show_assignment_submits(request, assignment_id):
     return render(request, 'web/submits_show_source.html', {
         'submits': submits,
     })
+
+@user_passes_test(is_teacher)
+def download_csv_per_task(request, assignment_id : int):
+    assigned_task = AssignedTask.objects.get(pk=assignment_id)
+    students = assigned_task.clazz.students.all()
+
+    csv = []
+    for student in students:
+        last_submit = Submit.objects.filter(student=student, assignment=assigned_task).order_by('-submit_num')
+        if len(last_submit) > 0:
+            # TODO: Multiply by assigned_task.max_points
+            success_rate = last_submit.points / last_submit.max_points
+            csv.append([student.username, success_rate])
+        else:
+            csv.append([student.username, 0.0])
+
+    csv_str = '\n'.join(( f'{l},{s}' for l, s in csv ))
+    response = HttpResponse(csv_str, 'text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{assigned_task.task.name}_{assigned_task.clazz.code}_success_rate.csv"'
+
+    return response
