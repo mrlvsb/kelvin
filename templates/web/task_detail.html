@@ -35,12 +35,6 @@ TODO: Make it nicer with Bootstrap
                 </a>
             </li>
 
-            {% if debug %}
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="tab" href="#tab_json">Raw JSON</a>
-            </li>
-            {% endif %}
-
             {% endif %}
 
             <li class="nav-item ml-auto">
@@ -124,12 +118,6 @@ TODO: Make it nicer with Bootstrap
             <div class="tab-pane" id="tab_result">
                 {% include "web/report.html" %}
             </div>
-
-            {% if debug %}
-            <div class="tab-pane fade" id="tab_json">
-                <pre>{{ submit.result }}</pre>
-            </div>
-            {% endif %}
         </div>
     </div>
 </div>   

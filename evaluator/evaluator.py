@@ -16,6 +16,7 @@ import logging
 from . import filters
 from . import pipelines
 from . import testsets
+from .results import EvaluationResult
 
 logger = logging.getLogger("evaluator")
 
@@ -64,6 +65,27 @@ class Evaluation:
 
     def task_file(self, path):
         return os.path.join(self.task_path, path)
+
+    def run(self):
+        pipeline = [
+            ('download', pipelines.DownloadPipe()),
+            ('normal run', pipelines.GccPipeline()),
+            ('run with sanitizer', pipelines.GccPipeline(['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])),
+            #('malloc fail tester', Mallocer()),
+            #('random inputs', InputGeneratorPipe())
+        ]
+        
+        result = []
+        for name, pipe in pipeline:
+            logger.info(f"executing {name}")
+            res = pipe.run(self)
+            if res:
+                result.append({'name': name, **res})
+
+        with open(os.path.join(self.result_path, 'result.json'), 'w') as f:
+            json.dump(result, f, indent=4)
+
+        return EvaluationResult(self.result_path)
 
     def evaluate(self, test: testsets.Test, env=None, title=None):
         result = {
@@ -249,25 +271,7 @@ def evaluate(task_path, submit_path, result_path, meta=None):
     logger.info(f"evaluating {submit_path}")
     copyfile(submit_path, os.path.join(sandbox.path, "box/submit"))
 
-    pipeline = [
-        ('download', pipelines.DownloadPipe()),
-        ('normal run', pipelines.GccPipeline()),
-        ('run with sanitizer', pipelines.GccPipeline(['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])),
-        #('malloc fail tester', Mallocer()),
-        #('random inputs', InputGeneratorPipe())
-    ]
-    
-    result = []
-    for name, pipe in pipeline:
-        logger.info(f"executing {name}")
-        res = pipe.run(evaluation)
-        if res:
-            result.append({'name': name, **res})
-
-    with open(evaluation.result_path + '/result.json', 'w') as f:
-        json.dump(result, f, indent=4)
-
-    return result
+    return evaluation.run()
 
 if __name__ == "__main__":
     import argparse

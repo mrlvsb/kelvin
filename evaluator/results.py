@@ -53,10 +53,6 @@ class EvaluationResult:
                         pipe.tests.append(test)
 
                     self.pipelines.append(pipe)
-
-
-
-                    
         except FileNotFoundError:
             pass
 
