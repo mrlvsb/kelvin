@@ -49,12 +49,17 @@ class AssignedTask(models.Model):
     def __str__(self):
         return f"{self.task.name} {self.clazz}"
 
-def submit_path(submit, filename):
-    return "/".join([
-        "submits",
+def submit_path_parts(submit):
+    return [
         f"{submit.assignment.clazz.year}-{'W' if submit.assignment.clazz.winter else 'S'}",
         submit.assignment.clazz.code.replace('/', ''),
         submit.assignment.task.code,
+    ]
+
+def submit_path(submit, filename):
+    return "/".join([
+        "submits",
+        *submit_path_parts(submit),
         f"{submit.student.username}_{submit.submit_num}.c"
     ])
 

@@ -123,11 +123,8 @@ class Test:
 
 
 class Evaluation:
-    def __init__(self, source : str, sandbox, meta=None):
-        '''
-        source - path to task directory, TODO: rename to a meaningful thing ;-)
-        '''
-        self.source = source
+    def __init__(self, task_path : str, result_path: str, sandbox, meta=None):
+        self.task_path = task_path
         self.sandbox = sandbox
         self.filters = []
         self.limits = {
@@ -143,6 +140,8 @@ class Evaluation:
         self.File = File
         self.load_tests()
 
+        os.makedirs(result_path)
+
     @property
     def tests(self):
         return self.tests_dict.values()
@@ -153,19 +152,19 @@ class Evaluation:
 
         t = Test(name)
 
-        path = os.path.join(self.source, f"{name}.out")
+        path = os.path.join(self.task_path, f"{name}.out")
         if os.path.exists(path):
             t.stdout = File(path)
 
-        path = os.path.join(self.source, f"{name}.err")
+        path = os.path.join(self.task_path, f"{name}.err")
         if os.path.exists(path):
             t.stderr = File(path)
 
-        stdin_path = os.path.join(self.source, f"{name}.in")
+        stdin_path = os.path.join(self.task_path, f"{name}.in")
         if os.path.exists(stdin_path):
             t.stdin = File(stdin_path)
 
-        path = os.path.join(self.source, f"{name}.test.py")
+        path = os.path.join(self.task_path, f"{name}.test.py")
         if os.path.exists(path):
             t.script = load_module(path)
 
@@ -174,12 +173,12 @@ class Evaluation:
 
     def load_tests(self):
         for ext in ['out', 'err', 'test.py']:
-            for out in glob.glob(os.path.join(self.source, f"*.{ext}")):
+            for out in glob.glob(os.path.join(self.task_path, f"*.{ext}")):
                 test_name = os.path.basename(re.sub(f".{ext}$", '', out))
                 self.create_test(test_name)
 
         try:
-            with open(os.path.join(self.source, 'config.yml')) as f:
+            with open(os.path.join(self.task_path, 'config.yml')) as f:
                 conf = yaml.load(f.read(), Loader=yaml.SafeLoader)
                 if conf:
                     for f in conf.get('filters', []):
@@ -202,13 +201,13 @@ class Evaluation:
                         for f in files:
                             t.files.append({
                                 'path': f['path'],
-                                'expected': File(os.path.join(self.source, f['expected'])),
+                                'expected': File(os.path.join(self.task_path, f['expected'])),
                             })
 
         except FileNotFoundError:
             pass
 
-        path = os.path.join(self.source, 'script.py')
+        path = os.path.join(self.task_path, 'script.py')
         if os.path.exists(path):
             script = load_module(path)
             generate_tests = getattr(script, 'gen_tests', None)
@@ -216,7 +215,7 @@ class Evaluation:
                 generate_tests(self)
 
     def task_file(self, path):
-        return os.path.join(self.source, path)
+        return os.path.join(self.task_path, path)
 
     def evaluate(self, test: Test, env=None, title=None):
         result = {
@@ -490,13 +489,13 @@ class InputGeneratorPipe:
             'tests': results,
         }
 
-def evaluate(task_dir, submit_path, meta=None):
+def evaluate(task_path, submit_path, result_path, meta=None):
     '''
     Called by Django.
     '''
 
     sandbox = Sandbox()
-    evaluation = Evaluation(task_dir, sandbox, meta)
+    evaluation = Evaluation(task_path, result_path, sandbox, meta)
 
     logger.info(f"evaluating {submit_path}")
     copyfile(submit_path, os.path.join(sandbox.path, "box/submit"))
@@ -521,6 +520,7 @@ def evaluate(task_dir, submit_path, meta=None):
 if __name__ == "__main__":
     import argparse
     from pprint import pprint
+    import shutil
 
     logger.setLevel(logging.DEBUG)
     parser = argparse.ArgumentParser()
@@ -528,8 +528,11 @@ if __name__ == "__main__":
     parser.add_argument('solution', help='path to source code in .c or tar')
     parser.add_argument('--print-json')
 
+    result_dir = '/tmp/eval'
+    shutil.rmtree(result_dir)
+
     args = parser.parse_args()
-    result = evaluate(args.task_dir, args.solution)
+    result = evaluate(args.task_dir, args.solution, result_dir)
 
     if args.print_json:
         pprint(result)
