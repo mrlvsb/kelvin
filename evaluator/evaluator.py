@@ -519,40 +519,17 @@ def evaluate(task_dir, submit_path, meta=None):
     return result
 
 if __name__ == "__main__":
-    import sys
-    sandbox = Sandbox()
-    evaluation = Evaluation(sys.argv[1], sandbox)
-
-    copyfile(sys.argv[2], os.path.join(sandbox.path, "box/submit"))
-
-    pipeline = [
-        ('download', DownloadPipe()),
-        #('normal run', GccPipeline()),
-        #('run with sanitizer', GccPipeline(['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])),
-        #('malloc fail tester', Mallocer()),
-        ('test', InputGeneratorPipe())
-    ]
-    
-    result = []
-    for name, pipe in pipeline:
-        res = pipe.run(evaluation)
-        if res:
-            result.append({'name': name, **res})
+    import argparse
     from pprint import pprint
-    #pprint(result)
 
+    logger.setLevel(logging.DEBUG)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('task_dir', help='path to directory with the task')
+    parser.add_argument('solution', help='path to source code in .c or tar')
+    parser.add_argument('--print-json')
 
-    for pipe in result:
-        print("====================================================")
-        print(pipe['name'].upper())
-        print("====================================================")
-        print(pipe['gcc']['stderr'])
+    args = parser.parse_args()
+    result = evaluate(args.task_dir, args.solution)
 
-        for test in pipe['tests']:
-            print("[{}] {}".format('OK' if test['success'] else 'ERR', test['name']))
-            print(test['stdout'])
-            print(test['stderr'])
-            print(test['expected'])
-        
-    #x = yaml.load(open("tasks/hello_world/config.yml").read(), Loader=yaml.SafeLoader)
-    #print(x)
+    if args.print_json:
+        pprint(result)
