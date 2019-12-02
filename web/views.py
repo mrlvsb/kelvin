@@ -312,6 +312,7 @@ def download_assignment_submits(request, assignment_id):
                 targets.append(submit.student.username)
         
             template = f"""
+CFLAGS=-lm
 CC=-gcc
 all: {' '.join(targets)}
 
