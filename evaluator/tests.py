@@ -1,13 +1,19 @@
 import unittest
+import os
 
-from evaluator import *
+from .evaluator import *
+from .pipelines import GccPipeline
+
+base_dir = os.path.dirname(__file__)
+
 
 class TestStringMethods(unittest.TestCase):
     def evaluate(self, name):
-        s = Sandbox()
-        s.copy(f'tests/{name}/submit.c', "main.c")
 
-        e = Evaluation(f'tests/{name}/', '/tmp/kelvin', s)
+        s = Sandbox()
+        s.copy(os.path.join(base_dir, f'tests/{name}/submit.c'), "main.c")
+
+        e = Evaluation(os.path.join(base_dir, f'tests/{name}/'), '/tmp/kelvin', s)
         r = GccPipeline().run(e)
 
         return r['tests'][0]
@@ -64,7 +70,7 @@ class TestStringMethods(unittest.TestCase):
 
     def test_warnings(self):
         s = Sandbox()
-        s.copy(f'tests/warning.c', "main.c")
+        s.copy(os.path.join(base_dir, f'tests/warning.c'), "main.c")
 
         e = Evaluation('/xx', '_', s)
         res = GccPipeline().run(e)
@@ -73,7 +79,7 @@ class TestStringMethods(unittest.TestCase):
 
     def test_error(self):
         s = Sandbox()
-        s.copy(f'tests/error.c', "main.c")
+        s.copy(os.path.join(base_dir, f'tests/error.c'), "main.c")
 
         e = Evaluation('/xx', '_', s)
         res = GccPipeline().run(e)
