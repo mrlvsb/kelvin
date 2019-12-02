@@ -5,6 +5,7 @@ import os
 import io
 import glob
 import shlex
+import shutil
 import re
 import json
 import tempfile
@@ -51,9 +52,15 @@ class Evaluation:
     def __init__(self, task_path : str, result_path: str, sandbox, meta=None):
         self.sandbox = sandbox
         self.task_path = task_path
+        self.result_path = result_path
         self.tests = testsets.TestSet(task_path, meta)
+
+        try:
+            shutil.rmtree(result_path)
+        except FileNotFoundError:
+            pass
         
-        #os.makedirs(result_path)
+        os.makedirs(result_path)
 
     def task_file(self, path):
         return os.path.join(self.task_path, path)
@@ -66,38 +73,52 @@ class Evaluation:
              'fail_reason': [],
         }
 
+        def result_path(name):
+            return os.path.join(self.result_path, name)
+
         args = {}
         if test.stdin:
             args['stdin'] = test.stdin.open()
-            result['stdin'] = args['stdin'].read()
-            args['stdin'].seek(0)
+            shutil.copyfile(
+                test.stdin.path, 
+                result_path(f"{test.name}.in")
+            )
 
         cmd = ['./main'] + test.args
         flags = " ".join([shlex.quote(f"--{k}={v}") for k, v in self.tests.limits.items()])
-        isolate_cmd = shlex.split(f"isolate -M /tmp/meta --cg {flags} -s --run {env_build(env)} --") + cmd
+
+        stdout_name = rand_str(10)
+        stderr_name = rand_str(10)
+
+        isolate_cmd = shlex.split(f"isolate -M /tmp/meta --cg {flags} -o {stdout_name} -r {stderr_name} -s --run {env_build(env)} --") + cmd
         logger.debug("executing in isolation: %s", isolate_cmd)
-        p = subprocess.Popen(isolate_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **args)
-        result['stdout'], result['stderr'] = p.communicate()
+        p = subprocess.Popen(isolate_cmd, **args)
+        p.communicate()
+
+        def move_if_not_empty(src, dst):
+            if os.stat(src).st_size > 0:
+                shutil.move(self.sandbox.system_path(stdout_name), result_path(dst))
+
+        move_if_not_empty(self.sandbox.system_path(stdout_name), f"{test.name}.out")
+        move_if_not_empty(self.sandbox.system_path(stderr_name), f"{test.name}.err")
 
         if test.stdin:
             args['stdin'].close()
 
         result['exit_code'] = p.returncode
-        result['stdout'] = result['stdout'][0:test.stdio_max_bytes].decode('utf-8')
-        result['stderr'] = result['stderr'][0:test.stdio_max_bytes].decode('utf-8')
-
-        p.stdout.close()
-        p.stderr.close()
 
         filters = self.tests.filters + test.filters
 
         if test.stdout:
-            with test.stdout.open() as f:
-                result['stdout_expected'] = f.read()
-            success = compare(result['stdout'], result['stdout_expected'], filters)
-            result['success'] &= success
-            if not success:
-                result['fail_reason'].append('stdout not matches')
+            shutil.copyfile(
+                test.stdout.path, 
+                result_path(f"{test.name}.out.expected")
+            )
+
+#            success = compare(result['stdout'], result['stdout_expected'], filters)
+#           result['success'] &= success
+#            if not success:
+#                result['fail_reason'].append('stdout not matches')
 
         if test.stderr:
             with test.stderr.open() as f:
@@ -243,6 +264,9 @@ def evaluate(task_path, submit_path, result_path, meta=None):
         if res:
             result.append({'name': name, **res})
 
+    with open(evaluation.result_path + '/result.json', 'w') as f:
+        json.dump(result, f, indent=4)
+
     return result
 
 if __name__ == "__main__":
@@ -257,14 +281,8 @@ if __name__ == "__main__":
     parser.add_argument('solution', help='path to source code in .c or tar')
     parser.add_argument('--print-json')
 
-    result_dir = '/tmp/eval'
-    try:
-        shutil.rmtree(result_dir)
-    except FileNotFoundError:
-        pass
-
     args = parser.parse_args()
-    result = evaluate(args.task_dir, args.solution, result_dir)
+    result = evaluate(args.task_dir, args.solution, '/tmp/eval')
 
     if args.print_json:
         pprint(result)

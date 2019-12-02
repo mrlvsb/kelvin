@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import io
 import glob
 import csv
@@ -34,6 +35,7 @@ from kelvin.settings import BASE_DIR
 from .forms import UploadSolutionForm
 from evaluator.testsets import TestSet
 from common.evaluate import get_meta
+from evaluator.results import EvaluationResult
 
 
 def is_teacher(user):
@@ -100,7 +102,9 @@ def index(request):
 def get(submit):
     results = []
     try:
-        results = json.loads(submit.result)
+        path = re.sub(r'^submits/', 'submit_results/', str(submit.source))
+        path = path.rstrip('.c')
+        results = EvaluationResult(path)
     except json.JSONDecodeError as e:
         # TODO: show error
         pass

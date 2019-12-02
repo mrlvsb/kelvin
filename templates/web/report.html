@@ -34,7 +34,7 @@ $ echo $?  # exit code (return value from main)
                     stdin
                 </div>
                 <div class="card-body">
-                    <pre>{{ test.stdin }}</pre>
+                    <pre>{{ test.stdin.read }}</pre>
                 </div>
             </div>
             {% endif %}
@@ -45,8 +45,8 @@ $ echo $?  # exit code (return value from main)
                     stdout
                 </div>
                 <div class="card-body diff">
-                    <pre class="actual">{{ test.stdout }}</pre>
-                    <pre class="expected">{{ test.stdout_expected }}</pre>
+                    <pre class="actual">{{ test.stdout.read }}</pre>
+                    <pre class="expected">{{ test.stdout_expected.read }}</pre>
                 </div>
             </div>
             {% endif %}
@@ -57,8 +57,8 @@ $ echo $?  # exit code (return value from main)
                     stderr
                 </div>
                 <div class="card-body diff">
-                    <pre class="actual">{{ test.stderr }}</pre>
-                    <pre class="expected">{{ test.stderr_expected }}</pre>
+                    <pre class="actual">{{ test.stderr.read }}</pre>
+                    <pre class="expected">{{ test.stderr_expected.read }}</pre>
                 </div>
             </div>
             {% endif %}
