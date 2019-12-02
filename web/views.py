@@ -349,13 +349,14 @@ def download_csv_per_task(request, assignment_id : int):
         last_submit = Submit.objects.filter(student=student, assignment=assigned_task).order_by('-submit_num')
         if len(last_submit) > 0:
             # TODO: Multiply by assigned_task.max_points
-            success_rate = last_submit.points / last_submit.max_points
+            success_rate = last_submit[0].points / last_submit[0].max_points
             csv.append([student.username, success_rate])
         else:
             csv.append([student.username, 0.0])
 
     csv_str = '\n'.join(( f'{l},{s}' for l, s in csv ))
     response = HttpResponse(csv_str, 'text/csv')
-    response['Content-Disposition'] = f'attachment; filename="{assigned_task.task.name}_{assigned_task.clazz.code}_success_rate.csv"'
+    csv_filename = f"{assigned_task.task.code}_{assigned_task.clazz.code}_success_rate.csv"
+    response['Content-Disposition'] = f'attachment; filename="{csv_filename}"'
 
     return response
