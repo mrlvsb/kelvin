@@ -32,7 +32,7 @@ from common.evaluate import evaluate_job
 from api.models import UserToken
 from kelvin.settings import BASE_DIR
 from .forms import UploadSolutionForm
-from evaluator.evaluator import Evaluation
+from evaluator.testsets import TestSet
 from common.evaluate import get_meta
 
 
@@ -145,7 +145,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         'tznow': tz.now(),
     }
 
-    data['inputs'] = Evaluation(task_dir, None, get_meta(request.user)).tests
+    data['inputs'] = TestSet(task_dir, get_meta(request.user))
 
     current_submit = None
     if submit_num:
