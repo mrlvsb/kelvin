@@ -42,3 +42,13 @@ OPT: a obrazky se muzou davat treba do adresare figures
 ```
 ./manage.py reevaluate --id <submit-id>
 ```
+
+## Run testing evaluation
+```
+python -m evaluator.evaluator tasks/komb_02_even_odd ./solution.c
+```
+
+## Run evaluator tests
+```
+python -m evaluator.tests
+```
