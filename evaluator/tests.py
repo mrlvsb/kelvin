@@ -9,60 +9,55 @@ base_dir = os.path.dirname(__file__)
 
 class TestStringMethods(unittest.TestCase):
     def evaluate(self, name):
-
-        s = Sandbox()
-        s.copy(os.path.join(base_dir, f'tests/{name}/submit.c'), "main.c")
-
-        e = Evaluation(os.path.join(base_dir, f'tests/{name}/'), '/tmp/kelvin', s)
-        r = GccPipeline().run(e)
-
-        return r['tests'][0]
+        path = os.path.join(base_dir, f'tests/{name}')
+        r = evaluate(path, os.path.join(path, 'submit.c'), '/tmp/eval')
+        return list(r)[0].tests[0]
 
     def test_stdout_only(self):
         res = self.evaluate('stdout_only')
 
-        self.assertEqual(res['stdout'], 'Hello world\n')
-        self.assertEqual(res['stderr'], '')
+        self.assertEqual(res['stdout'].read(), 'Hello world\n')
+        self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
         self.assertTrue(res['success'])
 
     def test_exit_code(self):
         res = self.evaluate('exit_code')
 
-        self.assertEqual(res['stdout'], '')
-        self.assertEqual(res['stderr'], '')
+        self.assertEqual(res['stdout'], None)
+        self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 42)
         self.assertTrue(res['success'])
 
     def test_stdin_stdout(self):
         res = self.evaluate('stdin_stdout')
 
-        self.assertEqual(res['stdout'], 'HELLO\n')
-        self.assertEqual(res['stderr'], '')
+        self.assertEqual(res['stdout'].read(), 'HELLO\n')
+        self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
         self.assertTrue(res['success'])
 
     def test_stderr(self):
         res = self.evaluate('stderr_only')
 
-        self.assertEqual(res['stdout'], '')
-        self.assertEqual(res['stderr'], 'error...\n')
+        self.assertEqual(res['stdout'], None)
+        self.assertEqual(res['stderr'].read(), 'error...\n')
         self.assertEqual(res['exit_code'], 0)
         self.assertTrue(res['success'])
 
     def test_cmdline(self):
         res = self.evaluate('cmdline')
 
-        self.assertEqual(res['stdout'], '"first" "second" "third with a space" ')
-        self.assertEqual(res['stderr'], '')
+        self.assertEqual(res['stdout'].read(), '"first" "second" "third with a space" ')
+        self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
         self.assertTrue(res['success'])
 
     def test_file(self):
         res = self.evaluate('file')
 
-        self.assertEqual(res['stdout'], '')
-        self.assertEqual(res['stderr'], '')
+        self.assertEqual(res['stdout'], None)
+        self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
         self.assertEqual(len(res['files']), 1)
         self.assertEqual(res['files'][0]['content'], 'hello file!\n')

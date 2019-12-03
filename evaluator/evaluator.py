@@ -16,7 +16,7 @@ import logging
 from . import filters
 from . import pipelines
 from . import testsets
-from .results import EvaluationResult
+from .results import EvaluationResult, TestResult
 
 logger = logging.getLogger("evaluator")
 
@@ -113,13 +113,13 @@ class Evaluation:
         stderr_name = rand_str(10)
 
         isolate_cmd = shlex.split(f"isolate -M /tmp/meta --cg {flags} -o {stdout_name} -r {stderr_name} -s --run {env_build(env)} --") + cmd
-        logger.debug("executing in isolation: %s", isolate_cmd)
+        logger.debug("executing in isolation: %s", shlex.join(isolate_cmd))
         p = subprocess.Popen(isolate_cmd, **args)
         p.communicate()
 
         def move_if_not_empty(src, dst):
             if os.stat(src).st_size > 0:
-                shutil.move(self.sandbox.system_path(stdout_name), result_path(dst))
+                shutil.move(self.sandbox.system_path(src), result_path(dst))
 
         move_if_not_empty(self.sandbox.system_path(stdout_name), f"{test.name}.out")
         move_if_not_empty(self.sandbox.system_path(stderr_name), f"{test.name}.err")
@@ -143,12 +143,14 @@ class Evaluation:
 #                result['fail_reason'].append('stdout not matches')
 
         if test.stderr:
-            with test.stderr.open() as f:
-                result['stderr_expected'] = f.read()
-            success = compare(result['stderr'], result['stderr_expected'], filters)
-            result['success'] &= success
-            if not success:
-                result['fail_reason'].append('stderr not matches')
+            shutil.copyfile(
+                test.stderr.path, 
+                result_path(f"{test.name}.err.expected")
+            )
+            #success = compare(result['stderr'], result['stderr_expected'], filters)
+            #result['success'] &= success
+            #if not success:
+                #result['fail_reason'].append('stderr not matches')
 
         result['files'] = []
         for f in test.files:
@@ -196,7 +198,7 @@ class Evaluation:
         if test.script:
             check = getattr(test.script, 'check', None)
             if check:
-                result['success'] &= check(result, self)
+                result['success'] &= check(TestResult(dict(result), self.result_path), self)
 
         return result
 
@@ -206,7 +208,6 @@ class Sandbox:
         self.path = subprocess.check_output(["isolate", "--init", "--cg"]).decode('utf-8').strip()
 
     def system_path(self, path=''):
-
         return os.path.join(os.path.join(self.path, 'box'), path)
 
     def run(self, cmd, env=None):

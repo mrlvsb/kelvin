@@ -4,8 +4,19 @@ import json
 from .testsets import File
 
 class TestResult:
-    def __init__(self, meta):
+    def __init__(self, meta, result_dir):
         self.meta = meta
+
+        def add_file_if_exists(key, path_suffix):
+            path = os.path.join(result_dir, f"{self['name']}{path_suffix}")
+            if os.path.exists(path):
+                self[key] = File(path)
+
+        add_file_if_exists('stdin', '.in')
+        add_file_if_exists('stdout', '.out')
+        add_file_if_exists('stdout_expected', '.out.expected')
+        add_file_if_exists('stderr', '.err')
+        add_file_if_exists('stderr_expected', '.err.expected')
 
     def __getitem__(self, key):
         if key in self.meta:
@@ -36,21 +47,7 @@ class EvaluationResult:
                 for pipe_json in json.load(f):
                     pipe = PipeResult(pipe_json['name'], pipe_json['gcc'])
                     for test_json in pipe_json['tests']:
-                        name = test_json['name']
-                        test = TestResult(test_json)
-
-                        def add_file_if_exists(key, path_suffix):
-                            path = os.path.join(self.result_dir, f"{name}{path_suffix}")
-                            if os.path.exists(path):
-                                test[key] = File(path)
-
-                        add_file_if_exists('stdin', '.in')
-                        add_file_if_exists('stdout', '.out')
-                        add_file_if_exists('stdout_expected', '.out.expected')
-                        add_file_if_exists('stderr', '.err')
-                        add_file_if_exists('stderr_expected', '.err.expected')
-
-                        pipe.tests.append(test)
+                        pipe.tests.append(TestResult(test_json, self.result_dir))
 
                     self.pipelines.append(pipe)
         except FileNotFoundError:
