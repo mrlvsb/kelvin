@@ -17,6 +17,7 @@ from . import filters
 from . import pipelines
 from . import testsets
 from .results import EvaluationResult, TestResult
+from .comparators import text_compare
 
 logger = logging.getLogger("evaluator")
 
@@ -75,25 +76,20 @@ class Evaluation:
             #('random inputs', InputGeneratorPipe())
         ]
         
-        result = []
+        result = EvaluationResult(self.result_path)
         for name, pipe in pipeline:
             logger.info(f"executing {name}")
             res = pipe.run(self)
             if res:
-                result.append({'name': name, **res})
+                res['name'] = name
+                result.pipelines.append(res)
 
-        with open(os.path.join(self.result_path, 'result.json'), 'w') as f:
-            json.dump(result, f, indent=4)
-
-        return EvaluationResult(self.result_path)
+        result.save(os.path.join(self.result_path, 'result.json'))
+        return result
 
     def evaluate(self, test: testsets.Test, env=None, title=None):
-        result = {
-             'name': test.name,
-             'title': title if title else test.title,
-             'success': True,
-             'fail_reason': [],
-        }
+        result = TestResult(test.name, self.result_path)
+        result.title = title if title else test.title
 
         def result_path(name):
             return os.path.join(self.result_path, name)
@@ -123,51 +119,43 @@ class Evaluation:
 
         move_if_not_empty(self.sandbox.system_path(stdout_name), f"{test.name}.out")
         move_if_not_empty(self.sandbox.system_path(stderr_name), f"{test.name}.err")
+        result.discover_files()
 
         if test.stdin:
             args['stdin'].close()
 
-        result['exit_code'] = p.returncode
-
         filters = self.tests.filters + test.filters
 
         if test.stdout:
+            # copy expected result
             shutil.copyfile(
                 test.stdout.path, 
                 result_path(f"{test.name}.out.expected")
             )
 
-#            success = compare(result['stdout'], result['stdout_expected'], filters)
-#           result['success'] &= success
-#            if not success:
-#                result['fail_reason'].append('stdout not matches')
+            success, output = text_compare(test.stdout.path, result['stdout'].path)
+            result['success'] &= success
 
         if test.stderr:
             shutil.copyfile(
                 test.stderr.path, 
                 result_path(f"{test.name}.err.expected")
             )
-            #success = compare(result['stderr'], result['stderr_expected'], filters)
-            #result['success'] &= success
-            #if not success:
-                #result['fail_reason'].append('stderr not matches')
+
+            success, output = text_compare(test.stderr.path, result['stderr'].path)
+            result['success'] &= success
 
         result['files'] = []
         for f in test.files:
             try:
-                with self.sandbox.open(f['path']) as cur:
-                    content = cur.read()
-                    expected = f['expected'].read()
-                    same = compare(content, expected, filters)
+                success, output = text_compare(f['expected'].path, self.sandbox.system_path(f['path']))
+         
+                result['files'].append({
+                    'path': f['path'],
+                    'success': success,
+                })
 
-                    result['files'].append({
-                        'path': f['path'],
-                        'content': content,
-                        'expected': expected,
-                        'success': same,
-                    })
-
-                    result['success'] &= same
+                result['success'] &= success
             except FileNotFoundError as e:
                 result['files'].append({
                     'path': f['path'],
@@ -198,7 +186,7 @@ class Evaluation:
         if test.script:
             check = getattr(test.script, 'check', None)
             if check:
-                result['success'] &= check(TestResult(dict(result), self.result_path), self)
+                result['success'] &= check(result, self)
 
         return result
 

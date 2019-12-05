@@ -1,17 +1,19 @@
 import unittest
 import os
+import struct
 
 from .evaluator import *
+from .comparators import *
 from .pipelines import GccPipeline
 
 base_dir = os.path.dirname(__file__)
 
 
-class TestStringMethods(unittest.TestCase):
-    def evaluate(self, name):
+class TestEvaluation(unittest.TestCase):
+    def evaluate(self, name, submit='submit.c'):
         path = os.path.join(base_dir, f'tests/{name}')
-        r = evaluate(path, os.path.join(path, 'submit.c'), '/tmp/eval')
-        return list(r)[0].tests[0]
+        r = evaluate(path, os.path.join(path, submit), '/tmp/eval')
+        return list(r)[0]['tests'][0]
 
     def test_stdout_only(self):
         res = self.evaluate('stdout_only')
@@ -21,13 +23,14 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(res['exit_code'], 0)
         self.assertTrue(res['success'])
 
-    def test_exit_code(self):
-        res = self.evaluate('exit_code')
+    def test_stdout_only_wrong(self):
+        res = self.evaluate('stdout_only', 'submit_wrong.c')
 
-        self.assertEqual(res['stdout'], None)
+        self.assertEqual(res['stdout'].read(), 'foo bar\n')
         self.assertEqual(res['stderr'], None)
-        self.assertEqual(res['exit_code'], 42)
-        self.assertTrue(res['success'])
+        self.assertEqual(res['exit_code'], 0)
+        self.assertFalse(res['success'])
+        # TODO: check html result
 
     def test_stdin_stdout(self):
         res = self.evaluate('stdin_stdout')
@@ -37,12 +40,36 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(res['exit_code'], 0)
         self.assertTrue(res['success'])
 
+    def test_stdin_stdout_wrong(self):
+        res = self.evaluate('stdin_stdout', 'wrong.c')
+
+        self.assertEqual(res['stdout'].read(), 'hello\n')
+        self.assertEqual(res['stderr'], None)
+        self.assertEqual(res['exit_code'], 0)
+        self.assertFalse(res['success'])
+
     def test_stderr(self):
         res = self.evaluate('stderr_only')
 
         self.assertEqual(res['stdout'], None)
         self.assertEqual(res['stderr'].read(), 'error...\n')
         self.assertEqual(res['exit_code'], 0)
+        self.assertTrue(res['success'])
+
+    def test_stderr_wrong(self):
+        res = self.evaluate('stderr_only', 'wrong.c')
+
+        self.assertEqual(res['stdout'], None)
+        self.assertEqual(res['stderr'].read(), 'hmmm...\n')
+        self.assertEqual(res['exit_code'], 0)
+        self.assertFalse(res['success'])
+
+    def test_exit_code(self):
+        res = self.evaluate('exit_code')
+
+        self.assertEqual(res['stdout'], None)
+        self.assertEqual(res['stderr'], None)
+        self.assertEqual(res['exit_code'], 42)
         self.assertTrue(res['success'])
 
     def test_cmdline(self):
@@ -63,6 +90,10 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(res['files'][0]['content'], 'hello file!\n')
         self.assertTrue(res['success'])
 
+        # bin file
+        # missing file
+        # 2 files
+
     def test_warnings(self):
         s = Sandbox()
         s.copy(os.path.join(base_dir, f'tests/warning.c'), "main.c")
@@ -82,6 +113,7 @@ class TestStringMethods(unittest.TestCase):
         self.assertTrue("error: ld returned 1 exit status" in res['gcc']['stderr'])
 
     def test_whitespace_end(self):
+        self.skipTest('f')
         for t in ['whitespace_end', 'whitespace_all']:
             res = self.evaluate(t)
             self.assertTrue(res['success'])
@@ -96,6 +128,55 @@ class TestStringMethods(unittest.TestCase):
         self.assertTrue(res['processed'])
         self.assertTrue(res['success'])
     
+
+class TestComparators(unittest.TestCase):
+    def file(self, name):
+        return os.path.join(base_dir, 'tests', 'comparators', name)
+
+    def test_open_text(self):
+        expected = ['0', '1', '2', '3', '4', '5']
+
+        self.assertEqual(list(open_me(map(str, range(6)))), expected)
+        self.assertEqual(list(open_me(self.file("seq5"))), expected)
+        self.assertEqual(list(open_me(io.StringIO("0\n1\n2\n3\n4\n5"))), expected)
+
+    def test_open_strlower(self):
+        expected = ['hello world', 'foo! 128 bar']
+        self.assertEqual(list(open_me(self.file("strlower"), 't', filters=['lower'])), expected)
+        
+
+    def test_open_binary(self):
+        expected = [struct.pack("I", i) for i in range(6)]
+
+        self.assertEqual(list(open_me((struct.pack("I", i) for i in range(6)))), expected)
+        self.assertEqual(list(open_me(self.file("seq5.bin"), 'b', block_size=4)), expected)
+        self.assertEqual(list(open_me(io.BytesIO(struct.pack("6I", *range(6))), block_size=4)), expected)
+
+    def test_stringio_same(self):
+        success, result = text_compare(io.StringIO("test 12345\nxyz"), io.StringIO("test 12345\nxyz"))
+
+        self.assertTrue(success)
+        self.assertEqual(result, "")
+
+    def test_file_same(self):
+        success, result = text_compare(self.file("same.1"), self.file("same.1"))
+
+        self.assertTrue(success)
+        self.assertEqual(result, "")
+
+    def test_generator_same(self):
+        success, result = text_compare((i for i in range(10)), (i for i in range(10)))
+
+        self.assertTrue(success)
+        self.assertEqual(result, "")
+
+
+    def test_file_differs(self):
+        success, result = text_compare(self.file("same.1"), self.file("copy.2"))
+
+        self.assertFalse(success)
+        self.assertEqual(result, "")
+
 
 if __name__ == '__main__':
     unittest.main()
