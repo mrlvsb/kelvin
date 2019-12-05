@@ -28,10 +28,10 @@ class File:
     def open(self, mode='r'):
         if isinstance(self.path, io.StringIO):
             return io.StringIO(self.path.getvalue())
-        return open(self.path)
+        return open(self.path, mode)
 
-    def read(self):
-        with self.open() as f:
+    def read(self, mode='r'):
+        with self.open(mode) as f:
             return f.read()
 
 
@@ -78,6 +78,7 @@ class TestSet:
         self.meta = meta if meta else {}
         self.tests_dict = {}
         self.File = File
+        self.comparators = {}
         self.load_tests()
 
     def __iter__(self):
@@ -126,6 +127,9 @@ class TestSet:
                             logging.error(f'unknown limit {k}')
                         else:
                             self.limits[k] = v
+
+                    for k, v in conf.get('comparators', {}).items():
+                        self.comparators[k] = v
 
 
                     for test_conf in conf.get('tests', []):

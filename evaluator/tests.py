@@ -32,6 +32,24 @@ class TestEvaluation(unittest.TestCase):
         self.assertFalse(res['success'])
         # TODO: check html result
 
+    def test_stdout_binary_in_text(self):
+        res = self.evaluate('stdout_only', 'binary.c')
+
+        self.assertEqual(res['stdout'].read('rb'), struct.pack("10I", *range(120, 130)))
+        self.assertEqual(res['stderr'], None)
+        self.assertEqual(res['exit_code'], 0)
+        self.assertFalse(res['success'])
+        # TODO: check html result
+
+    def test_binary_stdout_only(self):
+        res = self.evaluate('binary_stdout', 'submit.c')
+
+        self.assertEqual(res['stdout'].read('rb'), struct.pack("10I", *range(120, 130)))
+        self.assertEqual(res['stderr'], None)
+        self.assertEqual(res['exit_code'], 0)
+        self.assertTrue(res['success'])
+        # TODO: check html result
+
     def test_stdin_stdout(self):
         res = self.evaluate('stdin_stdout')
 
@@ -81,7 +99,7 @@ class TestEvaluation(unittest.TestCase):
         self.assertTrue(res['success'])
 
     def test_file(self):
-        res = self.evaluate('file')
+        res = self.evaluate('text_file')
 
         self.assertEqual(res['stdout'], None)
         self.assertEqual(res['stderr'], None)

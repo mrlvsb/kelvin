@@ -1,0 +1,2 @@
+comparators:
+  stdout: {type: binary, block_size: 4}

@@ -1,19 +1,9 @@
-"""
-compare files
- - binary
- - text
-    - filters
-compare StringIO, BytesIO
-compare against generator
-image comparator can give us image diff
-"""
-
 import io
 import re
 
 def apply_filters(token, filters):
     return token
-    
+   
 
 def xx(resource, filters=[]):
     with resource:
@@ -51,27 +41,32 @@ def open_me(resource, mode='t', block_size=None, filters=[]):
 
 
 def text_compare(f1, f2):
-    f1 = open_me(f1)
-    f2 = open_me(f2)
+    try:
+        f1 = open_me(f1)
+        f2 = open_me(f2)
 
-    errors = []
-    for line1, line2 in zip(f1, f2):
-        if line1 != line2:
-            errors.append(f'{line1} != {line2}')
+        errors = []
+        for line1, line2 in zip(f1, f2):
+            if line1 != line2:
+                errors.append(f'{line1} != {line2}')
 
-    
-    return (False if errors else True, ''.join(errors))
+        return (False if errors else True, ''.join(errors))
+    except UnicodeDecodeError as e:
+        return (False, e)
+
 
 
 def binary_compare(f1, f2):
-    f1 = BlockGenerator(f1, 1024)
-    f2 = BlockGenerator(f2, 1024)
+    f1 = open_me(f1, 'b', block_size=4)
+    f2 = open_me(f2, 'b', block_size=4)
 
+    errors = []
     for a, b in zip(f1, f2):
-        #a == b ...
-        pass
+        if a != b:
+            errors.append("not matches!!!")
+            print(a, b)
 
-    return (True, "bytes at offset 0x12 not equals")
+    return (False if errors else True, ''.join(errors))
 
 
 def image_compare(f1, f2):

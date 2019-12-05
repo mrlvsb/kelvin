@@ -17,7 +17,7 @@ from . import filters
 from . import pipelines
 from . import testsets
 from .results import EvaluationResult, TestResult
-from .comparators import text_compare
+from .comparators import text_compare, binary_compare
 
 logger = logging.getLogger("evaluator")
 
@@ -133,7 +133,15 @@ class Evaluation:
                 result_path(f"{test.name}.out.expected")
             )
 
-            success, output = text_compare(test.stdout.path, result['stdout'].path)
+            comparator = text_compare
+            if 'stdout' in self.tests.comparators:
+                all_comparators = {
+                    'binary': binary_compare
+                }
+
+                comparator = all_comparators[self.tests.comparators['stdout']['type']]
+            
+            success, output = comparator(test.stdout.path, result['stdout'].path)
             result['success'] &= success
 
         if test.stderr:
