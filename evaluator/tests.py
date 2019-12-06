@@ -53,7 +53,7 @@ class TestEvaluation(unittest.TestCase):
     def test_stdin_stdout(self):
         res = self.evaluate('stdin_stdout')
 
-        self.assertEqual(res['stdout']['actual'].read(), 'HELLO\n')
+        self.assertEqual(res['stdout']['actual'].read(), 'HELLO')
         self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
         self.assertTrue(res['success'])
@@ -61,7 +61,7 @@ class TestEvaluation(unittest.TestCase):
     def test_stdin_stdout_wrong(self):
         res = self.evaluate('stdin_stdout', 'wrong.c')
 
-        self.assertEqual(res['stdout']['actual'].read(), 'hello\n')
+        self.assertEqual(res['stdout']['actual'].read(), 'hello')
         self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
         self.assertFalse(res['success'])

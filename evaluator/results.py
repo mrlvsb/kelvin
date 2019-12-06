@@ -52,7 +52,7 @@ class TestResult:
                 if isinstance(actual, File):
                     actual = actual.path
                 if os.stat(actual).st_size > 0:
-                    shutil.move(actual, os.path.join(self.result_dir, f"{self['name']}.{ext}"))
+                    shutil.copyfile(actual, os.path.join(self.result_dir, f"{self['name']}.{ext}"))
             except FileNotFoundError:
                 pass
 
