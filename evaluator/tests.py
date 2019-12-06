@@ -18,7 +18,7 @@ class TestEvaluation(unittest.TestCase):
     def test_stdout_only(self):
         res = self.evaluate('stdout_only')
 
-        self.assertEqual(res['stdout'].read(), 'Hello world\n')
+        self.assertEqual(res['stdout']['actual'].read(), 'Hello world\n')
         self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
         self.assertTrue(res['success'])
@@ -26,7 +26,7 @@ class TestEvaluation(unittest.TestCase):
     def test_stdout_only_wrong(self):
         res = self.evaluate('stdout_only', 'submit_wrong.c')
 
-        self.assertEqual(res['stdout'].read(), 'foo bar\n')
+        self.assertEqual(res['stdout']['actual'].read(), 'foo bar\n')
         self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
         self.assertFalse(res['success'])
@@ -35,7 +35,7 @@ class TestEvaluation(unittest.TestCase):
     def test_stdout_binary_in_text(self):
         res = self.evaluate('stdout_only', 'binary.c')
 
-        self.assertEqual(res['stdout'].read('rb'), struct.pack("10I", *range(120, 130)))
+        self.assertEqual(res['stdout']['actual'].read('rb'), struct.pack("10I", *range(120, 130)))
         self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
         self.assertFalse(res['success'])
@@ -44,7 +44,7 @@ class TestEvaluation(unittest.TestCase):
     def test_binary_stdout_only(self):
         res = self.evaluate('binary_stdout', 'submit.c')
 
-        self.assertEqual(res['stdout'].read('rb'), struct.pack("10I", *range(120, 130)))
+        self.assertEqual(res['stdout']['actual'].read('rb'), struct.pack("10I", *range(120, 130)))
         self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
         self.assertTrue(res['success'])
@@ -53,7 +53,7 @@ class TestEvaluation(unittest.TestCase):
     def test_stdin_stdout(self):
         res = self.evaluate('stdin_stdout')
 
-        self.assertEqual(res['stdout'].read(), 'HELLO\n')
+        self.assertEqual(res['stdout']['actual'].read(), 'HELLO\n')
         self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
         self.assertTrue(res['success'])
@@ -61,7 +61,7 @@ class TestEvaluation(unittest.TestCase):
     def test_stdin_stdout_wrong(self):
         res = self.evaluate('stdin_stdout', 'wrong.c')
 
-        self.assertEqual(res['stdout'].read(), 'hello\n')
+        self.assertEqual(res['stdout']['actual'].read(), 'hello\n')
         self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
         self.assertFalse(res['success'])
@@ -70,7 +70,7 @@ class TestEvaluation(unittest.TestCase):
         res = self.evaluate('stderr_only')
 
         self.assertEqual(res['stdout'], None)
-        self.assertEqual(res['stderr'].read(), 'error...\n')
+        self.assertEqual(res['stderr']['actual'].read(), 'error...\n')
         self.assertEqual(res['exit_code'], 0)
         self.assertTrue(res['success'])
 
@@ -78,7 +78,7 @@ class TestEvaluation(unittest.TestCase):
         res = self.evaluate('stderr_only', 'wrong.c')
 
         self.assertEqual(res['stdout'], None)
-        self.assertEqual(res['stderr'].read(), 'hmmm...\n')
+        self.assertEqual(res['stderr']['actual'].read(), 'hmmm...\n')
         self.assertEqual(res['exit_code'], 0)
         self.assertFalse(res['success'])
 
@@ -93,7 +93,7 @@ class TestEvaluation(unittest.TestCase):
     def test_cmdline(self):
         res = self.evaluate('cmdline')
 
-        self.assertEqual(res['stdout'].read(), '"first" "second" "third with a space" ')
+        self.assertEqual(res['stdout']['actual'].read(), '"first" "second" "third with a space" ')
         self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
         self.assertTrue(res['success'])
@@ -104,14 +104,43 @@ class TestEvaluation(unittest.TestCase):
         self.assertEqual(res['stdout'], None)
         self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
-        self.assertEqual(len(res['files']), 1)
-        self.assertEqual(res['files'][0]['content'], 'hello file!\n')
+        self.assertEqual(len(res.files), 1)
+        self.assertEqual(res.files['test.txt']['actual'].read(), 'hello file!\nfoo bar\n')
         self.assertTrue(res['success'])
 
-        # bin file
-        # missing file
-        # 2 files
+    def test_file_wrong_path(self):
+        res = self.evaluate('text_file', 'wrong_path.c')
 
+        self.assertEqual(res['stdout'], None)
+        self.assertEqual(res['stderr'], None)
+        self.assertEqual(res['exit_code'], 0)
+        self.assertEqual(len(res.files), 1)
+        self.assertTrue('actual' not in res.files['test.txt'])
+        self.assertEqual(res.files['test.txt']['error'], 'file not found')
+        self.assertFalse(res['success'])
+
+    def test_file_bin_in_txt(self):
+        res = self.evaluate('text_file', 'bin.c')
+
+        self.assertEqual(res['stdout'], None)
+        self.assertEqual(res['stderr'], None)
+        self.assertEqual(res['exit_code'], 0)
+        self.assertEqual(len(res.files), 1)
+        self.assertEqual(res.files['test.txt']['actual'].read('rb'), b'\xb4')
+        self.assertTrue('error' not in res.files['test.txt'])
+        self.assertFalse(res['success'])
+
+    def test_multiple_files(self):
+        res = self.evaluate('multiple_files')
+
+        self.assertEqual(res['stdout'], None)
+        self.assertEqual(res['stderr'], None)
+        self.assertEqual(res['exit_code'], 0)
+        self.assertEqual(len(res.files), 2)
+        self.assertEqual(res.files['first.txt']['actual'].read(), 'first\n')
+        self.assertEqual(res.files['second.txt']['actual'].read(), 'second\n')
+        self.assertTrue(res['success'])
+        
     def test_warnings(self):
         s = Sandbox()
         s.copy(os.path.join(base_dir, f'tests/warning.c'), "main.c")
@@ -131,15 +160,14 @@ class TestEvaluation(unittest.TestCase):
         self.assertTrue("error: ld returned 1 exit status" in res['gcc']['stderr'])
 
     def test_whitespace_end(self):
-        self.skipTest('f')
         for t in ['whitespace_end', 'whitespace_all']:
             res = self.evaluate(t)
             self.assertTrue(res['success'])
 
     def test_large_output(self):
-        s = Sandbox()
-        res = s.run("/bin/dd if=/dev/zero bs=64M count=1")
-        self.assertEqual(len(res['stdout']), 64 * 1024 * 1024)
+        res = self.evaluate('large_output')
+        self.assertEqual(len(res.files['stdout']['actual'].read()), 1024 * 1024)
+        self.assertFalse(res['success'])
 
     def test_custom_check(self):
         res = self.evaluate('custom_check')

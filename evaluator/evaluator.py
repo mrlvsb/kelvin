@@ -88,94 +88,58 @@ class Evaluation:
         return result
 
     def evaluate(self, test: testsets.Test, env=None, title=None):
+        filters = self.tests.filters + test.filters
+
         result = TestResult(test.name, self.result_path)
         result.title = title if title else test.title
-
-        def result_path(name):
-            return os.path.join(self.result_path, name)
 
         args = {}
         if test.stdin:
             args['stdin'] = test.stdin.open()
-            shutil.copyfile(
-                test.stdin.path, 
-                result_path(f"{test.name}.in")
-            )
+            result.copy_result_file('stdin', actual=test.stdin)
 
+        # run process in the sandbox
         cmd = ['./main'] + test.args
         flags = " ".join([shlex.quote(f"--{k}={v}") for k, v in self.tests.limits.items()])
-
         stdout_name = rand_str(10)
         stderr_name = rand_str(10)
-
         isolate_cmd = shlex.split(f"isolate -M /tmp/meta --cg {flags} -o {stdout_name} -r {stderr_name} -s --run {env_build(env)} --") + cmd
         logger.debug("executing in isolation: %s", shlex.join(isolate_cmd))
         p = subprocess.Popen(isolate_cmd, **args)
         p.communicate()
 
-        def move_if_not_empty(src, dst):
-            if os.stat(src).st_size > 0:
-                shutil.move(self.sandbox.system_path(src), result_path(dst))
-
-        move_if_not_empty(self.sandbox.system_path(stdout_name), f"{test.name}.out")
-        move_if_not_empty(self.sandbox.system_path(stderr_name), f"{test.name}.err")
-        result.discover_files()
-
         if test.stdin:
             args['stdin'].close()
+        
+        # copy all result and expected files
+        result.copy_result_file('stdout', actual=self.sandbox.system_path(stdout_name), expected=test.stdout)
+        result.copy_result_file('stderr', actual=self.sandbox.system_path(stderr_name), expected=test.stderr)
+        for f in test.files:
+            result.copy_result_file(f['path'], actual=self.sandbox.system_path(f['path']), expected=f['expected'])
+        
+        # do a comparsion
+        for name, opts in result.files.items():
+            if 'expected' not in opts:
+                continue
 
-        filters = self.tests.filters + test.filters
-
-        if test.stdout:
-            # copy expected result
-            shutil.copyfile(
-                test.stdout.path, 
-                result_path(f"{test.name}.out.expected")
-            )
+            if 'actual' not in opts:
+                opts['error'] = 'file not found'
+                result['success'] &= False
+                continue
 
             comparator = text_compare
-            if 'stdout' in self.tests.comparators:
+            if name in self.tests.comparators:
                 all_comparators = {
                     'binary': binary_compare
                 }
 
-                comparator = all_comparators[self.tests.comparators['stdout']['type']]
-            
-            success, output = comparator(test.stdout.path, result['stdout'].path)
+                comparator = all_comparators[self.tests.comparators[name]['type']]
+        
+            success, output = comparator(opts['expected'].path, opts['actual'].path)
             result['success'] &= success
+        print(result.files)
 
-        if test.stderr:
-            shutil.copyfile(
-                test.stderr.path, 
-                result_path(f"{test.name}.err.expected")
-            )
-
-            success, output = text_compare(test.stderr.path, result['stderr'].path)
-            result['success'] &= success
-
-        result['files'] = []
-        for f in test.files:
-            try:
-                success, output = text_compare(f['expected'].path, self.sandbox.system_path(f['path']))
-         
-                result['files'].append({
-                    'path': f['path'],
-                    'success': success,
-                })
-
-                result['success'] &= success
-            except FileNotFoundError as e:
-                result['files'].append({
-                    'path': f['path'],
-                    'expected': f['expected'].read(),
-                    'success': False,
-                    'error': 'file not found',
-                })
-
-                result['success'] &= False
-
-
-
+        # extract statistics
         with open('/tmp/meta') as f:
             for line in f:
                 key, val = line.split(':', 1)
@@ -187,10 +151,12 @@ class Evaluation:
                 else:
                     result[key] = val
 
+        # save issued commandline
         result['command'] = ' '.join(cmd)
         if test.stdin:
             result['command'] += f' < {shlex.quote(os.path.basename(test.stdin.path))}'
 
+        # run custom evaluation script
         if test.script:
             check = getattr(test.script, 'check', None)
             if check:

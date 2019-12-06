@@ -73,7 +73,7 @@ class TestSet:
             'processes': 10,
             'stack': 0,
             'cg-mem': 5 * 1024 * 1024,
-            'fsize': 1024 * 1024,
+            'fsize': 1024, # in kbytes
         }
         self.meta = meta if meta else {}
         self.tests_dict = {}
@@ -106,13 +106,20 @@ class TestSet:
         if os.path.exists(path):
             t.script = load_module(path)
 
+        for f in glob.glob(os.path.join(self.task_path, f'{name}.*.file')):
+            filename = '.'.join(os.path.basename(f).split('.')[1:-1])
+            t.files.append({
+                'path': filename,
+                'expected': File(f),
+            })
+
         self.tests_dict[name] = t
         return t
 
     def load_tests(self):
-        for ext in ['out', 'err', 'test.py']:
+        for ext in ['out', 'err', 'test.py', 'file']:
             for out in glob.glob(os.path.join(self.task_path, f"*.{ext}")):
-                test_name = os.path.basename(re.sub(f".{ext}$", '', out))
+                test_name = os.path.basename(out).split('.')[0]
                 self.create_test(test_name)
 
         try:
