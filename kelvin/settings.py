@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_rq',
+    'django_cas_ng'
 ]
 
 MIDDLEWARE = [
@@ -51,6 +52,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_cas_ng.middleware.CASMiddleware',
 ]
 
 ROOT_URLCONF = 'kelvin.urls'
@@ -128,7 +130,16 @@ INTERNAL_IPS = (
     '127.0.0.1',
 )
 
-AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend', 'web.vsbldapbackend.MyLDAPBackend']
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'django_cas_ng.backends.CASBackend',
+    'web.vsbldapbackend.MyLDAPBackend'
+]
+
+CAS_ENABLE = False
+CAS_SERVER_URL = 'https://www.sso.vsb.cz/'
+CAS_CREATE_USER = False
+CAS_FORCE_CHANGE_USERNAME_CASE = 'upper'
 
 RQ_QUEUES = {
     'default': {

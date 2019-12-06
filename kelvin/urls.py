@@ -16,15 +16,19 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
 
-from django.contrib.auth import views as auth_views
-#from web.views import MyLoginView
+
+if settings.CAS_ENABLE:
+    from django_cas_ng import views as auth_views
+else:
+    from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('', include('web.urls')),
     path('admin/', admin.site.urls),
-    path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),
-    path('accounts/login/', auth_views.LoginView.as_view()),
+    path('accounts/logout/', auth_views.LogoutView.as_view(), name='cas_ng_logout'),
+    path('accounts/login/', auth_views.LoginView.as_view(), name='cas_ng_login'),
     path('api/', include('api.urls')),
     path('django-rq/', include('django_rq.urls'))
 ]

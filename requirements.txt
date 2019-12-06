@@ -7,3 +7,4 @@ six
 pyyaml
 fabric
 mosspy==1.0.4
+django-cas-ng==4.0.0
