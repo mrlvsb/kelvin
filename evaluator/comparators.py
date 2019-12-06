@@ -1,8 +1,10 @@
 import io
 import re
 
-def apply_filters(token, filters):
-    return token
+def apply_filters(line, filters):
+    for f in filters:
+        line = f.filter(line)
+    return line
    
 
 def xx(resource, filters=[]):
@@ -40,16 +42,15 @@ def open_me(resource, mode='t', block_size=None, filters=[]):
 
 
 
-def text_compare(f1, f2):
+def text_compare(f1, f2, filters=[]):
     try:
-        f1 = open_me(f1)
-        f2 = open_me(f2)
+        f1 = open_me(f1, filters=filters)
+        f2 = open_me(f2, filters=filters)
 
         errors = []
         for line1, line2 in zip(f1, f2):
             if line1 != line2:
                 errors.append(f'{line1} != {line2}')
-
         return (False if errors else True, ''.join(errors))
     except UnicodeDecodeError as e:
         return (False, e)
@@ -64,7 +65,6 @@ def binary_compare(f1, f2):
     for a, b in zip(f1, f2):
         if a != b:
             errors.append("not matches!!!")
-            print(a, b)
 
     return (False if errors else True, ''.join(errors))
 

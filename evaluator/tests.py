@@ -160,9 +160,8 @@ class TestEvaluation(unittest.TestCase):
         self.assertTrue("error: ld returned 1 exit status" in res['gcc']['stderr'])
 
     def test_whitespace_end(self):
-        for t in ['whitespace_end', 'whitespace_all']:
-            res = self.evaluate(t)
-            self.assertTrue(res['success'])
+        res = self.evaluate('whitespace_end')
+        self.assertTrue(res['success'])
 
     def test_large_output(self):
         res = self.evaluate('large_output')

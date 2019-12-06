@@ -128,16 +128,17 @@ class Evaluation:
                 continue
 
             comparator = text_compare
+            comparator_args = {'filters': filters}
             if name in self.tests.comparators:
                 all_comparators = {
                     'binary': binary_compare
                 }
 
                 comparator = all_comparators[self.tests.comparators[name]['type']]
+                comparator_args = {}
         
-            success, output = comparator(opts['expected'].path, opts['actual'].path)
+            success, output = comparator(opts['expected'].path, opts['actual'].path, **comparator_args)
             result['success'] &= success
-        print(result.files)
 
         # extract statistics
         with open('/tmp/meta') as f:
