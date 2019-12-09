@@ -25,7 +25,7 @@ SECRET_KEY = '***REMOVED***'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['upr.cs.vsb.cz', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['upr.cs.vsb.cz', '158.196.141.65', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -174,3 +174,4 @@ try:
     from .local_settings import *
 except ModuleNotFoundError:
     pass
+
