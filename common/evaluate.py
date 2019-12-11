@@ -30,8 +30,8 @@ def evaluate_job(s: Submit):
     s.points = 0
     s.max_points = 0
     for i in result:
-        for test in i.tests:
-            if test.success:
+        for test in i['tests']:
+            if test['success']:
                 s.points += 1
             s.max_points += 1
 
