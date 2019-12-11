@@ -197,7 +197,7 @@ def teacher_task(request, task_id):
         'inputs': [],
     }
 
-    data['inputs'] = Evaluation(task_dir, None, get_meta(request.user)).tests
+    data['inputs'] = TestSet(task_dir, get_meta(request.user))
 
     return render(request, 'web/task_detail.html', data)
 

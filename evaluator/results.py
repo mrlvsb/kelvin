@@ -11,12 +11,16 @@ def encode_json(o):
 
     raise Exception(o)
 
+
 class TestResult:
-    def __init__(self, name, result_dir):
-        self.meta = {
+    def __init__(self, name, result_dir, meta=None):
+        if not meta:
+            meta = {}
+
+        self.meta = {**{
             'name': name,
             'success': True,
-        }
+        }, **meta}
         self.files = {}
         self.result_dir = result_dir
 
@@ -28,7 +32,7 @@ class TestResult:
 
     @staticmethod
     def load(meta, result_dir):
-        result = TestResult(meta['name'], result_dir)
+        result = TestResult(meta['name'], result_dir, meta)
         result.discover_files()
         return result
 
@@ -83,10 +87,17 @@ class TestResult:
             return self.files[key]
         if key in self.meta:
             return self.meta[key]
-        return None     
+        return getattr(self, key)
 
     def __setitem__(self, key, value):
         self.meta[key] = value
+
+    def __getattr__(self, key):
+        if key in self.files:
+            return self.files[key]
+        if key in self.meta:
+            return self.meta[key]
+        return None
 
 
 class PipeResult:

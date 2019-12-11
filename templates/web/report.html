@@ -13,7 +13,7 @@
     <div class="card mb-3 mx-3 test-result {% if test.success%}border-success test-result-success{%else%}border-danger test-result-fail{%endif%}"{% if test.success%} hidden{% endif %}>
         <div class="card-header {% if test.success%}bg-success{%else%}bg-danger{%endif%}">
             <h5>
-                {{ test.title }}
+                {% if test.title %}{{ test.title }}{% else %} {{ test.name }} {% endif %}
                 <div class="float-right">
                     {{ test.time }}s, {{ test.maxrss|filesizeformat }}
                 </div>
@@ -28,49 +28,17 @@ $ echo $?  # exit code (return value from main)
 {{ test.exit_code }}
 </pre>
 
-            {% if test.stdin %}
+            {% for path, v in test.files.items %}
             <div class="card mb-3">
                 <div class="card-header">
-                    stdin
-                </div>
-                <div class="card-body">
-                    <pre>{{ test.stdin.read }}</pre>
-                </div>
-            </div>
-            {% endif %}
-
-            {% if test.stdout or test.stdout_expected %}
-            <div class="card mb-3">
-                <div class="card-header">
-                    stdout
+                    {{ path }}
                 </div>
                 <div class="card-body diff">
-                    <pre class="actual">{{ test.stdout.read }}</pre>
-                    <pre class="expected">{{ test.stdout_expected.read }}</pre>
-                </div>
-            </div>
-            {% endif %}
+                    <pre class="actual">{{ v.actual.read }}</pre>
 
-            {% if test.stderr or test.stderr_expected %}
-            <div class="card mb-3">
-                <div class="card-header">
-                    stderr
-                </div>
-                <div class="card-body diff">
-                    <pre class="actual">{{ test.stderr.read }}</pre>
-                    <pre class="expected">{{ test.stderr_expected.read }}</pre>
-                </div>
-            </div>
-            {% endif %}
-
-            {% for file in test.files %}
-            <div class="card mb-3">
-                <div class="card-header">
-                    {{ file.path }}
-                </div>
-                <div class="card-body diff">
-                    <pre class="actual">{{ file.content }}</pre>
-                    <pre class="expected">{{ file.expected }}</pre>
+                    {% if v.expected %}
+                    <pre class="expected">{{ v.expected.read }}</pre>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}
@@ -95,8 +63,16 @@ if(el) {
 }
 
 document.querySelectorAll('.diff').forEach(function(elem) {
-    let actual = elem.querySelector('.actual').textContent;
-    let expected = elem.querySelector('.expected').textContent;
+    let actual = elem.querySelector('.actual');
+    let expected = elem.querySelector('.expected');
+
+    if(!actual || !expected) {
+        return;
+    }
+
+    actual = actual.textContent;
+    expected = expected.textContent;
+
 
     const limit_bytes = 1 * 1024;
     if(actual.length > limit_bytes || expected.length > limit_bytes) {
