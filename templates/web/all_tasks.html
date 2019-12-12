@@ -1,0 +1,13 @@
+{% extends 'web/layout.html' %}
+
+{% block content %}
+    <ul>
+    {% for task in tasks %}
+        <li>
+            <a href="{% url  'teacher_task' task.id %}">
+                {{ task.name }}
+            </a>
+        </li>
+    {% endfor %}
+    </ul>
+{% endblock %}

@@ -371,6 +371,7 @@ def download_csv_per_task(request, assignment_id : int):
 
     return response
 
+
 @user_passes_test(is_teacher)
 def download_csv_per_class(request, class_id : int):
     clazz = Class.objects.get(pk=class_id)
@@ -396,3 +397,9 @@ def download_csv_per_class(request, class_id : int):
         response = HttpResponse(out.getvalue(), 'text/csv')
         response['Content-Disposition'] = f'attachment; filename="{clazz.code}_success_rate.csv"'
         return response
+
+
+@user_passes_test(is_teacher)
+def all_tasks(request):
+    return render(request, 'web/all_tasks.html', {'tasks': Task.objects.all()})
+

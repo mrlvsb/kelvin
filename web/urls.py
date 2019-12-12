@@ -23,7 +23,7 @@ urlpatterns = [
 
     path('class/download/<int:class_id>/csv', views.download_csv_per_class, name='download_csv_per_class'),
 
-
+    path('tasks', views.all_tasks),
 
     path('install_<str:token>.sh', views.script, name='install.sh'),
     path('upr.py', views.uprpy, name='upr.py'),
