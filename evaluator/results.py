@@ -1,6 +1,7 @@
 import os
 import json
 import shutil
+import re
 
 from .testsets import File
 
@@ -38,11 +39,36 @@ class TestResult:
         return result
 
     def discover_files(self):
-        self.add_existing_file('stdin', type='input')
-        self.add_existing_file('stdout')
-        self.add_existing_file('stderr')
+        aliases = {v: k for k, v in self.aliases.items()}
 
-        # TODO: load all files
+        for file in os.listdir(self.result_dir):
+            if not file.startswith(self['name']):
+                continue
+
+            n = file[len(self['name'])+1:]
+            base = re.sub('\.expected$', '', n)
+            base = re.sub('^file_in\.', '', base)
+            base = aliases.get(base, base)
+
+            if base not in self.files:
+                self.files[base] = {}
+
+            if n.endswith('.expected'):
+                self.files[base]['expected'] = File(os.path.join(self.result_dir, file))
+            else:
+                self.files[base]['actual'] = File(os.path.join(self.result_dir, file))
+
+    def copy_input_file(self, local_name, real_file):
+        if local_name == 'stdin':
+            dst = 'in'
+        else:
+            dst = local_name
+
+        shutil.copyfile(
+            real_file.path,
+            os.path.join(self.result_dir, f"{self['name']}.file_in.{dst}")
+        )
+
 
     def copy_result_file(self, name, expected=None, actual=None):
         ext = self.aliases.get(name, name)

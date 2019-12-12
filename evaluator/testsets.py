@@ -129,14 +129,12 @@ class TestSet:
             parts = n.split('.', 1)
             if parts[0] == 'file_in':
                 t.files[parts[1]] = TestFile(File(os.path.join(self.task_path, f)), True)
+            elif parts[0] == 'file_out':
+                t.files[parts[1]] = TestFile(File(os.path.join(self.task_path, f)), False)
 
         path = os.path.join(self.task_path, f"{name}.test.py")
         if os.path.exists(path):
             t.script = load_module(path)
-
-        for f in glob.glob(os.path.join(self.task_path, f'{name}.*.file')):
-            filename = '.'.join(os.path.basename(f).split('.')[1:-1])
-            t.files[filename] = TestFile(File(f), False)
 
         self.tests_dict[name] = t
         return t

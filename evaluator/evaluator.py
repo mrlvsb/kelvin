@@ -120,7 +120,12 @@ class Evaluation:
         result.copy_result_file('stdout', actual=self.sandbox.system_path(stdout_name), expected=test.stdout)
         result.copy_result_file('stderr', actual=self.sandbox.system_path(stderr_name), expected=test.stderr)
         for path, expected in test.files.items():
-            if path not in ['stdin', 'stdout', 'stderr']:
+            if path in ['stdout', 'stderr']:
+                continue
+
+            if expected.input:
+                result.copy_input_file(path, expected)
+            else:
                 result.copy_result_file(path, actual=self.sandbox.system_path(path), expected=expected)
         
         # do a comparsion
