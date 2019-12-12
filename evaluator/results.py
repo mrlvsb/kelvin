@@ -39,6 +39,7 @@ class TestResult:
     def discover_files(self):
         self.add_existing_file('stdin', type='input')
         self.add_existing_file('stdout')
+        self.add_existing_file('stderr')
 
         # TODO: load all files
 
