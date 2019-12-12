@@ -46,7 +46,6 @@ class Test:
         self.limits = {}
         self._title = None
         self.script = None
-        self.stdio_max_bytes = 100 * 1024
 
     @property
     def stdin(self):
