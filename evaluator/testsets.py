@@ -117,7 +117,7 @@ class TestSet:
         return t
 
     def load_tests(self):
-        for ext in ['out', 'err', 'test.py', 'file']:
+        for ext in ['in', 'out', 'err', 'test.py', 'file']:
             for out in glob.glob(os.path.join(self.task_path, f"*.{ext}")):
                 test_name = os.path.basename(out).split('.')[0]
                 self.create_test(test_name)
