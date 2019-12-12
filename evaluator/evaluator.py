@@ -93,6 +93,11 @@ class Evaluation:
         result = TestResult(test.name, self.result_path)
         result.title = title if title else test.title
 
+        # copy input files to the sandbox
+        for path, f in test.files.items():
+            if f.input:
+                shutil.copyfile(f.path, self.sandbox.system_path(path))
+
         args = {}
         if test.stdin:
             args['stdin'] = test.stdin.open()

@@ -77,6 +77,18 @@ class Test:
     def title(self, value):
         self._title = value
 
+class TestFile:
+    def __init__(self, file, input=False):
+        self.file = file
+        self.input = input
+
+    def read(self, mode='r'):
+        return self.file.read(mode)
+
+    @property
+    def path(self):
+        return self.file.path
+
 class TestSet:
     def __init__(self, task_path, meta=None):
         self.task_path = task_path
@@ -104,20 +116,19 @@ class TestSet:
             return self.tests_dict[name]
 
         t = Test(name)
-
-        aliases = {
-            'in': 'stdin',
-            'out': 'stdout',
-            'err': 'stderr'
-        }
-
         for f in self.files_cache:
             if not f.startswith(name + '.'):
                 continue
 
+            path = os.path.join(self.task_path, f)
+
             n = f[len(name) + 1:]
             if n in ['in', 'out', 'err']:
-                t.files['std' + n] = File(os.path.join(self.task_path, f))
+                t.files['std' + n] = TestFile(File(path), n == 'in')
+
+            parts = n.split('.', 1)
+            if parts[0] == 'file_in':
+                t.files[parts[1]] = TestFile(File(os.path.join(self.task_path, f)), True)
 
         path = os.path.join(self.task_path, f"{name}.test.py")
         if os.path.exists(path):
@@ -125,7 +136,7 @@ class TestSet:
 
         for f in glob.glob(os.path.join(self.task_path, f'{name}.*.file')):
             filename = '.'.join(os.path.basename(f).split('.')[1:-1])
-            t.files[filename] = File(f)
+            t.files[filename] = TestFile(File(f), False)
 
         self.tests_dict[name] = t
         return t
