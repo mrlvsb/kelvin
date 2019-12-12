@@ -104,7 +104,6 @@ class TestEvaluation(unittest.TestCase):
         self.assertEqual(res['stdout'], None)
         self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
-        self.assertEqual(len(res.files), 1)
         self.assertEqual(res.files['test.txt']['actual'].read(), 'hello file!\nfoo bar\n')
         self.assertTrue(res['success'])
 
@@ -125,7 +124,6 @@ class TestEvaluation(unittest.TestCase):
         self.assertEqual(res['stdout'], None)
         self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
-        self.assertEqual(len(res.files), 1)
         self.assertEqual(res.files['test.txt']['actual'].read('rb'), b'\xb4')
         self.assertTrue('error' not in res.files['test.txt'])
         self.assertFalse(res['success'])
@@ -136,7 +134,6 @@ class TestEvaluation(unittest.TestCase):
         self.assertEqual(res['stdout'], None)
         self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
-        self.assertEqual(len(res.files), 2)
         self.assertEqual(res.files['first.txt']['actual'].read(), 'first\n')
         self.assertEqual(res.files['second.txt']['actual'].read(), 'second\n')
         self.assertTrue(res['success'])
@@ -145,7 +142,7 @@ class TestEvaluation(unittest.TestCase):
         s = Sandbox()
         s.copy(os.path.join(base_dir, f'tests/warning.c'), "main.c")
 
-        e = Evaluation('/xx', '/tmp/kelvin', s)
+        e = Evaluation('/tmp', '/tmp/kelvin', s)
         res = GccPipeline().run(e)
             
         self.assertTrue("implicit declaration of function ‘printf’" in res['gcc']['stderr'])
@@ -154,7 +151,7 @@ class TestEvaluation(unittest.TestCase):
         s = Sandbox()
         s.copy(os.path.join(base_dir, f'tests/error.c'), "main.c")
 
-        e = Evaluation('/xx', '/tmp/kelvin', s)
+        e = Evaluation('/tmp', '/tmp/kelvin', s)
         res = GccPipeline().run(e)
             
         self.assertTrue("error: ld returned 1 exit status" in res['gcc']['stderr'])

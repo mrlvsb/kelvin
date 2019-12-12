@@ -38,18 +38,33 @@ class File:
 class Test:
     def __init__(self, name):
         self.name = name
-        self.stdin = None
-        self.stdout = None
-        self.stderr = None
         self.args = []
         self.exit_code = 0
-        self.files = []
+        self.files = {}
         self.check = None
         self.filters = []
         self.limits = {}
         self._title = None
         self.script = None
         self.stdio_max_bytes = 100 * 1024
+
+    @property
+    def stdin(self):
+        if 'stdin' not in self.files:
+            return None
+        return self.files['stdin']
+
+    @property
+    def stdout(self):
+        if 'stdout' not in self.files:
+            return None
+        return self.files['stdout']
+
+    @property
+    def stderr(self):
+        if 'stderr' not in self.files:
+            return None
+        return self.files['stderr']
 
     @property
     def escaped_args(self):
@@ -79,6 +94,7 @@ class TestSet:
         self.tests_dict = {}
         self.File = File
         self.comparators = {}
+        self.files_cache = os.listdir(self.task_path)
         self.load_tests()
 
     def __iter__(self):
@@ -90,17 +106,19 @@ class TestSet:
 
         t = Test(name)
 
-        path = os.path.join(self.task_path, f"{name}.out")
-        if os.path.exists(path):
-            t.stdout = File(path)
+        aliases = {
+            'in': 'stdin',
+            'out': 'stdout',
+            'err': 'stderr'
+        }
 
-        path = os.path.join(self.task_path, f"{name}.err")
-        if os.path.exists(path):
-            t.stderr = File(path)
+        for f in self.files_cache:
+            if not f.startswith(name + '.'):
+                continue
 
-        stdin_path = os.path.join(self.task_path, f"{name}.in")
-        if os.path.exists(stdin_path):
-            t.stdin = File(stdin_path)
+            n = f[len(name) + 1:]
+            if n in ['in', 'out', 'err']:
+                t.files['std' + n] = File(os.path.join(self.task_path, f))
 
         path = os.path.join(self.task_path, f"{name}.test.py")
         if os.path.exists(path):
@@ -108,16 +126,13 @@ class TestSet:
 
         for f in glob.glob(os.path.join(self.task_path, f'{name}.*.file')):
             filename = '.'.join(os.path.basename(f).split('.')[1:-1])
-            t.files.append({
-                'path': filename,
-                'expected': File(f),
-            })
+            t.files[filename] = File(f)
 
         self.tests_dict[name] = t
         return t
 
     def load_tests(self):
-        for ext in ['in', 'out', 'err', 'test.py', 'file']:
+        for ext in ['in', 'out', 'err', 'test.py', 'file', 'file_in']:
             for out in glob.glob(os.path.join(self.task_path, f"*.{ext}")):
                 test_name = os.path.basename(out).split('.')[0]
                 self.create_test(test_name)

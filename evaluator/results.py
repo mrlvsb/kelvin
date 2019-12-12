@@ -20,6 +20,7 @@ class TestResult:
         self.meta = {**{
             'name': name,
             'success': True,
+            'errors': []
         }, **meta}
         self.files = {}
         self.result_dir = result_dir
@@ -82,6 +83,11 @@ class TestResult:
 
         if result:
             self.files[name] = result
+
+    def add_result(self, success, message, additional=None):
+        if not success:
+            self['errors'].append(message)
+            self['success'] = False
 
     def __getitem__(self, key):
         if key in self.files:

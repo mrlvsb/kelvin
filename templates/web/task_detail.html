@@ -63,47 +63,14 @@ TODO: Make it nicer with Bootstrap
                 {% if input.exit_code != 0 %}
                 <div class="text-muted">exit code: {{ input.exit_code }}</div>
                 {% endif %}
-    
-                {% if input.stdin %}
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h5>stdin</h5>
-                    </div>
-                    <div class="card-body">
-                        <pre>{{ input.stdin.read }}</pre>
-                    </div>
-                </div>
-                {% endif %}
 
-                {% if input.stdout %}
+                {% for path, file in input.files.items %}
                 <div class="card mb-3">
                     <div class="card-header">
-                        <h5>stdout</h5>
+                        <h5>{{ path }}</h5>
                     </div>
                     <div class="card-body">
-                        <pre>{{ input.stdout.read }}</pre>
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if input.stderr %}
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h5>stderr</h5>
-                    </div>
-                    <div class="card-body">
-                        <pre>{{ input.stderr.read }}</pre>
-                    </div>
-                </div>
-                {% endif %}
-
-                {% for file in input.files %}
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h5>{{ file.path }}</h5>
-                    </div>
-                    <div class="card-body">
-                        <pre>{{ file.expected.read }}</pre>
+                        <pre>{{ file.read }}</pre>
                     </div>
                 </div>
                 {% endfor %}

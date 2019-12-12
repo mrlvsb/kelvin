@@ -114,8 +114,9 @@ class Evaluation:
         # copy all result and expected files
         result.copy_result_file('stdout', actual=self.sandbox.system_path(stdout_name), expected=test.stdout)
         result.copy_result_file('stderr', actual=self.sandbox.system_path(stderr_name), expected=test.stderr)
-        for f in test.files:
-            result.copy_result_file(f['path'], actual=self.sandbox.system_path(f['path']), expected=f['expected'])
+        for path, expected in test.files.items():
+            if path not in ['stdin', 'stdout', 'stderr']:
+                result.copy_result_file(path, actual=self.sandbox.system_path(path), expected=expected)
         
         # do a comparsion
         for name, opts in result.files.items():
@@ -124,7 +125,7 @@ class Evaluation:
 
             if 'actual' not in opts:
                 opts['error'] = 'file not found'
-                result['success'] &= False
+                result.add_result(False, f"file {name} not found")
                 continue
 
             comparator = text_compare
@@ -138,7 +139,7 @@ class Evaluation:
                 comparator_args = {}
         
             success, output = comparator(opts['expected'].path, opts['actual'].path, **comparator_args)
-            result['success'] &= success
+            result.add_result(success, f'file {name} not matches', output)
 
         # extract statistics
         with open('/tmp/meta') as f:
@@ -152,7 +153,7 @@ class Evaluation:
                 else:
                     result[key] = val
 
-        result['success'] &= test.exit_code == result['exit_code']
+        result.add_result(test.exit_code == result['exit_code'], f"invalid exit code {result['exit_code']}")
 
         # save issued commandline
         result['command'] = ' '.join(cmd)
@@ -163,7 +164,7 @@ class Evaluation:
         if test.script:
             check = getattr(test.script, 'check', None)
             if check:
-                result['success'] &= check(result, self)
+                result.add_result(check(result, self), 'custom script failed')
 
         return result
 
