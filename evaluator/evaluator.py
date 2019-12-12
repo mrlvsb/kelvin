@@ -152,6 +152,8 @@ class Evaluation:
                 else:
                     result[key] = val
 
+        result['success'] &= test.exit_code == result['exit_code']
+
         # save issued commandline
         result['command'] = ' '.join(cmd)
         if test.stdin:
