@@ -101,7 +101,7 @@ class Evaluation:
         args = {}
         if test.stdin:
             args['stdin'] = test.stdin.open()
-            result.copy_result_file('stdin', actual=test.stdin)
+            result.copy_result_file('stdin', actual=test.stdin.file.path)
 
         # run process in the sandbox
         cmd = ['./main'] + test.args

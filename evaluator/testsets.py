@@ -82,6 +82,9 @@ class TestFile:
         self.file = file
         self.input = input
 
+    def open(self, mode='r'):
+        return self.file.open(mode)
+
     def read(self, mode='r'):
         return self.file.read(mode)
 
