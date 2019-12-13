@@ -116,38 +116,32 @@ class TestSet:
         return iter(self.tests_dict.values())
 
     def create_test(self, name):
-        if name in self.tests_dict:
-            return self.tests_dict[name]
+        if name not in self.tests_dict:
+            self.tests_dict[name] = Test(name)
 
-        t = Test(name)
+        return self.tests_dict[name]
+
+    def discover_tests(self):
         for f in self.files_cache:
-            if not f.startswith(name + '.'):
-                continue
-
+            name = f.split('.')[0]
             path = os.path.join(self.task_path, f)
 
             n = f[len(name) + 1:]
             if n in ['in', 'out', 'err']:
-                t.files['std' + n] = TestFile(File(path), n == 'in')
+                self.create_test(name).files['std' + n] = TestFile(File(path), n == 'in')
 
             parts = n.split('.', 1)
             if parts[0] == 'file_in':
-                t.files[parts[1]] = TestFile(File(os.path.join(self.task_path, f)), True)
+                self.create_test(name).files[parts[1]] = TestFile(File(os.path.join(self.task_path, f)), True)
             elif parts[0] == 'file_out':
-                t.files[parts[1]] = TestFile(File(os.path.join(self.task_path, f)), False)
+                self.create_test(name).files[parts[1]] = TestFile(File(os.path.join(self.task_path, f)), False)
 
         path = os.path.join(self.task_path, f"{name}.test.py")
         if os.path.exists(path):
-            t.script = load_module(path)
-
-        self.tests_dict[name] = t
-        return t
+            self.create_test(name).script = load_module(path)
 
     def load_tests(self):
-        for ext in ['in', 'out', 'err', 'test.py', 'file', 'file_in']:
-            for out in glob.glob(os.path.join(self.task_path, f"*.{ext}")):
-                test_name = os.path.basename(out).split('.')[0]
-                self.create_test(test_name)
+        self.discover_tests()
 
         try:
             with open(os.path.join(self.task_path, 'config.yml')) as f:
