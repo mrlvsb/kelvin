@@ -109,7 +109,7 @@ class Evaluation:
         stdout_name = rand_str(10)
         stderr_name = rand_str(10)
         isolate_cmd = shlex.split(f"isolate -M /tmp/meta --cg {flags} -o {stdout_name} -r {stderr_name} -s --run {env_build(env)} --") + cmd
-        logger.debug("executing in isolation: %s", shlex.join(isolate_cmd))
+        logger.debug("executing in isolation: %s", " ".join((isolate_cmd))) # TODO: shlex.join only in python3.8
         p = subprocess.Popen(isolate_cmd, **args)
         p.communicate()
 
