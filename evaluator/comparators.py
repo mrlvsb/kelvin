@@ -1,5 +1,11 @@
 import io
+import numpy as np
+from PIL import Image
+import base64
 from diff_match_patch import diff_match_patch
+
+from evaluator import image_evaluator
+
 
 def apply_filters(line, filters):
     for f in filters:
@@ -63,8 +69,7 @@ def text_compare(f1, f2, filters=[]):
 
         return success, html
     except UnicodeDecodeError as e:
-        return False, e
-
+        return False, str(e)
 
 
 def binary_compare(f1, f2):
@@ -79,13 +84,18 @@ def binary_compare(f1, f2):
     return (False if errors else True, ''.join(errors))
 
 
+def to_base64(array):
+    with io.BytesIO() as f:
+        img = Image.fromarray(array)
+        img.save(f, 'PNG')
+        return 'data:image/png;base64,' + base64.b64encode(f.getvalue()).decode('utf-8')
+
 def image_compare(f1, f2):
-    #if f1 not File:
-    #    raise "Only files can be compared"
+    diff_img, expected_img = image_evaluator.compare(f1, f2)
+    color_diff_img = image_evaluator.colorize_diff(expected_img, diff_img)
+    actual = np.array(Image.open(f2))
 
-    #np.array(open(f1).read()).diff(open(f2).read())....
-
-    return (True, "<img src='data:image/png,base64;.....'>")
+    return (True, f"expected:<br><img src='{to_base64(expected_img)}'><br>actual:<br> <img src='{to_base64(actual)}'><br>diff:<br> <img src='{to_base64(color_diff_img)}'>")
 
 
 """

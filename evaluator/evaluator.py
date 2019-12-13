@@ -17,7 +17,7 @@ from . import filters
 from . import pipelines
 from . import testsets
 from .results import EvaluationResult, TestResult
-from .comparators import text_compare, binary_compare
+from .comparators import text_compare, binary_compare, image_compare
 
 logger = logging.getLogger("evaluator")
 
@@ -142,7 +142,8 @@ class Evaluation:
             comparator_args = {'filters': filters}
             if name in self.tests.comparators:
                 all_comparators = {
-                    'binary': binary_compare
+                    'binary': binary_compare,
+                    'image': image_compare,
                 }
 
                 comparator = all_comparators[self.tests.comparators[name]['type']]

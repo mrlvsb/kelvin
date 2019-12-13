@@ -3,8 +3,9 @@ import numpy as np
 
 
 def compare(expected_filename: str, submitted_filename: str):
-    expected_img = imageio.imread(expected_filename)
-    submitted_img = imageio.imread(submitted_filename)
+    from PIL import Image
+    expected_img = np.array(Image.open(expected_filename))
+    submitted_img = np.array(Image.open(submitted_filename))
 
     diff_img = expected_img - submitted_img
 
@@ -23,19 +24,19 @@ def colorize_diff(expected_img, diff_img):
 
     colorized_diff_img = np.zeros(diff_img.shape, diff_img.dtype)
     nz_indices = np.nonzero(diff_img)
-    np.put(colorized_diff_img, nz_indices, [255, 0, 0])
+    np.put(colorized_diff_img, nz_indices, [255, 0, 0, 255])
 
     print(nz_indices)
     #np.where(colorize_diff == [0, 0, 0], colorized_diff_img, [255, 0, 0])
 
     for i, j in zip(nz_indices[0], nz_indices[1]):
         print(i, j)
-        colorized_diff_img[i, j] = [255, 0, 0]
+        colorized_diff_img[i, j] = [255, 0, 0, 255]
 
     print(colorized_diff_img.min())
     print(colorized_diff_img.max())
 
-    print(colorized_diff_img[90, 410])
+    #print(colorized_diff_img[90, 410])
 
     return colorized_diff_img
 
