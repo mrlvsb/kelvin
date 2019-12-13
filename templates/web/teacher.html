@@ -4,6 +4,7 @@
 {% for class in classes %}
 <div class="card mb-2">
     <div class="card-header">
+        <a href="{% url 'download_csv_per_class' class.class.id %}" class="float-right">Download csv</a>
         <h5>{{ class.class }}</h5>
     </div>
     <div class="card-body"> 

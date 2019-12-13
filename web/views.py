@@ -2,9 +2,11 @@ import json
 import os
 import io
 import glob
+import csv
 import tarfile
 import django_rq
 from datetime import datetime
+from collections import OrderedDict
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
@@ -339,24 +341,53 @@ def show_assignment_submits(request, assignment_id):
         'submits': submits,
     })
 
-@user_passes_test(is_teacher)
-def download_csv_per_task(request, assignment_id : int):
-    assigned_task = AssignedTask.objects.get(pk=assignment_id)
-    students = assigned_task.clazz.students.all()
 
-    csv = []
-    for student in students:
+def student_scores(assigned_task):
+    for student in assigned_task.clazz.students.all():
         last_submit = Submit.objects.filter(student=student, assignment=assigned_task).order_by('-submit_num')
         if len(last_submit) > 0:
             # TODO: Multiply by assigned_task.max_points
-            success_rate = last_submit[0].points / last_submit[0].max_points
-            csv.append([student.username, success_rate])
+            if last_submit[0].max_points == 0:
+                success_rate = 0
+            else:
+                success_rate = last_submit[0].points / last_submit[0].max_points
+            yield student.username, success_rate
         else:
-            csv.append([student.username, 0.0])
+            yield student.username, 0.0
 
-    csv_str = '\n'.join(( f'{l},{s}' for l, s in csv ))
+@user_passes_test(is_teacher)
+def download_csv_per_task(request, assignment_id : int):
+    assigned_task = AssignedTask.objects.get(pk=assignment_id)
+
+    csv_str = '\n'.join((f'{l},{s}' for l, s in student_scores(assigned_task)))
     response = HttpResponse(csv_str, 'text/csv')
     csv_filename = f"{assigned_task.task.code}_{assigned_task.clazz.code}_success_rate.csv"
     response['Content-Disposition'] = f'attachment; filename="{csv_filename}"'
 
     return response
+
+@user_passes_test(is_teacher)
+def download_csv_per_class(request, class_id : int):
+    clazz = Class.objects.get(pk=class_id)
+    result = OrderedDict()
+
+    header = ['LOGIN']
+    for assignment in clazz.assignedtask_set.all():
+        header.append(assignment.task.name)
+
+        for login, score in student_scores(assignment):
+            if login not in result:
+                result[login] = {'LOGIN': login}
+
+            result[login][assignment.task.name] = score
+
+    with io.StringIO() as out:
+        w = csv.DictWriter(out, fieldnames=header)
+        w.writeheader()
+
+        for login, row in result.items():
+            w.writerow(row)
+
+        response = HttpResponse(out.getvalue(), 'text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{clazz.code}_success_rate.csv"'
+        return response
