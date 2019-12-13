@@ -30,6 +30,9 @@ def evaluate_job(s: Submit):
     s.points = 0
     s.max_points = 0
     for i in result:
+        if i['gcc']['exit_code'] != 0:
+            s.points = s.max_points = 0
+            break
         for test in i['tests']:
             if test['success']:
                 s.points += 1

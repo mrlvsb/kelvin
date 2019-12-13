@@ -195,8 +195,8 @@ class Sandbox:
 
         res = {
             'exit_code': p.returncode,
-            'stdout': stdout.decode('utf-8'),
-            'stderr': stderr.decode('utf-8'),
+            'stdout': stdout.decode('utf-8', errors='ignore'),
+            'stderr': stderr.decode('utf-8', errors='ignore'),
         }
         logger.info(f"exit_code: {p.returncode}")
 

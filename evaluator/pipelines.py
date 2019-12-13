@@ -9,8 +9,10 @@ class GccPipeline:
         gcc_result = evaluation.sandbox.compile(self.gcc_params)
 
         results = []
-        for test in evaluation.tests:
-            results.append(evaluation.evaluate(test))
+
+        if gcc_result['exit_code'] == 0:
+            for test in evaluation.tests:
+                results.append(evaluation.evaluate(test))
            
         return {
             "gcc": gcc_result,
