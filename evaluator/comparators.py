@@ -1,5 +1,5 @@
 import io
-import re
+from diff_match_patch import diff_match_patch
 
 def apply_filters(line, filters):
     for f in filters:
@@ -47,13 +47,23 @@ def text_compare(f1, f2, filters=[]):
         f1 = open_me(f1, filters=filters)
         f2 = open_me(f2, filters=filters)
 
-        errors = []
-        for line1, line2 in zip(f1, f2):
-            if line1 != line2:
-                errors.append(f'{line1} != {line2}')
-        return (False if errors else True, ''.join(errors))
+        # materialize them :(
+        text1 = "\n".join(f1)
+        text2 = "\n".join(f2)
+
+        dmp = diff_match_patch()
+        diff = dmp.diff_main(text2, text1)
+        html = dmp.diff_prettyHtml(diff)
+
+        success = True
+        for t, _ in diff:
+            if t != 0:
+                success = False
+                break
+
+        return success, html
     except UnicodeDecodeError as e:
-        return (False, e)
+        return False, e
 
 
 

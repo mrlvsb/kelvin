@@ -47,16 +47,19 @@ class TestResult:
 
             n = file[len(self['name'])+1:]
             base = re.sub('\.expected$', '', n)
-            base = re.sub('^file_in\.', '', base)
+            base = re.sub('^(file_in|html)\.', '', base)
             base = aliases.get(base, base)
 
             if base not in self.files:
                 self.files[base] = {}
 
+            key = 'actual'
             if n.endswith('.expected'):
-                self.files[base]['expected'] = File(os.path.join(self.result_dir, file))
-            else:
-                self.files[base]['actual'] = File(os.path.join(self.result_dir, file))
+                key = 'expected'
+            elif n.startswith('html'):
+                key = 'html'
+
+            self.files[base][key] = File(os.path.join(self.result_dir, file))
 
     def copy_input_file(self, local_name, real_file):
         if local_name == 'stdin':
@@ -69,6 +72,9 @@ class TestResult:
             os.path.join(self.result_dir, f"{self['name']}.file_in.{dst}")
         )
 
+    def copy_html_result(self, name, content):
+        with open(os.path.join(self.result_dir, f"{self['name']}.html.{name}"), 'w') as f:
+            f.write(content)
 
     def copy_result_file(self, name, expected=None, actual=None):
         ext = self.aliases.get(name, name)

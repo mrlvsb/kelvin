@@ -32,13 +32,28 @@ $ echo $?  # exit code (return value from main)
             <div class="card mb-3">
                 <div class="card-header">
                     {{ path }}
-                </div>
-                <div class="card-body diff">
-                    <pre class="actual">{{ v.actual.read }}</pre>
-
-                    {% if v.expected %}
-                    <pre class="expected">{{ v.expected.read }}</pre>
+                    {% if 'expected' in v %}
+                    <div class="btn-group btn-group-toggle btn-group-sm float-right" data-toggle="buttons">
+                      {% if 'html' in v %}
+                      <label class="btn btn-outline-secondary active">
+                        <input type="radio" autocomplete="off"> Result
+                      </label>
+                      {% endif %}
+                      <label class="btn btn-outline-secondary">
+                        <input type="radio" autocomplete="off"> Your output
+                      </label>
+                      <label class="btn btn-outline-secondary">
+                        <input type="radio" autocomplete="off"> Expected output
+                      </label>
+                    </div>
                     {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if 'html' in v %}
+                    <div class="result">{{ v.html.read | safe }}</div>
+                    {% endif %}
+                    <pre class="result"{% if 'html' in v %} hidden{% endif %}>{{ v.actual.read }}</pre>
+                    <pre class="result" hidden>{{ v.expected.read }}</pre>
                 </div>
             </div>
             {% endfor %}
@@ -60,41 +75,19 @@ if(el) {
         document.querySelectorAll('.test-result').forEach(elem => elem.removeAttribute('hidden'))
     }
   });
-}
 
-document.querySelectorAll('.diff').forEach(function(elem) {
-    let actual = elem.querySelector('.actual');
-    let expected = elem.querySelector('.expected');
-
-    if(!actual || !expected) {
-        return;
-    }
-
-    actual = actual.textContent;
-    expected = expected.textContent;
-
-
-    const limit_bytes = 1 * 1024;
-    if(actual.length > limit_bytes || expected.length > limit_bytes) {
-        return;
-    }
-
-    let fragment = document.createDocumentFragment();
-
-    Diff.diffLines(actual, expected).forEach(function(part) {
-        let color = part.added ? 'green' : part.removed ? 'red' : 'black';
-        let span = document.createElement('pre');
-        span.style.display = 'inline'
-        span.style.color = color;
-        if(part.removed) {
-          span.style.textDecoration = 'line-through';
+  document.querySelectorAll('label').forEach(function(el) {
+    el.addEventListener('click', function(ev) {
+        let el = ev.target;
+        var nth = 0;
+        while(el = el.previousElementSibling) {
+            nth++;
         }
-        span.appendChild(document.createTextNode(part.value));
-        fragment.appendChild(span);
-    });
 
-    elem.querySelector('.actual').style.display = 'none';
-    elem.querySelector('.expected').style.display = 'none';
-    elem.appendChild(fragment);
-});
+        ev.target.closest('.card').querySelectorAll('.result').forEach(function(el, i) {
+           el.hidden = i != nth;
+        });
+    });
+  });
+}
 </script>

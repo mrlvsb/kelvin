@@ -9,3 +9,4 @@ fabric
 mosspy==1.0.4
 https://github.com/mingchen/django-cas-ng/archive/master.zip #django-cas-ng==4.0.0
 imageio
+diff-match-patch
