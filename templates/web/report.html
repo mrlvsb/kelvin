@@ -29,7 +29,7 @@ $ echo $?  # exit code (return value from main)
 </pre>
 
             {% for path, v in test.files.items %}
-            <div class="card mb-3">
+            <div class="card mb-3 card-test">
                 <div class="card-header">
                     {{ path }}
                     {% if 'expected' in v %}
@@ -39,7 +39,7 @@ $ echo $?  # exit code (return value from main)
                         <input type="radio" autocomplete="off"> Result
                       </label>
                       {% endif %}
-                      <label class="btn btn-outline-secondary">
+                      <label class="btn btn-outline-secondary{% if 'html' not in v %} active{% endif %}">
                         <input type="radio" autocomplete="off"> Your output
                       </label>
                       <label class="btn btn-outline-secondary">
@@ -76,13 +76,14 @@ if(el) {
     }
   });
 
-  document.querySelectorAll('label').forEach(function(el) {
+  document.querySelectorAll('.card-test label').forEach(function(el) {
     el.addEventListener('click', function(ev) {
         let el = ev.target;
         var nth = 0;
         while(el = el.previousElementSibling) {
             nth++;
         }
+        console.log('f')
 
         ev.target.closest('.card').querySelectorAll('.result').forEach(function(el, i) {
            el.hidden = i != nth;
