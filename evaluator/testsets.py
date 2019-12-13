@@ -77,6 +77,7 @@ class Test:
     def title(self, value):
         self._title = value
 
+
 class TestFile:
     def __init__(self, file, input=False):
         self.file = file
@@ -164,7 +165,6 @@ class TestSet:
                     for k, v in conf.get('comparators', {}).items():
                         self.comparators[k] = v
 
-
                     for test_conf in conf.get('tests', []):
                         t = self.create_test(str(test_conf.get('name', f'test {len(self.tests_dict)}')))
                         t.title = test_conf.get('title', t.name)
@@ -172,10 +172,7 @@ class TestSet:
                         t.args = [str(s) for s in test_conf.get('args', [])]
                         files = test_conf.get('files', [])
                         for f in files:
-                            t.files.append({
-                                'path': f['path'],
-                                'expected': File(os.path.join(self.task_path, f['expected'])),
-                            })
+                            t.files[f['path']] = TestFile(File(os.path.join(self.task_path, f['expected'])))
 
         except FileNotFoundError:
             pass
