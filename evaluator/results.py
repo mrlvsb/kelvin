@@ -65,11 +65,11 @@ class TestResult:
         if local_name == 'stdin':
             dst = 'in'
         else:
-            dst = local_name
+            dst = f"file_in.{local_name}"
 
         shutil.copyfile(
             real_file.path,
-            os.path.join(self.result_dir, f"{self['name']}.file_in.{dst}")
+            os.path.join(self.result_dir, f"{self['name']}.{dst}")
         )
 
     def copy_html_result(self, name, content):
