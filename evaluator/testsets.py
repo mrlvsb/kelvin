@@ -113,7 +113,7 @@ class TestSet:
         self.load_tests()
 
     def __iter__(self):
-        return iter(self.tests_dict.values())
+        return iter(sorted(self.tests_dict.values(), key=lambda t: t.name))
 
     def create_test(self, name):
         if name not in self.tests_dict:
