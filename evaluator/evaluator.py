@@ -120,7 +120,7 @@ class Evaluation:
             args['stdin'].close()
         
         # copy all result and expected files
-        result.copy_result_file('stdout', actual=self.sandbox.system_path(stdout_name), expected=test.stdout)
+        result.copy_result_file('stdout', actual=self.sandbox.system_path(stdout_name), expected=test.stdout, force_save=True)
         result.copy_result_file('stderr', actual=self.sandbox.system_path(stderr_name), expected=test.stderr)
         for path, expected in test.files.items():
             if path in ['stdout', 'stderr']:

@@ -76,7 +76,7 @@ class TestResult:
         with open(os.path.join(self.result_dir, f"{self['name']}.html.{name}"), 'w') as f:
             f.write(content)
 
-    def copy_result_file(self, name, expected=None, actual=None):
+    def copy_result_file(self, name, expected=None, actual=None, force_save=False):
         ext = self.aliases.get(name, name)
 
         if expected:
@@ -89,7 +89,7 @@ class TestResult:
             try:
                 if isinstance(actual, File):
                     actual = actual.path
-                if os.stat(actual).st_size > 0:
+                if os.stat(actual).st_size > 0 or force_save:
                     shutil.copyfile(actual, os.path.join(self.result_dir, f"{self['name']}.{ext}"))
             except FileNotFoundError:
                 pass
