@@ -1,7 +1,8 @@
 import tarfile
 
 class GccPipeline:
-    def __init__(self, gcc_params=[]):
+    def __init__(self, name, gcc_params=[]):
+        self.name = name
         self.gcc_params = gcc_params
 
     def run(self, evaluation):
@@ -12,7 +13,7 @@ class GccPipeline:
 
         if gcc_result['exit_code'] == 0:
             for test in evaluation.tests:
-                results.append(evaluation.evaluate(test))
+                results.append(evaluation.evaluate(self.name, test))
            
         return {
             "gcc": gcc_result,
@@ -73,6 +74,10 @@ void* __wrap_malloc (size_t c) {
             }
         
 class DownloadPipe:
+    @property
+    def name(self):
+        return 'download'
+
     def run(self, evaluation):
         src = 'submit'
         if tarfile.is_tarfile(evaluation.sandbox.system_path(src)):

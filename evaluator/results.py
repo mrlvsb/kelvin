@@ -155,7 +155,8 @@ class EvaluationResult:
                 for pipe_json in json.load(f):
                     pipe = PipeResult(pipe_json['name'], pipe_json['gcc'])
                     for test_json in pipe_json['tests']:
-                        pipe.tests.append(TestResult.load(test_json, self.result_dir))
+                        result_dir = os.path.join(self.result_dir, pipe.name)
+                        pipe.tests.append(TestResult.load(test_json, result_dir))
                     self.pipelines.append(pipe)
         except FileNotFoundError:
             pass

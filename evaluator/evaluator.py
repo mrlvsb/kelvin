@@ -69,28 +69,31 @@ class Evaluation:
 
     def run(self):
         pipeline = [
-            ('download', pipelines.DownloadPipe()),
-            ('normal run', pipelines.GccPipeline()),
-            ('run with sanitizer', pipelines.GccPipeline(['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])),
-            #('malloc fail tester', Mallocer()),
-            #('random inputs', InputGeneratorPipe())
+            pipelines.DownloadPipe(),
+            pipelines.GccPipeline('normal'),
+            pipelines.GccPipeline('sanitizer', ['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])
         ]
         
         result = EvaluationResult(self.result_path)
-        for name, pipe in pipeline:
-            logger.info(f"executing {name}")
+        for pipe in pipeline:
+            logger.info(f"executing {pipe.name}")
             res = pipe.run(self)
             if res:
-                res['name'] = name
+                res['name'] = pipe.name
                 result.pipelines.append(res)
 
         result.save(os.path.join(self.result_path, 'result.json'))
         return result
 
-    def evaluate(self, test: testsets.Test, env=None, title=None):
+    def evaluate(self, runner, test: testsets.Test, env=None, title=None):
         filters = self.tests.filters + test.filters
 
-        result = TestResult(test.name, self.result_path)
+        result_dir = os.path.join(self.result_path, runner)
+        try:
+            os.makedirs(result_dir)
+        except FileExistsError:
+            pass
+        result = TestResult(test.name, result_dir)
         result.title = title if title else test.title
 
         # copy input files to the sandbox

@@ -144,7 +144,7 @@ class TestEvaluation(unittest.TestCase):
         s.copy(os.path.join(base_dir, f'tests/warning.c'), "main.c")
 
         e = Evaluation('/tmp', '/tmp/kelvin', s)
-        res = GccPipeline().run(e)
+        res = GccPipeline('test').run(e)
             
         self.assertTrue("implicit declaration of function ‘printf’" in res['gcc']['stderr'])
 
@@ -153,7 +153,7 @@ class TestEvaluation(unittest.TestCase):
         s.copy(os.path.join(base_dir, f'tests/error.c'), "main.c")
 
         e = Evaluation('/tmp', '/tmp/kelvin', s)
-        res = GccPipeline().run(e)
+        res = GccPipeline('test').run(e)
             
         self.assertTrue("error: ld returned 1 exit status" in res['gcc']['stderr'])
 
