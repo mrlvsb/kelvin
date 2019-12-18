@@ -136,6 +136,8 @@ AUTHENTICATION_BACKENDS = [
     'web.vsbldapbackend.MyLDAPBackend'
 ]
 
+LOGIN_REDIRECT_URL = '/'
+
 CAS_ENABLE = False
 CAS_SERVER_URL = 'https://www.sso.vsb.cz/'
 CAS_CREATE_USER = False

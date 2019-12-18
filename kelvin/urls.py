@@ -23,12 +23,14 @@ if settings.CAS_ENABLE:
     from django_cas_ng import views as auth_views
 else:
     from django.contrib.auth import views as auth_views
+from django.contrib.auth.views import LoginView as LDAPLoginView
 
 urlpatterns = [
     path('', include('web.urls')),
     path('admin/', admin.site.urls),
     path('accounts/logout/', auth_views.LogoutView.as_view(), name='cas_ng_logout'),
     path('accounts/login/', auth_views.LoginView.as_view(), name='cas_ng_login'),
+    path('accounts/login/ldap', LDAPLoginView.as_view()),
     path('api/', include('api.urls')),
     path('django-rq/', include('django_rq.urls'))
 ]
