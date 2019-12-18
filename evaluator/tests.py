@@ -5,6 +5,7 @@ import struct
 from .evaluator import *
 from .comparators import *
 from .pipelines import GccPipeline
+from .filters import *
 
 base_dir = os.path.dirname(__file__)
 
@@ -184,7 +185,7 @@ class TestComparators(unittest.TestCase):
 
     def test_open_strlower(self):
         expected = ['hello world', 'foo! 128 bar']
-        self.assertEqual(list(open_me(self.file("strlower"), 't', filters=['lower'])), expected)
+        self.assertEqual(list(open_me(self.file("strlower"), 't', filters=[LowerFilter()])), expected)
         
 
     def test_open_binary(self):
@@ -198,26 +199,22 @@ class TestComparators(unittest.TestCase):
         success, result = text_compare(io.StringIO("test 12345\nxyz"), io.StringIO("test 12345\nxyz"))
 
         self.assertTrue(success)
-        self.assertEqual(result, "")
 
     def test_file_same(self):
         success, result = text_compare(self.file("same.1"), self.file("same.1"))
 
         self.assertTrue(success)
-        self.assertEqual(result, "")
 
     def test_generator_same(self):
-        success, result = text_compare((i for i in range(10)), (i for i in range(10)))
+        success, result = text_compare((str(i) for i in range(10)), (str(i) for i in range(10)))
 
         self.assertTrue(success)
-        self.assertEqual(result, "")
 
 
     def test_file_differs(self):
         success, result = text_compare(self.file("same.1"), self.file("copy.2"))
 
         self.assertFalse(success)
-        self.assertEqual(result, "")
 
 
 if __name__ == '__main__':
