@@ -4,6 +4,7 @@ import shutil
 import re
 
 from .testsets import File
+from .utils import copyfile
 
 
 def encode_json(o):
@@ -67,7 +68,7 @@ class TestResult:
         else:
             dst = f"file_in.{local_name}"
 
-        shutil.copyfile(
+        copyfile(
             real_file.path,
             os.path.join(self.result_dir, f"{self['name']}.{dst}")
         )
@@ -80,7 +81,7 @@ class TestResult:
         ext = self.aliases.get(name, name)
 
         if expected:
-            shutil.copyfile(
+            copyfile(
                 expected.path, 
                 os.path.join(self.result_dir, f"{self['name']}.{ext}.expected")
             )

@@ -34,7 +34,6 @@ class File:
         with self.open(mode) as f:
             return f.read()
 
-
 class Test:
     def __init__(self, name):
         self.name = name
@@ -76,6 +75,11 @@ class Test:
     @title.setter
     def title(self, value):
         self._title = value
+
+    def add_memory_file(self, name, input=False):
+        f = io.StringIO()
+        self.files[name] = TestFile(File(f), input=input)
+        return f
 
 
 class TestFile:

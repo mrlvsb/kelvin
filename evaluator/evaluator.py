@@ -1,5 +1,4 @@
 import subprocess
-from shutil import copyfile
 import sys
 import os
 import io
@@ -18,6 +17,7 @@ from . import pipelines
 from . import testsets
 from .results import EvaluationResult, TestResult
 from .comparators import text_compare, binary_compare, image_compare
+from .utils import copyfile
 
 logger = logging.getLogger("evaluator")
 
@@ -99,7 +99,7 @@ class Evaluation:
         # copy input files to the sandbox
         for path, f in test.files.items():
             if f.input:
-                shutil.copyfile(f.path, self.sandbox.system_path(path))
+                copyfile(f.path, self.sandbox.system_path(path))
 
         args = {}
         if test.stdin:
