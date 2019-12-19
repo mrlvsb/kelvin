@@ -116,6 +116,16 @@ def get(submit):
     }
     return data
 
+def render_markdown(task_dir, name):
+    try:
+        with open(os.path.join(task_dir, "readme.md")) as f:
+            text = "\n".join(f.read().splitlines()[1:])
+        text = markdown2.markdown(text, extras=["fenced-code-blocks", "tables"])
+        text = text.replace('src="figures/', f'src="https://upr.cs.vsb.cz/static/tasks/{name}/figures/')
+        return text
+    except FileNotFoundError:
+        pass
+
 @login_required()
 def task_detail(request, assignment_id, submit_num=None, student_username=None):
     submits = Submit.objects.filter(
@@ -130,26 +140,16 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
     assignment = AssignedTask.objects.get(id=assignment_id)
 
     task_dir = os.path.join(BASE_DIR, "tasks", assignment.task.code)
-    text = ""
-    try:
-        with open(os.path.join(task_dir, "readme.md")) as f:
-            text = "\n".join(f.read().splitlines()[1:])
-        text = markdown2.markdown(text, extras=["fenced-code-blocks", "tables"])
-        text = text.replace('src="figures/', f'src="https://upr.cs.vsb.cz/static/tasks/{assignment.task.code}/figures/')
-    except FileNotFoundError:
-        pass
 
     data = {
         # TODO: task and deadline can be combined into assignment ad deal with it in template
         'task': assignment.task,
         'deadline': assignment.deadline,
         'submits': submits,
-        'text': text,
-        'inputs': [],
+        'text': render_markdown(task_dir, assignment.task.code),
+        'inputs': TestSet(task_dir, get_meta(request.user)),
         'tznow': tz.now(),
     }
-
-    data['inputs'] = TestSet(task_dir, get_meta(request.user))
 
     current_submit = None
     if submit_num:

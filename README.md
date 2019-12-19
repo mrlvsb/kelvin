@@ -45,7 +45,8 @@ OPT: a obrazky se muzou davat treba do adresare figures
 
 ## Run testing evaluation
 ```
-python -m evaluator.evaluator tasks/komb_02_even_odd ./solution.c
+$ ./manage.py evaluate ./tasks/gaura/komb_05_strings/ ./submit.c
+$ chromium /tmp/eval/result.html
 ```
 
 ## Run evaluator tests

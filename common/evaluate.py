@@ -1,15 +1,14 @@
 import django_rq
-from evaluator.evaluator import evaluate
+from evaluator.evaluator import evaluate, evaluate_score
 from common.models import Submit, submit_path_parts
-import json
 import os
-from django.conf import settings
 
 
 def get_meta(user):
     return {
         'username': user.username,
     }
+
 
 @django_rq.job
 def evaluate_job(s: Submit):
@@ -26,16 +25,5 @@ def evaluate_job(s: Submit):
         get_meta(s.student),
     )
 
-    # calculate points
-    s.points = 0
-    s.max_points = 0
-    for i in result:
-        if i['gcc']['exit_code'] != 0:
-            s.points = s.max_points = 0
-            break
-        for test in i['tests']:
-            if test['success']:
-                s.points += 1
-            s.max_points += 1
-
+    s.points, s.max_points = evaluate_score(result)
     s.save()

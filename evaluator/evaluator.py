@@ -256,20 +256,16 @@ def evaluate(task_path, submit_path, result_path, meta=None):
 
     return evaluation.run()
 
-if __name__ == "__main__":
-    import argparse
-    from pprint import pprint
-    import shutil
+def evaluate_score(result):
+    points = 0
+    max_points = 0
+    for i in result:
+        if i['gcc']['exit_code'] != 0:
+            points = max_points = 0
+            break
+        for test in i['tests']:
+            if test['success']:
+                points += 1
+            max_points += 1
+    return points, max_points
 
-    logging.basicConfig(level=logging.DEBUG)
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('task_dir', help='path to directory with the task')
-    parser.add_argument('solution', help='path to source code in .c or tar')
-    parser.add_argument('--print-json')
-
-    args = parser.parse_args()
-    result = evaluate(args.task_dir, args.solution, '/tmp/eval')
-
-    if args.print_json:
-        pprint(result)
