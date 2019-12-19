@@ -114,6 +114,7 @@ class TestSet:
         self.File = File
         self.comparators = {}
         self.files_cache = os.listdir(self.task_path)
+        self.gcc_flags = []
         self.load_tests()
 
     def __iter__(self):
@@ -151,6 +152,8 @@ class TestSet:
             with open(os.path.join(self.task_path, 'config.yml')) as f:
                 conf = yaml.load(f.read(), Loader=yaml.SafeLoader)
                 if conf:
+                    self.gcc_flags = conf.get('gcc_flags', [])
+
                     for filter_name in conf.get('filters', []):
                         self.filters.append(filters.all_filters[filter_name.lower()]())
 

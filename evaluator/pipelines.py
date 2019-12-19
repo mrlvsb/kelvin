@@ -7,7 +7,7 @@ class GccPipeline:
 
     def run(self, evaluation):
         # TODO: params formatting is not secure!
-        gcc_result = evaluation.sandbox.compile(self.gcc_params)
+        gcc_result = evaluation.sandbox.compile(self.gcc_params + evaluation.tests.gcc_flags)
 
         results = []
 
