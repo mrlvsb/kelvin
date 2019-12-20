@@ -240,6 +240,7 @@ class Sandbox:
         ).strip()
 
         result = self.run(command)
+        result['stderr'] = result['stderr'][:1024*10]
         result['command'] = command
         return result
 
