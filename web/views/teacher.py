@@ -1,182 +1,37 @@
-import json
 import os
-import re
 import io
-import glob
 import csv
 import tarfile
-import django_rq
-from datetime import datetime
+import tempfile
+from shutil import copyfile
 from collections import OrderedDict
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.views import LoginView
-from django.db.models import Count
+from django.contrib.auth.decorators import user_passes_test
 from django.utils import timezone as tz
 from django.conf import settings
 
-import tempfile
-from django.db.models import Max, F
-from shutil import copyfile
-
 import mosspy
 
-from .task_utils import highlight_code, render_markdown
-
+from ..task_utils import highlight_code, render_markdown
 from common.models import Submit, Class, Task, AssignedTask
-from common.evaluate import evaluate_job
-from api.models import UserToken
 from kelvin.settings import BASE_DIR
-from .forms import UploadSolutionForm
 from evaluator.testsets import TestSet
 from common.evaluate import get_meta
-from evaluator.results import EvaluationResult
-
-
-def is_teacher(user):
-    return user.groups.filter(name='teachers').exists()
-
-
-@login_required()
-def student_index(request):
-    result = []
-
-    now = datetime.now()
-    classess = Class.objects.current_semester().filter(students__pk=request.user.id)
-    
-    for clazz in classess:
-        tasks = []
-        for assignment in AssignedTask.objects.filter(clazz_id=clazz.id).order_by('-id'):
-            last_submit = Submit.objects.filter(
-                assignment__id=assignment.id,
-                student__id=request.user.id,
-            ).last()
-
-            data = {
-                'id': assignment.id,
-                'name': assignment.task.name,
-                'points': None,
-                'max_points': None,
-                'deadline': assignment.deadline,
-                'tznow': tz.now(),
-            }
-
-            if last_submit:
-                data['points'] = last_submit.points
-                data['max_points'] = last_submit.max_points
-
-            tasks.append(data)
-
-        result.append({
-            'class': clazz,
-            'tasks': tasks,
-        })
-
-    return render(request, 'web/index.html', {
-        'classess': result,
-        'token': UserToken.objects.get(user__id=request.user.id).token,
-    })
-
-@login_required()
-def index(request):
-    if is_teacher(request.user):
-        return teacher_list(request)
-    return student_index(request)
-
-def get(submit):
-    results = []
-    try:
-        path = re.sub(r'^submits/', 'submit_results/', str(submit.source))
-        path = path.rstrip('.c')
-        results = EvaluationResult(path)
-    except json.JSONDecodeError as e:
-        # TODO: show error
-        pass
-
-    data = {
-        "submit": submit,
-        "results": results,
-        "source": highlight_code(submit.source.path),
-    }
-    return data
-
-
-@login_required()
-def task_detail(request, assignment_id, submit_num=None, student_username=None):
-    submits = Submit.objects.filter(
-        assignment__pk=assignment_id,
-    ).order_by('-id')
-
-    if is_teacher(request.user):
-        submits = submits.filter(student__username=student_username)
-    else:
-        submits = submits.filter(student__pk=request.user.id)
-
-    assignment = AssignedTask.objects.get(id=assignment_id)
-
-    task_dir = os.path.join(BASE_DIR, "tasks", assignment.task.code)
-
-    data = {
-        # TODO: task and deadline can be combined into assignment ad deal with it in template
-        'task': assignment.task,
-        'deadline': assignment.deadline,
-        'submits': submits,
-        'text': render_markdown(task_dir, assignment.task.code),
-        'inputs': TestSet(task_dir, get_meta(request.user)),
-        'tznow': tz.now(),
-    }
-
-    current_submit = None
-    if submit_num:
-        current_submit = submits.get(submit_num=submit_num)
-    elif submits:
-        current_submit = submits[0]
-
-    if current_submit:
-        data = {**data, **get(current_submit)}
-
-    if request.method == 'POST':
-        form = UploadSolutionForm(request.POST, request.FILES)
-        if form.is_valid():
-            s = Submit()
-            s.source = request.FILES['solution']
-            s.student = request.user
-            s.assignment = assignment
-            s.submit_num = Submit.objects.filter(assignment__id=s.assignment.id, student__id=request.user.id).count() + 1
-            s.save()
-            django_rq.enqueue(evaluate_job, s)
-            return redirect(request.path_info + '#result')
-    else:
-        form = UploadSolutionForm()
-    data['upload_form'] = form
-    return render(request, 'web/task_detail.html', data)
+from .utils import is_teacher
 
 
 @user_passes_test(is_teacher)
 def teacher_task(request, task_id):
     task = get_object_or_404(Task, pk=task_id)
-
     task_dir = os.path.join(BASE_DIR, "tasks", task.code)
-    text = ""
-    try:
-        with open(os.path.join(task_dir, "readme.md")) as f:
-            text = "\n".join(f.read().splitlines()[1:])
-        text = markdown2.markdown(text, extras=["fenced-code-blocks", "tables"])
-        text = text.replace('src="figures/', f'src="https://upr.cs.vsb.cz/static/tasks/{task.code}/figures/')
-    except FileNotFoundError:
-        pass
 
-    data = {
-        'task': task,
-        'text': text,
-        'inputs': [],
-    }
-
-    data['inputs'] = TestSet(task_dir, get_meta(request.user))
-
-    return render(request, 'web/task_detail.html', data)
+    return render(request, 'web/task_detail.html', {
+          'task': task,
+          'text': render_markdown(task_dir, task.code),
+          'inputs': TestSet(task_dir, get_meta(request.user))
+    })
 
 
 def teacher_list(request):
@@ -214,7 +69,7 @@ def teacher_list(request):
                 'assignment': assignment,
                 'results': results,
                 'tznow': tz.now(),
-            })      
+            })
 
         result.append({
             'class': clazz,
@@ -225,7 +80,8 @@ def teacher_list(request):
         'classes': result,
     })
 
-@login_required
+
+@user_passes_test(is_teacher)
 def moss_check(request, assignment_id):
     m = mosspy.Moss(settings.MOSS_USERID, "c")
 
@@ -247,29 +103,12 @@ def moss_check(request, assignment_id):
 
         return redirect(assignment.moss_url)
 
+
 @user_passes_test(is_teacher)
 def submits(request):
     submits = Submit.objects.all().order_by('-id')[:100]
     return render(request, "web/submits.html", {'submits': submits})
 
-
-def script(request, token):
-    data = {
-        "token": token,
-    }
-    return render(request, "web/install.sh", data, "text/x-shellscript")
-
-def uprpy(request):
-    with open(os.path.join(BASE_DIR, "scripts/submit.py")) as f:
-        return HttpResponse(f.read(), 'text/x-python')
-
-@login_required
-def project(request, project_type):
-    if project_type not in ['normal', 'bonus']:
-        return HttpResponse(code=404)
-
-    with open(os.path.join(BASE_DIR, "projects", project_type, "assigned", f"{request.user.username}.html")) as f:
-        return HttpResponse(f.read(), 'text/html')
 
 def get_last_submits(assignment_id):
     submits = Submit.objects.filter(assignment_id=assignment_id).order_by('-submit_num', 'student_id')
@@ -277,11 +116,12 @@ def get_last_submits(assignment_id):
     result = []
     processed = set()
     for submit in submits:
-        if submit.student_id not in processed:            
+        if submit.student_id not in processed:
             result.append(submit)
             processed.add(submit.student_id)
 
     return result
+
 
 @user_passes_test(is_teacher)
 def download_assignment_submits(request, assignment_id):
@@ -291,7 +131,7 @@ def download_assignment_submits(request, assignment_id):
             for submit in get_last_submits(assignment_id):
                 tar.add(submit.source.path, f"{submit.student.username}.c")
                 targets.append(submit.student.username)
-        
+
             template = f"""
 CFLAGS=-lm
 CC=-gcc
@@ -309,7 +149,8 @@ clean:
         response = HttpResponse(f.read(), 'application/tar')
         response['Content-Disposition'] = f'attachment; filename="submits.tar.gz"'
         return response
-    
+
+
 @user_passes_test(is_teacher)
 def show_assignment_submits(request, assignment_id):
     submits = []
@@ -337,8 +178,9 @@ def student_scores(assigned_task):
         else:
             yield student.username, 0.0
 
+
 @user_passes_test(is_teacher)
-def download_csv_per_task(request, assignment_id : int):
+def download_csv_per_task(request, assignment_id: int):
     assigned_task = AssignedTask.objects.get(pk=assignment_id)
 
     csv_str = '\n'.join((f'{l},{s}' for l, s in student_scores(assigned_task)))
@@ -350,7 +192,7 @@ def download_csv_per_task(request, assignment_id : int):
 
 
 @user_passes_test(is_teacher)
-def download_csv_per_class(request, class_id : int):
+def download_csv_per_class(request, class_id: int):
     clazz = Class.objects.get(pk=class_id)
     result = OrderedDict()
 

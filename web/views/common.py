@@ -1,0 +1,12 @@
+from django.contrib.auth.decorators import login_required, user_passes_test
+
+from .teacher import teacher_list
+from .student import student_index
+from .utils import is_teacher
+
+
+@login_required()
+def index(request):
+    if is_teacher(request.user):
+        return teacher_list(request)
+    return student_index(request)
