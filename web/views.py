@@ -23,10 +23,7 @@ from shutil import copyfile
 
 import mosspy
 
-from pygments import highlight
-from pygments.lexers import CLexer
-from pygments.formatters import HtmlFormatter
-import markdown2
+from .task_utils import highlight_code, render_markdown
 
 from common.models import Submit, Class, Task, AssignedTask
 from common.evaluate import evaluate_job
@@ -41,17 +38,6 @@ from evaluator.results import EvaluationResult
 def is_teacher(user):
     return user.groups.filter(name='teachers').exists()
 
-def highlight_code(path):
-    source = ""
-    try:
-        with open(path) as f:
-            source = f.read()
-    except UnicodeDecodeError:
-        source = "-- source code contains binary data --"
-    except FileNotFoundError:
-        source = "-- source code not found --"
-
-    return highlight(source, CLexer(), HtmlFormatter(linenos='table', lineanchors='src', anchorlinenos=True))
 
 @login_required()
 def student_index(request):
@@ -116,15 +102,6 @@ def get(submit):
     }
     return data
 
-def render_markdown(task_dir, name):
-    try:
-        with open(os.path.join(task_dir, "readme.md")) as f:
-            text = "\n".join(f.read().splitlines()[1:])
-        text = markdown2.markdown(text, extras=["fenced-code-blocks", "tables"])
-        text = text.replace('src="figures/', f'src="https://upr.cs.vsb.cz/static/tasks/{name}/figures/')
-        return text
-    except FileNotFoundError:
-        pass
 
 @login_required()
 def task_detail(request, assignment_id, submit_num=None, student_username=None):

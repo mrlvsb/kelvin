@@ -5,7 +5,7 @@ from django.shortcuts import render
 
 from evaluator.evaluator import evaluate, evaluate_score
 from evaluator.testsets import TestSet
-from web.views import render_markdown, highlight_code
+from web.task_utils import render_markdown, highlight_code
 
 
 class Command(BaseCommand):
