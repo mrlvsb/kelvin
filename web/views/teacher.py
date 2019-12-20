@@ -9,16 +9,18 @@ from collections import OrderedDict
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth.decorators import user_passes_test
+from django.urls import reverse
 from django.utils import timezone as tz
 from django.conf import settings
 
 import mosspy
+import django_rq
 
 from ..task_utils import highlight_code, render_markdown
 from common.models import Submit, Class, Task, AssignedTask
 from kelvin.settings import BASE_DIR
 from evaluator.testsets import TestSet
-from common.evaluate import get_meta
+from common.evaluate import get_meta, evaluate_job
 from .utils import is_teacher
 
 
@@ -222,3 +224,11 @@ def download_csv_per_class(request, class_id: int):
 def all_tasks(request):
     return render(request, 'web/all_tasks.html', {'tasks': Task.objects.all()})
 
+
+@user_passes_test(is_teacher)
+def reevaluate(request, submit_id):
+    submit = Submit.objects.get(pk=submit_id)
+    submit.points = submit.max_points = None
+    submit.save()
+    django_rq.enqueue(evaluate_job, submit)
+    return redirect(request.META.get('HTTP_REFERER', reverse('submits')))

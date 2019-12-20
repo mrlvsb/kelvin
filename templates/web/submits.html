@@ -8,6 +8,7 @@
         <td>{{ submit.student.username }}</td>
         <td>{{ submit.points }} / {{ submit.max_points }}</td>
         <td title="{{ submit.created_at }}">{{ submit.created_at | timesince }}</td>
+        <td><a href="{% url 'reevaluate' submit.id %}">reevaluate</a></td>
     </tr>
 
     {% endfor %}
