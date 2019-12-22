@@ -18,7 +18,7 @@ import django_rq
 
 from ..task_utils import highlight_code, render_markdown
 from common.models import Submit, Class, Task, AssignedTask
-from kelvin.settings import BASE_DIR
+from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from evaluator.testsets import TestSet
 from common.evaluate import get_meta, evaluate_job
 from .utils import is_teacher
@@ -32,7 +32,8 @@ def teacher_task(request, task_id):
     return render(request, 'web/task_detail.html', {
           'task': task,
           'text': render_markdown(task_dir, task.code),
-          'inputs': TestSet(task_dir, get_meta(request.user))
+          'inputs': TestSet(task_dir, get_meta(request.user)),
+          'max_inline_content_bytes': MAX_INLINE_CONTENT_BYTES,
     })
 
 

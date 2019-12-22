@@ -173,6 +173,8 @@ LOGGING = {
     },
 }
 
+MAX_INLINE_CONTENT_BYTES = 4096
+
 try:
     from .local_settings import *
 except ModuleNotFoundError:

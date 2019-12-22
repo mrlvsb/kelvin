@@ -14,7 +14,7 @@ from ..task_utils import highlight_code, render_markdown
 from common.models import Submit, Class, AssignedTask, Task
 from common.evaluate import evaluate_job
 from api.models import UserToken
-from kelvin.settings import BASE_DIR
+from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from ..forms import UploadSolutionForm
 from evaluator.testsets import TestSet
 from common.evaluate import get_meta
@@ -103,7 +103,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         'text': render_markdown(task_dir, assignment.task.code),
         'inputs': TestSet(task_dir, get_meta(request.user)),
         'tznow': tz.now(),
-        'max_inline_content_bytes': 4096
+        'max_inline_content_bytes': MAX_INLINE_CONTENT_BYTES,
     }
 
     current_submit = None
