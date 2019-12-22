@@ -43,12 +43,12 @@ class TestResult:
         aliases = {v: k for k, v in self.aliases.items()}
 
         for file in os.listdir(self.result_dir):
-            if not file.startswith(self['name']):
+            if not file.startswith(f"{self['name']}."):
                 continue
 
             n = file[len(self['name'])+1:]
-            base = re.sub('\.expected$', '', n)
-            base = re.sub('^(file_in|html)\.', '', base)
+            base = re.sub(r'\.expected$', '', n)
+            base = re.sub(r'^(file_in|html)\.', '', base)
             base = aliases.get(base, base)
 
             if base not in self.files:
