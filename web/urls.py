@@ -12,6 +12,9 @@ urlpatterns = [
 
     path('task/<int:assignment_id>', student_view.task_detail, name='task_detail'),
     path('task/<int:assignment_id>/<int:submit_num>', student_view.task_detail, name='task_detail'),
+    path('task/<slug:task_name>/tests/<str:test_name>/<str:file>', student_view.raw_test_content, name='raw_test_content'),
+
+
 
     # teacher
     path('teacher/task/<int:task_id>', teacher_view.teacher_task, name='teacher_task'),

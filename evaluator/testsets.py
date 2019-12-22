@@ -93,6 +93,11 @@ class TestFile:
     def read(self, mode='r'):
         return self.file.read(mode)
 
+    def size(self):
+        if isinstance(self.file.path, io.StringIO):
+            return len(self.file.path.getvalue())
+        return os.stat(self.file.path).st_size
+
     @property
     def path(self):
         return self.file.path

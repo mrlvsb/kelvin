@@ -5,13 +5,13 @@ import django_rq
 from datetime import datetime
 
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseNotFound
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone as tz
 
 from ..task_utils import highlight_code, render_markdown
 
-from common.models import Submit, Class, AssignedTask
+from common.models import Submit, Class, AssignedTask, Task
 from common.evaluate import evaluate_job
 from api.models import UserToken
 from kelvin.settings import BASE_DIR
@@ -20,7 +20,6 @@ from evaluator.testsets import TestSet
 from common.evaluate import get_meta
 from evaluator.results import EvaluationResult
 from .utils import is_teacher
-
 
 @login_required()
 def student_index(request):
@@ -132,6 +131,18 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
     data['upload_form'] = form
     return render(request, 'web/task_detail.html', data)
 
+def raw_test_content(request, task_name, test_name, file):
+    task = Task.objects.get(code=task_name)
+
+    task_dir = os.path.join(BASE_DIR, "tasks", task.code)
+    tests = TestSet(task_dir, get_meta(request.user))
+
+    for test in tests:
+        print(test)
+        if test.name == test_name:
+            if file in test.files:
+                return HttpResponse(test.files[file].read(), 'text/plain')
+    return HttpResponseNotFound()
 
 def script(request, token):
     data = {

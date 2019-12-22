@@ -70,7 +70,11 @@ TODO: Make it nicer with Bootstrap
                         <h5>{{ path }}</h5>
                     </div>
                     <div class="card-body">
+                        {% if file.size < 4096 %}
                         <pre>{{ file.read }}</pre>
+                        {% else %}
+                            Content too large, show <a href='{% url 'raw_test_content' task.code input.name path %}'>raw content</a>.
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
