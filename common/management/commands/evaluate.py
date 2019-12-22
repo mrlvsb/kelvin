@@ -5,6 +5,7 @@ from django.shortcuts import render
 
 from evaluator.evaluator import evaluate, evaluate_score
 from evaluator.testsets import TestSet
+from evaluator.results import EvaluationResult
 from web.task_utils import render_markdown, highlight_code
 
 
@@ -15,21 +16,27 @@ class Command(BaseCommand):
         parser.add_argument('--print-json')
 
     def handle(self, *args, **opts):
-        result = evaluate(opts['task_dir'], opts['solution'], '/tmp/eval')
+        result_dir = '/tmp/eval'
 
+        result = evaluate(opts['task_dir'], opts['solution'], result_dir)
         points, max_points = evaluate_score(result)
+
+        # reread result so we get same state as in django
+        result = EvaluationResult(result_dir)
+
         r = render(None, 'web/task_detail.html', {
             'results': result,
             'text': render_markdown(opts['task_dir'], None),
             'inputs': TestSet(opts['task_dir'], {}),
             'source': highlight_code(opts['solution']),
             'task': {
-                'name': os.path.basename(os.path.normpath(opts['task_dir']))
+                'name': os.path.basename(os.path.normpath(opts['task_dir'])),
+                'code': 'task'
             },
             'submit': {
                 'points': points,
                 'max_points': max_points,
             }
         })
-        with open('/tmp/eval/result.html', 'wb') as f:
+        with open(os.path.join(result_dir, 'result.html'), 'wb') as f:
             f.write(r.getvalue())
