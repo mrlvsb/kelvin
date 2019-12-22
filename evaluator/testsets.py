@@ -30,6 +30,11 @@ class File:
             return io.StringIO(self.path.getvalue())
         return open(self.path, mode)
 
+    def size(self):
+        if isinstance(self.path, io.StringIO):
+            return len(self.path.getvalue())
+        return os.stat(self.path).st_size
+
     def read(self, mode='r'):
         with self.open(mode) as f:
             return f.read()

@@ -5,7 +5,7 @@ import django_rq
 from datetime import datetime
 
 from django.shortcuts import render, redirect
-from django.http import HttpResponse, HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseNotFound, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone as tz
 
@@ -103,6 +103,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         'text': render_markdown(task_dir, assignment.task.code),
         'inputs': TestSet(task_dir, get_meta(request.user)),
         'tznow': tz.now(),
+        'max_inline_content_bytes': 4096
     }
 
     current_submit = None
@@ -138,10 +139,24 @@ def raw_test_content(request, task_name, test_name, file):
     tests = TestSet(task_dir, get_meta(request.user))
 
     for test in tests:
-        print(test)
         if test.name == test_name:
             if file in test.files:
                 return HttpResponse(test.files[file].read(), 'text/plain')
+    return HttpResponseNotFound()
+
+@login_required
+def raw_result_content(request, submit_id, test_name, result_type, file):
+    submit = Submit.objects.get(pk=submit_id)
+    
+    if submit.student_id != request.user.id and not is_teacher(request.user):
+        return HttpResponseForbidden()
+
+    for pipe in get(submit)['results']:
+        for test in pipe.tests:
+            if test.name == test_name:
+                if file in test.files:
+                    if result_type in test.files[file]:
+                        return HttpResponse(test.files[file][result_type].read(), 'text/plain')
     return HttpResponseNotFound()
 
 def script(request, token):

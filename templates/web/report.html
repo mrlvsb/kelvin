@@ -52,8 +52,22 @@ $ echo $?  # exit code (return value from main)
                     {% if 'html' in v %}
                     <div class="result">{{ v.html.read | safe }}</div>
                     {% endif %}
+
+                    {% if v.actual.size < max_inline_content_bytes or not max_inline_content_bytes %}
                     <pre class="result"{% if 'html' in v %} hidden{% endif %}>{{ v.actual.read }}</pre>
+                    {% else %}
+                    <div class="result"{% if 'html' in v %} hidden{% endif %}>
+                      Content too large, show <a href='{% url 'raw_result_content' submit.id test.name 'actual' path %}'>raw content</a>.
+                    </div>
+                    {% endif %}
+
+                    {% if v.expected.size < max_inline_content_bytes or not max_inline_content_bytes %}
                     <pre class="result" hidden>{{ v.expected.read }}</pre>
+                    {% else %}
+                    <div class="result" hidden>
+                      Content too large, show <a href='{% url 'raw_result_content' submit.id test.name 'expected' path %}'>raw content</a>.
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}
