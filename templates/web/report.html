@@ -53,7 +53,9 @@ $ echo $?  # exit code (return value from main)
                     <div class="result">{{ v.html.read | safe }}</div>
                     {% endif %}
 
-                    {% if v.actual.size < max_inline_content_bytes or not max_inline_content_bytes %}
+                    {% if not v.actual %}
+                    <div class="result"></div>
+                    {% elif v.actual.size < max_inline_content_bytes or not max_inline_content_bytes %}
                     <pre class="result"{% if 'html' in v %} hidden{% endif %}>{{ v.actual.read }}</pre>
                     {% else %}
                     <div class="result"{% if 'html' in v %} hidden{% endif %}>
@@ -61,7 +63,9 @@ $ echo $?  # exit code (return value from main)
                     </div>
                     {% endif %}
 
-                    {% if v.expected.size < max_inline_content_bytes or not max_inline_content_bytes %}
+                    {% if not v.expected %}
+                    <div class="result"></div>
+                    {% elif v.expected.size < max_inline_content_bytes or not max_inline_content_bytes %}
                     <pre class="result" hidden>{{ v.expected.read }}</pre>
                     {% else %}
                     <div class="result" hidden>
