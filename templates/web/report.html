@@ -83,7 +83,6 @@ if(el) {
         while(el = el.previousElementSibling) {
             nth++;
         }
-        console.log('f')
 
         ev.target.closest('.card').querySelectorAll('.result').forEach(function(el, i) {
            el.hidden = i != nth;
