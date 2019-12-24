@@ -15,6 +15,14 @@ TODO: Make it nicer with Bootstrap
 <h6>Submit for student: {{ submit.student.get_full_name }} ({{ submit.student.username }})</h6>
 {% endif %}
 
+{% if is_teacher and inputs.warnings %}
+<ul class="text-danger">
+  {% for warning in inputs.warnings %}
+    <li>{{ warning }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
 <div class="card mb-3">
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs navbar-expand-lg">

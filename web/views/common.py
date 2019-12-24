@@ -9,3 +9,8 @@ def index(request):
     if is_teacher(request.user):
         return teacher_list(request)
     return student_index(request)
+
+def template_context(request):
+    return {
+        'is_teacher': is_teacher(request.user),
+    }

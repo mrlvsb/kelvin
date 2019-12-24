@@ -9,6 +9,7 @@ import importlib.util
 import yaml
 
 from . import filters
+from .utils import parse_human_size
 
 
 def load_module(path):
@@ -125,6 +126,7 @@ class TestSet:
         self.comparators = {}
         self.files_cache = os.listdir(self.task_path)
         self.gcc_flags = []
+        self.warnings = []
         self.load_tests()
 
     def __iter__(self):
@@ -155,6 +157,69 @@ class TestSet:
         if os.path.exists(path):
             self.create_test(name).script = load_module(path)
 
+    def add_warning(self, message):
+        self.warnings.append(message)
+
+    def parse_conf_gcc_flags(self, conf):
+        if not isinstance(conf, list):
+            self.add_warning('gcc_flags is not a list')
+        else:
+            self.gcc_flags = conf
+
+    def parse_conf_limits(self, conf):
+        handlers = {
+            'fsize': lambda txt: parse_human_size(txt) // 1024,
+            'cg-mem': parse_human_size,
+            'stack': parse_human_size,
+        }
+
+        for k, v in conf.items():
+            if k not in self.limits.keys():
+                self.add_warning(f'unknown limit {k}')
+            else:
+                try:
+                    self.limits[k] = handlers.get(k, lambda txt: txt)(v)
+                except ValueError as e:
+                    self.add_warning(f'bad limit {k} value "{v}": {e}')
+
+    def parse_conf_tests(self, conf):
+        allowed_keys = ['name', 'title', 'exit_code', 'args', 'files']
+
+        for test_conf in conf:
+            t = self.create_test(str(test_conf.get('name', f'test {len(self.tests_dict)}')))
+            t.title = test_conf.get('title', t.name)
+            t.exit_code = test_conf.get('exit_code', 0)
+            t.args = [str(s) for s in test_conf.get('args', [])]
+            files = test_conf.get('files', [])
+            for f in files:
+                t.files[f['path']] = TestFile(File(os.path.join(self.task_path, f['expected'])))
+
+            for k, v in test_conf.items():
+                if k not in allowed_keys:
+                    self.add_warning(f"task '{t.name}': unknown key '{k}'")
+
+
+    def parse_conf_filters(self, conf):
+        if not isinstance(conf, list):
+            self.add_warning("Filters must be a list!")
+            return
+
+        for filter_name in conf:
+            name = filter_name.lower()
+            if name not in filters.all_filters:
+                self.add_warning(f"Unknown filter: {name}, known filters are: {', '.join(filters.all_filters.keys())}")
+            else:
+                self.filters.append(filters.all_filters[name]())
+
+    def parse_conf_comparators(self, conf):
+        if not isinstance(conf, dict):
+            self.add_warning("comparators must be a dict!")
+            return
+
+        # TODO: move creation of comparators here and check it
+        for k, v in conf.items():
+            self.comparators[k] = v
+
     def load_tests(self):
         self.discover_tests()
 
@@ -162,29 +227,12 @@ class TestSet:
             with open(os.path.join(self.task_path, 'config.yml')) as f:
                 conf = yaml.load(f.read(), Loader=yaml.SafeLoader)
                 if conf:
-                    self.gcc_flags = conf.get('gcc_flags', [])
-
-                    for filter_name in conf.get('filters', []):
-                        self.filters.append(filters.all_filters[filter_name.lower()]())
-
-                    for k, v in conf.get('limits', {}).items():
-                        if k not in self.limits:
-                            logging.error(f'unknown limit {k}')
+                    for key, value in conf.items():
+                        fn = getattr(self, f"parse_conf_{key}", None)
+                        if not fn:
+                            self.add_warning(f"Unknown configuration key: {key}")
                         else:
-                            self.limits[k] = v
-
-                    for k, v in conf.get('comparators', {}).items():
-                        self.comparators[k] = v
-
-                    for test_conf in conf.get('tests', []):
-                        t = self.create_test(str(test_conf.get('name', f'test {len(self.tests_dict)}')))
-                        t.title = test_conf.get('title', t.name)
-                        t.exit_code = test_conf.get('exit_code', 0)
-                        t.args = [str(s) for s in test_conf.get('args', [])]
-                        files = test_conf.get('files', [])
-                        for f in files:
-                            t.files[f['path']] = TestFile(File(os.path.join(self.task_path, f['expected'])))
-
+                            fn(value)
         except FileNotFoundError:
             pass
 
