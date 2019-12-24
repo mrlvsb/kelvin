@@ -24,8 +24,6 @@
 <pre style="color: #e83e8c">
 $ {{ test.command }}{% if test.message %}
 {{ test.message }}{%endif%}
-$ echo $?  # exit code (return value from main)
-{{ test.exit_code }}
 </pre>
 
             {% for path, v in test.files.items %}
