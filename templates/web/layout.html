@@ -10,11 +10,23 @@
         <link rel="stylesheet" href="{% static 'style.css' %}">
     </head>
     <body>
-        <nav class="navbar navbar-light bg-light mb-2">
+        <nav class="navbar navbar-light bg-light navbar-expand-lg mb-2">
             <a class="navbar-brand" href="/">Kelvin</a>
+              <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+              </button>
 
-            <div>
-                {{ user.get_full_name }} ({{ user.username }}) <a href="/accounts/logout/?next=/">Logout</a>
+
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+              <ul class="navbar-nav mr-auto">
+                {% if is_teacher %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'submits' %}">Submits</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'tasks' %}">Tasks</a></li>
+                {% endif %}
+              </ul>
+              <div class="my-2 my-lg-0">
+                  {{ user.get_full_name }} ({{ user.username }}) <a href="/accounts/logout/?next=/">Logout</a>
+              </div>
             </div>
         </nav>
 
