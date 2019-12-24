@@ -70,7 +70,7 @@ class TestEvaluation(unittest.TestCase):
     def test_stderr(self):
         res = self.evaluate('stderr_only')
 
-        self.assertEqual(res['stdout'], None)
+        self.assertEqual(res['stdout']['actual'].read(), '')
         self.assertEqual(res['stderr']['actual'].read(), 'error...\n')
         self.assertEqual(res['exit_code'], 0)
         self.assertTrue(res['success'])
@@ -78,7 +78,7 @@ class TestEvaluation(unittest.TestCase):
     def test_stderr_wrong(self):
         res = self.evaluate('stderr_only', 'wrong.c')
 
-        self.assertEqual(res['stdout'], None)
+        self.assertEqual(res['stdout']['actual'].read(), '')
         self.assertEqual(res['stderr']['actual'].read(), 'hmmm...\n')
         self.assertEqual(res['exit_code'], 0)
         self.assertFalse(res['success'])
@@ -86,7 +86,7 @@ class TestEvaluation(unittest.TestCase):
     def test_exit_code(self):
         res = self.evaluate('exit_code')
 
-        self.assertEqual(res['stdout'], None)
+        self.assertEqual(res['stdout']['actual'].read(), "")
         self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 42)
         self.assertTrue(res['success'])
@@ -102,7 +102,7 @@ class TestEvaluation(unittest.TestCase):
     def test_file(self):
         res = self.evaluate('text_file')
 
-        self.assertEqual(res['stdout'], None)
+        self.assertEqual(res['stdout']['actual'].read(), "")
         self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
         self.assertEqual(res.files['test.txt']['actual'].read(), 'hello file!\nfoo bar\n')
@@ -111,10 +111,9 @@ class TestEvaluation(unittest.TestCase):
     def test_file_wrong_path(self):
         res = self.evaluate('text_file', 'wrong_path.c')
 
-        self.assertEqual(res['stdout'], None)
+        self.assertEqual(res['stdout']['actual'].read(), "")
         self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
-        self.assertEqual(len(res.files), 1)
         self.assertTrue('actual' not in res.files['test.txt'])
         self.assertEqual(res.files['test.txt']['error'], 'file not found')
         self.assertFalse(res['success'])
@@ -122,7 +121,7 @@ class TestEvaluation(unittest.TestCase):
     def test_file_bin_in_txt(self):
         res = self.evaluate('text_file', 'bin.c')
 
-        self.assertEqual(res['stdout'], None)
+        self.assertEqual(res['stdout']['actual'].read(), "")
         self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
         self.assertEqual(res.files['test.txt']['actual'].read('rb'), b'\xb4')
@@ -132,7 +131,7 @@ class TestEvaluation(unittest.TestCase):
     def test_multiple_files(self):
         res = self.evaluate('multiple_files')
 
-        self.assertEqual(res['stdout'], None)
+        self.assertEqual(res['stdout']['actual'].read(), "")
         self.assertEqual(res['stderr'], None)
         self.assertEqual(res['exit_code'], 0)
         self.assertEqual(res.files['first.txt']['actual'].read(), 'first\n')
