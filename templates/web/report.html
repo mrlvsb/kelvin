@@ -50,7 +50,13 @@ $ echo $?  # exit code (return value from main)
                 </div>
                 <div class="card-body">
                     {% if 'html' in v %}
+                    {% if v.html.size < max_inline_content_bytes or not max_inline_content_bytes %}
                     <div class="result">{{ v.html.read | safe }}</div>
+                    {% else %}
+                      <div class="result">
+                      Content too large, show <a href='{% url 'raw_result_content' submit.id test.name 'html' path %}'>raw content</a>.
+                      </div>
+                    {% endif %}
                     {% endif %}
 
                     {% if not v.actual %}

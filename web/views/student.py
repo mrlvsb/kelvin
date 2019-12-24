@@ -156,7 +156,7 @@ def raw_result_content(request, submit_id, test_name, result_type, file):
             if test.name == test_name:
                 if file in test.files:
                     if result_type in test.files[file]:
-                        return HttpResponse(test.files[file][result_type].read(), 'text/plain')
+                        return HttpResponse(test.files[file][result_type].read(), 'text/html' if result_type == 'html' else 'text/plain')
     return HttpResponseNotFound()
 
 def script(request, token):
