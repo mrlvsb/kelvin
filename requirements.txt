@@ -1,12 +1,12 @@
-django==3.0b1
-pygments
-markdown2
-python-ldap
+django==3.0.1
+pygments==2.5.2
+markdown2==2.3.8
+python-ldap==3.2.0
 git+https://github.com/trnila/django-rq
-six
-pyyaml
-fabric
+six==1.13.0
+pyyaml==5.2
+fabric==2.5.0
 mosspy==1.0.4
 https://github.com/mingchen/django-cas-ng/archive/master.zip #django-cas-ng==4.0.0
-imageio
-diff-match-patch
+imageio==2.6.1
+diff-match-patch==20181111
