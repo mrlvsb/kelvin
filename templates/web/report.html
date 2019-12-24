@@ -25,6 +25,13 @@
 $ {{ test.command }}{% if test.message %}
 {{ test.message }}{%endif%}
 </pre>
+{% if test.errors %}
+<ul class="text-danger">
+  {% for error in test.errors %}
+  <li>{{ error }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
 
             {% for path, v in test.files.items %}
             <div class="card mb-3 card-test">
