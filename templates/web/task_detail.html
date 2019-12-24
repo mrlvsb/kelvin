@@ -13,6 +13,9 @@ TODO: Make it nicer with Bootstrap
 
 {% if submit %}
 <h6>Submit for student: {{ submit.student.get_full_name }} ({{ submit.student.username }})</h6>
+{% if is_teacher %}
+  <a href="{% url 'reevaluate' submit.id %}">Reevaluate</a>
+{% endif %}
 {% endif %}
 
 {% if is_teacher and inputs.warnings %}
