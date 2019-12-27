@@ -67,7 +67,7 @@ def text_compare(f1, f2, filters=[]):
                 success = False
                 break
 
-        return success, html
+        return success, f'<div style="font-family: monospace;white-space: pre;">{html}</div>'
     except UnicodeDecodeError as e:
         return False, str(e)
 
