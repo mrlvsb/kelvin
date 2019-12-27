@@ -19,11 +19,21 @@ class StripFilter:
     def filter(self, s):
         return s.strip()
 
+class RStripFilter:
+    def filter(self, s):
+        return s.rstrip()
+
+class LStripFilter:
+    def filter(self, s):
+        return s.lstrip()
+
 all_filters = {
     'lower': LowerFilter,
     'trailingspaces': TrailingSpacesFilter,
     'allspaces': AllSpacesFilter,
     'strip': StripFilter,
+    'rstrip': RStripFilter,
+    'lstrip': LStripFilter,
 }
 
 def apply_filters(s, filters):
