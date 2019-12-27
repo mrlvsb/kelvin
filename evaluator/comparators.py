@@ -67,7 +67,15 @@ def text_compare(f1, f2, filters=[]):
                 success = False
                 break
 
-        return success, f'<div style="font-family: monospace;white-space: pre;">{html}</div>'
+        style = {
+            'font-size': '87.5%',
+            'color': '#212529',
+            'font-family': "SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace",
+            'white-space': 'pre',
+        }
+        style_txt = "; ".join([f"{k}: {v}" for k,v in style.items()])
+
+        return success, f'<div style="{style_txt}">{html}</div>'
     except UnicodeDecodeError as e:
         return False, str(e)
 
