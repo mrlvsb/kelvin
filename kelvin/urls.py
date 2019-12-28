@@ -32,5 +32,6 @@ urlpatterns = [
     path('accounts/login/', auth_views.LoginView.as_view(), name='cas_ng_login'),
     path('accounts/login/ldap', LDAPLoginView.as_view()),
     path('api/', include('api.urls')),
-    path('django-rq/', include('django_rq.urls'))
+    path('django-rq/', include('django_rq.urls')),
+    path('survey/', include('survey.urls')),
 ]

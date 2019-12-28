@@ -19,7 +19,7 @@ from ..forms import UploadSolutionForm
 from evaluator.testsets import TestSet
 from common.evaluate import get_meta
 from evaluator.results import EvaluationResult
-from .utils import is_teacher
+from common.utils import is_teacher
 
 @login_required()
 def student_index(request):

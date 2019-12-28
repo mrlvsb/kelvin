@@ -21,7 +21,7 @@ from common.models import Submit, Class, Task, AssignedTask
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from evaluator.testsets import TestSet
 from common.evaluate import get_meta, evaluate_job
-from .utils import is_teacher
+from common.utils import is_teacher
 
 
 @user_passes_test(is_teacher)

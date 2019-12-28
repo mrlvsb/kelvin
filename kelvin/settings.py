@@ -33,6 +33,7 @@ ALLOWED_HOSTS = ['upr.cs.vsb.cz', '158.196.141.65', 'localhost', '127.0.0.1']
 INSTALLED_APPS = [
     'web.apps.WebConfig',
     'api.apps.ApiConfig',
+    'survey.apps.SurveyConfig',
     'common.apps.CommonConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -40,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.forms',
     'django_rq',
     'django_cas_ng'
 ]
@@ -60,7 +62,7 @@ ROOT_URLCONF = 'kelvin.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['templates',],
+        'DIRS': [os.path.join(BASE_DIR, 'templates'),],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -73,6 +75,7 @@ TEMPLATES = [
         },
     },
 ]
+FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
 
 WSGI_APPLICATION = 'kelvin.wsgi.application'
 

@@ -1,0 +1,48 @@
+title: testovaci dotaznik
+active: false
+questions:
+  - name: comment
+    question: Jak hodnotis predmet?
+    type: textarea
+
+  - name: vimquit
+    question: jak ukoncime vim?
+    type: line
+
+  - name: hours
+    question: Kolik hodin jsi programoval tydne?
+    type: integer
+    min_value: 0
+    max_value: 100
+
+  - name: best_ide
+    question: vis jaky je nejlepsi editor?
+    type: radio 
+    choices:
+      vim: vim
+      nano: nano
+      vs: visualni studio ultimatni edice 2019
+
+  - name: best_ide_select
+    question: vis jaky je nejlepsi editor?
+    type: select
+    choices:
+      vim: vim
+      nano: nano
+      vs: visualni studio ultimatni edice 2019
+
+  - name: best_ide_multiselect
+    question: vis jaky je nejlepsi editor?
+    type: multiselect
+    choices:
+      vim: vim
+      nano: nano
+      vs: visualni studio ultimatni edice 2019
+
+  - name: best_ide_checkboxes
+    question: vis jaky je nejlepsi editor?
+    type: checkboxes
+    choices:
+      vim: vim
+      nano: nano
+      vs: visualni studio ultimatni edice 2019

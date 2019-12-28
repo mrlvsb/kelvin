@@ -1,0 +1,14 @@
+{% extends 'web/layout.html' %}
+
+{% block content %}
+<ul>
+{% for survey in surveys %}
+  <li>
+    <a href="{% url 'survey_show' survey.name %}">
+      {{ survey.title }}
+    </a>
+  </li>
+{% endfor %}
+</ul>
+
+{% endblock %}

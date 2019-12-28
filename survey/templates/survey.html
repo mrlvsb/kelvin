@@ -1,0 +1,73 @@
+{% extends 'web/layout.html' %}
+
+{% block content %}
+<h1>{{ survey.title }}</h1>
+
+{% if form %}
+<form method="post" class="survey needs-validation" novalidate>
+  {% csrf_token %}
+  <ul class="text-danger">
+    {{ form.errors }}
+  </ul>
+  {% for field in form %}
+  <div class="form-group">
+    {{ field.label_tag }}
+    {{ field }}
+    <div class="invalid-feedback">{{ field.errors.0 }}</div>
+    {% if field.help_text %}
+    <p class="help">{{ field.help_text|safe }}</p>
+    {% endif %}
+  </div>
+  {% endfor %}
+  <button type="submit" class="btn btn-primary mb-4">Save</button>
+</form>
+{% else %}
+<p class="text-success">Already filled.</p>
+{% endif %}
+
+<script>
+  (function() {
+    'use strict';
+    window.addEventListener('load', function() {
+      document.querySelectorAll('.needs-validation').forEach(form => {
+        form.querySelectorAll('.checkbox').forEach(grp => {
+          let checkboxes = grp.querySelectorAll('input[type=checkbox]');
+          let error_msg = 'select at least one';
+
+          function mark_all() {
+            let err = Array.prototype.filter.call(checkboxes, checkbox => checkbox.checked).length ? '' : error_msg;
+            checkboxes.forEach(checkbox => checkbox.setCustomValidity(err))
+          };
+
+          mark_all();
+          checkboxes.forEach(checkbox => checkbox.addEventListener('change', mark_all));
+        });
+
+        form.addEventListener('submit', function(event) {
+          if (form.checkValidity() === false) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          form.classList.add('was-validated');
+        }, false);
+      });
+    }, false);
+  })();
+</script>
+
+<style>
+.survey {
+  counter-reset: question;
+}
+
+.survey .form-group > label::before {
+  counter-increment: question;
+  content: counter(question) ". ";
+}
+
+.survey .form-group > label {
+  font-weight: bold;
+}
+</style>
+
+{% endblock %}
