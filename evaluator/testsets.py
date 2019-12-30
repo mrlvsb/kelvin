@@ -233,6 +233,8 @@ class TestSet:
                             self.add_warning(f"Unknown configuration key: {key}")
                         else:
                             fn(value)
+        except yaml.scanner.ScannerError as e:
+            self.add_warning(e)
         except FileNotFoundError:
             pass
 
