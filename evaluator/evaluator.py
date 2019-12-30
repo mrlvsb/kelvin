@@ -169,7 +169,8 @@ class Evaluation:
                 else:
                     result[key] = val
 
-        result.add_result(test.exit_code == result['exit_code'], f"invalid exit code {result['exit_code']}")
+        if test.exit_code is not None:
+            result.add_result(test.exit_code == result['exit_code'], f"invalid exit code {result['exit_code']}")
 
         # save issued commandline
         result['command'] = ' '.join(cmd)
