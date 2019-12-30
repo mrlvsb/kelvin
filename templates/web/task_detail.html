@@ -78,7 +78,12 @@ TODO: Make it nicer with Bootstrap
                 {% for path, file in input.files.items %}
                 <div class="card mb-3">
                     <div class="card-header">
-                        <h5>{{ path }}</h5>
+                        <h5>
+                          {{ path }}
+                          {% if file.input %}
+                            (<a href="{% url 'raw_test_content' task.code input.name path %}">Raw content</a>)
+                          {% endif %}
+                        </h5>
                     </div>
                     <div class="card-body">
                         {% if file.size < max_inline_content_bytes or not max_inline_content_bytes %}

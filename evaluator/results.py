@@ -3,7 +3,7 @@ import json
 import shutil
 import re
 
-from .testsets import File
+from .testsets import File, TestFile
 from .utils import copyfile
 
 
@@ -60,7 +60,10 @@ class TestResult:
             elif n.startswith('html'):
                 key = 'html'
 
-            self.files[base][key] = File(os.path.join(self.result_dir, file))
+            self.files[base][key] = TestFile(File(os.path.join(self.result_dir, file)))
+
+            if n.startswith('file_in'):
+                self.files[base][key].input = True
 
     def copy_input_file(self, local_name, real_file):
         if local_name == 'stdin':

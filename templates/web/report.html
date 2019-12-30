@@ -37,7 +37,9 @@ $ {{ test.command }}{% if test.message %}
             <div class="card mb-3 card-test">
                 <div class="card-header">
                     {{ path }}
-                    {% if 'expected' in v %}
+                    {% if v.actual.input %}
+                      (<a href="{% url 'raw_result_content' submit.id test.name 'actual' path %}">Raw content</a>)
+                    {% elif 'expected' in v %}
                     <div class="btn-group btn-group-toggle btn-group-sm float-right" data-toggle="buttons">
                       {% if 'html' in v %}
                       <label class="btn btn-outline-secondary active">
