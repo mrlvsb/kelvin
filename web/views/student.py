@@ -159,6 +159,21 @@ def raw_result_content(request, submit_id, test_name, result_type, file):
                         return HttpResponse(test.files[file][result_type].read(), 'text/html' if result_type == 'html' else 'text/plain')
     return HttpResponseNotFound()
 
+@login_required
+def submit_download(request, assignment_id, login, submit_num):
+    submit = Submit.objects.get(
+            assignment_id=assignment_id,
+            student__username=login,
+            submit_num=submit_num
+    )
+
+    if not is_teacher(request.user) and login != submit.student.username:
+        return HttpResponseForbidden()
+
+    res = HttpResponse(submit.source, 'text/plain')
+    res['Content-Disposition'] = f'attachment; filename="{login}_{submit_num}.c"'
+    return res
+
 def script(request, token):
     data = {
         "token": token,
