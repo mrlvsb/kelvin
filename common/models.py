@@ -7,9 +7,19 @@ from django.conf import settings
 class ClassManager(models.Manager):
     def current_semester(self):
         now = datetime.now()
+
+        if now.month >= 9 or now.month == 1:
+            year = now.year
+            if now.month == 1:
+                year -= 1
+            winter = 1
+        else:
+            year = now.year - 1
+            winter = 0
+
         return self.filter(
-            year=now.year,
-            winter=now.month >= 9
+            year=year,
+            winter=winter
         )
 
 
