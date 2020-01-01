@@ -98,6 +98,7 @@ TODO: Make it nicer with Bootstrap
                 {% endfor %}
             </div>
 
+            {% if submit %}
             <div class="tab-pane" id="tab_src">
                   <a href="{% url 'submit_download' submit.assignment.id submit.student.username submit.submit_num %}" class="float-right">Download</a>
                     {{ source|safe }}
@@ -106,6 +107,7 @@ TODO: Make it nicer with Bootstrap
             <div class="tab-pane" id="tab_result">
                 {% include "web/report.html" %}
             </div>
+            {% endif %}
         </div>
     </div>
 </div>   
