@@ -40,7 +40,7 @@ class ByTeacherFilter(admin.SimpleListFilter):
 
 class AssignedTaskAdmin(admin.ModelAdmin):
     # to see directly the teacher
-    list_display = admin.ModelAdmin.list_display + ('teacher_name',)
+    list_display = admin.ModelAdmin.list_display + ('teacher_name', 'assigned', 'deadline')
 
     # to filter by teacher
     list_filter = ('task__name', ByTeacherFilter)
