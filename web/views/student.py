@@ -5,7 +5,8 @@ import django_rq
 from datetime import datetime
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, Http404, HttpResponseForbidden
+from django.http import HttpResponse, Http404
+from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone as tz
 
@@ -152,7 +153,7 @@ def raw_result_content(request, submit_id, test_name, result_type, file):
     submit = get_object_or_404(Submit, pk=submit_id)
     
     if submit.student_id != request.user.id and not is_teacher(request.user):
-        return HttpResponseForbidden()
+        raise PermissionDenied()
 
     for pipe in get(submit)['results']:
         for test in pipe.tests:
@@ -170,8 +171,8 @@ def submit_download(request, assignment_id, login, submit_num):
             submit_num=submit_num
     )
 
-    if not is_teacher(request.user) and login != submit.student.username:
-        return HttpResponseForbidden()
+    if not is_teacher(request.user) and request.user.username != submit.student.username:
+        raise PermissionDenied()
 
     res = HttpResponse(submit.source, 'text/plain')
     res['Content-Disposition'] = f'attachment; filename="{login}_{submit_num}.c"'
