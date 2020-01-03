@@ -4,8 +4,8 @@ import re
 import django_rq
 from datetime import datetime
 
-from django.shortcuts import render, redirect
-from django.http import HttpResponse, HttpResponseNotFound, HttpResponseForbidden
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse, Http404, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone as tz
 
@@ -91,7 +91,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
     else:
         submits = submits.filter(student__pk=request.user.id)
 
-    assignment = AssignedTask.objects.get(id=assignment_id)
+    assignment = get_object_or_404(AssignedTask, id=assignment_id)
 
     task_dir = os.path.join(BASE_DIR, "tasks", assignment.task.code)
 
@@ -108,7 +108,10 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
 
     current_submit = None
     if submit_num:
-        current_submit = submits.get(submit_num=submit_num)
+        try:
+            current_submit = submits.get(submit_num=submit_num)
+        except Submit.DoesNotExist:
+            raise Http404()
     elif submits:
         current_submit = submits[0]
 
@@ -133,7 +136,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
     return render(request, 'web/task_detail.html', data)
 
 def raw_test_content(request, task_name, test_name, file):
-    task = Task.objects.get(code=task_name)
+    task = get_object_or_404(Task, code=task_name)
 
     task_dir = os.path.join(BASE_DIR, "tasks", task.code)
     tests = TestSet(task_dir, get_meta(request.user))
@@ -142,11 +145,11 @@ def raw_test_content(request, task_name, test_name, file):
         if test.name == test_name:
             if file in test.files:
                 return HttpResponse(test.files[file].read(), 'text/plain')
-    return HttpResponseNotFound()
+    raise Http404()
 
 @login_required
 def raw_result_content(request, submit_id, test_name, result_type, file):
-    submit = Submit.objects.get(pk=submit_id)
+    submit = get_object_or_404(Submit, pk=submit_id)
     
     if submit.student_id != request.user.id and not is_teacher(request.user):
         return HttpResponseForbidden()
@@ -157,11 +160,11 @@ def raw_result_content(request, submit_id, test_name, result_type, file):
                 if file in test.files:
                     if result_type in test.files[file]:
                         return HttpResponse(test.files[file][result_type].read(), 'text/html' if result_type == 'html' else 'text/plain')
-    return HttpResponseNotFound()
+    raise Http404()
 
 @login_required
 def submit_download(request, assignment_id, login, submit_num):
-    submit = Submit.objects.get(
+    submit = get_object_or_404(Submit,
             assignment_id=assignment_id,
             student__username=login,
             submit_num=submit_num
