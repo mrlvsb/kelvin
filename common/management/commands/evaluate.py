@@ -29,11 +29,20 @@ class Command(BaseCommand):
             'text': render_markdown(opts['task_dir'], None),
             'inputs': TestSet(opts['task_dir'], {}),
             'source': highlight_code(opts['solution']),
+            'max_inline_content_bytes': 1024 * 50,
             'task': {
                 'name': os.path.basename(os.path.normpath(opts['task_dir'])),
                 'code': 'task'
             },
             'submit': {
+                'id': 0,
+                'assignment': {
+                    'id': 0,
+                },
+                'student': {
+                    'username': 'nobody',
+                },
+                'submit_num': 1,
                 'points': points,
                 'max_points': max_points,
             }
