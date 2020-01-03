@@ -1,21 +1,11 @@
-from datetime import datetime
-
 from django.db import models
 from django.conf import settings
+from .utils import current_semester
 
 
 class ClassManager(models.Manager):
     def current_semester(self):
-        now = datetime.now()
-
-        if now.month >= 9 or now.month == 1:
-            year = now.year
-            if now.month == 1:
-                year -= 1
-            winter = 1
-        else:
-            year = now.year - 1
-            winter = 0
+        year, winter = current_semester()
 
         return self.filter(
             year=year,
