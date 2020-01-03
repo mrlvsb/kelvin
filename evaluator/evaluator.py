@@ -169,6 +169,9 @@ class Evaluation:
                 else:
                     result[key] = val
 
+        if result['exitsig'] == "11":
+            result.add_error("Segmentation fault")
+
         if test.exit_code is not None:
             result.add_result(test.exit_code == result['exit_code'], f"invalid exit code {result['exit_code']}")
 

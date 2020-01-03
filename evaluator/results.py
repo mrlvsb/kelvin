@@ -125,6 +125,9 @@ class TestResult:
             self['errors'].append(message)
             self['success'] = False
 
+    def add_error(self, message):
+        self.add_result(False, message)
+
     def __getitem__(self, key):
         if key in self.files:
             return self.files[key]
