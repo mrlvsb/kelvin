@@ -2,7 +2,7 @@ import json
 import os
 import re
 import django_rq
-from datetime import datetime
+from django.utils import timezone as datetime
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, Http404
@@ -31,7 +31,7 @@ def student_index(request):
 
     for clazz in classess:
         tasks = []
-        for assignment in AssignedTask.objects.filter(clazz_id=clazz.id).order_by('-id'):
+        for assignment in AssignedTask.objects.filter(clazz_id=clazz.id, assigned__lte=datetime.now()).order_by('-id'):
             last_submit = Submit.objects.filter(
                 assignment__id=assignment.id,
                 student__id=request.user.id,
@@ -93,6 +93,8 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         submits = submits.filter(student__pk=request.user.id)
 
     assignment = get_object_or_404(AssignedTask, id=assignment_id)
+    if assignment.assigned > datetime.now() and not is_teacher(request.user):
+        raise Http404()
 
     task_dir = os.path.join(BASE_DIR, "tasks", assignment.task.code)
 
