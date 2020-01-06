@@ -34,7 +34,7 @@ login3
             header = f.readline()
             headers = header[1:].split(';')
             if header[0] != '#' or len(headers) != 4:
-                self.stdout.write(self.style.ERROR(f"invalid header: {header}, import skipped"))
+                self.stdout.write(self.style.ERROR(f"invalid header: {header.strip()}, import skipped"))
                 return
 
             name, day, time, teacher_login = map(str.strip, headers)
@@ -50,7 +50,7 @@ login3
                     winter=winter,
                     day=day,
                     time=time,
-                    teacher=None
+                    teacher=teacher
             )
 
             for student in f:
