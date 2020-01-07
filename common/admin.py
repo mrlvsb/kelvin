@@ -8,6 +8,7 @@ class ClassAdmin(admin.ModelAdmin):
     autocomplete_fields = ['students']
     # FIXME: Limit to teachers only, now shows any User
     list_filter = ('teacher',)
+    list_display = admin.ModelAdmin.list_display + ('teacher',)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "teacher":
