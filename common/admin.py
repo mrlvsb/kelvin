@@ -8,12 +8,19 @@ class ClassAdmin(admin.ModelAdmin):
     autocomplete_fields = ['students']
     # FIXME: Limit to teachers only, now shows any User
     list_filter = ('teacher',)
-    list_display = admin.ModelAdmin.list_display + ('teacher',)
+    list_display = admin.ModelAdmin.list_display + ('teacher_name',)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "teacher":
             kwargs["queryset"] = User.objects.filter(groups__name='teachers')
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def teacher_name(self, obj):
+        if obj.teacher:
+            teacher = obj.teacher
+            return f'{teacher.get_full_name()} ({teacher.username})'
+        else:
+            return '-'
 
 
 class ByTeacherFilter(admin.SimpleListFilter):
