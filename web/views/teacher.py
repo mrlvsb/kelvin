@@ -36,6 +36,10 @@ def teacher_task(request, task_id):
           'max_inline_content_bytes': MAX_INLINE_CONTENT_BYTES,
     })
 
+@user_passes_test(is_teacher)
+def teacher_task_moss_check(request, task_id):
+    submits = Submit.objects.filter(assignment__task__id=task_id).order_by('-submit_num')
+    return redirect(send_to_moss(submits))
 
 def teacher_list(request):
     classess = Class.objects.filter(teacher__pk=request.user.id)
@@ -83,14 +87,11 @@ def teacher_list(request):
         'classes': result,
     })
 
-
-@user_passes_test(is_teacher)
-def moss_check(request, assignment_id):
+def send_to_moss(submits):
     m = mosspy.Moss(settings.MOSS_USERID, "c")
 
     with tempfile.TemporaryDirectory() as temp_dir:
         processed = set()
-        submits = Submit.objects.filter(assignment_id=assignment_id).order_by('-submit_num')
         for submit in submits:
             if submit.student_id not in processed:
                 dst = os.path.join(temp_dir, f"{submit.student.username}.c")
@@ -100,11 +101,17 @@ def moss_check(request, assignment_id):
 
                 processed.add(submit.student_id)
 
-        assignment = AssignedTask.objects.get(id=assignment_id)
-        assignment.moss_url = m.send()
-        assignment.save()
+        return m.send()
 
-        return redirect(assignment.moss_url)
+@user_passes_test(is_teacher)
+def moss_check(request, assignment_id):
+    submits = Submit.objects.filter(assignment_id=assignment_id).order_by('-submit_num')
+
+    assignment = AssignedTask.objects.get(id=assignment_id)
+    assignment.moss_url = send_to_moss(submits)
+    assignment.save()
+
+    return redirect(assignment.moss_url)
 
 
 @user_passes_test(is_teacher)
