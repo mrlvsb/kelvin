@@ -93,7 +93,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         submits = submits.filter(student__pk=request.user.id)
 
     assignment = get_object_or_404(AssignedTask, id=assignment_id)
-    if assignment.assigned > datetime.now() and not is_teacher(request.user):
+    if (assignment.assigned > datetime.now() or not assignment.clazz.students.filter(username=request.user.username)) and not is_teacher(request.user):
         raise Http404()
 
     task_dir = os.path.join(BASE_DIR, "tasks", assignment.task.code)
