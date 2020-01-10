@@ -240,7 +240,10 @@ class TestSet:
 
         path = os.path.join(self.task_path, 'script.py')
         if os.path.exists(path):
-            script = load_module(path)
-            generate_tests = getattr(script, 'gen_tests', None)
-            if generate_tests:
-                generate_tests(self)
+            try:
+                script = load_module(path)
+                generate_tests = getattr(script, 'gen_tests', None)
+                if generate_tests:
+                    generate_tests(self)
+            except Exception as e:
+                self.add_warning(f"script.py: {e}")
