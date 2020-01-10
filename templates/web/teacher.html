@@ -24,7 +24,10 @@
             <thead>
                 <tr>
                     <th>Student</th>
-                    <th>Skóre</th>
+                    <th>Score</th>
+                    <th>Total submits</th>
+                    <th>First submit</th>
+                    <th>Last submit</th>
                 </tr>
             </thead>
             {% for stud in task.results %}
@@ -43,6 +46,9 @@
                         {{ stud.points }} / {{ stud.max_points }}
                     {% endif %}
                 </td>
+                <td>{{ stud.submits }}</td>
+                <td>{{ stud.first_submit_date|date:'d.m.Y H:i' }}</td>
+                <td>{{ stud.last_submit_date|date:'d.m.Y H:i' }}</td>
             </tr>
             {% endfor %}
 

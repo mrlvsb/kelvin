@@ -66,6 +66,8 @@ def teacher_list(request):
                     last_submit = his_submits.latest('id')
                     record['points'] = last_submit.points
                     record['max_points'] = last_submit.max_points
+                    record['first_submit_date'] = his_submits[0].created_at
+                    record['last_submit_date'] = last_submit.created_at
                 except Submit.DoesNotExist:
                     pass
 
