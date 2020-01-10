@@ -117,9 +117,16 @@ def moss_check(request, assignment_id):
 
 
 @user_passes_test(is_teacher)
-def submits(request):
-    submits = Submit.objects.all().order_by('-id')[:100]
-    return render(request, "web/submits.html", {'submits': submits})
+def submits(request, student_username=None):
+    filters = {}
+    if student_username:
+        filters['student__username'] = student_username
+
+    submits = Submit.objects.filter(**filters).order_by('-id')[:100]
+    return render(request, "web/submits.html", {
+        'submits': submits,
+        'student_username': student_username,
+    })
 
 
 def get_last_submits(assignment_id):
