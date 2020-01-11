@@ -25,6 +25,7 @@ from common.evaluate import get_meta
 from evaluator.results import EvaluationResult
 from common.utils import is_teacher
 
+
 @login_required()
 def student_index(request):
     result = []
@@ -141,6 +142,14 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
     data['upload_form'] = form
     return render(request, 'web/task_detail.html', data)
 
+
+def file_response(file, filename, mimetype):
+    content = file.read()
+    response = HttpResponse(content, mimetype)
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
 def raw_test_content(request, task_name, test_name, file):
     task = get_object_or_404(Task, code=task_name)
 
@@ -149,12 +158,14 @@ def raw_test_content(request, task_name, test_name, file):
     for test in tests:
         if test.name == test_name:
             if file in test.files:
-                return HttpResponse(test.files[file].read(), 'text/plain')
+                return file_response(test.files[file], f"{test_name}.{file}", "text/plain")
     raise Http404()
+
 
 def create_taskset(task, user):
     task_dir = os.path.join(BASE_DIR, "tasks", task.code)
     return TestSet(task_dir, get_meta(user))
+
 
 @login_required
 def tar_test_data(request, task_name):
@@ -166,19 +177,18 @@ def tar_test_data(request, task_name):
 
     tests = create_taskset(task, request.user)
 
-    with tempfile.TemporaryFile(suffix=".tar.gz") as f:
-        with tarfile.open(fileobj=f, mode="w:gz") as tar:
-            for test in tests:
-                for file_path in test.files:
-                    test_file = test.files[file_path]
-                    info = tarfile.TarInfo(os.path.join(test.name, file_path))
-                    info.size = test_file.size()
-                    tar.addfile(info, fileobj=test_file.open('rb'))
+    f = io.BytesIO()
+    with tarfile.open(fileobj=f, mode="w:gz") as tar:
+        for test in tests:
+            for file_path in test.files:
+                test_file = test.files[file_path]
+                info = tarfile.TarInfo(os.path.join(test.name, file_path))
+                info.size = test_file.size()
+                tar.addfile(info, fileobj=test_file.open('rb'))
 
-        f.seek(0)
-        response = HttpResponse(f.read(), 'application/tar')
-        response['Content-Disposition'] = f'attachment; filename="{task_name}.tar.gz"'
-        return response
+    f.seek(0)
+    return file_response(f, f"{task_name}.tar.gz", "application/tar")
+
 
 @login_required
 def raw_result_content(request, submit_id, test_name, result_type, file):
@@ -192,8 +202,13 @@ def raw_result_content(request, submit_id, test_name, result_type, file):
             if test.name == test_name:
                 if file in test.files:
                     if result_type in test.files[file]:
-                        return HttpResponse(test.files[file][result_type].read(), 'text/html' if result_type == 'html' else 'text/plain')
+                        if result_type == "html":
+                            return HttpResponse(test.files[file][result_type].read(),
+                                                'text/html' if result_type == 'html' else 'text/plain')
+                        else:
+                            return file_response(test.files[file][result_type], f"{test_name}.{result_type}", 'text/plain')
     raise Http404()
+
 
 @login_required
 def submit_download(request, assignment_id, login, submit_num):
@@ -209,6 +224,7 @@ def submit_download(request, assignment_id, login, submit_num):
     res = HttpResponse(submit.source, 'text/plain')
     res['Content-Disposition'] = f'attachment; filename="{login}_{submit_num}.c"'
     return res
+
 
 def script(request, token):
     data = {

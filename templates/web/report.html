@@ -72,7 +72,7 @@ $ {{ test.command }}{% if test.message %}
                     <pre class="result"{% if 'html' in v %} hidden{% endif %}>{{ v.actual.read }}</pre>
                     {% else %}
                     <div class="result"{% if 'html' in v %} hidden{% endif %}>
-                      Content too large, show <a href='{% url 'raw_result_content' submit.id test.name 'actual' path %}'>raw content</a>.
+                      Content too large, download <a href='{% url 'raw_result_content' submit.id test.name 'actual' path %}'>raw content</a>.
                     </div>
                     {% endif %}
 
@@ -82,7 +82,7 @@ $ {{ test.command }}{% if test.message %}
                     <pre class="result" hidden>{{ v.expected.read }}</pre>
                     {% else %}
                     <div class="result" hidden>
-                      Content too large, show <a href='{% url 'raw_result_content' submit.id test.name 'expected' path %}'>raw content</a>.
+                      Content too large, download <a href='{% url 'raw_result_content' submit.id test.name 'expected' path %}'>raw content</a>.
                     </div>
                     {% endif %}
                 </div>
