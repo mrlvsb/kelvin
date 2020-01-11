@@ -28,6 +28,8 @@ class File:
 
     def open(self, mode='r'):
         if isinstance(self.path, io.StringIO):
+            if 'b' in mode:
+                return io.BytesIO(self.path.getvalue().encode('utf-8'))
             return io.StringIO(self.path.getvalue())
         return open(self.path, mode)
 

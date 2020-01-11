@@ -1,6 +1,9 @@
 import json
 import os
 import re
+import tarfile
+import tempfile
+import io
 import django_rq
 from django.utils import timezone as datetime
 
@@ -96,15 +99,15 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
     if (assignment.assigned > datetime.now() or not assignment.clazz.students.filter(username=request.user.username)) and not is_teacher(request.user):
         raise Http404()
 
-    task_dir = os.path.join(BASE_DIR, "tasks", assignment.task.code)
+    testset = create_taskset(assignment.task, request.user)
 
     data = {
         # TODO: task and deadline can be combined into assignment ad deal with it in template
         'task': assignment.task,
         'deadline': assignment.deadline,
         'submits': submits,
-        'text': render_markdown(task_dir, assignment.task.code),
-        'inputs': TestSet(task_dir, get_meta(request.user)),
+        'text': render_markdown(testset.task_path, assignment.task.code),
+        'inputs': testset,
         'tznow': tz.now(),
         'max_inline_content_bytes': MAX_INLINE_CONTENT_BYTES,
     }
@@ -141,14 +144,41 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
 def raw_test_content(request, task_name, test_name, file):
     task = get_object_or_404(Task, code=task_name)
 
-    task_dir = os.path.join(BASE_DIR, "tasks", task.code)
-    tests = TestSet(task_dir, get_meta(request.user))
+    tests = create_taskset(task, request.user)
 
     for test in tests:
         if test.name == test_name:
             if file in test.files:
                 return HttpResponse(test.files[file].read(), 'text/plain')
     raise Http404()
+
+def create_taskset(task, user):
+    task_dir = os.path.join(BASE_DIR, "tasks", task.code)
+    return TestSet(task_dir, get_meta(user))
+
+@login_required
+def tar_test_data(request, task_name):
+    task = get_object_or_404(Task, code=task_name)
+    if not is_teacher(request.user):
+        assigned_tasks = AssignedTask.objects.filter(task_id=task.id, clazz__students__id=request.user.id)
+        if not assigned_tasks:
+            raise PermissionDenied()
+
+    tests = create_taskset(task, request.user)
+
+    with tempfile.TemporaryFile(suffix=".tar.gz") as f:
+        with tarfile.open(fileobj=f, mode="w:gz") as tar:
+            for test in tests:
+                for file_path in test.files:
+                    test_file = test.files[file_path]
+                    info = tarfile.TarInfo(os.path.join(test.name, file_path))
+                    info.size = test_file.size()
+                    tar.addfile(info, fileobj=test_file.open('rb'))
+
+        f.seek(0)
+        response = HttpResponse(f.read(), 'application/tar')
+        response['Content-Disposition'] = f'attachment; filename="{task_name}.tar.gz"'
+        return response
 
 @login_required
 def raw_result_content(request, submit_id, test_name, result_type, file):
