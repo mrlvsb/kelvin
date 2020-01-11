@@ -155,7 +155,7 @@ class Evaluation:
             success, output = comparator(opts['expected'].path, opts['actual'].path, **comparator_args)
             if output:
                 result.copy_html_result(name, output)
-            result.add_result(success, f'file {name} not matches', output)
+            result.add_result(success, f"file {name} doesn't match", output)
 
         # extract statistics
         with open('/tmp/meta') as f:
