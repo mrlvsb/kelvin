@@ -4,10 +4,40 @@ from django.contrib.auth.models import User, Group
 from django.contrib.auth.admin import UserAdmin
 
 
+class BaseByTeacherFilter(admin.SimpleListFilter):
+    """
+    Base class to filter by Teacher.
+
+    From: https://books.agiliq.com/projects/django-admin-cookbook/en/latest/filtering_calculated_fields.html
+    and https://stackoverflow.com/questions/880684/in-django-admin-how-to-filter-users-by-group
+    """
+    title = 'teacher'
+    parameter_name = 'teacher'
+
+    def lookups(self, request, model_admin):
+        teachers = User.objects.filter(groups__name='teachers')
+        items = ( (t.id, t.username) for t in teachers )
+
+        return tuple(items)
+
+    def queryset(self, request, queryset):
+        pass
+
+
+class ByClassTeacherFilter(BaseByTeacherFilter):
+
+    def queryset(self, request, queryset):
+        # If 'All' is chosen in the admin, self.value() is None
+        value = self.value()
+        if value:
+            return queryset.filter(teacher__pk=value)
+        else:
+            return queryset
+
+
 class ClassAdmin(admin.ModelAdmin):
     autocomplete_fields = ['students']
-    # FIXME: Limit to teachers only, now shows any User
-    list_filter = ('teacher',)
+    list_filter = (ByClassTeacherFilter,)
     list_display = admin.ModelAdmin.list_display + ('teacher_name',)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -23,19 +53,7 @@ class ClassAdmin(admin.ModelAdmin):
             return '-'
 
 
-class ByTeacherFilter(admin.SimpleListFilter):
-    """
-    From: https://books.agiliq.com/projects/django-admin-cookbook/en/latest/filtering_calculated_fields.html
-    and https://stackoverflow.com/questions/880684/in-django-admin-how-to-filter-users-by-group
-    """
-    title = 'teacher'
-    parameter_name = 'teacher'
-
-    def lookups(self, request, model_admin):
-        teachers = User.objects.filter(groups__name='teachers')
-        items = ( (t.id, t.username) for t in teachers )
-
-        return tuple(items)
+class ByAssignedTaskTeacherFilter(BaseByTeacherFilter):
 
     def queryset(self, request, queryset):
         # If 'All' is chosen in the admin, self.value() is None
@@ -51,7 +69,7 @@ class AssignedTaskAdmin(admin.ModelAdmin):
     list_display = admin.ModelAdmin.list_display + ('teacher_name', 'assigned', 'deadline')
 
     # to filter by teacher
-    list_filter = ('task__name', ByTeacherFilter)
+    list_filter = ('task__name', ByAssignedTaskTeacherFilter)
 
     def teacher_name(self, obj):
         teacher = obj.clazz.teacher
