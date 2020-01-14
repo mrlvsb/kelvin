@@ -23,6 +23,7 @@
         <table class="table table-sm table-hover">
             <thead>
                 <tr>
+                    <th>Login</th>
                     <th>Student</th>
                     <th>Score</th>
                     <th>Total submits</th>
@@ -37,6 +38,15 @@
                     <a href="{% url 'task_detail' stud.student.username stud.assignment_id %}">
                     {% endif %}
                         {{ stud.student }}
+                    {% if stud.submits %}
+                    </a>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if stud.submits %}
+                    <a href="{% url 'task_detail' stud.student.username stud.assignment_id %}">
+                    {% endif %}
+                        {{ stud.student.get_full_name }}
                     {% if stud.submits %}
                     </a>
                     {% endif %}
