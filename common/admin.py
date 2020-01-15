@@ -18,7 +18,7 @@ class BaseByTeacherFilter(admin.SimpleListFilter):
         teachers = User.objects.filter(groups__name='teachers')
         items = ( (t.id, t.username) for t in teachers )
 
-        return tuple(items)
+        return items
 
     def queryset(self, request, queryset):
         pass
