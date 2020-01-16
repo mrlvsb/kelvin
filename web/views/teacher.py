@@ -43,7 +43,7 @@ def teacher_task_moss_check(request, task_id):
     return redirect(send_to_moss(submits))
 
 def teacher_list(request):
-    classess = Class.objects.filter() #teacher__pk=request.user.id)
+    classess = Class.objects.filter(teacher__pk=request.user.id)
 
     result = []
     for clazz in classess:
