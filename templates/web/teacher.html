@@ -35,7 +35,7 @@
             <tr class="table-{% if stud.max_points and stud.points == stud.max_points %}success{% elif stud.points > 0 %}warning{% else %}danger{%endif%}">
                 <td>
                     {% if stud.submits %}
-                    <a href="{% url 'task_detail' stud.student.username stud.assignment_id %}">
+                    <a href="{% url 'task_detail' stud.student.username task.assignment.id %}">
                     {% endif %}
                         {{ stud.student }}
                     {% if stud.submits %}
@@ -44,7 +44,7 @@
                 </td>
                 <td>
                     {% if stud.submits %}
-                    <a href="{% url 'task_detail' stud.student.username stud.assignment_id %}">
+                    <a href="{% url 'task_detail' stud.student.username task.assignment.id %}">
                     {% endif %}
                         {{ stud.student.get_full_name }}
                     {% if stud.submits %}

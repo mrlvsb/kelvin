@@ -13,6 +13,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone as tz
 from django.conf import settings
+from django.db.models import Max, Min, Count
 
 import mosspy
 import django_rq
@@ -42,41 +43,35 @@ def teacher_task_moss_check(request, task_id):
     return redirect(send_to_moss(submits))
 
 def teacher_list(request):
-    classess = Class.objects.filter(teacher__pk=request.user.id)
+    classess = Class.objects.filter() #teacher__pk=request.user.id)
 
     result = []
     for clazz in classess:
         tasks = []
 
         for assignment in clazz.assignedtask_set.all().order_by('-id'):
-            results = []
-
+            results = {}
             for student in clazz.students.all().order_by('username'):
-                his_submits = Submit.objects.filter(student__id=student.id, assignment__id=assignment.id)
-
-                record = {
-                    'assignment_id': assignment.id,
+                results[student.username] = {
                     'student': student,
-                    'submits': his_submits.count(),
-                    'points': None,
-                    'max_points': None,
+                    'submits': 0,
                 }
 
-                try:
-                    last_submit = his_submits.latest('id')
-                    record['points'] = last_submit.points
-                    record['max_points'] = last_submit.max_points
-                    record['first_submit_date'] = his_submits[0].created_at
-                    record['last_submit_date'] = last_submit.created_at
-                except Submit.DoesNotExist:
-                    pass
+            assignment_submits = Submit.objects.filter(assignment_id=assignment.id).select_related('student').order_by('id')
+            for submit in assignment_submits:
+                student_submit_stats = results[submit.student.username]
+                student_submit_stats['submits'] += 1
 
-                results.append(record)
+                if 'first_submit_date' not in student_submit_stats:
+                    student_submit_stats['first_submit_date'] = submit.created_at
+                student_submit_stats['last_submit_date'] = submit.created_at
+                student_submit_stats['points'] = submit.points
+                student_submit_stats['max_points'] = submit.max_points
 
             tasks.append({
                 'task': assignment.task,
                 'assignment': assignment,
-                'results': results,
+                'results': results.values(),
                 'tznow': tz.now(),
             })
 
