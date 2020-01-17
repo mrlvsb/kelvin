@@ -6,6 +6,12 @@ from pygments.formatters import HtmlFormatter
 import markdown2
 
 
+"""
+Inspiration for own Pygments HtmlFormatter:
+https://gist.github.com/icholy/2945676
+"""
+
+
 def highlight_code(path):
     try:
         with open(path) as f:
@@ -14,7 +20,6 @@ def highlight_code(path):
         return "-- source code contains binary data --"
     except FileNotFoundError:
         return "-- source code not found --"
-
 
 def render_markdown(task_dir, name):
     try:

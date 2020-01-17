@@ -1,5 +1,7 @@
 {% extends 'web/layout.html' %}
 
+{% load static %}
+
 {% block content %}
 
 {% comment %}
@@ -130,11 +132,32 @@ TODO: Make it nicer with Bootstrap
     </div>
 </div>
 
+{% if is_teacher %}
+
 <script>
-    // for each line create a hook to add a comment
-    // create ids for each link in pygments or do it in JS
-    //$(document).ready(function() {
-    //})
+     document.querySelectorAll("div.linenodiv a").forEach( (elem) => {
+        let i = document.createElement( "img" );
+        i.src = "{% static 'plus.svg' %}";
+        i.style.height = "1rem"; // FIXME: Set height to parent element height
+        i.style.visibility = "hidden";
+        elem.appendChild(i);
+     } );
+
+     document.querySelector("div.linenodiv").addEventListener( "mouseover", (event) => {
+        console.log(event);
+        if ( event.target.tagName == "A" ) {
+            event.target.querySelector("img").style.visibility = "visible";
+        }
+     } );
+
+     document.querySelector("div.linenodiv").addEventListener( "mouseout", (event) => {
+        console.log(event);
+        if ( event.target.tagName == "A" ) {
+            event.target.querySelector("img").style.visibility = "hidden";
+        }
+     } );
 </script>
+
+{% endif %}
 
 {% endblock %}
