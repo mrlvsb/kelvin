@@ -1,8 +1,8 @@
-from django.contrib.auth.backends import BaseBackend
+import ldap
 
+from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 
-import ldap
 
 # Django LDAP package (inspiration for multple atttempts)
 # https://django-auth-ldap.readthedocs.io/en/latest/custombehavior.html
@@ -51,32 +51,17 @@ def ldap_auth(username, password):
             return False
 
 
-class MyLDAPBackend(BaseBackend):
-    default_settings = {
-        "LOGIN_COUNTER_KEY": "CUSTOM_LDAP_LOGIN_ATTEMPT_COUNT",
-        "LOGIN_ATTEMPT_LIMIT": 50,
-        "RESET_TIME": 30 * 60,
-        "USERNAME_REGEX": r"^.*$",
-    }
-
+class MyLDAPBackend(ModelBackend):
     def authenticate(self, request, username=None, password=None):
-        username = username.upper()
+        if not username or not password:
+            return None
 
+        username = username.upper()
         try:
-            user = User.objects.get(username=username)
             authenticated = ldap_auth(username, password)
             if authenticated:
-                return user
+                return User.objects.get(username=username)
         except User.DoesNotExist:
             pass
 
         return None
-
-    def get_user(self, id):
-        try:
-            return User.objects.get(id=id)
-        except User.DoesNotExist:
-            return None
-
-
-
