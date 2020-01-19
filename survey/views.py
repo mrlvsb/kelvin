@@ -145,6 +145,6 @@ def show_csv(request, survey_file):
         for answer in answers:
             w.writerow(answer)
 
-        response = HttpResponse(out.getvalue(), 'text/plain')
+        response = HttpResponse(out.getvalue(), 'text/plain; charset=utf-8')
         return response
 
