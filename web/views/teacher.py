@@ -42,8 +42,16 @@ def teacher_task_moss_check(request, task_id):
     submits = Submit.objects.filter(assignment__task__id=task_id).order_by('-submit_num')
     return redirect(send_to_moss(submits))
 
-def teacher_list(request):
-    classess = Class.objects.filter(teacher__pk=request.user.id)
+
+@user_passes_test(is_teacher)
+def all_classes(request):
+    return teacher_list(request)
+
+def teacher_list(request, **class_conditions):
+    if not class_conditions:
+        class_conditions = {}
+
+    classess = Class.objects.filter(**class_conditions)
 
     result = []
     for clazz in classess:

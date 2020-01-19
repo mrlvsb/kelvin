@@ -7,7 +7,7 @@ from common.utils import is_teacher
 @login_required()
 def index(request):
     if is_teacher(request.user):
-        return teacher_list(request)
+        return teacher_list(request, teacher__pk=request.user.id)
     return student_index(request)
 
 def template_context(request):
