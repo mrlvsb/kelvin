@@ -8,7 +8,7 @@ class TokenAuthenticationMiddleware(MiddlewareMixin):
         if not hasattr(request, "user") or request.user.is_anonymous:
             header = request.META.get("HTTP_AUTHORIZATION", "")
             if header.startswith("Bearer"):
-                _, token = header.split(' ', 2)
+                _, token = header.split(None, 2)
                 user = authenticate(request=request, token=token)
                 if not user:
                     return HttpResponse('<h1>Unauthorized</h1>', status=401)
