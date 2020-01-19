@@ -13,19 +13,12 @@ from common.evaluate import evaluate_job
 @csrf_exempt
 @transaction.atomic
 def submit(request, task_code):
-    auth_header = request.headers.get('Authorization')
-    if not auth_header:
-        return HttpResponse('Missing Authorization header', status=400)
-
     try:
-        token = auth_header.split(' ')[-1]
-        found_token = UserToken.objects.get(token=token)
-        
         s = Submit()
         s.source = request.FILES['solution']
-        s.student = found_token.user
-        s.assignment = AssignedTask.objects.get(task__code=task_code, clazz__students__id=found_token.user.id)
-        s.submit_num = Submit.objects.filter(assignment__id=s.assignment.id, student__id=found_token.user.id).count() + 1
+        s.student = request.user
+        s.assignment = AssignedTask.objects.get(task__code=task_code, clazz__students__id=request.user.id)
+        s.submit_num = Submit.objects.filter(assignment__id=s.assignment.id, student__id=request.user.id).count() + 1
         s.save()
 
         django_rq.enqueue(evaluate_job, s)
