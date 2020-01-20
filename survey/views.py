@@ -148,3 +148,28 @@ def show_csv(request, survey_file):
         response = HttpResponse(out.getvalue(), 'text/plain; charset=utf-8')
         return response
 
+@user_passes_test(is_teacher)
+def show_edison_csv(request, survey_file):
+    """
+    Outputs CSV with just logins and 'A' to mark the task as done in EdISon.
+    """
+    answers = []
+    for answer in Answer.objects.filter(survey_name=survey_file):
+        data = {}
+        data['login'] = answer.student.username
+        data['done'] = 'A'
+
+        answers.append(data)
+
+    conf = survey_read(survey_file, request.user)
+    if not answers or not conf:
+        return HttpResponse(status=204)
+
+    with io.StringIO() as out:
+        w = csv.DictWriter(out, fieldnames=['login', 'done'])
+
+        for answer in answers:
+            w.writerow(answer)
+
+        response = HttpResponse(out.getvalue(), 'text/plain; charset=utf-8')
+        return response
