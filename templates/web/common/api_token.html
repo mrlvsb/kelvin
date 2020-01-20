@@ -1,0 +1,31 @@
+{% extends 'web/layout.html' %}
+
+{% block content %}
+<h1>API token</h1>
+
+<form method="post" class="mb-4">
+  {% csrf_token %}
+  <input type="submit" value="Generate new token" class="btn btn-primary">
+</form>
+
+{% if token_plaintext %}
+<p>
+Your new token is: <br>
+<code>{{ token_plaintext }}</code>
+</p>
+
+{% endif %}
+
+<h2>Usage</h2>
+<h3>Curl</h3>
+<code>$ curl -H"Authorization: Bearer {{ doc_token }}" {{ base_url }}</code>
+
+<h3>Python requests</h3>
+<pre>
+import requests
+url = '{{ base_url }}'
+res = requests.get(url, headers={'Authorization': 'Bearer {{ doc_token }}'})
+print(res.text)
+</pre>
+
+{% endblock %}
