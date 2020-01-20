@@ -166,7 +166,7 @@ def show_edison_csv(request, survey_file):
         return HttpResponse(status=204)
 
     with io.StringIO() as out:
-        w = csv.DictWriter(out, fieldnames=['login', 'done'])
+        w = csv.DictWriter(out, fieldnames=['login', 'done'], delimiter=';')
 
         for answer in answers:
             w.writerow(answer)
