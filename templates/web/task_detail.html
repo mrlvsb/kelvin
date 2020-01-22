@@ -140,18 +140,30 @@ TODO: Make it nicer with Bootstrap
         i.src = "{% static 'plus.svg' %}";
         i.style.height = "1rem"; // FIXME: Set height to parent element height
         i.style.visibility = "hidden";
-        elem.appendChild(i);
-     } );
+        i.id = "img-" + elem.hash.slice( 1 ); // this is hackish, since it depends on Pygments settings
+        elem.appendChild( i );
+        //console.log(elem.hash);
+        elem.addEventListener( "click", ( event ) => {
+            //console.log( "mouse click", event.target );
+            document.getElementsByName( elem.hash.slice( 1 ) ).forEach( ( lineElem ) => {
+                // TODO: Here comes our comment table ;-)
+                //console.log( lineElem );
+                //let s = document.createElement( "table");
+                //s.innerText = "Ici";
+                //elem2.appendChild( s );
+            });
+        });
+     });
 
      document.querySelector("div.linenodiv").addEventListener( "mouseover", (event) => {
-        console.log(event);
+        //console.log(event);
         if ( event.target.tagName == "A" ) {
             event.target.querySelector("img").style.visibility = "visible";
         }
      } );
 
      document.querySelector("div.linenodiv").addEventListener( "mouseout", (event) => {
-        console.log(event);
+        //console.log(event);
         if ( event.target.tagName == "A" ) {
             event.target.querySelector("img").style.visibility = "hidden";
         }
