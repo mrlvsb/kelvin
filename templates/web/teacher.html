@@ -16,8 +16,8 @@
         <a href="{{ task.assignment.moss_url }}">moss result</a>
         {% endif %}
         
-        <a href="{% url 'download_assignment_submits' task.assignment.id %}">Download all</a>&nbsp;&nbsp;
-        <a href="{% url 'show_assignment_submits' task.assignment.id %}">Show all</a>&nbsp;&nbsp;
+        <a href="{% url 'download_assignment_submits' task.assignment.id %}">Download all source codes</a>&nbsp;&nbsp;
+        <a href="{% url 'show_assignment_submits' task.assignment.id %}">Show all source codes</a>&nbsp;&nbsp;
         <a href="{% url 'download_csv_per_task' task.assignment.id %}">Download CSV with results</a>
         
         <table class="table table-sm table-hover">
