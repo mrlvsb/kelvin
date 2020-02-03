@@ -69,7 +69,7 @@ class AssignedTaskAdmin(admin.ModelAdmin):
     list_display = admin.ModelAdmin.list_display + ('teacher_name', 'clazz', 'assigned', 'deadline')
 
     # to filter by teacher
-    list_filter = ('task__name', ByAssignedTaskTeacherFilter)
+    list_filter = ('task__name', ByAssignedTaskTeacherFilter, 'clazz')
 
     def teacher_name(self, obj):
         teacher = obj.clazz.teacher
