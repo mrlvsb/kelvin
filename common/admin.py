@@ -37,7 +37,7 @@ class ByClassTeacherFilter(BaseByTeacherFilter):
 
 class ClassAdmin(admin.ModelAdmin):
     autocomplete_fields = ['students']
-    list_filter = (ByClassTeacherFilter,)
+    list_filter = (ByClassTeacherFilter, 'subject')
     list_display = admin.ModelAdmin.list_display + ('teacher_name',)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -69,7 +69,7 @@ class AssignedTaskAdmin(admin.ModelAdmin):
     list_display = admin.ModelAdmin.list_display + ('teacher_name', 'clazz', 'assigned', 'deadline')
 
     # to filter by teacher
-    list_filter = ('task__name', ByAssignedTaskTeacherFilter, 'clazz')
+    list_filter = ('clazz__subject', 'task__name', ByAssignedTaskTeacherFilter, 'clazz',)
 
     def teacher_name(self, obj):
         teacher = obj.clazz.teacher
@@ -109,11 +109,18 @@ class MyUserAdmin(UserAdmin):
     def is_teacher(self, obj):
         return obj.groups.filter(name='teachers').exists()
 
+class TaskAdmin(admin.ModelAdmin):
+    list_filter = ('subject', )
 
-admin.site.register(models.Task)
+class SubmitAdmin(admin.ModelAdmin):
+    list_filter = ('assignment__task__subject', 'assignment__task__name')
+
+admin.site.register(models.Task, TaskAdmin)
 admin.site.register(models.Class, ClassAdmin)
-admin.site.register(models.Submit)
+admin.site.register(models.Submit, SubmitAdmin)
 admin.site.register(models.AssignedTask, AssignedTaskAdmin)
+admin.site.register(models.Semester)
+admin.site.register(models.Subject)
 
 admin.site.unregister(User)
 admin.site.register(User, MyUserAdmin)

@@ -14,7 +14,7 @@ def get_meta(user):
 def evaluate_job(s: Submit):
     result_path = os.path.join(
         'submit_results',
-        *submit_path_parts(s),
+        *submit_path_parts(s.assignment),
         f"{s.student.username}_{s.submit_num}"
     )
 

@@ -1,14 +1,22 @@
 import datetime
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
-from common.models import Class
+from common.models import Class, Semester, Subject
+from lxml.html import parse
+
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('file', help='saved html from edison')
+        parser.add_argument('subject', help='subject abbreviation')
+        parser.add_argument('semester', help='semester in format YYYY/{W,S}')
 
     def handle(self, *args, **opts):
-        from lxml.html import parse
+        subject = Subject.objects.get(abbr=opts['subject'])
+
+        year, half = opts['semester'].split('/')
+        semester = Semester.objects.get(year=year, winter=half=='W')
+
         doc = parse(opts['file']).getroot()
 
         classes = list(map(str.strip, doc.xpath('//tr[@class="rowClass1"]/th/div/span[1]/text()')))
@@ -17,7 +25,7 @@ class Command(BaseCommand):
         class_in_db = {}
         for c, label in zip(classes, labels):
             try:
-                class_in_db[c] = Class.objects.get(code=c)
+                class_in_db[c] = Class.objects.get(code=c, semester=semester, subject=subject)
             except Class.DoesNotExist:
                 s = label.split(' ')
 
@@ -28,6 +36,8 @@ class Command(BaseCommand):
                 class_in_db[c].year = datetime.datetime.now().year
                 class_in_db[c].winter = datetime.datetime.now().month >= 9
                 class_in_db[c].time = s[7]
+                class_in_db[c].subject = subject
+                class_in_db[c].semester = semester
                 class_in_db[c].save()
 
         for row in doc.xpath('//table[@class="dataTable"]//tr')[10:]:

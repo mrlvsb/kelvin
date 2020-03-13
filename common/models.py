@@ -1,21 +1,36 @@
+from datetime import datetime
+
 from django.db import models
 from django.conf import settings
-from .utils import current_semester
 
 
 class ClassManager(models.Manager):
     def current_semester(self):
-        year, winter = current_semester()
-
         return self.filter(
-            year=year,
-            winter=winter
+            semester__begin__lte=datetime.now(),
+            semester__end__gte=datetime.now(),
         )
 
+class Semester(models.Model):
+    begin = models.DateField()
+    end = models.DateField()
+    year = models.IntegerField()
+    winter = models.BooleanField()
+
+    def __str__(self):
+        return f"{self.year}/{'W' if self.winter else 'S'}"
+
+class Subject(models.Model):
+    name = models.CharField(max_length=30)
+    abbr = models.CharField(max_length=10)
+
+    def __str__(self):
+        return self.name
 
 class Task(models.Model):
     name = models.CharField(max_length=60)
     code = models.CharField(max_length=60)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -25,15 +40,15 @@ class Class(models.Model):
     teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
     students = models.ManyToManyField(settings.AUTH_USER_MODEL, 'students')
     tasks = models.ManyToManyField(Task, through='AssignedTask')
-    year = models.IntegerField()
-    winter = models.BooleanField()
+    semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     day = models.CharField(max_length=5)
     time = models.TimeField()
 
     objects = ClassManager()
 
     def __str__(self):
-        return f"{self.code} {self.day} {self.time:%H:%M} {self.teacher.last_name if self.teacher else ''}"
+        return f"{self.subject.abbr} {self.code} {self.day} {self.time:%H:%M} {self.teacher.last_name if self.teacher else ''}"
 
     class Meta:
             verbose_name_plural = "classes"
@@ -49,17 +64,18 @@ class AssignedTask(models.Model):
     def __str__(self):
         return f"{self.task.name} {self.clazz}"
 
-def submit_path_parts(submit):
+def submit_path_parts(assignment):
     return [
-        f"{submit.assignment.clazz.year}-{'W' if submit.assignment.clazz.winter else 'S'}",
-        submit.assignment.clazz.code.replace('/', ''),
-        submit.assignment.task.code,
+        f"{assignment.clazz.semester.year}-{'W' if assignment.clazz.semester.winter else 'S'}",
+        assignment.clazz.subject.abbr,
+        assignment.clazz.code.replace('/', ''),
+        assignment.task.code,
     ]
 
 def submit_path(submit, filename):
     return "/".join([
         "submits",
-        *submit_path_parts(submit),
+        *submit_path_parts(submit.assignment),
         f"{submit.student.username}_{submit.submit_num}.c"
     ])
 
