@@ -248,6 +248,16 @@ class Sandbox:
         result['command'] = command
         return result
 
+# TODO: python3.8
+def copytree(src, dst, symlinks=False, ignore=None):
+    for item in os.listdir(src):
+        s = os.path.join(src, item)
+        d = os.path.join(dst, item)
+        if os.path.isdir(s):
+            shutil.copytree(s, d, symlinks, ignore)
+        else:
+            shutil.copy2(s, d)
+
 def evaluate(task_path, submit_path, result_path, meta=None):
     '''
     Called by Django.
@@ -257,7 +267,10 @@ def evaluate(task_path, submit_path, result_path, meta=None):
     evaluation = Evaluation(task_path, result_path, sandbox, meta)
 
     logger.info(f"evaluating {submit_path}")
-    shutil.copytree(submit_path, os.path.join(sandbox.path, "box/"), dirs_exist_ok=True)
+    # TODO: python3.8
+    #shutil.copytree(submit_path, os.path.join(sandbox.path, "box/"), dirs_exist_ok=True)
+    copytree(submit_path, os.path.join(sandbox.path, "box/"))
+
 
     return evaluation.run()
 
