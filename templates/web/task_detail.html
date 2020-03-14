@@ -51,6 +51,7 @@ TODO: Make it nicer with Bootstrap
 
             {% endif %}
 
+            {% if user == submit.student %}
             <li class="nav-item ml-auto">
                 <ul class="navbar-nav">
                     <li class="nav-item">
@@ -62,6 +63,7 @@ TODO: Make it nicer with Bootstrap
                     </li>
                 </ul>
             </li>
+            {% endif %}
         </ul>
     </div>
     <div class="card-body">
