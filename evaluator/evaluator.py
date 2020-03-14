@@ -69,7 +69,6 @@ class Evaluation:
 
     def run(self):
         pipeline = [
-            pipelines.DownloadPipe(),
             pipelines.GccPipeline('normal'),
             pipelines.GccPipeline('sanitizer', ['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])
         ]
@@ -257,7 +256,7 @@ def evaluate(task_path, submit_path, result_path, meta=None):
     evaluation = Evaluation(task_path, result_path, sandbox, meta)
 
     logger.info(f"evaluating {submit_path}")
-    copyfile(submit_path, os.path.join(sandbox.path, "box/submit"))
+    shutil.copytree(submit_path, os.path.join(sandbox.path, "box/"), dirs_exist_ok=True)
 
     return evaluation.run()
 

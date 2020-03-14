@@ -56,7 +56,7 @@ TODO: Make it nicer with Bootstrap
                     <li class="nav-item">
                         <form method="post" enctype="multipart/form-data">
                             {% csrf_token %}
-                            <input type="file" name="{{ upload_form.solution.html_name }}" hidden id="upload-choose" onchange="form.submit()">
+                            <input type="file" name="{{ upload_form.solution.html_name }}" multiple hidden id="upload-choose" onchange="form.submit()">
                             <span class="btn btn-sm btn-primary" onclick="$('#upload-choose').click()">Upload</span>
                         </form>
                     </li>
@@ -102,8 +102,11 @@ TODO: Make it nicer with Bootstrap
 
             {% if submit %}
             <div class="tab-pane" id="tab_src">
-                  <a href="{% url 'submit_download' submit.assignment.id submit.student.username submit.submit_num %}" class="float-right">Download</a>
-                    {{ source|safe }}
+                <a href="{% url 'submit_download' submit.assignment.id submit.student.username submit.submit_num %}" class="float-right">Download</a>
+                {% for path, source in sources %}
+                  <h4>{{ path }}</h4>
+                  {{ source|safe }}
+                {% endfor %}
             </div>
 
             <div class="tab-pane" id="tab_result">

@@ -1,3 +1,5 @@
+import os
+
 from datetime import datetime
 
 from django.db import models
@@ -64,30 +66,48 @@ class AssignedTask(models.Model):
     def __str__(self):
         return f"{self.task.name} {self.clazz}"
 
-def submit_path_parts(assignment):
-    return [
-        f"{assignment.clazz.semester.year}-{'W' if assignment.clazz.semester.winter else 'S'}",
-        assignment.clazz.subject.abbr,
-        assignment.clazz.code.replace('/', ''),
-        assignment.task.code,
-    ]
-
-def submit_path(submit, filename):
-    return "/".join([
-        "submits",
-        *submit_path_parts(submit.assignment),
-        f"{submit.student.username}_{submit.submit_num}.c"
-    ])
+class SourcePath:
+    def __init__(self, virt, phys):
+        self.virt = virt
+        self.phys = phys
 
 class Submit(models.Model):
     assignment = models.ForeignKey(AssignedTask, on_delete=models.CASCADE)
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     submit_num = models.IntegerField()
-    source = models.FileField(upload_to=submit_path)
     result = models.TextField(default='')
     points = models.IntegerField(null=True)
     max_points = models.IntegerField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def path_parts(self):
+        return [
+            f"{self.assignment.clazz.semester.year}-{'W' if self.assignment.clazz.semester.winter else 'S'}",
+            self.assignment.clazz.subject.abbr,
+            self.assignment.clazz.code.replace('/', ''),
+            self.assignment.task.code,
+            f"{self.student.username}",
+            f"{self.submit_num}"
+        ]
+
+    def dir(self):
+        return "/".join([
+            "submits",
+            *self.path_parts(),
+        ])
+
+    def source_path(self, name):
+        return os.path.join(self.dir(), name)
+
+    def all_sources(self):
+        sources = []
+        offset = len(self.dir()) + 1
+        for root, dirs, files in os.walk(self.dir()):
+            for f in files:
+                path = os.path.join(root, f)
+                sources.append(SourcePath(path[offset:], path))
+
+        return sources
 
     def __str__(self):
         return f"#{self.id} {self.student.username} {self.assignment.task.name} {self.submit_num}"

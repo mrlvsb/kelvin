@@ -70,7 +70,7 @@ def student_index(request):
 def get(submit):
     results = []
     try:
-        path = re.sub(r'^submits/', 'submit_results/', str(submit.source))
+        path = re.sub(r'^submits/', 'submit_results/', str(submit.dir()))
         path = path.rstrip('.c')
         results = EvaluationResult(path)
     except json.JSONDecodeError as e:
@@ -80,7 +80,9 @@ def get(submit):
     data = {
         "submit": submit,
         "results": results,
-        "source": highlight_code(submit.source.path),
+        "sources": (
+            (path.virt, highlight_code(path.phys)) for path in submit.all_sources()
+        ),
     }
     return data
 
@@ -129,12 +131,19 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         form = UploadSolutionForm(request.POST, request.FILES)
         if form.is_valid():
             s = Submit()
-            s.source = request.FILES['solution']
             s.student = request.user
             s.assignment = assignment
             s.submit_num = Submit.objects.filter(assignment__id=s.assignment.id,
                                                  student__id=request.user.id).count() + 1
             s.save()
+
+            for uploaded_file in request.FILES.getlist('solution'):
+                path = s.source_path(uploaded_file.name)
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                with open(path, "wb") as storage_file:
+                    for chunk in uploaded_file.chunks():
+                        storage_file.write(chunk)
+
             django_rq.enqueue(evaluate_job, s)
             return redirect(request.path_info + '#result')
     else:
@@ -177,17 +186,17 @@ def tar_test_data(request, task_name):
 
     tests = create_taskset(task, request.user)
 
-    f = io.BytesIO()
-    with tarfile.open(fileobj=f, mode="w:gz") as tar:
-        for test in tests:
-            for file_path in test.files:
-                test_file = test.files[file_path]
-                info = tarfile.TarInfo(os.path.join(test.name, file_path))
-                info.size = test_file.size()
-                tar.addfile(info, fileobj=test_file.open('rb'))
+    with io.BytesIO() as f:
+        with tarfile.open(fileobj=f, mode="w:gz") as tar:
+            for test in tests:
+                for file_path in test.files:
+                    test_file = test.files[file_path]
+                    info = tarfile.TarInfo(os.path.join(test.name, file_path))
+                    info.size = test_file.size()
+                    tar.addfile(info, fileobj=test_file.open('rb'))
 
-    f.seek(0)
-    return file_response(f, f"{task_name}.tar.gz", "application/tar")
+        f.seek(0)
+        return file_response(f, f"{task_name}.tar.gz", "application/tar")
 
 
 @login_required
@@ -221,9 +230,16 @@ def submit_download(request, assignment_id, login, submit_num):
     if not is_teacher(request.user) and request.user.username != submit.student.username:
         raise PermissionDenied()
 
-    res = HttpResponse(submit.source, 'text/plain')
-    res['Content-Disposition'] = f'attachment; filename="{login}_{submit_num}.c"'
-    return res
+    with io.BytesIO() as f:
+        with tarfile.open(fileobj=f, mode="w:gz") as tar:
+            for source in submit.all_sources():
+                info = tarfile.TarInfo(source.virt)
+                info.size = os.path.getsize(source.phys)
+                with open(source.phys, "rb") as fr:
+                    tar.addfile(info, fileobj=fr)
+
+        f.seek(0)
+        return file_response(f, f"{login}_{submit_num}.tar.gz", "application/tar")
 
 
 def script(request, token):

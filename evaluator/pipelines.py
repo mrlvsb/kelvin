@@ -73,18 +73,6 @@ void* __wrap_malloc (size_t c) {
                 "tests": results,
             }
         
-class DownloadPipe:
-    @property
-    def name(self):
-        return 'download'
-
-    def run(self, evaluation):
-        src = 'submit'
-        if tarfile.is_tarfile(evaluation.sandbox.system_path(src)):
-            evaluation.sandbox.run_check('tar -xf {}'.format(src))
-        else:
-            evaluation.sandbox.run_check('/bin/mv {} main.c'.format(src))
-
 class InputGeneratorPipe:
     def __init__(self, path='input_generator.py', count=4):
         self.gen_path = path

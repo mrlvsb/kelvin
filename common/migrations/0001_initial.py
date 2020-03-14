@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('submit_num', models.IntegerField()),
-                ('source', models.FileField(upload_to=common.models.submit_path)),
+                ('source', models.FileField()),
                 ('result', models.TextField(default='')),
                 ('points', models.IntegerField(null=True)),
                 ('max_points', models.IntegerField(null=True)),

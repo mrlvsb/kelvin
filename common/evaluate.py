@@ -1,6 +1,6 @@
 import django_rq
 from evaluator.evaluator import evaluate, evaluate_score
-from common.models import Submit, submit_path_parts
+from common.models import Submit
 import os
 
 
@@ -14,13 +14,12 @@ def get_meta(user):
 def evaluate_job(s: Submit):
     result_path = os.path.join(
         'submit_results',
-        *submit_path_parts(s.assignment),
-        f"{s.student.username}_{s.submit_num}"
+        *s.path_parts(),
     )
 
     result = evaluate(
         "tasks/{}".format(s.assignment.task.code),
-        s.source.path,
+        s.dir(),
         result_path,
         get_meta(s.student),
     )
