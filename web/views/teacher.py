@@ -51,7 +51,7 @@ def teacher_list(request, **class_conditions):
     if not class_conditions:
         class_conditions = {}
 
-    classess = Class.objects.filter(**class_conditions)
+    classess = Class.objects.current_semester().filter(**class_conditions)
 
     result = []
     for clazz in classess:
