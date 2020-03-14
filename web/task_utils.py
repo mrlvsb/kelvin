@@ -73,9 +73,9 @@ def highlight_code_json(path):
             tokens = CLexer().get_tokens(f.read())
             return HtmlLineFormatter().format(tokens)
     except UnicodeDecodeError:
-        return "-- source code contains binary data --"
+        return ["-- source code contains binary data --"]
     except FileNotFoundError:
-        return "-- source code not found --"
+        return ["-- source code not found --"]
 
 
 def highlight_code(path):
@@ -83,9 +83,9 @@ def highlight_code(path):
         with open(path) as f:
             return highlight(f.read(), CLexer(), HtmlFormatter(linenos='table', lineanchors='src', anchorlinenos=True))
     except UnicodeDecodeError:
-        return "-- source code contains binary data --"
+        return ["-- source code contains binary data --"]
     except FileNotFoundError:
-        return "-- source code not found --"
+        return ["-- source code not found --"]
 
 def render_markdown(task_dir, name):
     try:
