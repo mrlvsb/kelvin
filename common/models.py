@@ -111,3 +111,11 @@ class Submit(models.Model):
 
     def __str__(self):
         return f"#{self.id} {self.student.username} {self.assignment.task.name} {self.submit_num}"
+
+class Comment(models.Model):
+    submit = models.ForeignKey(Submit, on_delete=models.CASCADE)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    text = models.TextField()
+    source = models.CharField(max_length=255)
+    line = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)

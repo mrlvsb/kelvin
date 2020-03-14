@@ -105,10 +105,7 @@ TODO: Make it nicer with Bootstrap
             {% if submit %}
             <div class="tab-pane" id="tab_src">
                 <a href="{% url 'submit_download' submit.assignment.id submit.student.username submit.submit_num %}" class="float-right">Download</a>
-                {% for path, source in sources %}
-                  <h4>{{ path }}</h4>
-                  {{ source|safe }}
-                {% endfor %}
+                <div id="submit-sources"><submit-sources url="{% url 'submit_comments' submit.assignment.id submit.student submit.submit_num %}"></div>
             </div>
 
             <div class="tab-pane" id="tab_result">
@@ -118,6 +115,7 @@ TODO: Make it nicer with Bootstrap
         </div>
     </div>
 </div>   
+
 
 {% comment %}
 <div class="card mb-3 mt-2">
@@ -138,44 +136,8 @@ TODO: Make it nicer with Bootstrap
 </div>
 {% endcomment %}
 
-{% if is_teacher %}
-
-<script>
-     document.querySelectorAll("div.linenodiv a").forEach( (elem) => {
-        let i = document.createElement( "img" );
-        i.src = "{% static 'plus.svg' %}";
-        i.style.height = "1rem"; // FIXME: Set height to parent element height
-        i.style.visibility = "hidden";
-        i.id = "img-" + elem.hash.slice( 1 ); // this is hackish, since it depends on Pygments settings
-        elem.appendChild( i );
-        //console.log(elem.hash);
-        elem.addEventListener( "click", ( event ) => {
-            //console.log( "mouse click", event.target );
-            document.getElementsByName( elem.hash.slice( 1 ) ).forEach( ( lineElem ) => {
-                // TODO: Here comes our comment table ;-)
-                //console.log( lineElem );
-                //let s = document.createElement( "table");
-                //s.innerText = "Ici";
-                //elem2.appendChild( s );
-            });
-        });
-     });
-
-     document.querySelector("div.linenodiv").addEventListener( "mouseover", (event) => {
-        //console.log(event);
-        if ( event.target.tagName == "A" ) {
-            event.target.querySelector("img").style.visibility = "visible";
-        }
-     } );
-
-     document.querySelector("div.linenodiv").addEventListener( "mouseout", (event) => {
-        //console.log(event);
-        if ( event.target.tagName == "A" ) {
-            event.target.querySelector("img").style.visibility = "hidden";
-        }
-     } );
-</script>
-
-{% endif %}
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+<script src="{% static 'comments.vue' %}"></script>
 
 {% endblock %}

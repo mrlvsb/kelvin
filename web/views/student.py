@@ -13,9 +13,9 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone as tz
 
-from ..task_utils import highlight_code, render_markdown
+from ..task_utils import highlight_code, highlight_code_json, render_markdown
 
-from common.models import Submit, Class, AssignedTask, Task
+from common.models import Submit, Class, AssignedTask, Task, Comment
 from common.evaluate import evaluate_job
 from api.models import UserToken
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
@@ -151,6 +151,67 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
     data['upload_form'] = form
     return render(request, 'web/task_detail.html', data)
 
+@login_required
+def submit_comments(request, assignment_id, login, submit_num):
+    submit = get_object_or_404(Submit,
+            assignment_id=assignment_id,
+            student__username=login,
+            submit_num=submit_num
+    )
+
+    if not is_teacher(request.user) and request.user.username != submit.student.username:
+        raise PermissionDenied()
+
+    def dump_comment(comment):
+        return {
+            'id': comment.id,
+            'author': comment.author.get_full_name(),
+            'text': comment.text,
+            'can_edit': comment.author == request.user,
+        }
+
+
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        comment = Comment()
+        comment.submit = submit
+        comment.author = request.user
+        comment.text = data['text']
+        comment.source = data['source']
+        comment.line = data['line']
+        comment.save()
+        return HttpResponse(json.dumps(dump_comment(comment)))
+    elif request.method == 'PATCH':
+        data = json.loads(request.body)
+        comment = get_object_or_404(Comment, id=data['id'])
+
+        if comment.author != request.user:
+            raise PermissionDenied()
+
+        if not data['text']:
+            comment.delete()
+            return HttpResponse()
+        else:
+            comment.text = data['text']
+            comment.save()
+            return HttpResponse(json.dumps(dump_comment(comment)))
+
+    result = {}
+    for source in submit.all_sources():
+        lines = []
+        for line in highlight_code_json(source.phys):
+            lines.append({'content': line, 'comments': []})
+
+
+        result[source.virt] = lines
+
+    for comment in Comment.objects.filter(submit_id=submit.id).order_by('id'):
+        if comment.source not in result or comment.line >= len(result[comment.source]):
+            continue
+
+        result[comment.source][comment.line - 1]['comments'].append(dump_comment(comment))
+
+    return HttpResponse(json.dumps(result))
 
 def file_response(file, filename, mimetype):
     content = file.read()
