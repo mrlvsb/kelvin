@@ -51,7 +51,7 @@ TODO: Make it nicer with Bootstrap
 
             {% endif %}
 
-            {% if user == submit.student %}
+            {% if not is_teacher %}
             <li class="nav-item ml-auto">
                 <ul class="navbar-nav">
                     <li class="nav-item">
