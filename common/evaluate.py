@@ -4,9 +4,9 @@ from common.models import Submit
 import os
 
 
-def get_meta(user):
+def get_meta(login):
     return {
-        'username': user.username,
+        'login': login,
     }
 
 
@@ -21,7 +21,7 @@ def evaluate_job(s: Submit):
         "tasks/{}".format(s.assignment.task.code),
         s.dir(),
         result_path,
-        get_meta(s.student),
+        get_meta(s.student.username),
     )
 
     s.points, s.max_points = evaluate_score(result)

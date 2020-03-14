@@ -69,8 +69,9 @@ class Evaluation:
 
     def run(self):
         pipeline = [
-            pipelines.GccPipeline('normal'),
-            pipelines.GccPipeline('sanitizer', ['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])
+#            pipelines.GccPipeline('normal'),
+#            pipelines.GccPipeline('sanitizer', ['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])    
+            pipelines.MakePipeline('build'),
         ]
         
         result = EvaluationResult(self.result_path)

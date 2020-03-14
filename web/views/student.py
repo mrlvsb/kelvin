@@ -102,7 +102,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
     if (assignment.assigned > datetime.now() or not assignment.clazz.students.filter(username=request.user.username)) and not is_teacher(request.user):
         raise Http404()
 
-    testset = create_taskset(assignment.task, request.user)
+    testset = create_taskset(assignment.task, student_username if student_username else request.user.username)
 
     data = {
         # TODO: task and deadline can be combined into assignment ad deal with it in template
@@ -245,7 +245,7 @@ def tar_test_data(request, task_name):
         if not assigned_tasks:
             raise PermissionDenied()
 
-    tests = create_taskset(task, request.user)
+    tests = create_taskset(task, request.user.username)
 
     with io.BytesIO() as f:
         with tarfile.open(fileobj=f, mode="w:gz") as tar:
