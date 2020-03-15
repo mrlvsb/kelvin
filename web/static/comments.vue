@@ -6,7 +6,7 @@ Vue.component('submit-source-form', {
   props: ['save', 'text', 'required'],
   template: `
   <form>
-      <textarea class="form-control" v-on:keydown="keydown($event)" ref="text" :disabled="sending">{{ text }}</textarea>
+      <textarea class="form-control mb-1" v-on:keydown="keydown($event)" ref="text" :disabled="sending">{{ text }}</textarea>
       <input type="submit" class="btn btn-sm btn-primary" v-on:click="submit" :disabled="sending">
   </form>`,
   data() {
