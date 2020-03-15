@@ -86,12 +86,13 @@ Vue.component('submit-source', {
         return;
       }
 
-      textarea.value = '';
+      textarea.disabled = 'disabled';
       axios.post(this.url, {
         text: text,
         source: this.source,
         line: linenum
       }).then((resp) => {
+        this.formLine = -1;
         this.lines[linenum - 1].comments.push(resp.data);
       });
     },
