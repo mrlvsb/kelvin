@@ -2,6 +2,32 @@ axios.defaults.headers.common = {
   "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').content,
 };
 
+Vue.component('submit-source-form', {
+  props: ['save', 'text'],
+  template: `
+  <form>
+      <textarea class="form-control" v-on:keydown="keydown($event)" ref="text" :disabled="sending">{{ text }}</textarea>
+      <input type="submit" class="btn btn-sm btn-primary" v-on:click="submit" :disabled="sending">
+  </form>`,
+  data() {
+    return {
+      sending: false,
+    };
+  }, 
+  methods: {
+    keydown(evt) {
+      if (evt.ctrlKey && evt.keyCode == 13) {
+        this.submit();
+      }
+    },
+
+    submit() {
+        this.sending = true;
+        this.save(this.$refs.text.value);
+    }
+  }
+});
+
 Vue.component('submit-source-comment', {
   props: ['id', 'author', 'text', 'canEdit', 'editComment'],
   template: `
@@ -11,8 +37,7 @@ Vue.component('submit-source-comment', {
       <span v-if="!editing">{{ text }}</span>
     </span>
     <div v-if="editing">
-      <textarea class="form-control">{{ text }}</textarea>
-      <input type="submit" class="btn btn-sm btn-primary" v-on:click="edit(id, $event.target.closest('td').querySelector('textarea'))">
+      <submit-source-form :save="edit" :text="text" /> 
     </div>
   </div>
   `,
@@ -22,11 +47,8 @@ Vue.component('submit-source-comment', {
     };
   },
   methods: {
-    edit(id, textarea) {
-      let text = textarea.value;
-      textarea.value = '';
-
-      this.editComment(id, text).then((resp) => {
+    edit(text) {
+      this.editComment(this.id, text).then((resp) => {
           this.editing = false;
       });
     }
@@ -36,11 +58,11 @@ Vue.component('submit-source-comment', {
 Vue.component('submit-source', {
   template: `
   <table class="sourcecode">
-    <template v-for="(line, linenum) in lines">
+    <template v-for="(line, lineIdx) in lines">
       <tr>
         <td>
-          {{ linenum + 1 }}
-          <span class="comment-add" v-on:click="showForm(linenum + 1)"></span>
+          {{ lineIdx + 1 }}
+          <span class="comment-add" v-on:click="showForm(lineIdx)"></span>
         </td>
         <td><pre v-html="line.content"></pre></td>
       </tr>
@@ -52,12 +74,11 @@ Vue.component('submit-source', {
         </td>
       </tr>
 
-      <tr v-if="canShowForm(linenum + 1)">
+      <tr v-if="lineIdx == formLineIdx">
         <td></td>
         <td>
           <div class="form-group">
-            <textarea class="form-control mb-1"></textarea>
-            <input type="submit" class="btn btn-sm btn-primary" v-on:click="addComment(linenum + 1, $event.target.closest('td').querySelector('textarea'))">
+            <submit-source-form :save="addComment" /> 
           </div>
         </td>
       </tr>
@@ -67,33 +88,27 @@ Vue.component('submit-source', {
 `,
   data() { 
     return {
-      formLine: -1,
+      formLineIdx: -1,
     }
   },
   props: ['lines', 'source', 'url'],
   methods: {
-    canShowForm(linenum) {
-      return /*this.lines[linenum - 1].comments.length > 0 ||*/ this.formLine == linenum;
+    showForm(lineidx) {
+      this.formLineIdx = lineidx;
     },
 
-    showForm(linenum) {
-      this.formLine = linenum;
-    },
-
-    addComment(linenum, textarea) {
-      let text = textarea.value;
+    addComment(text) {
       if(text.length <= 0) {
         return;
       }
 
-      textarea.disabled = 'disabled';
       axios.post(this.url, {
         text: text,
         source: this.source,
-        line: linenum
+        line: this.formLineIdx + 1
       }).then((resp) => {
-        this.formLine = -1;
-        this.lines[linenum - 1].comments.push(resp.data);
+        this.lines[this.formLineIdx].comments.push(resp.data);
+        this.formLineIdx = -1;
       });
     },
     editComment(id, text) {
