@@ -127,7 +127,8 @@ def title_in_markdown_validator(value):
 class TaskForm(forms.ModelForm):
     assignment = forms.CharField(
             validators=[title_in_markdown_validator],
-            widget=forms.Textarea(attrs={'style': 'max-height: 300px; height: 300px; width: 95%;'})
+            widget=forms.Textarea(attrs={'style': 'max-height: 300px; height: 300px; width: 95%;'}),
+            strip=False
     )
 
     class Meta:
@@ -142,7 +143,7 @@ class TaskForm(forms.ModelForm):
             with open(os.path.join(self.instance.dir(), "readme.md")) as f:
                 self.fields['assignment'].initial = f.read()
         else:
-            self.fields['assignment'].initial = '# task name'
+            self.fields['assignment'].initial = '# task name\n'
 
     def save(self, commit=True):
         code = self.cleaned_data['code']
