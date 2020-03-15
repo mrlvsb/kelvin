@@ -4,7 +4,10 @@
 {% for class in classes %}
 <div class="card mb-2">
     <div class="card-header">
-        <a href="{% url 'download_csv_per_class' class.class.id %}" class="float-right">Download CSV with results for all task</a>
+        <div class="float-right">
+          <a href="{% url 'admin:common_assignedtask_add' %}?clazz={{ class.class.id }}">Assign new task</a>
+          <a href="{% url 'download_csv_per_class' class.class.id %}">Download CSV with results for all task</a>
+        </div>
         <h5>{{ class.class }}</h5>
     </div>
     <div class="card-body"> 
