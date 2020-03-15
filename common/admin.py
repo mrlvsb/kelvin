@@ -6,6 +6,7 @@ from django.contrib.auth.models import User, Group
 from django.contrib.auth.admin import UserAdmin
 from django.db.models import TextField
 from django import forms
+from django.core.exceptions import ValidationError
 
 
 class BaseByTeacherFilter(admin.SimpleListFilter):
@@ -118,12 +119,21 @@ class MyUserAdmin(UserAdmin):
     def is_teacher(self, obj):
         return obj.groups.filter(name='teachers').exists()
 
+def title_in_markdown_validator(value):
+    title = value.splitlines()
+    if not title[0].startswith('# '):
+        raise ValidationError('Missing task name on the first line - add # task name')
+
 class TaskForm(forms.ModelForm):
-    assignment = forms.CharField(widget=forms.Textarea(attrs={'style': 'max-height: 300px; height: 300px; width: 95%;'}))
+    assignment = forms.CharField(
+            validators=[title_in_markdown_validator],
+            widget=forms.Textarea(attrs={'style': 'max-height: 300px; height: 300px; width: 95%;'})
+    )
 
     class Meta:
         model = models.Task
         fields = "__all__"
+        exclude = ('name', )
 
     def __init__(self, *args, **kwargs):
         super(TaskForm, self).__init__(*args, **kwargs)
@@ -131,6 +141,8 @@ class TaskForm(forms.ModelForm):
         if self.instance.pk:
             with open(os.path.join(self.instance.dir(), "readme.md")) as f:
                 self.fields['assignment'].initial = f.read()
+        else:
+            self.fields['assignment'].initial = '# task name'
 
     def save(self, commit=True):
         code = self.cleaned_data['code']
@@ -140,7 +152,11 @@ class TaskForm(forms.ModelForm):
         with open(os.path.join(path, "readme.md"), "w") as f:
             f.write(self.cleaned_data['assignment'])
 
-        return super(TaskForm, self).save(commit)
+
+        task = super(TaskForm, self).save(commit=False)
+        task.name = self.cleaned_data['assignment'].splitlines()[0].strip('# ')
+        task.save()
+        return task
 
 class TaskAdmin(admin.ModelAdmin):
     form = TaskForm
