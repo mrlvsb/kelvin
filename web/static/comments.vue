@@ -3,7 +3,7 @@ axios.defaults.headers.common = {
 };
 
 Vue.component('submit-source-form', {
-  props: ['save', 'text'],
+  props: ['save', 'text', 'required'],
   template: `
   <form>
       <textarea class="form-control" v-on:keydown="keydown($event)" ref="text" :disabled="sending">{{ text }}</textarea>
@@ -22,8 +22,12 @@ Vue.component('submit-source-form', {
     },
 
     submit() {
-        this.sending = true;
-        this.save(this.$refs.text.value);
+      let value = this.$refs.text.value;
+      if(this.required && value.length <= 0) {
+        return;
+      }
+      this.sending = true;
+      this.save(value);
     }
   }
 });
@@ -78,7 +82,7 @@ Vue.component('submit-source', {
         <td></td>
         <td>
           <div class="form-group">
-            <submit-source-form :save="addComment" /> 
+            <submit-source-form :save="addComment" :required="true" /> 
           </div>
         </td>
       </tr>
