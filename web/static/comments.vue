@@ -6,9 +6,9 @@ Vue.component('submit-source-comment', {
   props: ['id', 'author', 'text', 'canEdit', 'editComment'],
   template: `
   <div>
-    <span style="background: yellow">
+    <span style="background: yellow" v-on:dblclick="editing = canEdit">
       <b>{{ author }}</b>: 
-      <span v-on:dblclick="editing = canEdit" v-if="!editing">{{ text }}</span>
+      <span v-if="!editing">{{ text }}</span>
     </span>
     <div v-if="editing">
       <textarea class="form-control">{{ text }}</textarea>
