@@ -23,7 +23,7 @@ class Semester(models.Model):
         return f"{self.year}/{'W' if self.winter else 'S'}"
 
 class Subject(models.Model):
-    name = models.CharField(max_length=30)
+    name = models.CharField(max_length=60)
     abbr = models.CharField(max_length=10)
 
     def __str__(self):
@@ -31,7 +31,7 @@ class Subject(models.Model):
 
 class Task(models.Model):
     name = models.CharField(max_length=60)
-    code = models.CharField(max_length=60)
+    code = models.CharField(max_length=60, verbose_name='Directory')
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -60,8 +60,8 @@ class AssignedTask(models.Model):
     clazz = models.ForeignKey(Class, on_delete=models.CASCADE)
     assigned = models.DateTimeField()
     deadline = models.DateTimeField(null=True, blank=True)
-    max_points = models.IntegerField()
-    moss_url = models.URLField(null=True, blank=True)
+    max_points = models.IntegerField(null=True, blank=True)
+    moss_url = models.URLField(null=True, blank=True, editable=False)
 
     def __str__(self):
         return f"{self.task.name} {self.clazz}"
