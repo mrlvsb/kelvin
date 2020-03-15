@@ -63,7 +63,7 @@ def student_index(request):
 
     return render(request, 'web/index.html', {
         'classess': result,
-        'token': UserToken.objects.get(user__id=request.user.id).token,
+#        'token': UserToken.objects.get(user__id=request.user.id).token,
     })
 
 
