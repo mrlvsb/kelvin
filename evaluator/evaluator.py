@@ -107,7 +107,7 @@ class Evaluation:
             result.copy_result_file('stdin', actual=test.stdin.file.path)
 
         # run process in the sandbox
-        cmd = ['./main'] + test.args
+        cmd = ['./c-main'] + test.args
         flags = " ".join([shlex.quote(f"--{k}={v}") for k, v in self.tests.limits.items()])
         stdout_name = rand_str(10)
         stderr_name = rand_str(10)
