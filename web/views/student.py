@@ -206,7 +206,7 @@ def submit_comments(request, assignment_id, login, submit_num):
         result[source.virt] = lines
 
     for comment in Comment.objects.filter(submit_id=submit.id).order_by('id'):
-        if comment.source not in result or comment.line >= len(result[comment.source]):
+        if comment.source not in result or comment.line > len(result[comment.source]):
             continue
 
         result[comment.source][comment.line - 1]['comments'].append(dump_comment(comment))
