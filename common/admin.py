@@ -1,7 +1,11 @@
+import os
+
 from django.contrib import admin
 import common.models as models
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.admin import UserAdmin
+from django.db.models import TextField
+from django import forms
 
 
 class BaseByTeacherFilter(admin.SimpleListFilter):
@@ -109,7 +113,32 @@ class MyUserAdmin(UserAdmin):
     def is_teacher(self, obj):
         return obj.groups.filter(name='teachers').exists()
 
+class TaskForm(forms.ModelForm):
+    assignment = forms.CharField(widget=forms.Textarea(attrs={'style': 'max-height: 300px; height: 300px; width: 95%;'}))
+
+    class Meta:
+        model = models.Task
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super(TaskForm, self).__init__(*args, **kwargs)
+
+        if self.instance.pk:
+            with open(os.path.join(self.instance.dir(), "readme.md")) as f:
+                self.fields['assignment'].initial = f.read()
+
+    def save(self, commit=True):
+        code = self.cleaned_data['code']
+        path = os.path.join("tasks", code)
+
+        os.makedirs(path, exist_ok=True)
+        with open(os.path.join(path, "readme.md"), "w") as f:
+            f.write(self.cleaned_data['assignment'])
+
+        return super(TaskForm, self).save(commit)
+
 class TaskAdmin(admin.ModelAdmin):
+    form = TaskForm
     list_filter = ('subject', )
 
 class SubmitAdmin(admin.ModelAdmin):
