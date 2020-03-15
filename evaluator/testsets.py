@@ -5,6 +5,7 @@ import glob
 import re
 import sys
 import importlib.util
+import traceback
 
 import yaml
 
@@ -248,4 +249,4 @@ class TestSet:
                 if generate_tests:
                     generate_tests(self)
             except Exception as e:
-                self.add_warning(f"script.py: {e}")
+                self.add_warning(f"script.py: {e}\n{traceback.format_exc()}")

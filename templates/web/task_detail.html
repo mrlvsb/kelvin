@@ -25,7 +25,7 @@ TODO: Make it nicer with Bootstrap
 {% if is_teacher and inputs.warnings %}
 <ul class="text-danger">
   {% for warning in inputs.warnings %}
-    <li>{{ warning }}</li>
+    <li>{{ warning | linebreaks }}</li>
   {% endfor %}
 </ul>
 {% endif %}
