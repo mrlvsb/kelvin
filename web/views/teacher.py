@@ -33,7 +33,7 @@ def teacher_task(request, task_id):
     return render(request, 'web/task_detail.html', {
           'task': task,
           'text': render_markdown(task_dir, task.code),
-          'inputs': TestSet(task_dir, get_meta(request.user)),
+          'inputs': TestSet(task_dir, get_meta(request.user.username)),
           'max_inline_content_bytes': MAX_INLINE_CONTENT_BYTES,
     })
 
