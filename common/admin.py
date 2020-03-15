@@ -75,6 +75,11 @@ class AssignedTaskAdmin(admin.ModelAdmin):
     # to filter by teacher
     list_filter = ('clazz__subject', 'task__name', ByAssignedTaskTeacherFilter, 'clazz',)
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "clazz":
+            kwargs["queryset"] = models.Class.objects.current_semester()
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
     def teacher_name(self, obj):
         teacher = obj.clazz.teacher
         return f'{teacher.get_full_name()} ({teacher.username})'
