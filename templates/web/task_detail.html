@@ -18,6 +18,7 @@ TODO: Make it nicer with Bootstrap
 {% if is_teacher %}
   <a href="{% url 'submits' submit.student.username %}">Student submits</a>
   <a href="{% url 'reevaluate' submit.id %}">Reevaluate</a>
+  <a href="{% url 'admin:common_task_change' submit.assignment.task.id %}">Edit task</a>
 {% endif %}
 {% endif %}
 

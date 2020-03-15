@@ -1,6 +1,8 @@
 {% extends 'web/layout.html' %}
 
 {% block content %}
+<a href="{% url 'admin:common_task_add' %}" class="btn btn-primary btn-sm mb-2 float-right">Add task</a>
+
   <table class="table table-striped table-hover table-sm">
     <thead>
       <tr>
