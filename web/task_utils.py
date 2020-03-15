@@ -92,7 +92,7 @@ def render_markdown(task_dir, name):
         with open(os.path.join(task_dir, "readme.md")) as f:
             text = "\n".join(f.read().splitlines()[1:])
         text = markdown2.markdown(text, extras=["fenced-code-blocks", "tables"])
-        text = text.replace('src="figures/', f'src="https://upr.cs.vsb.cz/static/tasks/{name}/figures/')
+        text = text.replace('src="figures/', f'src="https://kelvin.cs.vsb.cz/static/tasks/{name}/figures/')
         return text
     except FileNotFoundError:
         pass

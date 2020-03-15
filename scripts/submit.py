@@ -4,7 +4,7 @@ import sys
 import os
 import argparse
 
-URL = os.getenv("UPR_URL", "https://upr.cs.vsb.cz")
+URL = os.getenv("UPR_URL", "https://kelvin.cs.vsb.cz")
 API_URL = URL + "/api/"
 
 def command_submit(args):
