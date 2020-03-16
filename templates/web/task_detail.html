@@ -21,6 +21,7 @@ TODO: Make it nicer with Bootstrap
   <a href="{% url 'admin:common_task_change' submit.assignment.task.id %}">Edit task</a>
 {% endif %}
 {% endif %}
+<div class="text-right" style="font-size: 0.8rem">Select multiple files using CTRL or SHIFT</div>
 
 {% if is_teacher and inputs.warnings %}
 <ul class="text-danger">
@@ -63,7 +64,7 @@ TODO: Make it nicer with Bootstrap
                         <form method="post" enctype="multipart/form-data">
                             {% csrf_token %}
                             <input type="file" name="{{ upload_form.solution.html_name }}" multiple hidden id="upload-choose" onchange="form.submit()">
-                            <span class="btn btn-sm btn-primary" onclick="$('#upload-choose').click()" title='Multiple files can be selected with CTRL or SHIFT'>Upload</span>
+                            <span class="btn btn-sm btn-primary" onclick="$('#upload-choose').click()">Upload</span>
                         </form>
                     </li>
                 </ul>
