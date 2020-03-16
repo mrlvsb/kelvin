@@ -36,9 +36,11 @@ TODO: Make it nicer with Bootstrap
             <li class="nav-item">
                 <a class="nav-link active" data-toggle="tab" href="#tab_assignment">Assignment</a>
             </li>
+            {% if inputs.tests_dict %}
             <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#tab_tests">Tests</a>
             </li>
+            {% endif %}
             {% if submit %}
             <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#tab_src">Source code</a>
