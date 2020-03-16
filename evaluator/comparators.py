@@ -47,6 +47,18 @@ def open_me(resource, mode='t', block_size=None, filters=[]):
     return resource
 
 
+def diff_format_html(diffs):
+    html = []
+    for (op, data) in diffs:
+      text = (data.replace("&", "&amp;").replace("<", "&lt;")
+                 .replace(">", "&gt;").replace("\n", "&para;<br>"))
+      if op == diff_match_patch.DIFF_INSERT:
+        html.append("<ins style=\"background:#9bf0ae;\">%s</ins>" % text)
+      elif op == diff_match_patch.DIFF_DELETE:
+        html.append("<del style=\"background:#ffe6e6;\">%s</del>" % text)
+      elif op == diff_match_patch.DIFF_EQUAL:
+        html.append("<span>%s</span>" % text)
+    return "".join(html)
 
 def text_compare(f1, f2, filters=[]):
     try:
@@ -59,7 +71,8 @@ def text_compare(f1, f2, filters=[]):
 
         dmp = diff_match_patch()
         diff = dmp.diff_main(text2, text1)
-        html = dmp.diff_prettyHtml(diff)
+
+        html = diff_format_html(diff)
 
         success = True
         for t, _ in diff:
