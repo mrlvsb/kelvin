@@ -59,7 +59,7 @@ TODO: Make it nicer with Bootstrap
                         <form method="post" enctype="multipart/form-data">
                             {% csrf_token %}
                             <input type="file" name="{{ upload_form.solution.html_name }}" multiple hidden id="upload-choose" onchange="form.submit()">
-                            <span class="btn btn-sm btn-primary" onclick="$('#upload-choose').click()">Upload</span>
+                            <span class="btn btn-sm btn-primary" onclick="$('#upload-choose').click()" title='Multiple files can be selected with CTRL or SHIFT'>Upload</span>
                         </form>
                     </li>
                 </ul>
