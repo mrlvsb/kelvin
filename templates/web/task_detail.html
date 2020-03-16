@@ -43,12 +43,14 @@ TODO: Make it nicer with Bootstrap
             <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#tab_src">Source code</a>
             </li>
+            {% if inputs.tests_dict %}
             <li class="nav-item">
                 <a class="nav-link text-{% if submit.points and submit.points == submit.max_points %}success{%else%}danger{%endif%}" data-toggle="tab" href="#tab_result">
                     Result #{{ submit.submit_num }} 
                     {%if submit.max_points is not None %}({{ submit.points }} / {{ submit.max_points }}){%else%}evaluating...{%endif%}
                 </a>
             </li>
+            {% endif %}
 
             {% endif %}
 
