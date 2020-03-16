@@ -18,7 +18,7 @@
                 <tr>
                     <th>Task</th>
                     <th>Deadline</th>
-                    <th>Score</th>
+                    <!--                <th>Score</th> -->
                 </tr>
             </thead>
             {% for task in node.tasks  %}
@@ -34,11 +34,13 @@
                     {{ task.deadline|date:"G:i, d.m.Y" }}, Time remaining: {{ task.deadline|timeuntil:task.tznow }}
                     {% endif %}
                 </td>
+                <!--
                 <td>
                     {% if task.points is not None and task.max_points is not None %}
                     {{ task.points }} / {{ task.max_points }}
                     {% endif %}
                 </td>
+                -->
             </tr>
             {% endfor %}
         </table>
