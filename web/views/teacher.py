@@ -100,7 +100,10 @@ def send_to_moss(submits):
         for submit in submits:
             if submit.student_id not in processed:
                 dst = os.path.join(temp_dir, f"{submit.student.username}.c")
-                copyfile(submit.source.path, dst)
+                with open(dst, "w") as dst_f:
+                    for source in submit.all_sources():
+                        with open(source.phys) as src_f:
+                            dst_f.write(src_f.read())
                 m.addFile(dst)
                 print(dst)
 
@@ -152,23 +155,9 @@ def get_last_submits(assignment_id):
 def download_assignment_submits(request, assignment_id):
     with tempfile.TemporaryFile(suffix=".tar.gz") as f:
         with tarfile.open(fileobj=f, mode="w:gz") as tar:
-            targets = []
             for submit in get_last_submits(assignment_id):
-                tar.add(submit.source.path, f"{submit.student.username}.c")
-                targets.append(submit.student.username)
-
-            template = f"""
-CFLAGS=-lm
-CC=-gcc
-all: {' '.join(targets)}
-
-clean:
-\trm -f {' '.join(targets)}
-            """
-
-            makefile = tarfile.TarInfo('Makefile')
-            makefile.size = len(template)
-            tar.addfile(makefile, fileobj=io.BytesIO(template.encode('utf-8')))
+                for source in submit.all_sources():
+                    tar.add(source.phys, f"{submit.student.username}/{source.virt}")
 
         f.seek(0)
         response = HttpResponse(f.read(), 'application/tar')
@@ -182,7 +171,7 @@ def show_assignment_submits(request, assignment_id):
     for submit in get_last_submits(assignment_id):
         submits.append({
             'submit': submit,
-            'source': highlight_code(submit.source.path),
+            'sources': [highlight_code(source.phys) for source in submit.all_sources()],
         })
 
     return render(request, 'web/submits_show_source.html', {

@@ -159,6 +159,8 @@ Vue.component('submit-sources', {
   },
 });
 
-new Vue({
-  el: '#submit-sources',
-})
+document.querySelectorAll('.comments').forEach((el) => {
+  new Vue({
+    el: el,
+  })
+});

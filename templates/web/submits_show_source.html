@@ -3,12 +3,21 @@
 {% block content %}
 
 {% for submit in submits %}
-    <h1>
-        <a href="{% url 'task_detail' submit.submit.student.username submit.submit.assignment_id %}"  class="text-{% if submit.submit.points and submit.submit.points == submit.submit.max_points %}success{%else%}danger{%endif%}">
-            {{submit.submit.student}} - {{ submit.submit.student.get_full_name }} ({{submit.submit.points}} / {{submit.submit.max_points}})
-        </a>
-    </h1>
-    {{ submit.source|safe }}
+  <div class="card mb-1">
+    <div class="card-header p-0">
+      <h5 class="mb-0">
+        <button data-toggle="collapse" data-target="#submit-{{submit.submit.student}}"
+          class="btn btn-link text-{% if submit.submit.points and submit.submit.points == submit.submit.max_points %}success{%else%}danger{%endif%}"
+          >
+          {{ submit.submit.student}} - {{ submit.submit.student.get_full_name }} ({{submit.submit.points}} / {{submit.submit.max_points}})
+        </button>
+      </h5>
+    </div>
+    <div id="submit-{{submit.submit.student}}" class="collapse">
+      <div class="card-body">
+        <div class="comments"><submit-sources url="{% url 'submit_comments' submit.submit.assignment.id submit.submit.student submit.submit.submit_num %}"></div>
+      </div>
+    </div>
+  </div>
 {% endfor %}
-
 {% endblock %}

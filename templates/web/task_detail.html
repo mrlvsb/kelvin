@@ -111,7 +111,7 @@ TODO: Make it nicer with Bootstrap
             {% if submit %}
             <div class="tab-pane" id="tab_src">
                 <a href="{% url 'submit_download' submit.assignment.id submit.student.username submit.submit_num %}" class="float-right">Download</a>
-                <div id="submit-sources"><submit-sources url="{% url 'submit_comments' submit.assignment.id submit.student submit.submit_num %}"></div>
+                <div class="comments"><submit-sources url="{% url 'submit_comments' submit.assignment.id submit.student submit.submit_num %}"></div>
             </div>
 
             <div class="tab-pane" id="tab_result">
@@ -142,8 +142,5 @@ TODO: Make it nicer with Bootstrap
 </div>
 {% endcomment %}
 
-<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
-<script src="{% static 'comments.vue' %}"></script>
 
 {% endblock %}
