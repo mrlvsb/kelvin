@@ -1,6 +1,6 @@
 import os
 
-from datetime import datetime
+from django.utils import timezone
 
 from django.db import models
 from django.conf import settings
@@ -9,8 +9,8 @@ from django.conf import settings
 class ClassManager(models.Manager):
     def current_semester(self):
         return self.filter(
-            semester__begin__lte=datetime.now(),
-            semester__end__gte=datetime.now(),
+            semester__begin__lte=timezone.now(),
+            semester__end__gte=timezone.now(),
         )
 
 class Semester(models.Model):
@@ -68,6 +68,9 @@ class AssignedTask(models.Model):
     deadline = models.DateTimeField(null=True, blank=True)
     max_points = models.IntegerField(null=True, blank=True)
     moss_url = models.URLField(null=True, blank=True, editable=False)
+
+    def is_visible(self):
+        return timezone.now() >= self.assigned
 
     def __str__(self):
         return f"{self.task.name} {self.clazz}"
