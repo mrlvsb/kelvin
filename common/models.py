@@ -37,6 +37,9 @@ class Task(models.Model):
     def dir(self):
         return os.path.join("tasks", self.code)
 
+    def sanitized_name(self):
+        return self.name.replace('/', '_').replace(' ', '_')
+
     def __str__(self):
         return self.name
 

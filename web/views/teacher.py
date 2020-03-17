@@ -153,6 +153,8 @@ def get_last_submits(assignment_id):
 
 @user_passes_test(is_teacher)
 def download_assignment_submits(request, assignment_id):
+    assignment = get_object_or_404(AssignedTask, pk=assignment_id)
+
     with tempfile.TemporaryFile(suffix=".tar.gz") as f:
         with tarfile.open(fileobj=f, mode="w:gz") as tar:
             for submit in get_last_submits(assignment_id):
@@ -161,7 +163,7 @@ def download_assignment_submits(request, assignment_id):
 
         f.seek(0)
         response = HttpResponse(f.read(), 'application/tar')
-        response['Content-Disposition'] = f'attachment; filename="submits.tar.gz"'
+        response['Content-Disposition'] = f'attachment; filename="{assignment.task.sanitized_name()}_{assignment.clazz.day}{assignment.clazz.time:%H%M}.tar.gz"'
         return response
 
 
