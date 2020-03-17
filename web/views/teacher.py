@@ -75,6 +75,7 @@ def teacher_list(request, **class_conditions):
                 student_submit_stats['last_submit_date'] = submit.created_at
                 student_submit_stats['points'] = submit.points
                 student_submit_stats['max_points'] = submit.max_points
+                student_submit_stats['assigned_points'] = submit.assigned_points
 
             tasks.append({
                 'task': assignment.task,
@@ -169,17 +170,24 @@ def download_assignment_submits(request, assignment_id):
 
 @user_passes_test(is_teacher)
 def show_assignment_submits(request, assignment_id):
+    assignment = get_object_or_404(AssignedTask, pk=assignment_id)
+
     submits = []
     for submit in get_last_submits(assignment_id):
-        submits.append({
-            'submit': submit,
-            'sources': [highlight_code(source.phys) for source in submit.all_sources()],
-        })
+        submits.append(submit)
 
     return render(request, 'web/submits_show_source.html', {
         'submits': submits,
+        'assignment': assignment, 
     })
 
+@user_passes_test(is_teacher)
+def submit_assign_points(request, submit_id):
+    submit = get_object_or_404(Submit, pk=submit_id)
+
+    submit.assigned_points = request.POST['assigned_points']
+    submit.save()
+    return redirect(request.META.get('HTTP_REFERER', '/'))
 
 def student_scores(assigned_task):
     for student in assigned_task.clazz.students.all():

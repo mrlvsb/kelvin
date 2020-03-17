@@ -6,16 +6,25 @@
   <div class="card mb-1">
     <div class="card-header p-0">
       <h5 class="mb-0">
-        <button data-toggle="collapse" data-target="#submit-{{submit.submit.student}}"
-          class="btn btn-link text-{% if submit.submit.points and submit.submit.points == submit.submit.max_points %}success{%else%}danger{%endif%}"
+        <button data-toggle="collapse" data-target="#submit-{{submit.student}}"
+          class="btn btn-link text-{% if submit.points and submit.points == submit.max_points %}success{%else%}danger{%endif%}"
           >
-          {{ submit.submit.student}} - {{ submit.submit.student.get_full_name }} ({{submit.submit.points}} / {{submit.submit.max_points}})
+          {{ submit.student}} - {{ submit.student.get_full_name }} ({{submit.points}} / {{submit.max_points}})
         </button>
+        <form class="form-inline float-right" action="{% url 'submit_assign_points' submit.id %}" method="POST">
+          {% csrf_token %} 
+          <div class="input-group input-group-sm mt-1 mr-1">
+            <input type="number" name="assigned_points" min=0 max="{{ assignment.max_points }}" class="form-control" placeholder="points" style="width: 70px" value="{{ submit.assigned_points }}">
+            <div class="input-group-append">
+              <div class="input-group-text"> / {{ assignment.max_points }}</div>
+            </div>
+          </div>
+        </form>
       </h5>
     </div>
-    <div id="submit-{{submit.submit.student}}" class="collapse">
+    <div id="submit-{{submit.student}}" class="collapse">
       <div class="card-body">
-        <div class="comments"><submit-sources url="{% url 'submit_comments' submit.submit.assignment.id submit.submit.student submit.submit.submit_num %}"></div>
+        <div class="comments"><submit-sources url="{% url 'submit_comments' submit.assignment.id submit.student submit.submit_num %}"></div>
       </div>
     </div>
   </div>

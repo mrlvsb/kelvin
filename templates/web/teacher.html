@@ -42,6 +42,7 @@
                 <tr>
                     <th>Login</th>
                     <th>Student</th>
+                    <th>Points</th>
                     <th>Score</th>
                     <th>Total submits</th>
                     <th>First submit</th>
@@ -67,6 +68,11 @@
                     {% if stud.submits %}
                     </a>
                     {% endif %}
+                </td>
+                <td>
+                  {% if stud.assigned_points is not None %}
+                    {{ stud.assigned_points }} / {{ task.assignment.max_points }}
+                  {% endif %}
                 </td>
                 <td>
                     {% if stud.max_points %}
