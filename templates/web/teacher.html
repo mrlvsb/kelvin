@@ -81,7 +81,15 @@
                 </td>
                 <td>{{ stud.submits }}</td>
                 <td>{{ stud.first_submit_date|date:'d.m.Y H:i' }}</td>
-                <td>{{ stud.last_submit_date|date:'d.m.Y H:i' }}</td>
+                <td>
+                  {% if stud.last_submit_date > task.assignment.deadline %}
+                    <span class="text-danger font-weight-bold" title="{{ stud.last_submit_date|date:'d.m.Y H:i' }}">
+                      {{ stud.last_submit_date|timeuntil:task.assignment.deadline }}
+                    </span>
+                  {% else %}
+                    {{ stud.last_submit_date|date:'d.m.Y H:i' }}
+                  {% endif %}
+                </td>
             </tr>
             {% endfor %}
 
