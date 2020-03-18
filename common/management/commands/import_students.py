@@ -40,7 +40,7 @@ class Command(BaseCommand):
                 class_in_db[c].semester = semester
                 class_in_db[c].save()
 
-        for row in doc.xpath('//table[@class="dataTable"]//tr')[10:]:
+        for row in doc.xpath('//table[@class="dataTable"]//tr')[1:]:
             login = row.xpath('./td[2]/a/text()')[0].strip()
             email = row.xpath('./td[2]/a/@href')[0].replace('mailto:', '').strip()
             name = row.xpath('./td[3]/a/text()')[0].replace(', Ing.', '').replace(', Bc.', '')
@@ -62,7 +62,8 @@ class Command(BaseCommand):
                 user.first_name = firstname
                 user.last_name = lastname
                 user.save()
-    
+                print("Created: {}".format(user))
+
             if clazz:
                 class_in_db[clazz].students.add(user)
             else:
