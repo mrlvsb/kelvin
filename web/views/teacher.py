@@ -185,7 +185,11 @@ def show_assignment_submits(request, assignment_id):
 def submit_assign_points(request, submit_id):
     submit = get_object_or_404(Submit, pk=submit_id)
 
-    submit.assigned_points = request.POST['assigned_points']
+    points = None
+    if request.POST['assigned_points'] != '':
+        points = request.POST['assigned_points']
+
+    submit.assigned_points = points
     submit.save()
     return redirect(request.META.get('HTTP_REFERER', '/'))
 
