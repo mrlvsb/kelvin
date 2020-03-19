@@ -62,9 +62,11 @@ TODO: Make it nicer with Bootstrap
             {% endif %}
 
             {% if is_teacher %}
-            <li class="nav-item ml-auto">
-              {% include 'web/teacher/form_assign_points.html' %}
-            <li>
+              {% if submit %}
+                <li class="nav-item ml-auto">
+                  {% include 'web/teacher/form_assign_points.html' %}
+                <li>
+              {% endif %}
             {% else %}
             <li class="nav-item ml-auto">
                 <ul class="navbar-nav">
