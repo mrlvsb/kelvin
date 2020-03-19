@@ -68,6 +68,7 @@ pre .il { color: #009999 } /* Literal.Number.Integer.Long */
 .sourcecode tr td:first-of-type {
   text-align: right;
   color: #7e7e7e;
+  user-select: none;
 }
 
 .sourcecode td {
