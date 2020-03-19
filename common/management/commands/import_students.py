@@ -46,27 +46,24 @@ class Command(BaseCommand):
             name = row.xpath('./td[3]/a/text()')[0].replace(', Ing.', '').replace(', Bc.', '')
             lastname, firstname = name.strip().split(' ', 1)
 
-            clazz = None
+            member_of = []
+            created = False
             for i, el in enumerate(row.xpath('.//input')):
                 if "checked" in el.attrib:
-                    if classes[i][0] != 'P':
-                        if clazz is not None:
-                            raise "in multiple classess"
                         clazz = classes[i]
+                        member_of.append(clazz)
 
-            user = None
-            try:
-                user = User.objects.get(username=login)
-            except User.DoesNotExist:
-                user = User.objects.create_user(login.upper(), email)
-                user.first_name = firstname
-                user.last_name = lastname
-                user.save()
-                print("Created: {}".format(user))
+                        user = None
+                        try:
+                            user = User.objects.get(username=login)
+                        except User.DoesNotExist:
+                            user = User.objects.create_user(login.upper(), email)
+                            user.first_name = firstname
+                            user.last_name = lastname
+                            user.save()
+                            created = True
+                        class_in_db[clazz].students.add(user)
 
-            if clazz:
-                class_in_db[clazz].students.add(user)
-            else:
-                print(login, email, firstname, lastname, clazz, " have no class")
+            print(f"{login} {firstname:>15} {lastname:>15} {created:>5} {', '.join(member_of)}")
 
 
