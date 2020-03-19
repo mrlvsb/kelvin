@@ -23,7 +23,9 @@ TODO: Make it nicer with Bootstrap
 {% if is_teacher %}
 <a href="{% url 'admin:common_task_change' task.id %}">Edit task</a>
 {% endif %}
+{% if not is_teacher %}
 <div class="text-right" style="font-size: 0.8rem">Select multiple files using CTRL or SHIFT</div>
+{% endif %}
 
 {% if is_teacher and inputs.warnings %}
 <ul class="text-danger">
@@ -59,7 +61,11 @@ TODO: Make it nicer with Bootstrap
 
             {% endif %}
 
-            {% if not is_teacher %}
+            {% if is_teacher %}
+            <li class="nav-item ml-auto">
+              {% include 'web/teacher/form_assign_points.html' %}
+            <li>
+            {% else %}
             <li class="nav-item ml-auto">
                 <ul class="navbar-nav">
                     <li class="nav-item">
