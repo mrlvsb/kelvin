@@ -5,12 +5,14 @@
 {% for submit in submits %}
   <div class="card mb-1">
     <div class="card-header p-0">
-      <h5 class="mb-0">
+      <a href="{% url 'task_detail' submit.student.username submit.assignment.id submit.submit_num %}#result" class="text-muted pl-1">[Result]</a>
+      <h5 class="mb-0 pl-0" style="display: inline">
         <button data-toggle="collapse" data-target="#submit-{{submit.student}}"
           class="btn btn-link text-{% if submit.points and submit.points == submit.max_points %}success{%else%}danger{%endif%}"
           >
           {{ submit.student}} - {{ submit.student.get_full_name }} ({{submit.points}} / {{submit.max_points}})
         </button>
+      </h5>
         <form class="form-inline float-right" action="{% url 'submit_assign_points' submit.id %}" method="POST">
           {% csrf_token %} 
           <div class="input-group input-group-sm mt-1 mr-1">
@@ -20,7 +22,6 @@
             </div>
           </div>
         </form>
-      </h5>
     </div>
     <div id="submit-{{submit.student}}" class="collapse">
       <div class="card-body">
