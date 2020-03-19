@@ -10,6 +10,22 @@ class Command(BaseCommand):
         parser.add_argument('file', help='saved html from edison')
         parser.add_argument('subject', help='subject abbreviation')
         parser.add_argument('semester', help='semester in format YYYY/{W,S}')
+        parser.add_argument('--no-lectures', action='store_true', help='do not add students to lectures')
+        parser.add_argument('--no-exercises', action='store_true', help='do not add students to exercises')
+
+    def is_allowed(self, clazz, opts):
+        t, _ = clazz.split('/')
+
+        if t == 'P':
+            if opts['no_lectures']:
+                return False
+        elif t == 'C':
+            if opts['no_exercises']:
+                return False
+        else:
+            print(f"Uknown class type: {clazz}")
+
+        return True
 
     def handle(self, *args, **opts):
         subject = Subject.objects.get(abbr=opts['subject'])
@@ -24,6 +40,8 @@ class Command(BaseCommand):
 
         class_in_db = {}
         for c, label in zip(classes, labels):
+            if not self.is_allowed(c, opts):
+                continue
             try:
                 class_in_db[c] = Class.objects.get(code=c, semester=semester, subject=subject)
             except Class.DoesNotExist:
@@ -48,22 +66,26 @@ class Command(BaseCommand):
 
             member_of = []
             created = False
+
+            user = None
+            try:
+                user = User.objects.get(username=login)
+            except User.DoesNotExist:
+                user = User.objects.create_user(login.upper(), email)
+                user.first_name = firstname
+                user.last_name = lastname
+                user.save()
+                created = True
+
             for i, el in enumerate(row.xpath('.//input')):
                 if "checked" in el.attrib:
                         clazz = classes[i]
-                        member_of.append(clazz)
+                        if not self.is_allowed(clazz, opts):
+                            continue
 
-                        user = None
-                        try:
-                            user = User.objects.get(username=login)
-                        except User.DoesNotExist:
-                            user = User.objects.create_user(login.upper(), email)
-                            user.first_name = firstname
-                            user.last_name = lastname
-                            user.save()
-                            created = True
-                        class_in_db[clazz].students.add(user)
+                        if user not in class_in_db[clazz].students.all():
+                            member_of.append(clazz)
+                            class_in_db[clazz].students.add(user)
 
-            print(f"{login} {firstname:>15} {lastname:>15} {created:>5} {', '.join(member_of)}")
-
+            print(f"{login} {firstname:>15} {lastname:>15} {('created' if created else ''):>5} {', '.join(member_of)}")
 
