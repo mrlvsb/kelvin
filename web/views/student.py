@@ -44,15 +44,12 @@ def student_index(request):
             data = {
                 'id': assignment.id,
                 'name': assignment.task.name,
-                'points': None,
-                'max_points': None,
                 'deadline': assignment.deadline,
                 'tznow': tz.now(),
             }
 
             if last_submit:
-                data['points'] = last_submit.points
-                data['max_points'] = last_submit.max_points
+                data['assigned_points'] = last_submit.assigned_points
 
             tasks.append(data)
 
