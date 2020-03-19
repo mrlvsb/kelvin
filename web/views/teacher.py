@@ -103,10 +103,13 @@ def send_to_moss(submits):
                 dst = os.path.join(temp_dir, f"{submit.student.username}.c")
                 with open(dst, "w") as dst_f:
                     for source in submit.all_sources():
-                        with open(source.phys) as src_f:
-                            dst_f.write(src_f.read())
+                        try:
+                            with open(source.phys) as src_f:
+                                dst_f.write(src_f.read())
+                        except UnicodeDecodeError:
+                            # TODO: student can bypass plagiarism check
+                            print(submit.student_id)
                 m.addFile(dst)
-                print(dst)
 
                 processed.add(submit.student_id)
 
