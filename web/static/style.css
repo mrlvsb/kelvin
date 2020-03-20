@@ -62,13 +62,18 @@ pre .il { color: #009999 } /* Literal.Number.Integer.Long */
 
 
 .sourcecode {
-  line-height: 1rem;
+  line-height: normal;
+}
+
+.sourcecode td {
+  padding: 0px;
 }
 
 .sourcecode tr td:first-of-type {
   text-align: right;
   color: #7e7e7e;
   user-select: none;
+  font-size: 87.5%
 }
 
 .sourcecode td {
