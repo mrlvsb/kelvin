@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.forms',
     'django_rq',
-    'django_cas_ng'
+    'django_cas_ng',
+    'notifications'
 ]
 
 MIDDLEWARE = [

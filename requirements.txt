@@ -9,4 +9,5 @@ mosspy==1.0.4
 https://github.com/mingchen/django-cas-ng/archive/master.zip #django-cas-ng==4.0.0
 imageio==2.6.1
 diff-match-patch==20181111
+django-notifications-hq
 Unidecode==1.1.1
