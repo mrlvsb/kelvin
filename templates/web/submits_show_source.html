@@ -13,15 +13,7 @@
           {{ submit.student}} - {{ submit.student.get_full_name }} ({{submit.points}} / {{submit.max_points}})
         </button>
       </h5>
-        <form class="form-inline float-right" action="{% url 'submit_assign_points' submit.id %}" method="POST">
-          {% csrf_token %} 
-          <div class="input-group input-group-sm mt-1 mr-1">
-            <input type="number" name="assigned_points" min=0 max="{{ assignment.max_points }}" class="form-control" placeholder="points" style="width: 70px" value="{{ submit.assigned_points }}">
-            <div class="input-group-append">
-              <div class="input-group-text"> / {{ assignment.max_points }}</div>
-            </div>
-          </div>
-        </form>
+      {% include 'web/teacher/form_assign_points.html' %}
     </div>
     <div id="submit-{{submit.student}}" class="collapse">
       <div class="card-body">

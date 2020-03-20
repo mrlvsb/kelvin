@@ -87,7 +87,7 @@ class Submit(models.Model):
     result = models.TextField(default='')
     points = models.IntegerField(null=True)
     max_points = models.IntegerField(null=True)
-    assigned_points = models.IntegerField(null=True)
+    assigned_points = models.FloatField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def path_parts(self):
