@@ -12,6 +12,7 @@ class Command(BaseCommand):
         parser.add_argument('semester', help='semester in format YYYY/{W,S}')
         parser.add_argument('--no-lectures', action='store_true', help='do not add students to lectures')
         parser.add_argument('--no-exercises', action='store_true', help='do not add students to exercises')
+        parser.add_argument('--class-code', help='add all students to classes with this code', action='append', default=[])
 
     def is_allowed(self, clazz, opts):
         t, _ = clazz.split('/')
@@ -37,6 +38,14 @@ class Command(BaseCommand):
 
         classes = list(map(str.strip, doc.xpath('//tr[@class="rowClass1"]/th/div/span[1]/text()')))
         labels = list(doc.xpath('//tr[@class="rowClass1"]/th/div/@title'))
+
+        default_classes = []
+        for code in opts['class_code']:
+            try:
+                default_classes.append(Class.objects.current_semester().get(code=code, subject__abbr=opts['subject']))
+            except Class.DoesNotExist:
+                print(f"Class with code {code} does not exist.")
+                exit(1)
 
         class_in_db = {}
         for c, label in zip(classes, labels):
@@ -86,6 +95,10 @@ class Command(BaseCommand):
                         if user not in class_in_db[clazz].students.all():
                             member_of.append(clazz)
                             class_in_db[clazz].students.add(user)
+            for clazz in default_classes:
+                if user not in clazz.students.all():
+                    member_of.append(clazz.code)
+                    clazz.students.add(user)
 
             print(f"{login} {firstname:>15} {lastname:>15} {('created' if created else ''):>5} {', '.join(member_of)}")
 
