@@ -17,6 +17,7 @@ from django.db.models import Max, Min, Count
 
 import mosspy
 import django_rq
+from unidecode import unidecode
 
 from ..task_utils import highlight_code, render_markdown
 from common.models import Submit, Class, Task, AssignedTask
@@ -167,7 +168,8 @@ def download_assignment_submits(request, assignment_id):
 
         f.seek(0)
         response = HttpResponse(f.read(), 'application/tar')
-        response['Content-Disposition'] = f'attachment; filename="{assignment.task.sanitized_name()}_{assignment.clazz.day}{assignment.clazz.time:%H%M}.tar.gz"'
+        filename = f"{assignment.task.sanitized_name()}_{assignment.clazz.day}{assignment.clazz.time:%H%M}.tar.gz"
+        response['Content-Disposition'] = f'attachment; filename="{unidecode(filename)}"'
         return response
 
 
