@@ -3,7 +3,7 @@ Vue.component('notifications', {
   data() {
     return {
       unread_count: null,
-      unread_list: [],
+      notifications: [],
 			show: false,
     };
   },
@@ -20,16 +20,19 @@ Vue.component('notifications', {
 						<span class="btn" class="float-right" style="cursor: pointer" v-on:click="markAllRead">&times;</span>
 					</li>
 					<div style="max-height: 300px; overflow-y: auto; font-size: 80%;">
-						<li v-for="(item, _) in notifications" class='list-group-item p-1' v-bind:class="{'list-group-item-light': !item.unread}">
-							<strong v-if="item.actor_full_name">{{ item.actor_full_name }}</strong>
-							<strong v-else>{{ item.actor }}</strong>
-              {{ item.verb }} 
+            <template v-if="notifications.length > 0">
+              <li v-for="(item, _) in notifications" class='list-group-item p-1' v-bind:class="{'list-group-item-light': !item.unread}">
+                <strong v-if="item.actor_full_name">{{ item.actor_full_name }}</strong>
+                <strong v-else>{{ item.actor }}</strong>
+                {{ item.verb }} 
 
-							<a :href="item.action_url" v-if="item.action_url">{{ item.action_object }}</a>
-              <span v-else>{{ item.action_object }}</span>
-              on 
-							{{ item.target }}
-						</li>
+                <a :href="item.action_url" v-if="item.action_url">{{ item.action_object }}</a>
+                <span v-else>{{ item.action_object }}</span>
+                on 
+                {{ item.target }}
+              </li>
+            </template>
+            <li class="list-group-item p-1 text-center" v-else>There are no notifications!</span>
 					</div>
 				</ul>
     </div>
