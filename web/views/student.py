@@ -156,6 +156,20 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
     data['upload_form'] = form
     return render(request, 'web/task_detail.html', data)
 
+def comment_recipients(submit, current_author):
+    recipients = [
+        submit.assignment.clazz.teacher,
+        submit.student
+    ]
+
+    # add all participants
+    for comment in Comment.objects.filter(submit_id=submit.id):
+        if comment.author not in recipients:
+            recipients.append(comment.author)
+
+    recipients.remove(current_author)
+    return recipients
+
 @login_required
 def submit_comments(request, assignment_id, login, submit_num):
     submit = get_object_or_404(Submit,
@@ -186,12 +200,7 @@ def submit_comments(request, assignment_id, login, submit_num):
         comment.line = data['line']
         comment.save()
 
-        if request.user == submit.student:
-            recipient = submit.assignment.clazz.teacher
-        else:
-            recipient = submit.student
-
-        notify.send(sender=request.user, recipient=recipient, verb='added new', action_object=comment, target=submit)
+        notify.send(sender=request.user, recipient=comment_recipients(submit, request.user), verb='added new', action_object=comment, target=submit)
         return HttpResponse(json.dumps(dump_comment(comment)))
     elif request.method == 'PATCH':
         data = json.loads(request.body)
@@ -212,7 +221,7 @@ def submit_comments(request, assignment_id, login, submit_num):
             comment.text = data['text']
             comment.save()
 
-            notify.send(sender=request.user, recipient=submit.student, verb='Comment has been updated', action_object=comment, target=submit)
+            notify.send(sender=request.user, recipient=comment_recipients(submit, request.user), verb='updated', action_object=comment, target=submit)
             return HttpResponse(json.dumps(dump_comment(comment)))
 
     result = {}
