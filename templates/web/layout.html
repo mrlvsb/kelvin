@@ -32,8 +32,11 @@
                 {% endif %}
               </ul>
               <div class="my-2 my-lg-0">
-                  <!--<img src="{% static 'notify_icon.png' %}" style="height: 15px;"/>-->
-                  {{ user.get_full_name }} ({{ user.username }}) <a href="/accounts/logout/?next=/">Logout</a>
+                  {{ user.get_full_name }} ({{ user.username }})
+                  <span id="notifications">
+                    <notifications />
+                  </span>
+                  <a href="/accounts/logout/?next=/">Logout</a>
               </div>
             </div>
         </nav>
@@ -59,5 +62,6 @@
         <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
         <script src="{% static 'comments.vue' %}"></script>
+        <script src="{% static 'notifications.vue' %}"></script>
     </body>
 </html>

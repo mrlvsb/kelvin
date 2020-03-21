@@ -4,6 +4,7 @@ from django.utils import timezone
 
 from django.db import models
 from django.conf import settings
+from django.urls import reverse
 
 
 class ClassManager(models.Manager):
@@ -129,3 +130,14 @@ class Comment(models.Model):
     source = models.CharField(max_length=255)
     line = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"comment #{self.id}"
+
+    def notification_url(self):
+        return reverse('task_detail', kwargs={
+            'student_username': self.submit.student.username,
+            'assignment_id': self.submit.assignment.id,
+            'submit_num': self.submit.submit_num
+        }) + '?clear_notifications=1#src'
+

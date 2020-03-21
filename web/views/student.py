@@ -35,7 +35,6 @@ def student_index(request):
 
     now = datetime.now()
     classess = Class.objects.current_semester().filter(students__pk=request.user.id)
-    notifications = request.user.notifications.unread()
 
     for clazz in classess:
         tasks = []
@@ -64,7 +63,6 @@ def student_index(request):
 
     return render(request, 'web/index.html', {
         'classess': result,
-        'notifications': notifications,
 #        'token': UserToken.objects.get(user__id=request.user.id).token,
     })
 
@@ -100,15 +98,10 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
     else:
         submits = submits.filter(student__pk=request.user.id)
 
-    notification_id = request.GET.get('notification_id')
-    if notification_id:
-        try:
-            notification = Notification.objects.get(pk=notification_id)
+    if request.GET.get('clear_notifications'):
+        for notification in request.user.notifications.unread().filter(target_object_id=submits[0].id):
             notification.mark_as_read()
-        except Notification.DoesNotExist as e:
-            # TODO: Handle it better
-            # This should never happen, but if it does, we don't care.
-            pass
+        return redirect(request.path_info)
 
     assignment = get_object_or_404(AssignedTask, id=assignment_id)
     if (assignment.assigned > datetime.now() or not assignment.clazz.students.filter(username=request.user.username)) and not is_teacher(request.user):
@@ -192,7 +185,13 @@ def submit_comments(request, assignment_id, login, submit_num):
         comment.source = data['source']
         comment.line = data['line']
         comment.save()
-        notify.send(sender=request.user, recipient=submit.student, verb='New comment has been added', action_object=comment, target=submit)
+
+        if request.user == submit.student:
+            recipient = submit.assignment.clazz.teacher
+        else:
+            recipient = submit.student
+
+        notify.send(sender=request.user, recipient=recipient, verb='added new', action_object=comment, target=submit)
         return HttpResponse(json.dumps(dump_comment(comment)))
     elif request.method == 'PATCH':
         data = json.loads(request.body)
@@ -343,10 +342,3 @@ def project(request, project_type):
     with open(os.path.join(BASE_DIR, "projects", project_type, "assigned", f"{request.user.username}.html")) as f:
         return HttpResponse(f.read(), 'text/html')
 
-@login_required
-def notification_mark_as_read(request, notification_id):
-    if request.method == 'POST':
-        notification = request.user.notifications.unread().filter(pk=notification_id)
-        if len(notification) == 1:
-            notification[0].mark_as_read()
-    return redirect('index')

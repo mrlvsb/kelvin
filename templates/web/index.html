@@ -9,22 +9,6 @@
 </ul>
 {% endcomment %}
 
-{% if notifications|length > 0 %}
-<div class="card mb-2">
-    <div class="card-header"><h5>Notifications</h5></div>
-        <div class="card-body">
-        {% for notification in notifications %}
-            <p>
-                {{ notification.verb }} in submit <a href="{% url 'task_detail' notification.target.student.username notification.target.assignment.id notification.target.submit_num %}?notification_id={{ notification.id }}#src">{{ notification.target.submit_num }}</a>
-                <form action="{% url 'notification_mark_as_read' notification.id %}" method="POST">{% csrf_token %}
-                    <button type="submit" class="btn btn-primary btn-sm" data-action="{% url 'notification_mark_as_read' notification.id %}" data-method="POST">Mark as read</button>
-                </form>
-            </p>
-        {% endfor %}
-        </div>
-    </div>
-</div>
-{% endif %}
 
 {% for node in classess %}
 <div class="card mb-2">

@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import teacher as teacher_view
 from .views import student as student_view
+from .views import notification as notification_view
 from .views import common as common_view
 
 urlpatterns = [
@@ -17,7 +18,11 @@ urlpatterns = [
     path('result/<int:submit_id>/<str:test_name>/<str:result_type>/<str:file>', student_view.raw_result_content, name='raw_result_content'),
     path('task/<int:assignment_id>/<str:login>/<int:submit_num>/download', student_view.submit_download, name='submit_download'),
     path('task/<int:assignment_id>/<str:login>/<int:submit_num>/comments', student_view.submit_comments, name='submit_comments'),
-    path('notification/<int:notification_id>/mark_as_read', student_view.notification_mark_as_read, name='notification_mark_as_read'),
+
+    # notifications
+    path('notification/all', notification_view.all_notifications),
+    path('notification/mark_as_read', notification_view.mark_as_read),
+    path('notification/mark_as_read/<int:notification_id>', notification_view.mark_as_read),
 
     # teacher
     path('all', teacher_view.all_classes),
