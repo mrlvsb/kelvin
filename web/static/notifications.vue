@@ -26,7 +26,7 @@ Vue.component('notifications', {
                 <strong v-else>{{ item.actor }}</strong>
                 {{ item.verb }} 
 
-                <a :href="item.action_url" v-if="item.action_url">{{ item.action_object }}</a>
+                <a :href="item.action_object_url" v-if="item.action_object_url">{{ item.action_object }}</a>
                 <span v-else>{{ item.action_object }}</span>
                 on 
                 {{ item.target }}

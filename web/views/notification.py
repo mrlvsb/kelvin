@@ -29,17 +29,17 @@ def all_notifications(request):
 
     for notification in request.user.notifications.all()[0:num_to_fetch]:
         struct = model_to_dict(notification)
-        if notification.actor:
-            struct['actor'] = str(notification.actor)
-            if ContentType.objects.get_for_model(User).id == struct['actor_content_type']:
-                struct['actor_full_name'] = notification.actor.get_full_name()
-        if notification.target:
-            struct['target'] = str(notification.target)
-        if notification.action_object:
-            struct['action_object'] = str(notification.action_object)
-            if hasattr(notification.action_object, 'notification_url'):
-                struct['action_url'] = notification.action_object.notification_url()
-    
+
+        for obj_type in ['actor', 'target', 'action_object']:
+            obj = getattr(notification, obj_type)
+            if obj:
+                if hasattr(obj, 'notification_str'):
+                    struct[obj_type] = obj.notification_str()
+                else:
+                    struct[obj_type] = str(obj)
+                if hasattr(obj, 'notification_url'):
+                    struct[f"{obj_type}_url"] = obj.notification_url()
+
         if notification.data:
             struct = {**struct, **notification.data}
 

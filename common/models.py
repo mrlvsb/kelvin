@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.db import models
 from django.conf import settings
 from django.urls import reverse
+from django.contrib.auth.models import User
 
 
 class ClassManager(models.Manager):
@@ -123,6 +124,9 @@ class Submit(models.Model):
     def __str__(self):
         return f"#{self.id} {self.student.username} {self.assignment.task.name} {self.submit_num}"
 
+    def notification_str(self):
+        return f"{self.assignment.task.name} #{self.submit_num}"
+
 class Comment(models.Model):
     submit = models.ForeignKey(Submit, on_delete=models.CASCADE)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -134,10 +138,15 @@ class Comment(models.Model):
     def __str__(self):
         return f"comment #{self.id}"
 
+    def notification_str(self):
+        return "comment"
+
     def notification_url(self):
         return reverse('task_detail', kwargs={
             'student_username': self.submit.student.username,
             'assignment_id': self.submit.assignment.id,
             'submit_num': self.submit.submit_num
         }) + '?clear_notifications=1#src'
+
+User.add_to_class('notification_str', lambda self: self.get_full_name())
 
