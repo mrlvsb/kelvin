@@ -5,16 +5,16 @@
 <div class="card mb-2">
     <div class="card-header">
         <div class="float-right">
-          <a href="{% url 'admin:common_assignedtask_add' %}?clazz={{ class.class.id }}">Assign new task</a>
-          <a href="{% url 'download_csv_per_class' class.class.id %}">Download CSV with results for all task</a>
+          <a href="{% url 'admin:common_assignedtask_add' %}?clazz={{ class.class.id }}" title="Assign new task"><i class="material-icons">add_box</i></a>
+          <a href="{% url 'download_csv_per_class' class.class.id %}" title="Download CSV with results for all task"><i class="material-icons">get_app</i></a>
         </div>
         <h5>{{ class.class }}</h5>
     </div>
     <div class="card-body"> 
         {% for task in class.tasks %}
         <h3>
-          <a href="{% url 'teacher_task' task.task.id %}">{{ task.task.name }}</a>
-          <a href="{% url 'admin:common_assignedtask_change' task.assignment.id %}" class="text-muted">edit</a>
+          <a href="{% url 'teacher_task' task.task.id %}" title="View task assignment">{{ task.task.name }}</a>
+          <a href="{% url 'admin:common_assignedtask_change' task.assignment.id %}" class="text-muted" title="Edit"><i class="material-icons">edit</i></a>
         </h3>
         <h5>
           Assigned: {{ task.assignment.assigned|date:"G:i, d.m.Y" }}
@@ -28,15 +28,16 @@
             , Time remaining: {{ task.assignment.deadline|timeuntil:task.tznow }}
           {% endif %}
         </h5>
-        <a href="{% url 'moss_check' task.assignment.id %}" class="btn btn-secondary btn-sm">Send to MOSS</a>
+        <a href="{% url 'moss_check' task.assignment.id %}" title="Send to MOSS"><i class="material-icons">check_circle</i></a>
         {% if task.assignment.moss_url %}
         <a href="{{ task.assignment.moss_url }}">moss result</a>
         {% endif %}
         
-        <a href="{% url 'download_assignment_submits' task.assignment.id %}">Download all source codes</a>&nbsp;&nbsp;
-        <a href="{% url 'show_assignment_submits' task.assignment.id %}">Show all source codes</a>&nbsp;&nbsp;
-        <a href="{% url 'download_csv_per_task' task.assignment.id %}">Download CSV with results</a>
-        
+        <a href="{% url 'download_assignment_submits' task.assignment.id %}" title="Download all source codes"><i class="material-icons">cloud_download</i></a>&nbsp;&nbsp;
+        <a href="{% url 'show_assignment_submits' task.assignment.id %}" title="Show all source codes"><img src="/static/show_code.svg" style="height: 25px;" /></a>&nbsp;&nbsp;
+        <a href="{% url 'download_csv_per_task' task.assignment.id %}" title="Download CSV with results"><i class="material-icons">get_app</i></a>
+        <br/>
+        <br/>
         <table class="table table-sm table-hover">
             <thead>
                 <tr>
