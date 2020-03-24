@@ -48,3 +48,8 @@ $ chromium /tmp/eval/result.html
 ```
 python -m evaluator.tests
 ```
+
+
+### Favicon
+
+Generated from [favicon.io](https://favicon.io/favicon-generator/) with Didact Gothic font.
