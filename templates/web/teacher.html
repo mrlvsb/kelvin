@@ -1,5 +1,7 @@
 {% extends 'web/layout.html' %}
 
+{% load static %}
+
 {% block content %}
 {% for class in classes %}
 <div class="card mb-2">
@@ -34,7 +36,7 @@
         {% endif %}
         
         <a href="{% url 'download_assignment_submits' task.assignment.id %}" title="Download all source codes"><i class="material-icons">cloud_download</i></a>&nbsp;&nbsp;
-        <a href="{% url 'show_assignment_submits' task.assignment.id %}" title="Show all source codes"><img src="/static/show_code.svg" style="height: 25px;" /></a>&nbsp;&nbsp;
+        <a href="{% url 'show_assignment_submits' task.assignment.id %}" title="Show all source codes"><img src="{% static 'show_code.svg' %}" style="height: 20px;margin-top: -15px;" /></a>&nbsp;&nbsp;
         <a href="{% url 'download_csv_per_task' task.assignment.id %}" title="Download CSV with results"><i class="material-icons">get_app</i></a>
         <br/>
         <br/>
