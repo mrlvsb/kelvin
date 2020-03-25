@@ -55,7 +55,7 @@ Vue.component('notifications', {
   },
   mounted() {
 		this.refresh();
-    setInterval(this.refresh, 5000);
+//    setInterval(this.refresh, 5000);
   },
 });
 
