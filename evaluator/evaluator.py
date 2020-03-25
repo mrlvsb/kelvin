@@ -184,7 +184,9 @@ class Evaluation:
         if test.script:
             check = getattr(test.script, 'check', None)
             if check:
-                result.add_result(check(result, self), 'custom script failed')
+                custom_result = check(result, self)
+                if custom_result:
+                    result.add_error(custom_result)
 
         return result
 
