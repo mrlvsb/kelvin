@@ -90,6 +90,11 @@ TODO: Make it nicer with Bootstrap
             {% else %}
             <li class="nav-item ml-auto">
                 <ul class="navbar-nav">
+                    {% if submit and submit.assigned_points is not None %}
+                    <li class="nav-item mr-2 pt-1">
+                        {{ submit.assigned_points }} / {{ submit.assignment.max_points }}
+                    </li>
+                    {% endif %}
                     <li class="nav-item">
                         <form method="post" enctype="multipart/form-data">
                             {% csrf_token %}
