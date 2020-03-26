@@ -16,7 +16,7 @@ TODO: Make it nicer with Bootstrap
 
 {% if submit %}
 <h6>
-  Submit for student: {{ submit.student.get_full_name }} ({{ submit.student.username }}),
+  Submit #{{ submit.submit_num }} for student: {{ submit.student.get_full_name }} ({{ submit.student.username }}),
 
   {% if submit.created_at > submit.assignment.deadline %}
   <span class="text-danger font-weight-bold" title="{{ stud.last_submit_date|date:'d.m.Y H:i' }}">
@@ -24,6 +24,13 @@ TODO: Make it nicer with Bootstrap
   </span>
   {% else %}
     {{ submit.created_at|date:'d.m.Y H:i' }}
+  {% endif %}
+
+  {% if prev_submit %}
+    <a href="{% url 'task_detail' submit.student.username submit.assignment.id prev_submit %}">prev</a>
+  {% endif %}
+  {% if next_submit %}
+    <a href="{% url 'task_detail' submit.student.username submit.assignment.id next_submit %}">next</a>
   {% endif %}
 </h6>
 <div>

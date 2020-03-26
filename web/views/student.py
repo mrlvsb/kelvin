@@ -132,6 +132,13 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
     if current_submit:
         data = {**data, **get(current_submit)}
 
+        submit_nums = sorted(submits.values_list('submit_num', flat=True))
+        current_idx = submit_nums.index(current_submit.submit_num)
+        if current_idx - 1 >= 0:
+            data['prev_submit'] = submit_nums[current_idx - 1]
+        if current_idx + 1 < len(submit_nums):
+            data['next_submit'] = submit_nums[current_idx + 1]
+
     if request.method == 'POST':
         form = UploadSolutionForm(request.POST, request.FILES)
         if form.is_valid():
