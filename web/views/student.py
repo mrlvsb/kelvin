@@ -98,11 +98,6 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
     else:
         submits = submits.filter(student__pk=request.user.id)
 
-    if request.GET.get('clear_notifications'):
-        for notification in request.user.notifications.unread().filter(target_object_id=submits[0].id):
-            notification.mark_as_read()
-        return redirect(request.path_info)
-
     assignment = get_object_or_404(AssignedTask, id=assignment_id)
     if (assignment.assigned > datetime.now() or not assignment.clazz.students.filter(username=request.user.username)) and not is_teacher(request.user):
         raise Http404()
@@ -138,6 +133,11 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
             data['prev_submit'] = submit_nums[current_idx - 1]
         if current_idx + 1 < len(submit_nums):
             data['next_submit'] = submit_nums[current_idx + 1]
+
+        if request.GET.get('clear_notifications'):
+            for notification in request.user.notifications.unread().filter(target_object_id=current_submit.id):
+                notification.mark_as_read()
+            return redirect(request.path_info)
 
     if request.method == 'POST':
         form = UploadSolutionForm(request.POST, request.FILES)
