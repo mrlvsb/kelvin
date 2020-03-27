@@ -26,6 +26,8 @@ def all_notifications(request):
 
     num_to_fetch = 50
     read_count = 0
+    unread = request.user.notifications.filter(unread=True).count()
+    unread_found = 0
 
     for notification in request.user.notifications.all()[0:num_to_fetch]:
         struct = model_to_dict(notification)
@@ -46,11 +48,14 @@ def all_notifications(request):
         all_list.append(struct)
 
         if not struct['unread']:
-            read_count += 1
-            if read_count >= 5:
-                break
+            if unread_found == unread:
+                read_count += 1
+                if read_count >= 5:
+                    break
+        else:
+            unread_found += 1
     data = {
-        'unread_count': request.user.notifications.filter(unread=True).count(),
+        'unread_count': unread,
         'notifications': all_list
     }
     return JsonResponse(data)
