@@ -86,7 +86,7 @@ TODO: Make it nicer with Bootstrap
             {% endif %}
 
             {% if is_teacher %}
-              {% if submit %}
+              {% if submit and submit.assignment.max_points is not None %}
                 <li class="nav-item ml-auto">
                   {% include 'web/teacher/form_assign_points.html' %}
                 <li>
