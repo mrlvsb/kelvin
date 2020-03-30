@@ -82,7 +82,6 @@ def teacher_list(request, **class_conditions):
                 'task': assignment.task,
                 'assignment': assignment,
                 'results': results.values(),
-                'tznow': tz.now(),
             })
 
         result.append({

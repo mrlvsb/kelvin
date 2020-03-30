@@ -25,13 +25,13 @@
             <h5>
               Assigned: {{ task.assignment.assigned|date:"d.m.Y, G:i" }}
               {% if not task.assignment.is_visible %}
-                , Time remaining: {{ task.assignment.assigned|timeuntil:task.tznow }}
+                , Time remaining: {{ task.assignment.assigned|timeuntil }}
               {% endif %}
             </h5>
             <h5>
               Deadline: {{ task.assignment.deadline|date:"d.m.Y, G:i" }}
               {% if task.assignment.is_visible %}
-                , Time remaining: {{ task.assignment.deadline|timeuntil:task.tznow }}
+                , Time remaining: {{ task.assignment.deadline|timeuntil }}
               {% endif %}
             </h5>
             <a href="{% url 'moss_check' task.assignment.id %}" title="Send to MOSS"><i class="material-icons">check_circle</i></a>
