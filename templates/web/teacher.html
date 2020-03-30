@@ -4,102 +4,107 @@
 
 {% block content %}
 {% for class in classes %}
-<div class="card mb-2">
-    <div class="card-header">
-        <div class="float-right">
-          <a href="{% url 'admin:common_assignedtask_add' %}?clazz={{ class.class.id }}" title="Assign new task"><i class="material-icons">add_box</i></a>
-          <a href="{% url 'download_csv_per_class' class.class.id %}" title="Download CSV with results for all task"><i class="material-icons">get_app</i></a>
-        </div>
-        <h5>{{ class.class }}</h5>
-    </div>
-    <div class="card-body"> 
-        {% for task in class.tasks %}
-        <h3>
-          <a href="{% url 'teacher_task' task.task.id %}" title="View task assignment">{{ task.task.name }}</a>
-          <a href="{% url 'admin:common_assignedtask_change' task.assignment.id %}" class="text-muted" title="Edit"><i class="material-icons">edit</i></a>
-        </h3>
-        <h5>
-          Assigned: {{ task.assignment.assigned|date:"d.m.Y, G:i" }}
-          {% if not task.assignment.is_visible %}
-            , Time remaining: {{ task.assignment.assigned|timeuntil:task.tznow }}
-          {% endif %}
-        </h5>
-        <h5>
-          Deadline: {{ task.assignment.deadline|date:"d.m.Y, G:i" }}
-          {% if task.assignment.is_visible %}
-            , Time remaining: {{ task.assignment.deadline|timeuntil:task.tznow }}
-          {% endif %}
-        </h5>
-        <a href="{% url 'moss_check' task.assignment.id %}" title="Send to MOSS"><i class="material-icons">check_circle</i></a>
-        {% if task.assignment.moss_url %}
-        <a href="{{ task.assignment.moss_url }}">moss result</a>
-        {% endif %}
-        
-        <a href="{% url 'download_assignment_submits' task.assignment.id %}" title="Download all source codes"><i class="material-icons">cloud_download</i></a>&nbsp;&nbsp;
-        <a href="{% url 'show_assignment_submits' task.assignment.id %}" title="Show all source codes"><img src="{% static 'show_code.svg' %}" style="height: 20px;margin-top: -15px;" /></a>&nbsp;&nbsp;
-        <a href="{% url 'download_csv_per_task' task.assignment.id %}" title="Download CSV with results"><i class="material-icons">get_app</i></a>
-        <br/>
-        <br/>
-        <table class="table table-sm table-hover">
-            <thead>
-                <tr>
-                    <th>Login</th>
-                    <th>Student</th>
-                    <th>Points</th>
-                    <th>Score</th>
-                    <th>Total submits</th>
-                    <th>First submit</th>
-                    <th>Last submit</th>
-                </tr>
-            </thead>
-            {% for stud in task.results %}
-            <tr class="table-{% if stud.max_points and stud.points == stud.max_points %}success{% elif stud.points > 0 %}warning{% else %}danger{%endif%}">
-                <td>
-                    {% if stud.submits %}
-                    <a href="{% url 'task_detail' stud.student.username task.assignment.id %}">
-                    {% endif %}
-                        {{ stud.student }}
-                    {% if stud.submits %}
-                    </a>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if stud.submits %}
-                    <a href="{% url 'task_detail' stud.student.username task.assignment.id %}">
-                    {% endif %}
-                        {{ stud.student.get_full_name }}
-                    {% if stud.submits %}
-                    </a>
-                    {% endif %}
-                </td>
-                <td>
-                  {% if stud.assigned_points is not None %}
-                    {{ stud.assigned_points }} / {{ task.assignment.max_points }}
-                  {% endif %}
-                </td>
-                <td>
-                    {% if stud.max_points %}
-                        {{ stud.points }} / {{ stud.max_points }}
-                    {% endif %}
-                </td>
-                <td>{{ stud.submits }}</td>
-                <td>{{ stud.first_submit_date|date:'d.m.Y H:i' }}</td>
-                <td>
-                  {% if stud.last_submit_date > task.assignment.deadline %}
-                    <span class="text-danger font-weight-bold" title="{{ stud.last_submit_date|date:'d.m.Y H:i' }}">
-                      {{ stud.last_submit_date|timeuntil:task.assignment.deadline }}
-                    </span>
-                  {% else %}
-                    {{ stud.last_submit_date|date:'d.m.Y H:i' }}
-                  {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
+<div id="class-block-{{class.class.id}}">
+  <div class="card mb-2">
+      <div class="card-header">
+          <div class="float-right">
+            <a href="{% url 'admin:common_assignedtask_add' %}?clazz={{ class.class.id }}" title="Assign new task"><i class="material-icons">add_box</i></a>
+            <a href="{% url 'download_csv_per_class' class.class.id %}" title="Download CSV with results for all task"><i class="material-icons">get_app</i></a>
+          </div>
+          <button class="btn btn-link" data-toggle="collapse" data-target="#class-{{class.class.id}}" aria-expanded="true" aria-controls="collapseOne">
+            <h5>{{ class.class }}</h5>
+          </button>
+      </div>
+      <div id="class-{{class.class.id}}" class="collapse show" aria-labelledby="headingOne" data-parent="#class-block-{{class.class.id}}">
+        <div class="card-body">
+            {% for task in class.tasks %}
+            <h3>
+              <a href="{% url 'teacher_task' task.task.id %}" title="View task assignment">{{ task.task.name }}</a>
+              <a href="{% url 'admin:common_assignedtask_change' task.assignment.id %}" class="text-muted" title="Edit"><i class="material-icons">edit</i></a>
+            </h3>
+            <h5>
+              Assigned: {{ task.assignment.assigned|date:"d.m.Y, G:i" }}
+              {% if not task.assignment.is_visible %}
+                , Time remaining: {{ task.assignment.assigned|timeuntil:task.tznow }}
+              {% endif %}
+            </h5>
+            <h5>
+              Deadline: {{ task.assignment.deadline|date:"d.m.Y, G:i" }}
+              {% if task.assignment.is_visible %}
+                , Time remaining: {{ task.assignment.deadline|timeuntil:task.tznow }}
+              {% endif %}
+            </h5>
+            <a href="{% url 'moss_check' task.assignment.id %}" title="Send to MOSS"><i class="material-icons">check_circle</i></a>
+            {% if task.assignment.moss_url %}
+            <a href="{{ task.assignment.moss_url }}">moss result</a>
+            {% endif %}
 
-        
-        </table>
-        {% endfor %}
-    </div>
+            <a href="{% url 'download_assignment_submits' task.assignment.id %}" title="Download all source codes"><i class="material-icons">cloud_download</i></a>&nbsp;&nbsp;
+            <a href="{% url 'show_assignment_submits' task.assignment.id %}" title="Show all source codes"><img src="{% static 'show_code.svg' %}" style="height: 20px;margin-top: -15px;" /></a>&nbsp;&nbsp;
+            <a href="{% url 'download_csv_per_task' task.assignment.id %}" title="Download CSV with results"><i class="material-icons">get_app</i></a>
+            <br/>
+            <br/>
+            <table class="table table-sm table-hover">
+                <thead>
+                    <tr>
+                        <th>Login</th>
+                        <th>Student</th>
+                        <th>Points</th>
+                        <th>Score</th>
+                        <th>Total submits</th>
+                        <th>First submit</th>
+                        <th>Last submit</th>
+                    </tr>
+                </thead>
+                {% for stud in task.results %}
+                <tr class="table-{% if stud.max_points and stud.points == stud.max_points %}success{% elif stud.points > 0 %}warning{% else %}danger{%endif%}">
+                    <td>
+                        {% if stud.submits %}
+                        <a href="{% url 'task_detail' stud.student.username task.assignment.id %}">
+                        {% endif %}
+                            {{ stud.student }}
+                        {% if stud.submits %}
+                        </a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if stud.submits %}
+                        <a href="{% url 'task_detail' stud.student.username task.assignment.id %}">
+                        {% endif %}
+                            {{ stud.student.get_full_name }}
+                        {% if stud.submits %}
+                        </a>
+                        {% endif %}
+                    </td>
+                    <td>
+                      {% if stud.assigned_points is not None %}
+                        {{ stud.assigned_points }} / {{ task.assignment.max_points }}
+                      {% endif %}
+                    </td>
+                    <td>
+                        {% if stud.max_points %}
+                            {{ stud.points }} / {{ stud.max_points }}
+                        {% endif %}
+                    </td>
+                    <td>{{ stud.submits }}</td>
+                    <td>{{ stud.first_submit_date|date:'d.m.Y H:i' }}</td>
+                    <td>
+                      {% if stud.last_submit_date > task.assignment.deadline %}
+                        <span class="text-danger font-weight-bold" title="{{ stud.last_submit_date|date:'d.m.Y H:i' }}">
+                          {{ stud.last_submit_date|timeuntil:task.assignment.deadline }}
+                        </span>
+                      {% else %}
+                        {{ stud.last_submit_date|date:'d.m.Y H:i' }}
+                      {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </table>
+            {% endfor %}
+        </div>
+      </div>
+  </div>
 </div>
 {% endfor %}
 {% endblock %}
