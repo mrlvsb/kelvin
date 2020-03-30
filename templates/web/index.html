@@ -32,7 +32,7 @@
                 {% endcomment %}
                 <td>
                     {% if task.deadline %}
-                    {{ task.deadline|date:"G:i, d.m.Y" }}, Time remaining: {{ task.deadline|timeuntil:task.tznow }}
+                    {{ task.deadline|date:"d.m.Y, G:i" }}, Time remaining: {{ task.deadline|timeuntil:task.tznow }}
                     {% endif %}
                 </td>
                 <td>
