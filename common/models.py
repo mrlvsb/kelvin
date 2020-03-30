@@ -150,3 +150,32 @@ class Comment(models.Model):
 
 User.add_to_class('notification_str', lambda self: self.get_full_name())
 
+def assignedtask_results(assignment, **kwargs):
+    results = {}
+    assignment_submits = Submit.objects.filter(assignment_id=assignment.id, **kwargs).select_related('student').order_by('id')
+    for submit in assignment_submits:
+        if submit.student.username not in results:
+            results[submit.student.username] = {
+                'student': submit.student,
+                'submits': 0,
+                'submits_with_assigned_pts': 0,
+            }
+
+        student_submit_stats = results[submit.student.username]
+        student_submit_stats['submits'] += 1
+
+        if 'first_submit_date' not in student_submit_stats:
+            student_submit_stats['first_submit_date'] = submit.created_at
+        student_submit_stats['last_submit_date'] = submit.created_at
+
+        if student_submit_stats['submits_with_assigned_pts'] == 0:
+            if submit.assigned_points or (assignment.deadline and submit.created_at < assignment.deadline):
+                student_submit_stats['points'] = submit.points
+                student_submit_stats['max_points'] = submit.max_points
+                student_submit_stats['assigned_points'] = submit.assigned_points
+                student_submit_stats['accepted_submit_num'] = submit.submit_num
+
+        if submit.assigned_points:
+            student_submit_stats['submits_with_assigned_pts'] += 1
+
+    return list(results.values())

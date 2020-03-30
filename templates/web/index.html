@@ -24,7 +24,13 @@
             </thead>
             {% for task in node.tasks  %}
             <tr>
-                <td><a href="{% url 'task_detail' task.id %}">{{ task.name }}</a></td>
+                <td>
+                  {% if task.accepted_submit_num %}
+                    <a href="{% url 'task_detail' task.student.username task.id task.accepted_submit_num %}">{{ task.name }}</a>
+                  {% else %}
+                    <a href="{% url 'task_detail' task.id %}">{{ task.name }}</a>
+                  {% endif %}
+                </td>
                 {% comment %}
                 TODO: Add remaining time to deadline by creating simple tag:
                 https://stackoverflow.com/questions/52296306/django-template-is-there-a-built-in-way-to-get-current-date-as-type-date-ins
@@ -32,7 +38,7 @@
                 {% endcomment %}
                 <td>
                     {% if task.deadline %}
-                    {{ task.deadline|date:"d.m.Y, G:i" }}, Time remaining: {{ task.deadline|timeuntil:task.tznow }}
+                    {{ task.deadline|date:"d.m.Y, H:i" }}, Time remaining: {{ task.deadline|timeuntil }}
                     {% endif %}
                 </td>
                 <td>

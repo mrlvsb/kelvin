@@ -20,7 +20,7 @@ import django_rq
 from unidecode import unidecode
 
 from ..task_utils import highlight_code, render_markdown
-from common.models import Submit, Class, Task, AssignedTask
+from common.models import Submit, Class, Task, AssignedTask, assignedtask_results
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from evaluator.testsets import TestSet
 from common.evaluate import get_meta, evaluate_job
@@ -48,6 +48,7 @@ def teacher_task_moss_check(request, task_id):
 def all_classes(request):
     return teacher_list(request)
 
+
 def teacher_list(request, **class_conditions):
     if not class_conditions:
         class_conditions = {}
@@ -58,30 +59,21 @@ def teacher_list(request, **class_conditions):
     for clazz in classess:
         tasks = []
 
+        class_logins = clazz.students.all().order_by('username')
         for assignment in clazz.assignedtask_set.all().order_by('-id'):
-            results = {}
-            for student in clazz.students.all().order_by('username'):
-                results[student.username] = {
-                    'student': student,
-                    'submits': 0,
-                }
-
-            assignment_submits = Submit.objects.filter(assignment_id=assignment.id).select_related('student').order_by('id')
-            for submit in assignment_submits:
-                student_submit_stats = results[submit.student.username]
-                student_submit_stats['submits'] += 1
-
-                if 'first_submit_date' not in student_submit_stats:
-                    student_submit_stats['first_submit_date'] = submit.created_at
-                student_submit_stats['last_submit_date'] = submit.created_at
-                student_submit_stats['points'] = submit.points
-                student_submit_stats['max_points'] = submit.max_points
-                student_submit_stats['assigned_points'] = submit.assigned_points
+            results = assignedtask_results(assignment)
+            submit_logins = [r['student'].username for r in results]
+            for student in class_logins:
+                if student.username not in submit_logins:
+                    results.append({
+                        'student': student,
+                        'submits': 0
+                    })
 
             tasks.append({
                 'task': assignment.task,
                 'assignment': assignment,
-                'results': results.values(),
+                'results': sorted(results, key=lambda s: s['student'].username),
             })
 
         result.append({

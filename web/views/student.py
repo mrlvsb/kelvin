@@ -15,7 +15,7 @@ from django.utils import timezone as tz
 
 from ..task_utils import highlight_code, highlight_code_json, render_markdown
 
-from common.models import Submit, Class, AssignedTask, Task, Comment
+from common.models import Submit, Class, AssignedTask, Task, Comment, assignedtask_results
 from common.evaluate import evaluate_job
 from api.models import UserToken
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
@@ -33,27 +33,21 @@ from notifications.models import Notification
 def student_index(request):
     result = []
 
-    now = datetime.now()
     classess = Class.objects.current_semester().filter(students__pk=request.user.id)
 
     for clazz in classess:
         tasks = []
         for assignment in AssignedTask.objects.filter(clazz_id=clazz.id, assigned__lte=datetime.now()).order_by('-id'):
-            last_submit = Submit.objects.filter(
-                assignment__id=assignment.id,
-                student__id=request.user.id,
-            ).last()
-
             data = {
                 'id': assignment.id,
                 'name': assignment.task.name,
                 'deadline': assignment.deadline,
-                'tznow': tz.now(),
+                'assignment': assignment,
             }
 
-            if last_submit:
-                data['assigned_points'] = last_submit.assigned_points
-
+            score = assignedtask_results(assignment, student__id=request.user.id)
+            if score:
+                data = {**data, **score[0]}
             tasks.append(data)
 
         result.append({

@@ -58,48 +58,55 @@
                 </thead>
                 {% for stud in task.results %}
                 <tr class="table-{% if stud.max_points and stud.points == stud.max_points %}success{% elif stud.points > 0 %}warning{% else %}danger{%endif%}">
-                    <td>
-                        {% if stud.submits %}
-                        <a href="{% url 'task_detail' stud.student.username task.assignment.id %}">
+                  <td>
+                      {% if stud.submits %}
+                        {% if stud.accepted_submit_num %}
+                          <a href="{% url 'task_detail' stud.student.username task.assignment.id stud.accepted_submit_num %}">
+                        {% else %}
+                          <a href="{% url 'task_detail' stud.student.username task.assignment.id %}">
                         {% endif %}
-                            {{ stud.student }}
-                        {% if stud.submits %}
-                        </a>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if stud.submits %}
-                        <a href="{% url 'task_detail' stud.student.username task.assignment.id %}">
-                        {% endif %}
-                            {{ stud.student.get_full_name }}
-                        {% if stud.submits %}
-                        </a>
-                        {% endif %}
-                    </td>
-                    <td>
-                      {% if stud.assigned_points is not None %}
-                        {{ stud.assigned_points }} / {{ task.assignment.max_points }}
                       {% endif %}
-                    </td>
-                    <td>
-                        {% if stud.max_points %}
-                            {{ stud.points }} / {{ stud.max_points }}
-                        {% endif %}
-                    </td>
-                    <td>{{ stud.submits }}</td>
-                    <td>{{ stud.first_submit_date|date:'d.m.Y H:i' }}</td>
-                    <td>
-                      {% if stud.last_submit_date > task.assignment.deadline %}
-                        <span class="text-danger font-weight-bold" title="{{ stud.last_submit_date|date:'d.m.Y H:i' }}">
-                          {{ stud.last_submit_date|timeuntil:task.assignment.deadline }}
-                        </span>
-                      {% else %}
-                        {{ stud.last_submit_date|date:'d.m.Y H:i' }}
+                          {{ stud.student }}
+                      {% if stud.submits %}
+                      </a>
                       {% endif %}
-                    </td>
+                  </td>
+                  <td>
+                      {% if stud.submits %}
+                        {% if stud.accepted_submit_num %}
+                          <a href="{% url 'task_detail' stud.student.username task.assignment.id stud.accepted_submit_num %}">
+                        {% else %}
+                          <a href="{% url 'task_detail' stud.student.username task.assignment.id %}">
+                        {% endif %}
+                      {% endif %}
+                          {{ stud.student.get_full_name }}
+                      {% if stud.submits %}
+                      </a>
+                      {% endif %}
+                  </td>
+                  <td>
+                    {% if stud.assigned_points is not None %}
+                      {{ stud.assigned_points }} / {{ task.assignment.max_points }}
+                    {% endif %}
+                  </td>
+                  <td>
+                      {% if stud.max_points %}
+                          {{ stud.points }} / {{ stud.max_points }}
+                      {% endif %}
+                  </td>
+                  <td>{{ stud.submits }}</td>
+                  <td>{{ stud.first_submit_date|date:'d.m.Y H:i' }}</td>
+                  <td>
+                    {% if stud.last_submit_date > task.assignment.deadline %}
+                      <span class="text-danger font-weight-bold" title="{{ stud.last_submit_date|date:'d.m.Y H:i' }}">
+                        {{ stud.last_submit_date|timeuntil:task.assignment.deadline }}
+                      </span>
+                    {% else %}
+                      {{ stud.last_submit_date|date:'d.m.Y H:i' }}
+                    {% endif %}
+                  </td>
                 </tr>
                 {% endfor %}
-
             </table>
             {% endfor %}
         </div>
