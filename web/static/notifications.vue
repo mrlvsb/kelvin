@@ -17,7 +17,7 @@ Vue.component('notifications', {
 				<ul class="list-group">
 					<li class="list-group-item" style="background-color: rgba(0,0,0,.03)">
 						Notifications <span v-if="unread_count > 0">({{ unread_count }})</span>
-						<span class="btn" class="float-right" style="cursor: pointer" v-on:click="markAllRead">&times;</span>
+						<span class="btn" class="float-right material-icons" style="cursor: pointer; font-size: 18px" v-on:click="markAllRead">{{ unread_count == 0 ? 'radio_button_unchecked' : 'highlight_off' }}</span>
 					</li>
 					<div style="max-height: 300px; overflow-y: auto; font-size: 80%;">
             <template v-if="notifications.length > 0">
