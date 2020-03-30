@@ -54,6 +54,11 @@ Vue.component('notifications', {
     },
   },
   mounted() {
+    document.body.addEventListener('click', (evt) => {
+      if(!this.$el.contains(evt.target)) {
+        this.show = false;
+      }
+    });
 		this.refresh();
 //    setInterval(this.refresh, 5000);
   },
