@@ -19,13 +19,13 @@
           <a href="{% url 'admin:common_assignedtask_change' task.assignment.id %}" class="text-muted" title="Edit"><i class="material-icons">edit</i></a>
         </h3>
         <h5>
-          Assigned: {{ task.assignment.assigned|date:"G:i, d.m.Y" }}
+          Assigned: {{ task.assignment.assigned|date:"d.m.Y, G:i" }}
           {% if not task.assignment.is_visible %}
             , Time remaining: {{ task.assignment.assigned|timeuntil:task.tznow }}
           {% endif %}
         </h5>
         <h5>
-          Deadline: {{ task.assignment.deadline|date:"G:i, d.m.Y" }}
+          Deadline: {{ task.assignment.deadline|date:"d.m.Y, G:i" }}
           {% if task.assignment.is_visible %}
             , Time remaining: {{ task.assignment.deadline|timeuntil:task.tznow }}
           {% endif %}

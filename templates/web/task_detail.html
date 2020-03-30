@@ -11,7 +11,7 @@ TODO: Make it nicer with Bootstrap
 
 <h2>{{ task.name }}</h2>
 {% if deadline %}
-<h6>Deadline: {{ deadline|date:"G:i, d.m.Y" }}, Time remaining: {{ deadline|timeuntil:tznow }}</h6>
+<h6>Deadline: {{ deadline|date:"d.m.Y, G:i" }}, Time remaining: {{ deadline|timeuntil:tznow }}</h6>
 {% endif %}
 
 {% if submit %}
