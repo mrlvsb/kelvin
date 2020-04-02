@@ -146,7 +146,7 @@ TODO: Make it nicer with Bootstrap
 
             {% if submit %}
             <div class="tab-pane" id="tab_src">
-                <a href="{% url 'submit_download' submit.assignment.id submit.student.username submit.submit_num %}" class="float-right">Download</a>
+                <a href="{% url 'submit_download' submit.assignment.id submit.student.username submit.submit_num %}" class="float-right" title="Download"><i class="material-icons">get_app</i></a>
                 <div class="comments"><submit-sources url="{% url 'submit_comments' submit.assignment.id submit.student submit.submit_num %}"></div>
             </div>
 
