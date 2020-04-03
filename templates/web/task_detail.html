@@ -27,10 +27,10 @@ TODO: Make it nicer with Bootstrap
   {% endif %}
 
   {% if prev_submit %}
-    <a href="{% url 'task_detail' submit.student.username submit.assignment.id prev_submit %}">prev</a>
+    <a href="{% url 'task_detail' submit.student.username submit.assignment.id prev_submit %}" title="Previous submit"><i class="material-icons" style="position: relative; top: 5px;">keyboard_arrow_left</i></a>
   {% endif %}
   {% if next_submit %}
-    <a href="{% url 'task_detail' submit.student.username submit.assignment.id next_submit %}">next</a>
+    <a href="{% url 'task_detail' submit.student.username submit.assignment.id next_submit %}" title="Next submit"><i class="material-icons" style="position: relative; top: 5px;">keyboard_arrow_right</i></a>
   {% endif %}
 </h6>
 <div>
