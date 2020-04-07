@@ -44,7 +44,7 @@ TODO: Make it nicer with Bootstrap
 
     {% if is_teacher %}
     <a href="{% url 'submits' submit.student.username %}">Student submits</a>
-    <a href="{% url 'reevaluate' submit.id %}">Reevaluate</a>
+    <a href="{% url 'reevaluate' submit.id %}" title="Reevaluate"><i class="material-icons">cached</i></a>
     {% endif %}
 {% endif %}
 {% if not is_teacher %}
