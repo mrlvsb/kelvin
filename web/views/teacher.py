@@ -59,21 +59,11 @@ def teacher_list(request, **class_conditions):
     for clazz in classess:
         tasks = []
 
-        class_logins = clazz.students.all().order_by('username')
         for assignment in clazz.assignedtask_set.all().order_by('-id'):
-            results = assignedtask_results(assignment)
-            submit_logins = [r['student'].username for r in results]
-            for student in class_logins:
-                if student.username not in submit_logins:
-                    results.append({
-                        'student': student,
-                        'submits': 0
-                    })
-
             tasks.append({
                 'task': assignment.task,
                 'assignment': assignment,
-                'results': sorted(results, key=lambda s: s['student'].username),
+                'results': assignedtask_results(assignment),
             })
 
         result.append({
@@ -189,46 +179,20 @@ def submit_assign_points(request, submit_id):
     submit.save()
     return redirect(request.META.get('HTTP_REFERER', '/'))
 
-def student_scores(assigned_task):
-    for student in assigned_task.clazz.students.all():
-        last_submit = Submit.objects.filter(student=student, assignment=assigned_task).order_by('-submit_num')
-        if len(last_submit) > 0:
-            # TODO: Multiply by assigned_task.max_points
-            if last_submit[0].max_points == 0:
-                success_rate = 0
-            else:
-                success_rate = last_submit[0].points / last_submit[0].max_points
-            yield student.username, success_rate
-        else:
-            yield student.username, 0.0
 
-
-@user_passes_test(is_teacher)
-def download_csv_per_task(request, assignment_id: int):
-    assigned_task = AssignedTask.objects.get(pk=assignment_id)
-
-    csv_str = '\n'.join((f'{l},{s}' for l, s in student_scores(assigned_task)))
-    response = HttpResponse(csv_str, 'text/csv')
-    csv_filename = f"{assigned_task.task.code}_{assigned_task.clazz.code}_success_rate.csv"
-    response['Content-Disposition'] = f'attachment; filename="{csv_filename}"'
-
-    return response
-
-
-@user_passes_test(is_teacher)
-def download_csv_per_class(request, class_id: int):
-    clazz = Class.objects.get(pk=class_id)
+def build_score_csv(assignments, filename):
     result = OrderedDict()
 
     header = ['LOGIN']
-    for assignment in clazz.assignedtask_set.all():
+    for assignment in assignments:
         header.append(assignment.task.name)
 
-        for login, score in student_scores(assignment):
+        for record in assignedtask_results(assignment):
+            login = record['student'].username
             if login not in result:
                 result[login] = {'LOGIN': login}
 
-            result[login][assignment.task.name] = score
+            result[login][assignment.task.name] = record['assigned_points'] if 'assigned_points' in record else 0
 
     with io.StringIO() as out:
         w = csv.DictWriter(out, fieldnames=header)
@@ -238,8 +202,19 @@ def download_csv_per_class(request, class_id: int):
             w.writerow(row)
 
         response = HttpResponse(out.getvalue(), 'text/csv')
-        response['Content-Disposition'] = f'attachment; filename="{clazz.code}_success_rate.csv"'
+        response['Content-Disposition'] = f'attachment; filename="{unidecode(filename)}"'
         return response
+
+@user_passes_test(is_teacher)
+def download_csv_per_task(request, assignment_id: int):
+    assigned_task = AssignedTask.objects.get(pk=assignment_id)
+    csv_filename = f"{assigned_task.task.sanitized_name()}_{assigned_task.clazz.day}{assigned_task.clazz.time:%H%M}.csv"
+    return build_score_csv([assigned_task], csv_filename)
+
+@user_passes_test(is_teacher)
+def download_csv_per_class(request, class_id: int):
+    clazz = Class.objects.get(pk=class_id)
+    return build_score_csv(clazz.assignedtask_set.all(), f"{clazz.subject.abbr}_{clazz.day}{clazz.time:%H%M}.csv")
 
 
 @user_passes_test(is_teacher)

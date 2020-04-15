@@ -152,15 +152,15 @@ User.add_to_class('notification_str', lambda self: self.get_full_name())
 
 def assignedtask_results(assignment, **kwargs):
     results = {}
+    for student in assignment.clazz.students.all().order_by('username'):
+        results[student.username] = {
+            'student': student,
+            'submits': 0,
+            'submits_with_assigned_pts': 0,
+        }
+
     assignment_submits = Submit.objects.filter(assignment_id=assignment.id, **kwargs).select_related('student').order_by('id')
     for submit in assignment_submits:
-        if submit.student.username not in results:
-            results[submit.student.username] = {
-                'student': submit.student,
-                'submits': 0,
-                'submits_with_assigned_pts': 0,
-            }
-
         student_submit_stats = results[submit.student.username]
         student_submit_stats['submits'] += 1
 
@@ -178,4 +178,4 @@ def assignedtask_results(assignment, **kwargs):
         if submit.assigned_points is not None:
             student_submit_stats['submits_with_assigned_pts'] += 1
 
-    return list(results.values())
+    return sorted(results.values(), key=lambda s: s['student'].username)
