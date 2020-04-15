@@ -169,13 +169,13 @@ def assignedtask_results(assignment, **kwargs):
         student_submit_stats['last_submit_date'] = submit.created_at
 
         if student_submit_stats['submits_with_assigned_pts'] == 0:
-            if submit.assigned_points or (assignment.deadline and submit.created_at < assignment.deadline):
+            if submit.assigned_points is not None or (assignment.deadline and submit.created_at < assignment.deadline):
                 student_submit_stats['points'] = submit.points
                 student_submit_stats['max_points'] = submit.max_points
                 student_submit_stats['assigned_points'] = submit.assigned_points
                 student_submit_stats['accepted_submit_num'] = submit.submit_num
 
-        if submit.assigned_points:
+        if submit.assigned_points is not None:
             student_submit_stats['submits_with_assigned_pts'] += 1
 
     return list(results.values())
