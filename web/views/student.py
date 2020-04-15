@@ -45,9 +45,9 @@ def student_index(request):
                 'assignment': assignment,
             }
 
-            score = assignedtask_results(assignment, student__id=request.user.id)
-            if score:
-                data = {**data, **score[0]}
+            for student in assignedtask_results(assignment, student__id=request.user.id):
+                if student['student'].username == request.user.username:
+                    data = {**data, **student}
             tasks.append(data)
 
         result.append({
