@@ -3,6 +3,7 @@ import os
 import re
 import tarfile
 import tempfile
+import mimetypes
 import io
 import django_rq
 from django.utils import timezone as datetime
@@ -288,6 +289,27 @@ def tar_test_data(request, task_name):
         f.seek(0)
         return file_response(f, f"{task_name}.tar.gz", "application/tar")
 
+@login_required
+def task_asset(request, task_name, path):
+    task = get_object_or_404(Task, code=task_name)
+    if not is_teacher(request.user):
+        assigned_tasks = AssignedTask.objects.filter(task_id=task.id, clazz__students__id=request.user.id)
+        if not assigned_tasks:
+            raise PermissionDenied()
+
+    if '..' in path:
+        raise PermissionDenied()
+
+    try:
+        system_path = os.path.join("tasks", task_name, path)
+        with open(system_path, 'rb') as f:
+            resp = HttpResponse(f)
+            mime = mimetypes.MimeTypes().guess_type(system_path)
+            if mime:
+                resp['Content-Type'] = f"{mime[0]};charset=utf-8"
+            return resp
+    except FileNotFoundError as e:
+        raise Http404()
 
 @login_required
 def raw_result_content(request, submit_id, test_name, result_type, file):

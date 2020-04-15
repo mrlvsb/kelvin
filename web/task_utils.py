@@ -1,10 +1,13 @@
 import os
 
+from django.urls import reverse
+
 from pygments import highlight
 from pygments.lexers import CLexer
 from pygments.formatters import HtmlFormatter
 from pygments.token import Token, Text, STANDARD_TYPES
 import markdown2
+import lxml.html as html
 
 escape_html_table = {
     ord('&'): u'&amp;',
@@ -92,7 +95,13 @@ def render_markdown(task_dir, name):
         with open(os.path.join(task_dir, "readme.md")) as f:
             text = "\n".join(f.read().splitlines()[1:])
         text = markdown2.markdown(text, extras=["fenced-code-blocks", "tables"])
-        text = text.replace('src="figures/', f'src="https://kelvin.cs.vsb.cz/static/tasks/{name}/figures/')
-        return text
+
+        root = html.fromstring(text)
+        for tag, attr in [('a', 'href'), ('img', 'src')]:
+            for el in root.iter(tag):
+                if not el.attrib[attr].startswith('http'):
+                    el.attrib[attr] = reverse('task_asset', args=[name, el.attrib[attr]])
+
+        return html.tostring(root, pretty_print=True).decode('utf-8')
     except FileNotFoundError:
         pass
