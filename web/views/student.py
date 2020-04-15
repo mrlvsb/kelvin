@@ -266,14 +266,16 @@ def create_taskset(task, user):
     task_dir = os.path.join(BASE_DIR, "tasks", task.code)
     return TestSet(task_dir, get_meta(user))
 
+def check_is_task_accessible(request, task):
+    if not is_teacher(request.user):
+        assigned_tasks = AssignedTask.objects.filter(task_id=task.id, clazz__students__id=request.user.id, assigned__lte=datetime.now())
+        if not assigned_tasks:
+            raise PermissionDenied()
 
 @login_required
 def tar_test_data(request, task_name):
     task = get_object_or_404(Task, code=task_name)
-    if not is_teacher(request.user):
-        assigned_tasks = AssignedTask.objects.filter(task_id=task.id, clazz__students__id=request.user.id)
-        if not assigned_tasks:
-            raise PermissionDenied()
+    check_is_task_accessible(request, task)
 
     tests = create_taskset(task, request.user.username)
 
@@ -292,10 +294,7 @@ def tar_test_data(request, task_name):
 @login_required
 def task_asset(request, task_name, path):
     task = get_object_or_404(Task, code=task_name)
-    if not is_teacher(request.user):
-        assigned_tasks = AssignedTask.objects.filter(task_id=task.id, clazz__students__id=request.user.id)
-        if not assigned_tasks:
-            raise PermissionDenied()
+    check_is_task_accessible(request, task)
 
     if '..' in path:
         raise PermissionDenied()
