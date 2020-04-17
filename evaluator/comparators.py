@@ -70,6 +70,7 @@ def text_compare(f1, f2, filters=[]):
         text2 = "\n".join(f2)
 
         dmp = diff_match_patch()
+        dmp.Diff_Timeout = 10
         diff = dmp.diff_main(text2, text1)
 
         html = diff_format_html(diff)
