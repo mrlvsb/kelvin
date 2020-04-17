@@ -180,14 +180,6 @@ class TestSet:
 
                 self.pipeline.append(pipe)
 
-
-
-    def parse_conf_gcc_flags(self, conf):
-        if not isinstance(conf, list):
-            self.add_warning('gcc_flags is not a list')
-        else:
-            self.gcc_flags = conf
-
     def parse_conf_limits(self, conf):
         handlers = {
             'fsize': lambda txt: parse_human_size(txt) // 1024,
