@@ -54,17 +54,19 @@ class ClangtidyPipe:
             self.root = root
             self.files = {}
 
-        def to_line(self, file, offset):
-            if file not in self.files:
-                self.files[file] = self.build(file)
+        def to_line(self, path, offset):
+            if path not in self.files:
+                self.files[path] = self.build(path)
 
-            for line, threshold in enumerate(self.files[file]):
+            for line, threshold in enumerate(self.files[path]):
                 if threshold > offset:
                     return line + 1
 
-        def build(self, file):
+        def build(self, path):
             offsets = []
-            with open(os.path.join(self.root, file), "rb") as f:
+            import logging
+            logging.error(path)
+            with open(os.path.join(self.root, path), "rb") as f:
                 for offset, byte in enumerate(f.read()):
                     if byte == ord('\n'):
                         offsets.append(offset)
@@ -72,15 +74,15 @@ class ClangtidyPipe:
 
 
     def run(self, evaluation):
-        result = evaluation.sandbox.run('sh -c "clang-tidy rds_reader.cpp --export-fixes=errors 2>/dev/null >/dev/null; cat errors"')
+        result = evaluation.sandbox.run('sh -c "clang-tidy *.cpp --export-fixes=errors 2>/dev/null >/dev/null; cat errors"')
 
         offset_to_line = ClangtidyPipe.OffsetToLine(evaluation.sandbox.system_path())
         comments = defaultdict(list)
         for err in yaml.load(result['stdout'], Loader=yaml.SafeLoader)['Diagnostics']:
             seen = set()
 
-            for note in [err['DiagnosticMessage']]: #, *err['Notes']]:
-                if note['Message'] in seen:
+            for note in [err, err['DiagnosticMessage'] if 'DiagnosticMessage' in err else {}]: #, *err['Notes']]:
+                if 'Message' not in note or note['Message'] in seen:
                     continue
                 seen.add(note['Message'])
                 source = note['FilePath'][5:]
