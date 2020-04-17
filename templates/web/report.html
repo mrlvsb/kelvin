@@ -2,6 +2,7 @@
 <input type="checkbox" id="checkbox-only-errors" checked> <label for="checkbox-only-errors">show only errors</label>
 
 {% for result in results %}
+  {% if result.html or result.tests %}
     <h5>{{ result.title }}</h5>
     <div class="card-body">
         {{ result.html | safe }}
@@ -89,6 +90,7 @@ $ {{ test.command }}{% if test.message %}
         </div>
     </div>
     {% endfor %}
+  {% endif %}
 {% endfor %}
 
 {% endif %}
