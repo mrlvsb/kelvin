@@ -16,10 +16,13 @@ class CommandPipe:
 
 
 class TestsPipe:
+    def __init__(self, executable='./main'):
+        self.executable = executable
+
     def run(self, evaluation):
         results = []
         for test in evaluation.tests:
-            results.append(evaluation.evaluate(self.id, test))
+            results.append(evaluation.evaluate(self.id, test, self.executable))
 
         return {
             "tests": results,

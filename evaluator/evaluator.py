@@ -80,7 +80,7 @@ class Evaluation:
         result.save(os.path.join(self.result_path, 'result.json'))
         return result
 
-    def evaluate(self, runner, test: testsets.Test, env=None, title=None):
+    def evaluate(self, runner, test: testsets.Test, executable, env=None, title=None):
         filters = self.tests.filters + test.filters
 
         result_dir = os.path.join(self.result_path, runner)
@@ -102,7 +102,7 @@ class Evaluation:
             result.copy_result_file('stdin', actual=test.stdin.file.path)
 
         # run process in the sandbox
-        cmd = ['./c-main'] + test.args
+        cmd = [executable] + test.args
         flags = " ".join([shlex.quote(f"--{k}={v}") for k, v in self.tests.limits.items()])
         stdout_name = rand_str(10)
         stderr_name = rand_str(10)
