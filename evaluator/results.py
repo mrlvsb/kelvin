@@ -15,12 +15,11 @@ def encode_json(o):
 
 
 class TestResult:
-    def __init__(self, name, result_dir, meta=None):
+    def __init__(self, result_dir, meta=None):
         if not meta:
             meta = {}
 
         self.meta = {**{
-            'name': name,
             'success': True,
             'errors': []
         }, **meta}
@@ -32,12 +31,6 @@ class TestResult:
             'stdout': 'out',
             'stderr': 'err'
         }
-
-    @staticmethod
-    def load(meta, result_dir):
-        result = TestResult(meta['name'], result_dir, meta)
-        result.discover_files()
-        return result
 
     def discover_files(self):
         aliases = {v: k for k, v in self.aliases.items()}
@@ -147,9 +140,10 @@ class TestResult:
 
 
 class PipeResult:
-    def __init__(self, name, gcc):
-        self.name = name
-        self.gcc = gcc
+    def __init__(self, id):
+        self.id = id
+        self.title = None
+        self.html = None
         self.tests = []
 
 class EvaluationResult:
@@ -160,10 +154,16 @@ class EvaluationResult:
         try:
             with open(os.path.join(self.result_dir, 'result.json')) as f:
                 for pipe_json in json.load(f):
-                    pipe = PipeResult(pipe_json['name'], pipe_json['gcc'])
-                    for test_json in pipe_json['tests']:
-                        result_dir = os.path.join(self.result_dir, pipe.name)
-                        pipe.tests.append(TestResult.load(test_json, result_dir))
+                    pipe = PipeResult(pipe_json.get('id', ''))
+                    pipe.title = pipe_json.get('title', '')
+                    pipe.html = pipe_json.get('html', '')
+                    for test_json in pipe_json.get('tests', []):
+                        result_dir = os.path.join(self.result_dir, pipe.id)
+
+                        result = TestResult(result_dir, test_json)
+                        result.discover_files()
+
+                        pipe.tests.append(result)
                     self.pipelines.append(pipe)
         except FileNotFoundError:
             pass

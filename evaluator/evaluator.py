@@ -25,7 +25,7 @@ def env_build(env):
     if not env:
         env = {}
 
-    return " ".join([shlex.quote(f"-E{k}={v}") for k, v in env.items()])
+    return [shlex.quote(f"-E{k}={v}") for k, v in env.items()]
 
 def rand_str(N):
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=N))
@@ -68,18 +68,13 @@ class Evaluation:
         return os.path.join(self.task_path, path)
 
     def run(self):
-        pipeline = [
-#            pipelines.GccPipeline('normal'),
-#            pipelines.GccPipeline('sanitizer', ['-fsanitize=address', '-fsanitize=bounds', '-fsanitize=undefined'])    
-            pipelines.MakePipeline('build'),
-        ]
-        
         result = EvaluationResult(self.result_path)
-        for pipe in pipeline:
-            logger.info(f"executing {pipe.name}")
+        for pipe in self.tests.pipeline:
+            logger.info(f"executing {pipe.id}")
             res = pipe.run(self)
+            res['id'] = pipe.id
             if res:
-                res['name'] = pipe.name
+                res['title'] = pipe.title
                 result.pipelines.append(res)
 
         result.save(os.path.join(self.result_path, 'result.json'))
@@ -93,7 +88,7 @@ class Evaluation:
             os.makedirs(result_dir)
         except FileExistsError:
             pass
-        result = TestResult(test.name, result_dir)
+        result = TestResult(result_dir, {'name': test.name})
         result.title = title if title else test.title
 
         # copy input files to the sandbox
@@ -111,7 +106,7 @@ class Evaluation:
         flags = " ".join([shlex.quote(f"--{k}={v}") for k, v in self.tests.limits.items()])
         stdout_name = rand_str(10)
         stderr_name = rand_str(10)
-        isolate_cmd = shlex.split(f"isolate -M /tmp/meta --cg {flags} -o {stdout_name} -r {stderr_name} -s --run {env_build(env)} --") + cmd
+        isolate_cmd = shlex.split(f"isolate -M /tmp/meta --cg {flags} -o {stdout_name} -r {stderr_name} -s --run {' '.join(env_build(env))} --") + cmd
         logger.debug("executing in isolation: %s", " ".join((isolate_cmd))) # TODO: shlex.join only in python3.8
         p = subprocess.Popen(isolate_cmd, **args)
         p.communicate()
@@ -198,11 +193,29 @@ class Sandbox:
     def system_path(self, path=''):
         return os.path.join(os.path.join(self.path, 'box'), path)
 
-    def run(self, cmd, env=None):
-        isolation_cmd = f"isolate -s --run --processes=100 {env_build(env)} -e -- {cmd}"
-        logger.info(f"executing in isolation: {isolation_cmd}")
+    def run(self, cmd, env=None, stderr_to_stdout=False):
+        if not env:
+            env = {}
+        if 'PATH' not in env:
+            env['PATH'] = '/usr/bin/:/bin'
 
-        p = subprocess.Popen(shlex.split(isolation_cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        argv = [
+            'isolate',
+            '-s',
+            '--run',
+            '--processes=100',
+            *env_build(env)
+        ]
+
+        if stderr_to_stdout:
+            argv.append('--stderr-to-stdout')
+
+        argv.append('--')
+        argv += shlex.split(cmd)
+
+        logger.info(f"executing in isolation: {shlex.join(argv)}")
+
+        p = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
 
         res = {
@@ -277,6 +290,7 @@ def evaluate(task_path, submit_path, result_path, meta=None):
     return evaluation.run()
 
 def evaluate_score(result):
+    return 0, 0
     points = 0
     max_points = 0
     for i in result:

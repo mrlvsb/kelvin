@@ -1,25 +1,27 @@
 import tarfile
 
-class MakePipeline:
-    def __init__(self, name):
-        self.name = name
+class CommandPipe:
+    def __init__(self, commands):
+        self.commands = commands
 
     def run(self, evaluation):
-        # TODO: params formatting is not secure!
-        result = evaluation.sandbox.run("/usr/bin/make clean all", env={'PATH': '/usr/bin/:/bin'})
-        build_result = {
-            "stderr": result['stderr'][:1024*10] + result['stdout'][:1024*10],
-            "command": "make",
-            "exit_code": 0, #result['exit_code'],
+        output = ""
+        for command in self.commands:
+            result = evaluation.sandbox.run(command, )
+            output += f"<code>$ {command}</code><br><pre>{result['stdout']}</pre>" 
+
+        return {
+            "html": output,
         }
 
+
+class TestsPipe:
+    def run(self, evaluation):
         results = []
-        if build_result['exit_code'] == 0:
-            for test in evaluation.tests:
-                results.append(evaluation.evaluate(self.name, test))
-           
+        for test in evaluation.tests:
+            results.append(evaluation.evaluate(self.id, test))
+
         return {
-            "gcc": build_result,
             "tests": results,
         }
 

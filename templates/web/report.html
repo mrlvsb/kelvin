@@ -2,13 +2,11 @@
 <input type="checkbox" id="checkbox-only-errors" checked> <label for="checkbox-only-errors">show only errors</label>
 
 {% for result in results %}
-    <h5>{{ result.name }}</h5>
+    <h5>{{ result.title }}</h5>
     <div class="card-body">
-        <code>$ {{ result.gcc.command }}</code>
-        <pre>{{ result.gcc.stderr }}</pre>
+        {{ result.html | safe }}
     </div>
 
-    {% if result.gcc.exit_code == 0 %}
     {% for test in result.tests %}
     <div class="card mb-3 mx-3 test-result {% if test.success%}border-success test-result-success{%else%}border-danger test-result-fail{%endif%}"{% if test.success%} hidden{% endif %}>
         <div class="card-header {% if test.success%}bg-success{%else%}bg-danger{%endif%}">
@@ -91,7 +89,6 @@ $ {{ test.command }}{% if test.message %}
         </div>
     </div>
     {% endfor %}
-    {% endif %}
 {% endfor %}
 
 {% endif %}

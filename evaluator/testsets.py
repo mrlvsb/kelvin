@@ -6,10 +6,11 @@ import re
 import sys
 import importlib.util
 import traceback
+from collections import defaultdict
 
 import yaml
 
-from . import filters
+from . import filters, pipelines
 from .utils import parse_human_size
 
 
@@ -130,6 +131,7 @@ class TestSet:
         self.files_cache = os.listdir(self.task_path)
         self.gcc_flags = []
         self.warnings = []
+        self.pipeline = []
         self.load_tests()
 
     def __iter__(self):
@@ -162,6 +164,23 @@ class TestSet:
 
     def add_warning(self, message):
         self.warnings.append(message)
+
+    def parse_conf_pipeline(self, conf):
+        if not isinstance(conf, list):
+            self.add_warning('pipeline is not a list')
+        else:
+            counters = defaultdict(lambda: 0)
+            for item in conf:
+                pipe_type = item['type']
+                pipe = getattr(pipelines, f"{item['type'].capitalize()}Pipe")(**{k: v for k, v in item.items() if k not in ['type', 'title']})
+                pipe.title = item.get('title', item['type'])
+
+                pipe.id = f"{item['type']}_{counters[item['type']]}"
+                counters[pipe_type] += 1
+
+                self.pipeline.append(pipe)
+
+
 
     def parse_conf_gcc_flags(self, conf):
         if not isinstance(conf, list):
