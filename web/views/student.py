@@ -262,8 +262,7 @@ def submit_comments(request, assignment_id, login, submit_num):
     return HttpResponse(json.dumps(result))
 
 def file_response(file, filename, mimetype):
-    content = file.read()
-    response = HttpResponse(content, mimetype)
+    response = HttpResponse(file, mimetype)
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
 
@@ -276,7 +275,7 @@ def raw_test_content(request, task_name, test_name, file):
     for test in tests:
         if test.name == test_name:
             if file in test.files:
-                return file_response(test.files[file], f"{test_name}.{file}", "text/plain")
+                return file_response(test.files[file].open('rb'), f"{test_name}.{file}", "text/plain")
     raise Http404()
 
 
@@ -344,7 +343,7 @@ def raw_result_content(request, submit_id, test_name, result_type, file):
                             return HttpResponse(test.files[file][result_type].read(),
                                                 'text/html' if result_type == 'html' else 'text/plain')
                         else:
-                            return file_response(test.files[file][result_type], f"{test_name}.{result_type}", 'text/plain')
+                            return file_response(test.files[file][result_type].open('rb'), f"{test_name}.{result_type}", 'text/plain')
     raise Http404()
 
 
