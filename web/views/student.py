@@ -235,11 +235,29 @@ def submit_comments(request, assignment_id, login, submit_num):
 
         result[source.virt] = lines
 
-    for comment in Comment.objects.filter(submit_id=submit.id).order_by('id'):
-        if comment.source not in result or comment.line > len(result[comment.source]):
-            continue
+    # add comments from pipeline
+    resultset = get(submit)
+    for pipe in resultset['results']:
+        for source, comments in pipe.comments.items():
+            for comment in comments:
+                try:
+                    result[source][comment['line'] - 1]['comments'].append({
+                        'id': -1,
+                        'author': 'ReviewBot',
+                        'text': comment['text'],
+                        'can_edit': False,
+                    })
+                except KeyError:
+                    pass
 
-        result[comment.source][comment.line - 1]['comments'].append(dump_comment(comment))
+    for comment in Comment.objects.filter(submit_id=submit.id).order_by('id'):
+        try:
+            if comment.source not in result or comment.line > len(result[comment.source]):
+                continue
+
+            result[comment.source][comment.line - 1]['comments'].append(dump_comment(comment))
+        except KeyError:
+            pass
 
     return HttpResponse(json.dumps(result))
 

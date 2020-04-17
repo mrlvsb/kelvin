@@ -157,6 +157,7 @@ class EvaluationResult:
                     pipe = PipeResult(pipe_json.get('id', ''))
                     pipe.title = pipe_json.get('title', '')
                     pipe.html = pipe_json.get('html', '')
+                    pipe.comments = pipe_json.get('comments', {})
                     for test_json in pipe_json.get('tests', []):
                         result_dir = os.path.join(self.result_dir, pipe.id)
 
