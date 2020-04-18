@@ -1,6 +1,7 @@
 import json
 import yaml
 import os
+import shlex
 from collections import defaultdict
 
 
@@ -33,8 +34,23 @@ class TestsPipe:
         }
 
 class GcclinterPipe:
+    def __init__(self, compiler, flags=None):
+        self.compiler = compiler
+
+        if not flags:
+            flags = ['-Wall']
+
+        self.flags = flags
+
     def run(self, evaluation):
-        result = evaluation.sandbox.run('g++ rds_reader.cpp -Wall -fdiagnostics-format=json', stderr_to_stdout=True)
+        sources = [f for f in os.listdir(evaluation.sandbox.system_path()) if f.endswith(".c") or f.endswith(".cpp")]
+        cmd = [
+            self.compiler,
+            '-fdiagnostics-format=json',
+            *self.flags,
+            *sources
+        ]
+        result = evaluation.sandbox.run(shlex.join(cmd), stderr_to_stdout=True)
 
         comments = defaultdict(list)
         for err in json.loads(result['stdout']):
