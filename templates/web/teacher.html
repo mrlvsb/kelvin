@@ -61,9 +61,9 @@
                   <td>
                       {% if stud.submits %}
                         {% if stud.accepted_submit_num %}
-                          <a href="{% url 'task_detail' stud.student.username task.assignment.id stud.accepted_submit_num %}">
+                          <a href="{% url 'task_detail' stud.student.username task.assignment.id stud.accepted_submit_num %}#src">
                         {% else %}
-                          <a href="{% url 'task_detail' stud.student.username task.assignment.id %}">
+                          <a href="{% url 'task_detail' stud.student.username task.assignment.id %}#src">
                         {% endif %}
                       {% endif %}
                           {{ stud.student }}
@@ -74,9 +74,9 @@
                   <td>
                       {% if stud.submits %}
                         {% if stud.accepted_submit_num %}
-                          <a href="{% url 'task_detail' stud.student.username task.assignment.id stud.accepted_submit_num %}">
+                          <a href="{% url 'task_detail' stud.student.username task.assignment.id stud.accepted_submit_num %}#src">
                         {% else %}
-                          <a href="{% url 'task_detail' stud.student.username task.assignment.id %}">
+                          <a href="{% url 'task_detail' stud.student.username task.assignment.id %}#src">
                         {% endif %}
                       {% endif %}
                           {{ stud.student.get_full_name }}
