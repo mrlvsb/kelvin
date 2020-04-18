@@ -12,6 +12,7 @@ class Command(BaseCommand):
         group.add_argument('--failed', action='store_true', help='reevaluate all failed tasks')
         group.add_argument('--latest', action='store_true', help='reevaluate all latest submits for each student and task')
         group.add_argument('--all', action='store_true')
+        group.add_argument('--task-code')
         parser.add_argument('--dry-run', action='store_true')
 
     def latest_submits(self):
@@ -30,6 +31,8 @@ class Command(BaseCommand):
             submits = self.latest_submits()
         elif opts['failed']:
             submits = Submit.objects.filter(max_points=None)
+        elif opts['task_code']:
+            submits = Submit.objects.filter(assignment__task__code=opts['task_code'])
         elif opts['all']:
             submits = Submit.objects.all()
 
