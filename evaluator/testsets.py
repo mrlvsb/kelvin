@@ -12,6 +12,9 @@ import yaml
 
 from . import filters, pipelines
 from .utils import parse_human_size
+from web.task_utils import process_markdown
+from kelvin.settings import BASE_DIR
+from django.template import Context, Template
 
 
 def load_module(path):
@@ -130,6 +133,7 @@ class TestSet:
         self.comparators = {}
         self.files_cache = os.listdir(self.task_path)
         self.gcc_flags = []
+        self.script = None
         self.warnings = []
         self.pipeline = []
         self.load_tests()
@@ -255,9 +259,29 @@ class TestSet:
         path = os.path.join(self.task_path, 'script.py')
         if os.path.exists(path):
             try:
-                script = load_module(path)
-                generate_tests = getattr(script, 'gen_tests', None)
+                self.script = load_module(path)
+                generate_tests = getattr(self.script, 'gen_tests', None)
                 if generate_tests:
                     generate_tests(self)
             except Exception as e:
                 self.add_warning(f"script.py: {e}\n{traceback.format_exc()}")
+
+    def load_readme(self):
+        try:
+            tasks_dir = os.path.realpath(os.path.join(BASE_DIR, "tasks"))
+            task_code = os.path.relpath(os.path.realpath(self.task_path), tasks_dir)
+            with open(os.path.join(self.task_path, "readme.md")) as f:
+                readme = f.read()
+                if self.script:
+                    fn = getattr(self.script, 'readme_vars', None)
+                    if fn:
+                        try:
+                            t = Template(readme)
+                            c = Context(fn(self))
+                            readme = t.render(c)
+                        except Exception as e:
+                            self.add_warning(f"script.py: {e}\n{traceback.format_exc()}")
+
+                return process_markdown(task_code, readme)
+        except FileNotFoundError:
+            pass

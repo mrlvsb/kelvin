@@ -15,7 +15,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone as tz
 from django.urls import reverse
 
-from ..task_utils import highlight_code, highlight_code_json, load_readme 
+from ..task_utils import highlight_code, highlight_code_json
 
 from common.models import Submit, Class, AssignedTask, Task, Comment, assignedtask_results
 from common.evaluate import evaluate_job
@@ -100,25 +100,25 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         submits = submits.filter(student__pk=request.user.id)
 
     assignment = get_object_or_404(AssignedTask, id=assignment_id)
+    testset = create_taskset(assignment.task, student_username if student_username else request.user.username)
     if (assignment.assigned > datetime.now() or not assignment.clazz.students.filter(username=request.user.username)) and not is_teacher(request.user):
         if assignment.task.announce:
             return render(request, 'web/task_detail.html', {
                 'task': assignment.task,
                 'assigned': assignment.assigned,
                 'deadline': assignment.deadline,
-                'text':  load_readme(assignment.task.code).announce,
+                'text':  testset.load_readme().announce,
                 'upload': False,
             })
         raise Http404()
 
-    testset = create_taskset(assignment.task, student_username if student_username else request.user.username)
 
     data = {
         # TODO: task and deadline can be combined into assignment ad deal with it in template
         'task': assignment.task,
         'deadline': assignment.deadline,
         'submits': submits,
-        'text':  load_readme(assignment.task.code),
+        'text':  testset.load_readme(),
         'inputs': testset,
         'max_inline_content_bytes': MAX_INLINE_CONTENT_BYTES,
         'upload': not is_teacher(request.user),

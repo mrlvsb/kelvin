@@ -1,17 +1,19 @@
 import os
+import hashlib
+import subprocess
+
+import lxml.html as html
+import lxml
 
 from django.urls import reverse
+from django.core.cache import caches
+
 from kelvin.settings import BASE_DIR
 
 from pygments import highlight
 from pygments.lexers import CLexer
 from pygments.formatters import HtmlFormatter
 from pygments.token import Token, Text, STANDARD_TYPES
-from django.core.cache import caches
-import hashlib
-import lxml.html as html
-import lxml
-import subprocess
 
 escape_html_table = {
     ord('&'): u'&amp;',
