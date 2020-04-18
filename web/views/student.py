@@ -13,6 +13,7 @@ from django.http import HttpResponse, Http404
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone as tz
+from django.urls import reverse
 
 from ..task_utils import highlight_code, highlight_code_json, load_readme 
 
@@ -165,7 +166,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
                         storage_file.write(chunk)
 
             django_rq.enqueue(evaluate_job, s)
-            return redirect(request.path_info + '#result')
+            return redirect(reverse('task_detail', args=[s.student.username, s.assignment.id, s.submit_num]) + '#result')
     else:
         form = UploadSolutionForm()
     data['upload_form'] = form
