@@ -145,7 +145,7 @@ def process_markdown(task_code, markdown):
 
     for tag, attr in [('a', 'href'), ('img', 'src')]:
         for el in root.iter(tag):
-            if not el.attrib[attr].startswith('http'):
+            if attr in el.attrib and not el.attrib[attr].startswith('http'):
                 el.attrib[attr] = reverse('task_asset', args=[task_code, el.attrib[attr]])
 
     content = html.tostring(root, pretty_print=True).decode('utf-8')
