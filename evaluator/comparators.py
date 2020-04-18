@@ -33,7 +33,7 @@ def xxbin(f, block_size=1024):
 def open_me(resource, mode='t', block_size=None, filters=[]):
     if isinstance(resource, str):
         if mode == 't':
-            resource = open(resource)
+            resource = open(resource, errors='replace')
         elif mode == 'b':
             resource = open(resource, 'rb')
         else:
@@ -51,7 +51,8 @@ def diff_format_html(diffs):
     html = []
     for (op, data) in diffs:
       text = (data.replace("&", "&amp;").replace("<", "&lt;")
-                 .replace(">", "&gt;").replace("\n", "&para;<br>"))
+                 .replace(">", "&gt;").replace("\n", "&para;<br>")
+                 .replace("\ufffd", "&#xfffd;"))
       if op == diff_match_patch.DIFF_INSERT:
         html.append("<ins style=\"background:#9bf0ae;\">%s</ins>" % text)
       elif op == diff_match_patch.DIFF_DELETE:
@@ -91,6 +92,7 @@ def text_compare(f1, f2, filters=[]):
 
         return success, f'<div style="{style_txt}">{html}</div>'
     except UnicodeDecodeError as e:
+        raise e
         return False, str(e)
 
 
