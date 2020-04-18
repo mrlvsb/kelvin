@@ -14,7 +14,7 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone as tz
 
-from ..task_utils import highlight_code, highlight_code_json, render_markdown
+from ..task_utils import highlight_code, highlight_code_json, load_readme 
 
 from common.models import Submit, Class, AssignedTask, Task, Comment, assignedtask_results
 from common.evaluate import evaluate_job
@@ -104,7 +104,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         'task': assignment.task,
         'deadline': assignment.deadline,
         'submits': submits,
-        'text': render_markdown(testset.task_path, assignment.task.code),
+        'text':  load_readme(testset.task_path, assignment.task.code),
         'inputs': testset,
         'tznow': tz.now(),
         'max_inline_content_bytes': MAX_INLINE_CONTENT_BYTES,

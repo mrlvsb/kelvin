@@ -92,13 +92,22 @@ def highlight_code(path):
     except FileNotFoundError:
         return ["-- source code not found --"]
 
-def render_markdown(task_dir, task_code):
+
+class Readme:
+    def __init__(self, name, announce, content):
+        self.name = name
+        self.announce = announce
+        self.content = content
+
+    def __str__(self):
+        return self.content
+
+def load_readme(task_dir, task_code):
     try:
         with open(os.path.join(task_dir, "readme.md")) as f:
             return process_markdown(task_code, f.read())
     except FileNotFoundError:
         pass
-
 
 def process_markdown(task_code, markdown):
     h = hashlib.md5()
@@ -114,14 +123,23 @@ def process_markdown(task_code, markdown):
     out = out[0].decode('utf-8')
 
     root = html.fromstring(out)
-    header = root.xpath('//h1')
+    header = root.cssselect('h1')
+    name = ""
+    announce = ""
     if header:
-        root.remove(header[0])
+        name = str(header[0].text)
+        header[0].getparent().remove(header[0])
+
+    tag = root.cssselect('.announce')
+    if tag:
+        announce = html.tostring(tag[0], pretty_print=True).decode('utf-8')
+
     for tag, attr in [('a', 'href'), ('img', 'src')]:
         for el in root.iter(tag):
             if not el.attrib[attr].startswith('http'):
                 el.attrib[attr] = reverse('task_asset', args=[task_code, el.attrib[attr]])
 
-    out = html.tostring(root, pretty_print=True).decode('utf-8')
-    caches['default'].set(key, out)
-    return out
+    content = html.tostring(root, pretty_print=True).decode('utf-8')
+    task_readme = Readme(name, announce, content)
+    caches['default'].set(key, task_readme)
+    return task_readme

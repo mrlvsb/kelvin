@@ -19,7 +19,7 @@ import mosspy
 import django_rq
 from unidecode import unidecode
 
-from ..task_utils import highlight_code, render_markdown
+from ..task_utils import highlight_code, load_readme 
 from common.models import Submit, Class, Task, AssignedTask, assignedtask_results
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from evaluator.testsets import TestSet
@@ -33,7 +33,7 @@ def teacher_task(request, task_id):
 
     return render(request, 'web/task_detail.html', {
           'task': task,
-          'text': render_markdown(task_dir, task.code),
+          'text': load_readme(task_dir, task.code),
           'inputs': TestSet(task_dir, get_meta(request.user.username)),
           'max_inline_content_bytes': MAX_INLINE_CONTENT_BYTES,
     })
