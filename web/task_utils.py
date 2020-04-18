@@ -6,8 +6,10 @@ from pygments import highlight
 from pygments.lexers import CLexer
 from pygments.formatters import HtmlFormatter
 from pygments.token import Token, Text, STANDARD_TYPES
-import markdown2
+from django.core.cache import caches
+import hashlib
 import lxml.html as html
+import subprocess
 
 escape_html_table = {
     ord('&'): u'&amp;',
@@ -90,18 +92,36 @@ def highlight_code(path):
     except FileNotFoundError:
         return ["-- source code not found --"]
 
-def render_markdown(task_dir, name):
+def render_markdown(task_dir, task_code):
     try:
         with open(os.path.join(task_dir, "readme.md")) as f:
-            text = "\n".join(f.read().splitlines()[1:])
-        text = markdown2.markdown(text, extras=["fenced-code-blocks", "tables"])
-
-        root = html.fromstring(text)
-        for tag, attr in [('a', 'href'), ('img', 'src')]:
-            for el in root.iter(tag):
-                if not el.attrib[attr].startswith('http'):
-                    el.attrib[attr] = reverse('task_asset', args=[name, el.attrib[attr]])
-
-        return html.tostring(root, pretty_print=True).decode('utf-8')
+            return process_markdown(task_code, f.read())
     except FileNotFoundError:
         pass
+
+
+def process_markdown(task_code, markdown):
+    h = hashlib.md5()
+    h.update(markdown.encode('utf-8'))
+    key = 'markdown_' + h.hexdigest()
+
+    out = caches['default'].get(key)
+    if out:
+        return out
+
+    p = subprocess.Popen(["pandoc"], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+    out = p.communicate(input=markdown.encode('utf-8'))
+    out = out[0].decode('utf-8')
+
+    root = html.fromstring(out)
+    header = root.xpath('//h1')
+    if header:
+        root.remove(header[0])
+    for tag, attr in [('a', 'href'), ('img', 'src')]:
+        for el in root.iter(tag):
+            if not el.attrib[attr].startswith('http'):
+                el.attrib[attr] = reverse('task_asset', args=[task_code, el.attrib[attr]])
+
+    out = html.tostring(root, pretty_print=True).decode('utf-8')
+    caches['default'].set(key, out)
+    return out

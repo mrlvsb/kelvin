@@ -1,10 +1,12 @@
 from django import template
 from django.template.defaultfilters import stringfilter
-import markdown2
+from web.task_utils import process_markdown
 
 register = template.Library()
 
 @register.filter()
 @stringfilter
-def markdown(value):
-    return markdown2.markdown(value, extras=["fenced-code-blocks", "tables"])
+def markdown(value, task_code):
+    if value:
+        return process_markdown(task_code, value)
+    return ""

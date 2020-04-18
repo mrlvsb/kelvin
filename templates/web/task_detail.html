@@ -120,7 +120,7 @@ TODO: Make it nicer with Bootstrap
                 <a href="{% url 'tar_test_data' task.code %}" class="float-right">Download all tests</a>
                 {% for input in inputs %}
                 <h2>{{ input.title }}</h2>
-                {{ input.assignment | markdown | safe }}
+                {{ input.assignment | markdown:task.code | safe }}
 
                 <code style="display: block">$ ./main {{ input.escaped_args }}</code>
                 {% if input.exit_code != 0 %}
