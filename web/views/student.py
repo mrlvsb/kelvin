@@ -38,11 +38,16 @@ def student_index(request):
 
     for clazz in classess:
         tasks = []
-        for assignment in AssignedTask.objects.filter(clazz_id=clazz.id, assigned__lte=datetime.now()).order_by('-id'):
+        for assignment in AssignedTask.objects.filter(clazz_id=clazz.id).order_by('-id'):
+            if not assignment.task.announce and assignment.assigned > datetime.now():
+                continue
+
             data = {
                 'id': assignment.id,
                 'name': assignment.task.name,
                 'deadline': assignment.deadline,
+                'assigned': assignment.assigned,
+                'assigned_show_remaining': assignment.assigned > datetime.now(),
                 'assignment': assignment,
             }
 
@@ -95,6 +100,14 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
 
     assignment = get_object_or_404(AssignedTask, id=assignment_id)
     if (assignment.assigned > datetime.now() or not assignment.clazz.students.filter(username=request.user.username)) and not is_teacher(request.user):
+        if assignment.task.announce:
+            return render(request, 'web/task_detail.html', {
+                'task': assignment.task,
+                'assigned': assignment.assigned,
+                'deadline': assignment.deadline,
+                'text':  load_readme(assignment.task.code).announce,
+                'upload': False,
+            })
         raise Http404()
 
     testset = create_taskset(assignment.task, student_username if student_username else request.user.username)
@@ -104,10 +117,10 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         'task': assignment.task,
         'deadline': assignment.deadline,
         'submits': submits,
-        'text':  load_readme(testset.task_path, assignment.task.code),
+        'text':  load_readme(assignment.task.code),
         'inputs': testset,
-        'tznow': tz.now(),
         'max_inline_content_bytes': MAX_INLINE_CONTENT_BYTES,
+        'upload': not is_teacher(request.user),
     }
 
     current_submit = None

@@ -17,8 +17,11 @@ TODO: Make it nicer with Bootstrap
     <a href="{% url 'admin:common_task_change' task.id %}" class="text-muted" title="Edit task"><i class="material-icons">edit</i></a>
     {% endif %}
 </h2>
+{% if assigned %}
+<h6>Assigned: {{ assigned|date:"d.m.Y, G:i" }}, Time remaining: {{ assigned|timeuntil }}</h6>
+{% endif %}
 {% if deadline %}
-<h6>Deadline: {{ deadline|date:"d.m.Y, G:i" }}, Time remaining: {{ deadline|timeuntil:tznow }}</h6>
+<h6>Deadline: {{ deadline|date:"d.m.Y, G:i" }}, Time remaining: {{ deadline|timeuntil }}</h6>
 {% endif %}
 
 {% if submit %}
@@ -47,7 +50,7 @@ TODO: Make it nicer with Bootstrap
     <a href="{% url 'reevaluate' submit.id %}" title="Reevaluate"><i class="material-icons">cached</i></a>
     {% endif %}
 {% endif %}
-{% if not is_teacher %}
+{% if upload != False %}
 <div class="text-right" style="font-size: 0.8rem">Select multiple files using CTRL or SHIFT</div>
 {% endif %}
 
@@ -99,6 +102,7 @@ TODO: Make it nicer with Bootstrap
                         {{ submit.assigned_points }} / {{ submit.assignment.max_points }}
                     </li>
                     {% endif %}
+                    {% if upload != False %}
                     <li class="nav-item">
                         <form method="post" enctype="multipart/form-data">
                             {% csrf_token %}
@@ -106,6 +110,7 @@ TODO: Make it nicer with Bootstrap
                             <span class="btn btn-sm btn-primary" onclick="$('#upload-choose').click()">Upload</span>
                         </form>
                     </li>
+                    {% endif %}
                 </ul>
             </li>
             {% endif %}

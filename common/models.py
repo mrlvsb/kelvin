@@ -35,6 +35,7 @@ class Task(models.Model):
     name = models.CharField(max_length=60)
     code = models.CharField(max_length=60, verbose_name='Directory')
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    announce = models.BooleanField(default=False)
 
     def dir(self):
         return os.path.join("tasks", self.code)

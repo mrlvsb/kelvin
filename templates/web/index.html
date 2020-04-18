@@ -18,6 +18,7 @@
             <thead>
                 <tr>
                     <th>Task</th>
+                    <th>Assigned</th>
                     <th>Deadline</th>
                     <th>Points</th>
                 </tr>
@@ -36,6 +37,10 @@
                 https://stackoverflow.com/questions/52296306/django-template-is-there-a-built-in-way-to-get-current-date-as-type-date-ins
                 https://docs.djangoproject.com/en/1.11/howto/custom-template-tags/#django.template.Library.simple_tag
                 {% endcomment %}
+                <td>
+                    {{ task.assigned|date:"d.m.Y, H:i" }}
+                    {% if task.assigned_show_remaining %} , Time remaining: {{ task.assigned|timeuntil }} {% endif %}
+                </td>
                 <td>
                     {% if task.deadline %}
                     {{ task.deadline|date:"d.m.Y, H:i" }}, Time remaining: {{ task.deadline|timeuntil }}

@@ -1,6 +1,7 @@
 import os
 
 from django.urls import reverse
+from kelvin.settings import BASE_DIR
 
 from pygments import highlight
 from pygments.lexers import CLexer
@@ -102,8 +103,9 @@ class Readme:
     def __str__(self):
         return self.content
 
-def load_readme(task_dir, task_code):
+def load_readme(task_code):
     try:
+        task_dir = os.path.join(BASE_DIR, "tasks", task_code)
         with open(os.path.join(task_dir, "readme.md")) as f:
             return process_markdown(task_code, f.read())
     except FileNotFoundError:

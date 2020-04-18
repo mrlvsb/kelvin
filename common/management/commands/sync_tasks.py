@@ -24,6 +24,7 @@ class Command(BaseCommand):
                         'subject': subject
                     })
                     task.name = readme.name
+                    task.announce = True if readme.announce else False
                     task.save()
                     print(relative_path)
                 except Subject.DoesNotExist:
