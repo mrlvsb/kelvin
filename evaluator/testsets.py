@@ -175,14 +175,18 @@ class TestSet:
         else:
             counters = defaultdict(lambda: 0)
             for item in conf:
-                pipe_type = item['type']
-                pipe = getattr(pipelines, f"{item['type'].capitalize()}Pipe")(**{k: v for k, v in item.items() if k not in ['type', 'title']})
-                pipe.title = item.get('title', item['type'])
+                try:
+                    pipe_type = item['type']
+                    pipe = getattr(pipelines, f"{item['type'].capitalize()}Pipe")(**{k: v for k, v in item.items() if k not in ['type', 'title']})
+                    pipe.title = item.get('title', item['type'])
 
-                pipe.id = f"{item['type']}_{counters[item['type']]}"
-                counters[pipe_type] += 1
+                    pipe.id = f"{item['type']}_{counters[item['type']]}"
+                    counters[pipe_type] += 1
 
-                self.pipeline.append(pipe)
+                    self.pipeline.append(pipe)
+                except Exception as e:
+                    self.add_warning(f'pipe {item["type"]}: {e}\n{traceback.format_exc()}')
+
 
     def parse_conf_limits(self, conf):
         handlers = {
