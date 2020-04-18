@@ -10,6 +10,7 @@ from pygments.token import Token, Text, STANDARD_TYPES
 from django.core.cache import caches
 import hashlib
 import lxml.html as html
+import lxml
 import subprocess
 
 escape_html_table = {
@@ -130,7 +131,11 @@ def process_markdown(task_code, markdown):
     announce = ""
     if header:
         name = str(header[0].text)
-        header[0].getparent().remove(header[0])
+
+        if header[0].getparent().tag == 'body':
+            root = lxml.etree.Element("p")
+        else:
+            header[0].getparent().remove(header[0])
 
     tag = root.cssselect('.announce')
     if tag:
