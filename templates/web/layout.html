@@ -8,6 +8,7 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
         <meta name="csrf-token" content="{{ csrf_token }}">
         {% load static %}
+        <meta name="django-webpush-vapid-key" content="{{ vapid_public_key }}">
         <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon/apple-touch-icon.png' %}">
         <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}">
         <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}">
@@ -35,6 +36,7 @@
                 <li class="nav-item"><a class="nav-link" href="{% url 'admin:index' %}">Admin</a></li>
                 {% endif %}
               </ul>
+              {% if user.is_authenticated %}
               <div class="my-2 my-lg-0">
                   {{ user.get_full_name }} ({{ user.username }})
                   <span id="notifications">
@@ -42,6 +44,7 @@
                   </span>
                   <a href="/accounts/logout/?next=/">Logout</a>
               </div>
+              {% endif %}
             </div>
         </nav>
 

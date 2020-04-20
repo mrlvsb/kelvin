@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'django.forms',
     'django_rq',
     'django_cas_ng',
-    'notifications'
+    'notifications',
+    'webpush',
 ]
 
 MIDDLEWARE = [

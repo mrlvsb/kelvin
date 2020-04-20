@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render
 from django.utils.crypto import get_random_string
 from django.contrib.auth.hashers import make_password
+from django.conf import settings
+from django.urls import reverse
 from api.models import UserToken
 
 from .teacher import teacher_list
@@ -46,4 +48,6 @@ def api_token(request):
 def template_context(request):
     return {
         'is_teacher': is_teacher(request.user),
+        'vapid_public_key': getattr(settings, 'WEBPUSH_SETTINGS', {}).get('VAPID_PUBLIC_KEY', ''),
+        'webpush_save_url': reverse('save_webpush_info'),
     }

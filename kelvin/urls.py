@@ -35,5 +35,5 @@ urlpatterns = [
     path('api/', include('api.urls')),
     path('django-rq/', include('django_rq.urls')),
     path('survey/', include('survey.urls')),
-    #path('inbox/notifications/', include(notifications.urls, namespace='notifications')),
+    path('webpush/', include('webpush.urls'))
 ]

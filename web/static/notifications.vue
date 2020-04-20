@@ -1,3 +1,18 @@
+function urlB64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (var i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
 Vue.component('notifications', {
   props: ['url'],
   data() {
@@ -61,6 +76,51 @@ Vue.component('notifications', {
     });
 		this.refresh();
 //    setInterval(this.refresh, 5000);
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/static/service-worker.js').then((reg) => {
+        if (!(reg.showNotification) || Notification.permission === 'denied' || !('PushManager' in window)) {
+          return;
+        }
+
+				reg.pushManager.getSubscription().then((sub) => {
+            if(sub) {
+              // already registered, pass false to next then handler
+              return false;
+            }
+
+            let key = document.querySelector('meta[name="django-webpush-vapid-key"]').content;
+            return reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlB64ToUint8Array(key),
+            });
+				}).then((sub) => {
+          if(!sub) {
+            // already registered
+            return;
+          }
+
+					let browser = navigator.userAgent.match(/(firefox|msie|chrome|safari|trident)/ig)[0].toLowerCase();
+					let data = {
+            status_type: 'subscribe',
+						subscription: sub.toJSON(),
+						browser: browser,
+						group: null,
+					};
+
+					fetch('/webpush/save_information', {
+            method: 'post',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data),
+            credentials: 'include'
+					}).then((response) => {
+            if(response.status != 201) {
+              alert('Subscribe failed');
+            }
+          });
+				});
+      });
+    }
   },
 });
 
