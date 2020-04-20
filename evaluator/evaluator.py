@@ -77,6 +77,9 @@ class Evaluation:
                 res['title'] = pipe.title
                 result.pipelines.append(res)
 
+                if 'failed' in res and res['failed']:
+                    break
+
         result.save(os.path.join(self.result_path, 'result.json'))
         return result
 

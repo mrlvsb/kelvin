@@ -177,8 +177,9 @@ class TestSet:
             for item in conf:
                 try:
                     pipe_type = item['type']
-                    pipe = getattr(pipelines, f"{item['type'].capitalize()}Pipe")(**{k: v for k, v in item.items() if k not in ['type', 'title']})
+                    pipe = getattr(pipelines, f"{item['type'].capitalize()}Pipe")(**{k: v for k, v in item.items() if k not in ['type', 'title', 'fail_on_error']})
                     pipe.title = item.get('title', item['type'])
+                    pipe.fail_on_error = item.get('fail_on_error', False)
 
                     pipe.id = f"{item['type']}_{counters[item['type']]}"
                     counters[pipe_type] += 1
