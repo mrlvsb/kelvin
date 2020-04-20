@@ -19,14 +19,15 @@
         <div class="card-body">
           {% for task in class.tasks %}
             <h3>
-              <button class="btn btn-link" data-toggle="collapse" data-target="#task-{{task.assignment.id}}" aria-expanded="true" aria-controls="collapseOne" title="Collapse">
+              <button class="btn btn-link" data-toggle="collapse" data-target="#task-{{task.assignment.id}}" aria-expanded="true" aria-controls="task-{{task.assignment.id}}" title="Collapse">
                 <i class="material-icons">keyboard_arrow_down</i>
               </button>
 
               <a href="{% url 'teacher_task' task.task.id %}" title="View task assignment">{{ task.task.name }}</a>
               <a href="{% url 'admin:common_assignedtask_change' task.assignment.id %}" class="text-muted" title="Edit"><i class="material-icons">edit</i></a>
             </h3>
-            <div id="task-{{task.assignment.id}}" class="collapse show" aria-labelledby="headingOne" data-parent="#class-{{class.class.id}}">
+            <!--<div id="task-{{task.assignment.id}}" class="collapse show" aria-labelledby="headingOne" data-parent="#class-{{class.class.id}}">-->
+            <div id="task-{{task.assignment.id}}" class="collapse multi-collapse show">
               <h5>
                 Assigned: {{ task.assignment.assigned|date:"d.m.Y, G:i" }}
                 {% if not task.assignment.is_visible %}
