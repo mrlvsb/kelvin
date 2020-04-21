@@ -164,6 +164,8 @@ def show_assignment_submits(request, assignment_id):
     for submit in get_last_submits(assignment_id):
         submits.append(submit)
 
+    submits = sorted(submits, key=lambda submit: submit.student.username)
+
     return render(request, 'web/submits_show_source.html', {
         'submits': submits,
         'assignment': assignment, 
