@@ -44,6 +44,7 @@ class ClassAdmin(admin.ModelAdmin):
     autocomplete_fields = ['students']
     list_filter = (ByClassTeacherFilter, 'subject')
     list_display = admin.ModelAdmin.list_display + ('teacher_name',)
+    search_fields = ['subject__abbr']
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "teacher":
@@ -75,6 +76,8 @@ class AssignedTaskAdmin(admin.ModelAdmin):
 
     # to filter by teacher
     list_filter = ('clazz__subject', 'task__name', ByAssignedTaskTeacherFilter, 'clazz',)
+
+    autocomplete_fields = ['task', 'clazz']
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "clazz":
@@ -162,6 +165,7 @@ class TaskForm(forms.ModelForm):
 class TaskAdmin(admin.ModelAdmin):
     form = TaskForm
     list_filter = ('subject', )
+    search_fields = ['name', 'subject__abbr']
 
 class SubmitAdmin(admin.ModelAdmin):
     list_filter = ('assignment__task__subject', 'assignment__task__name')
