@@ -59,18 +59,20 @@ def teacher_list(request, **class_conditions):
 
     result = []
     for clazz in classess:
-        tasks = []
+        assignments = []
+        students = {s.username: {'student': s, 'points': []} for s in clazz.students.all()}
 
-        for assignment in clazz.assignedtask_set.all().order_by('-id'):
-            tasks.append({
-                'task': assignment.task,
-                'assignment': assignment,
-                'results': assignedtask_results(assignment),
-            })
+        for assignment in clazz.assignedtask_set.all().order_by('id'):
+            assignments.append(assignment)
+
+            for score in assignedtask_results(assignment):
+                score['assignment'] = assignment
+                students[score['student'].username]['points'].append(score)
 
         result.append({
             'class': clazz,
-            'tasks': tasks,
+            'assignments': assignments,
+            'students': sorted([(s['student'], s['points']) for _, s in students.items()], key=lambda s: s[0].username),
         })
 
     return render(request, 'web/teacher.html', {

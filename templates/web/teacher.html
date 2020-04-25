@@ -17,6 +17,46 @@
       </div>
       <div id="class-{{class.class.id}}" class="collapse show" aria-labelledby="headingOne" data-parent="#class-block-{{class.class.id}}">
         <div class="card-body">
+          <table class="table table-sm table-hover">
+            <thead>
+              <tr>
+                <th>Login</th>
+                <th>Student</th>
+                {% for assignment in class.assignments %}
+                <th>{{ assignment.task.code_name }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+
+            {% for student, points in class.students %}
+            <tr>
+              <td>{{ student.username }}</td>
+              <td>{{ student.get_full_name }}</td>
+
+              {% for point in points %}
+              <td>
+                  {% if point.submits != 0 %}
+                    {% if point.accepted_submit_num %}
+                      <a href="{% url 'task_detail' student.username point.assignment.id point.accepted_submit_num %}#src">
+                    {% else %}
+                      <a href="{% url 'task_detail' student.username point.assignment.id %}#src">
+                    {% endif %}
+
+                      {% if point.assigned_points is None %}
+                        ?
+                      {% else %}
+                        {{ point.assigned_points }}
+                      {% endif %}
+                    </a>
+                  {% endif %}
+              </td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </table>
+
+
+
           {% for task in class.tasks %}
             <h3>
               <button class="btn btn-link" data-toggle="collapse" data-target="#task-{{task.assignment.id}}" aria-expanded="true" aria-controls="task-{{task.assignment.id}}" title="Collapse">

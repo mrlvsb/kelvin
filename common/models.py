@@ -43,6 +43,9 @@ class Task(models.Model):
     def sanitized_name(self):
         return self.name.replace('/', '_').replace(' ', '_')
 
+    def code_name(self):
+        return self.code.split('/')[-1]
+
     def __str__(self):
         return self.name
 
