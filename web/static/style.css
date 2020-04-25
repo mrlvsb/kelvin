@@ -180,3 +180,17 @@ h3 {
   /* Support for IE. */
   font-feature-settings: 'liga';
 }
+
+.more-content {
+  display: none;
+}
+
+.more-hover:hover .more-content {
+  position: absolute;
+  display: block;
+  background: white;
+  padding: 3px;
+  border: 1px solid #dee2e6;
+  font-weight: normal;
+  z-index: 10;
+}
