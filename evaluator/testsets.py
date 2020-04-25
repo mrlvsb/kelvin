@@ -131,10 +131,14 @@ class TestSet:
         self.tests_dict = {}
         self.File = File
         self.comparators = {}
-        self.files_cache = os.listdir(self.task_path)
+        self.warnings = []
+        try:
+            self.files_cache = os.listdir(self.task_path)
+        except FileNotFoundError as e:
+            self.add_warning(e)
+            self.files_cache = []
         self.gcc_flags = []
         self.script = None
-        self.warnings = []
         self.pipeline = []
         self.load_tests()
 
@@ -161,10 +165,6 @@ class TestSet:
                 self.create_test(name).files[parts[1]] = TestFile(File(os.path.join(self.task_path, f)), True)
             elif parts[0] == 'file_out':
                 self.create_test(name).files[parts[1]] = TestFile(File(os.path.join(self.task_path, f)), False)
-
-        path = os.path.join(self.task_path, f"{name}.test.py")
-        if os.path.exists(path):
-            self.create_test(name).script = load_module(path)
 
     def add_warning(self, message):
         self.warnings.append(message)

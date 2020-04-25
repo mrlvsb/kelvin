@@ -8,6 +8,8 @@ from django.db.models import TextField
 from django import forms
 from django.core.exceptions import ValidationError
 
+from web.task_utils import load_readme, process_markdown 
+
 
 class BaseByTeacherFilter(admin.SimpleListFilter):
     """
@@ -122,14 +124,8 @@ class MyUserAdmin(UserAdmin):
     def is_teacher(self, obj):
         return obj.groups.filter(name='teachers').exists()
 
-def title_in_markdown_validator(value):
-    title = value.splitlines()
-    if not title[0].startswith('# '):
-        raise ValidationError('Missing task name on the first line - add # task name')
-
 class TaskForm(forms.ModelForm):
     assignment = forms.CharField(
-            validators=[title_in_markdown_validator],
             widget=forms.Textarea(attrs={'style': 'max-height: 300px; height: 300px; width: 95%;'}),
             strip=False
     )
@@ -143,8 +139,11 @@ class TaskForm(forms.ModelForm):
         super(TaskForm, self).__init__(*args, **kwargs)
 
         if self.instance.pk:
-            with open(os.path.join(self.instance.dir(), "readme.md")) as f:
-                self.fields['assignment'].initial = f.read()
+            try:
+                with open(os.path.join(self.instance.dir(), "readme.md")) as f:
+                    self.fields['assignment'].initial = f.read()
+            except FileNotFoundError:
+                self.fields['assignment'].initial = 'readme not found...'
         else:
             self.fields['assignment'].initial = '# task name\n'
 
@@ -153,12 +152,14 @@ class TaskForm(forms.ModelForm):
         path = os.path.join("tasks", code)
 
         os.makedirs(path, exist_ok=True)
-        with open(os.path.join(path, "readme.md"), "w") as f:
+        path = os.path.join(path, "readme.md")
+        with open(path, "w") as f:
             f.write(self.cleaned_data['assignment'])
 
-
         task = super(TaskForm, self).save(commit=False)
-        task.name = self.cleaned_data['assignment'].splitlines()[0].strip('# ')
+        task.name = load_readme(task.code).name
+        if not task.name:
+            task.name = task.code
         task.save()
         return task
 
