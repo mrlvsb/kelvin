@@ -67,6 +67,13 @@ def teacher_list(request, **class_conditions):
 
             for score in assignedtask_results(assignment):
                 score['assignment'] = assignment
+
+                if 'assigned_points' in score and score['assigned_points'] is not None and int(assignment.max_points or 0) > 0:
+                    ratio = min(1, score['assigned_points'] / assignment.max_points)
+                    green = int(ratio * 200)
+                    red = int((1 - ratio) * 255)
+                    score['color'] = f'#{red:02X}{green:02X}00'
+
                 students[score['student'].username]['points'].append(score)
 
         result.append({

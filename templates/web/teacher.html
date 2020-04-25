@@ -76,11 +76,14 @@
               {% for point in points %}
               <td>
                   {% if point.submits != 0 %}
+                    <a href=
                     {% if point.accepted_submit_num %}
-                      <a href="{% url 'task_detail' student.username point.assignment.id point.accepted_submit_num %}#src">
+                      "{% url 'task_detail' student.username point.assignment.id point.accepted_submit_num %}#src"
                     {% else %}
-                      <a href="{% url 'task_detail' student.username point.assignment.id %}#src">
+                      "{% url 'task_detail' student.username point.assignment.id %}#src"
                     {% endif %}
+                    style="color: {{ point.color }}">
+
 
                       {% if point.assigned_points is None %}
                         ?
