@@ -3,6 +3,11 @@
 {% load static %}
 
 {% block content %}
+
+{% for subject in subjects %}
+  <a href="{% url 'teacher_index' subject.abbr %}">{{ subject.abbr }}</a>
+{% endfor %}
+
 {% for class in classes %}
 <div id="class-block-{{class.class.id}}">
   <div class="card mb-2">

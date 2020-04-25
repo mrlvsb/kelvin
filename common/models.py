@@ -7,13 +7,15 @@ from django.conf import settings
 from django.urls import reverse
 from django.contrib.auth.models import User
 
+def current_semester_conds(prefix=''):
+    return {
+        f'{prefix}semester__begin__lte': timezone.now(),
+        f'{prefix}semester__end__gte': timezone.now()
+    }
 
 class ClassManager(models.Manager):
     def current_semester(self):
-        return self.filter(
-            semester__begin__lte=timezone.now(),
-            semester__end__gte=timezone.now(),
-        )
+        return self.filter(**current_semester_conds())
 
 class Semester(models.Model):
     begin = models.DateField()

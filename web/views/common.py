@@ -16,7 +16,7 @@ from api.backends import hash_token
 @login_required()
 def index(request):
     if is_teacher(request.user):
-        return teacher_list(request, teacher__pk=request.user.id)
+        return teacher_list(request)
     return student_index(request)
 
 @login_required()

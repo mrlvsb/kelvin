@@ -20,7 +20,7 @@ import django_rq
 from unidecode import unidecode
 
 from ..task_utils import highlight_code
-from common.models import Submit, Class, Task, AssignedTask, assignedtask_results
+from common.models import Submit, Class, Task, AssignedTask, Subject, assignedtask_results, current_semester_conds
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from evaluator.testsets import TestSet
 from common.evaluate import get_meta, evaluate_job
@@ -50,12 +50,25 @@ def teacher_task_moss_check(request, task_id):
 def all_classes(request):
     return teacher_list(request)
 
-
+@user_passes_test(is_teacher)
 def teacher_list(request, **class_conditions):
     if not class_conditions:
         class_conditions = {}
 
-    classess = Class.objects.current_semester().filter(**class_conditions)
+    if 'teacher_id' not in class_conditions:
+        class_conditions['teacher_id'] = request.user.id
+    elif class_conditions['teacher_id'] is None:
+        del class_conditions['teacher_id']
+
+    current_semester = True
+    if 'semester__winter' in class_conditions:
+        class_conditions['semester__winter'] = class_conditions['semester__winter'] == 'W'
+        current_semester = False
+
+    if current_semester:
+        classess = Class.objects.current_semester().filter(**class_conditions)
+    else:
+        classess = Class.objects.filter(**class_conditions)
 
     result = []
     for clazz in classess:
@@ -84,6 +97,7 @@ def teacher_list(request, **class_conditions):
 
     return render(request, 'web/teacher.html', {
         'classes': result,
+        'subjects': Subject.objects.filter(class__teacher=request.user.id, **current_semester_conds('class__')).distinct(),
     })
 
 def send_to_moss(submits):
