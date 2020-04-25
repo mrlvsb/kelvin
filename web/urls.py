@@ -47,6 +47,7 @@ urlpatterns = [
     path('class/download/<int:class_id>/csv', teacher_view.download_csv_per_class, name='download_csv_per_class'),
 
     path('tasks', teacher_view.all_tasks, name='tasks'),
+    path('tasks/<str:subject__abbr>', teacher_view.all_tasks, name='tasks'),
 
     path('reevaluate/<int:submit_id>', teacher_view.reevaluate, name='reevaluate'),
 

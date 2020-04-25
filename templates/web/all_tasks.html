@@ -1,6 +1,10 @@
 {% extends 'web/layout.html' %}
 
 {% block content %}
+{% for subj in subjects %}
+  <a href="{% url 'tasks' subj.abbr %}">{{ subj.abbr }}</a>
+{% endfor %}
+
 <a href="{% url 'admin:common_task_add' %}" class="btn btn-primary btn-sm mb-2 float-right">Add task</a>
 
   <table class="table table-striped table-hover table-sm">
