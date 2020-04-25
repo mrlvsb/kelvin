@@ -257,7 +257,7 @@ def submit_comments(request, assignment_id, login, submit_num):
                 try:
                     result[source][comment['line'] - 1]['comments'].append({
                         'id': -1,
-                        'author': 'ReviewBot',
+                        'author': 'Kelvin',
                         'text': comment['text'],
                         'can_edit': False,
                     })
