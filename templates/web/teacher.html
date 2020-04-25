@@ -10,7 +10,7 @@
 
 {% for class in classes %}
 <div id="class-block-{{class.class.id}}">
-  <div class="card mb-2">
+<div class="card mb-2" style="position: initial">
       <div class="card-header">
           <div class="float-right">
             <a href="{% url 'admin:common_assignedtask_add' %}?clazz={{ class.class.id }}" title="Assign new task"><i class="material-icons">add_box</i></a>
