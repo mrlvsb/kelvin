@@ -183,6 +183,7 @@ h3 {
 
 .more-content {
   display: none;
+  text-align: left;
 }
 
 .more-hover:hover .more-content {
