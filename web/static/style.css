@@ -195,6 +195,6 @@ h3 {
   z-index: 10;
 }
 
-[id^=class-] table tr td:nth-of-type(2) ~ td {
+[id^=class-] table tr td:nth-of-type(2) ~ td, [id^=class-] table tr th:nth-of-type(2) ~ th {
   text-align: center;
 } 
