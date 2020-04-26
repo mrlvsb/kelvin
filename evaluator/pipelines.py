@@ -3,6 +3,8 @@ import yaml
 import os
 import shlex
 from collections import defaultdict
+import subprocess
+import tempfile
 
 
 class CommandPipe:
@@ -85,35 +87,41 @@ class ClangtidyPipe:
 
         def build(self, path):
             offsets = []
-            import logging
-            logging.error(path)
             with open(os.path.join(self.root, path), "rb") as f:
                 for offset, byte in enumerate(f.read()):
                     if byte == ord('\n'):
                         offsets.append(offset)
             return offsets
 
+    def __init__(self, checks=None):
+        self.checks = [] if not checks else checks
 
     def run(self, evaluation):
-        result = evaluation.sandbox.run('sh -c "clang-tidy *.cpp --export-fixes=errors 2>/dev/null >/dev/null; cat errors"')
+        with tempfile.NamedTemporaryFile() as f:
+            sources = [os.path.basename(f) for f in os.listdir(evaluation.sandbox.system_path()) if f.endswith(".c") or f.endswith(".cpp")]
+            print(["clang-tidy", "--export-fixes=" + f.name, *sources])
 
-        offset_to_line = ClangtidyPipe.OffsetToLine(evaluation.sandbox.system_path())
-        comments = defaultdict(list)
-        for err in yaml.load(result['stdout'], Loader=yaml.SafeLoader)['Diagnostics']:
-            seen = set()
+            subprocess.Popen(["clang-tidy", f"-checks={','.join(self.checks)}", f"--export-fixes={f.name}", *sources], cwd=evaluation.sandbox.system_path()).wait()
 
-            for note in [err, err['DiagnosticMessage'] if 'DiagnosticMessage' in err else {}]: #, *err['Notes']]:
-                if 'Message' not in note or note['Message'] in seen:
-                    continue
-                seen.add(note['Message'])
-                source = note['FilePath'][5:]
-                comments[source].append({
-                    'line': offset_to_line.to_line(source, note['FileOffset']),
-                    'text': note['Message'],
-                })
+            offset_to_line = ClangtidyPipe.OffsetToLine(evaluation.sandbox.system_path())
+            comments = defaultdict(list)
+            f.seek(0)
+            for err in yaml.load(f.read(), Loader=yaml.SafeLoader)['Diagnostics']:
+                seen = set()
+
+                for note in [err, err['DiagnosticMessage'] if 'DiagnosticMessage' in err else {}]: #, *err['Notes']]:
+                    if 'Message' not in note or note['Message'] in seen:
+                        continue
+                    seen.add(note['Message'])
+                    source = os.path.basename(note['FilePath'])
+                    comments[source].append({
+                        'line': offset_to_line.to_line(source, note['FileOffset']),
+                        'text': note['Message'],
+                        'source': err['DiagnosticName'],
+                    })
 
 
-        return {
-            "comments": comments,
-        }
+            return {
+                "comments": comments,
+            }
 
