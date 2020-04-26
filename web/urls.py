@@ -28,6 +28,7 @@ urlpatterns = [
     # teacher
     path('all', lambda req: teacher_view.teacher_list(req, teacher_id=None)),
     path('subject/<str:subject__abbr>', teacher_view.teacher_list, name='teacher_index'),
+    path('subject/<str:subject__abbr>/all', lambda req, **kwargs: teacher_view.teacher_list(req, teacher_id=None, **kwargs)),
     re_path('^semester/(?P<semester__year>[0-9]{4})/(?P<semester__winter>W|S)$', teacher_view.teacher_list),
     re_path('^semester/(?P<semester__year>[0-9]{4})/(?P<semester__winter>W|S)/all$', lambda req, **kwargs: teacher_view.teacher_list(req, teacher_id=None, **kwargs)),
     re_path('^semester/(?P<semester__year>[0-9]{4})/(?P<semester__winter>W|S)/(?P<subject__abbr>[A-Z0-9]+)$', teacher_view.teacher_list),
