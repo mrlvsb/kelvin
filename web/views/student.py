@@ -255,8 +255,9 @@ def submit_comments(request, assignment_id, login, submit_num):
         for source, comments in pipe.comments.items():
             for comment in comments:
                 try:
-                    if not any(filter(lambda c: c['text'] == comment['text'], result[source][comment['line'] - 1]['comments'])):
-                        result[source][comment['line'] - 1]['comments'].append({
+                    line = min(len(result[source]), comment['line']) - 1
+                    if not any(filter(lambda c: c['text'] == comment['text'], result[source][line]['comments'])):
+                        result[source][line]['comments'].append({
                             'id': -1,
                             'author': 'Kelvin',
                             'text': comment['text'],
