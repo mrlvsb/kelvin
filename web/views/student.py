@@ -6,6 +6,7 @@ import tempfile
 import mimetypes
 import io
 import django_rq
+import mimetypes
 from django.utils import timezone as datetime
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -184,6 +185,21 @@ def comment_recipients(submit, current_author):
     return recipients
 
 @login_required
+def submit_source(request, submit_id, path):
+    submit = get_object_or_404(Submit, id=submit_id)
+    if not is_teacher(request.user) and request.user.username != submit.student.username:
+        raise PermissionDenied()
+
+    for s in submit.all_sources():
+        if s.virt == path:
+            with open(s.phys, 'rb') as f:
+                res = HttpResponse(f)
+                mime = mimetypes.MimeTypes().guess_type(s.phys)[0]
+                if mime:
+                    res['Content-type'] = mime
+                return res
+
+@login_required
 def submit_comments(request, assignment_id, login, submit_num):
     submit = get_object_or_404(Submit,
             assignment_id=assignment_id,
@@ -239,12 +255,20 @@ def submit_comments(request, assignment_id, login, submit_num):
 
     result = {}
     for source in submit.all_sources():
-        lines = []
-        for line in highlight_code_json(source.phys):
-            lines.append({'content': line, 'comments': []})
-
-
-        result[source.virt] = lines
+        mime = mimetypes.MimeTypes().guess_type(source.phys)[0]
+        if mime and mime.startswith('image/'):
+            result[source.virt] = {
+                'type': 'img',
+                'src': reverse('submit_source', args=[submit.id, source.virt]),
+            }
+        else:
+            lines = []
+            for line in highlight_code_json(source.phys):
+                lines.append({'content': line, 'comments': []})
+            result[source.virt] = {
+                'type': 'source',
+                'lines': lines
+            }
 
     # add comments from pipeline
     resultset = get(submit)
