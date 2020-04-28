@@ -11,7 +11,7 @@ from django.core.cache import caches
 from kelvin.settings import BASE_DIR
 
 from pygments import highlight
-from pygments.lexers import CLexer
+from pygments.lexers import guess_lexer_for_filename
 from pygments.formatters import HtmlFormatter
 from pygments.token import Token, Text, STANDARD_TYPES
 
@@ -78,8 +78,11 @@ class HtmlLineFormatter(HtmlFormatter):
 
 def highlight_code_json(path):
     try:
+        if os.path.getsize(path) > 1024 * 1024:
+            return ['-- File too large --']
         with open(path) as f:
-            tokens = CLexer().get_tokens(f.read())
+            text = f.read()
+            tokens = guess_lexer_for_filename(path, text).get_tokens(text)
             return HtmlLineFormatter().format(tokens)
     except UnicodeDecodeError:
         return ["-- source code contains binary data --"]
@@ -90,7 +93,7 @@ def highlight_code_json(path):
 def highlight_code(path):
     try:
         with open(path) as f:
-            return highlight(f.read(), CLexer(), HtmlFormatter(linenos='table', lineanchors='src', anchorlinenos=True))
+            return highlight(f.read(), guess_lexer_for_filename(path), HtmlFormatter(linenos='table', lineanchors='src', anchorlinenos=True))
     except UnicodeDecodeError:
         return ["-- source code contains binary data --"]
     except FileNotFoundError:
