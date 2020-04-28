@@ -19,7 +19,6 @@ import mosspy
 import django_rq
 from unidecode import unidecode
 
-from ..task_utils import highlight_code
 from common.models import Submit, Class, Task, AssignedTask, Subject, assignedtask_results, current_semester_conds
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from evaluator.testsets import TestSet

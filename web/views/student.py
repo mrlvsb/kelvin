@@ -15,7 +15,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone as tz
 from django.urls import reverse
 
-from ..task_utils import highlight_code, highlight_code_json
+from ..task_utils import highlight_code_json
 
 from common.models import Submit, Class, AssignedTask, Task, Comment, assignedtask_results
 from common.evaluate import evaluate_job
@@ -81,9 +81,6 @@ def get(submit):
     data = {
         "submit": submit,
         "results": results,
-        "sources": (
-            (path.virt, highlight_code(path.phys)) for path in submit.all_sources()
-        ),
     }
     return data
 

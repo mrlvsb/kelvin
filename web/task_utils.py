@@ -89,17 +89,6 @@ def highlight_code_json(path):
     except FileNotFoundError:
         return ["-- source code not found --"]
 
-
-def highlight_code(path):
-    try:
-        with open(path) as f:
-            return highlight(f.read(), guess_lexer_for_filename(path), HtmlFormatter(linenos='table', lineanchors='src', anchorlinenos=True))
-    except UnicodeDecodeError:
-        return ["-- source code contains binary data --"]
-    except FileNotFoundError:
-        return ["-- source code not found --"]
-
-
 class Readme:
     def __init__(self, name, announce, content):
         self.name = name
