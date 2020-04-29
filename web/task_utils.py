@@ -14,6 +14,7 @@ from pygments import highlight
 from pygments.lexers import guess_lexer_for_filename
 from pygments.formatters import HtmlFormatter
 from pygments.token import Token, Text, STANDARD_TYPES
+from pygments.util import ClassNotFound
 
 escape_html_table = {
     ord('&'): u'&amp;',
@@ -82,8 +83,11 @@ def highlight_code_json(path):
             return ['-- File too large --']
         with open(path) as f:
             text = f.read()
-            tokens = guess_lexer_for_filename(path, text).get_tokens(text)
-            return HtmlLineFormatter().format(tokens)
+            try:
+                tokens = guess_lexer_for_filename(path, text).get_tokens(text)
+                return HtmlLineFormatter().format(tokens)
+            except ClassNotFound:
+                return text.splitlines()
     except UnicodeDecodeError:
         return ["-- source code contains binary data --"]
     except FileNotFoundError:
