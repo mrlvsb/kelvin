@@ -2,7 +2,8 @@ import io
 import numpy as np
 from PIL import Image
 import base64
-from diff_match_patch import diff_match_patch
+import tempfile
+import subprocess
 
 from evaluator import image_evaluator
 
@@ -46,53 +47,33 @@ def open_me(resource, mode='t', block_size=None, filters=[]):
     
     return resource
 
-
-def diff_format_html(diffs):
-    html = []
-    for (op, data) in diffs:
-      text = (data.replace("&", "&amp;").replace("<", "&lt;")
-                 .replace(">", "&gt;").replace("\n", "&para;<br>")
-                 .replace("\ufffd", "&#xfffd;"))
-      if op == diff_match_patch.DIFF_INSERT:
-        html.append("<ins style=\"background:#9bf0ae;\">%s</ins>" % text)
-      elif op == diff_match_patch.DIFF_DELETE:
-        html.append("<del style=\"background:#ffe6e6;\">%s</del>" % text)
-      elif op == diff_match_patch.DIFF_EQUAL:
-        html.append("<span>%s</span>" % text)
-    return "".join(html)
-
-def text_compare(f1, f2, filters=[]):
+def text_compare(expected, actual, filters=[]):
     try:
-        f1 = open_me(f1, filters=filters)
-        f2 = open_me(f2, filters=filters)
+        expected = open_me(expected, filters=filters)
+        actual = open_me(actual, filters=filters)
 
-        # materialize them :(
-        text1 = "\n".join(f1)
-        text2 = "\n".join(f2)
+        with tempfile.NamedTemporaryFile() as exp, tempfile.NamedTemporaryFile() as act, tempfile.TemporaryFile() as out:
+            exp.write(("\n".join(expected)).encode('utf-8'))
+            exp.flush()
+            act.write(("\n".join(actual)).encode('utf-8'))
+            act.flush()
 
-        dmp = diff_match_patch()
-        dmp.Diff_Timeout = 10
-        diff = dmp.diff_main(text2, text1)
+            cmd = [
+                "diff",
+                "-a",
+                "-u",
+                act.name,
+                exp.name,
+            ]
 
-        html = diff_format_html(diff)
+            p = subprocess.Popen(cmd, stdout=out)
+            p.communicate()
 
-        success = True
-        for t, _ in diff:
-            if t != 0:
-                success = False
-                break
+            success = p.returncode == 0
 
-        style = {
-            'font-size': '87.5%',
-            'color': '#212529',
-            'font-family': "SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace",
-            'white-space': 'pre',
-        }
-        style_txt = "; ".join([f"{k}: {v}" for k,v in style.items()])
-
-        return success, f'<div style="{style_txt}">{html}</div>'
+            out.seek(0)
+            return success, None, out.read().decode('utf-8')
     except UnicodeDecodeError as e:
-        raise e
         return False, str(e)
 
 
@@ -120,15 +101,3 @@ def image_compare(f1, f2):
     actual = np.array(Image.open(f2))
 
     return (True, f"expected:<br><img src='{to_base64(expected_img)}'><br>actual:<br> <img src='{to_base64(actual)}'><br>diff:<br> <img src='{to_base64(color_diff_img)}'>")
-
-
-"""
-# tasks/task.py
-def init_tests():
-    t = Test()
-    t.stdout = (i for i in range(100))
-
-#-Werror=array-bounds
-#-Qformat_security
-# odebirat body za warning?
-"""

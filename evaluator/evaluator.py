@@ -150,9 +150,11 @@ class Evaluation:
                 comparator = all_comparators[self.tests.comparators[name]['type']]
                 comparator_args = {}
 
-            success, output = comparator(opts['expected'].path, opts['actual'].path, **comparator_args)
+            success, output, diff = comparator(opts['expected'].path, opts['actual'].path, **comparator_args)
             if output:
                 result.copy_html_result(name, output)
+            if diff:
+                result.copy_diff(name, diff)
             result.add_result(success, f"file {name} doesn't match", output)
 
         # extract statistics

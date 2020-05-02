@@ -4,12 +4,12 @@
 {% for result in results %}
   {% if result.html or result.tests %}
     <h5>{{ result.title }}</h5>
-    <div class="card-body">
-        {{ result.html | safe }}
-    </div>
+    {% if result.html %}
+    {{ result.html | safe }}
+    {% endif %}
 
     {% for test in result.tests %}
-    <div class="card mb-3 mx-3 test-result {% if test.success%}border-success test-result-success{%else%}border-danger test-result-fail{%endif%}"{% if test.success%} hidden{% endif %}>
+    <div class="card mb-3 test-result {% if test.success%}border-success test-result-success{%else%}border-danger test-result-fail{%endif%}"{% if test.success%} hidden{% endif %}>
         <div class="card-header {% if test.success%}bg-success{%else%}bg-danger{%endif%}">
             <h5>
                 {% if test.title %}{{ test.title }}{% else %} {{ test.name }} {% endif %}
@@ -20,72 +20,73 @@
             
         </div>
         <div class="card-body">
-<pre style="color: #e83e8c">
-$ {{ test.command }}{% if test.message %}
-{{ test.message }}{%endif%}
-</pre>
 {% if test.errors %}
 <ul class="text-danger">
   {% for error in test.errors %}
   <li>{{ error }}</li>
   {% endfor %}
 </ul>
+<pre style="color: #e83e8c">
+$ {{ test.command }}{% if test.message %}
+{{ test.message }}{%endif%}
+</pre>
 {% endif %}
 
             {% for path, v in test.files.items %}
-            <div class="card mb-3 card-test">
-                <div class="card-header">
-                    {{ path }}
-                    {% if v.actual.input %}
-                      (<a href="{% url 'raw_result_content' submit.id test.name 'actual' path %}">Raw content</a>)
-                    {% elif 'expected' in v %}
-                    <div class="btn-group btn-group-toggle btn-group-sm float-right" data-toggle="buttons">
-                      {% if 'html' in v %}
-                      <label class="btn btn-outline-secondary active">
-                        <input type="radio" autocomplete="off"> Result
-                      </label>
+            {% if v.diff and v.diff.size < max_inline_content_bytes or not max_inline_content_bytes %}
+              <div class="diff"
+                data-expected-url="{% url 'raw_result_content' submit.id test.name 'expected' path %}"
+                data-actual-url="{% url 'raw_result_content' submit.id test.name 'actual' path %}"
+                >
+              {{ v.diff.read }}
+              </div>
+            {% else %}
+              <div class="d2h-wrapper">
+                <div class="d2h-file-wrapper">
+                  <div class="d2h-file-header">
+                    <span class="d2h-file-name-wrapper">
+                      {% if not v.expected %}
+                      <span class="d2h-file-name">
+                        <a href="{% url 'raw_result_content' submit.id test.name 'actual' path %}">{{ path }}</a>
+                      </span>
+                      {% else %}
+                      <span class="d2h-file-name">
+                        {{ path }}
+                      </span>
+
+                      <span style='margin-left: auto'>
+                        <a href="{% url 'raw_result_content' submit.id test.name 'actual' path %}">your output</a>
+                        &#8594;
+                        <a href="{% url 'raw_result_content' submit.id test.name 'expected' path %}">expected output</a>
+                      </span>
                       {% endif %}
-                      <label class="btn btn-outline-secondary{% if 'html' not in v %} active{% endif %}">
-                        <input type="radio" autocomplete="off"> Your output
-                      </label>
-                      <label class="btn btn-outline-secondary">
-                        <input type="radio" autocomplete="off"> Expected output
-                      </label>
-                    </div>
-                    {% endif %}
-                </div>
-                <div class="card-body">
-                    {% if 'html' in v %}
-                    {% if v.html.size < max_inline_content_bytes or not max_inline_content_bytes %}
-                    <div class="result">{{ v.html.read | safe }}</div>
-                    {% else %}
-                      <div class="result">
-                      Content too large, show <a href='{% url 'raw_result_content' submit.id test.name 'html' path %}'>raw content</a>.
+                  </div>
+                  <div class="d2h-file-diff">
+                    <div class="d2h-code-wrapper">
+                      {% if 'html' in v %}
+                      {% if v.html.size < max_inline_content_bytes or not max_inline_content_bytes %}
+                      <div class="result">{{ v.html.read | safe }}</div>
+                      {% else %}
+                        <div class="result">
+                        Content too large, show <a href='{% url 'raw_result_content' submit.id test.name 'html' path %}'>raw content</a>.
+                        </div>
+                      {% endif %}
+                      {% endif %}
+
+                      {% if not v.actual %}
+                      <div class="result"></div>
+                      {% elif v.actual.size < max_inline_content_bytes or not max_inline_content_bytes %}
+                      <pre class="result"{% if 'html' in v %} {% endif %}>{{ v.actual.read }}</pre>
+                      {% else %}
+                      <div class="result"{% if 'html' in v %} {% endif %}>
+                        Content too large, download <a href='{% url 'raw_result_content' submit.id test.name 'actual' path %}'>raw content</a>.
                       </div>
-                    {% endif %}
-                    {% endif %}
-
-                    {% if not v.actual %}
-                    <div class="result"></div>
-                    {% elif v.actual.size < max_inline_content_bytes or not max_inline_content_bytes %}
-                    <pre class="result"{% if 'html' in v %} hidden{% endif %}>{{ v.actual.read }}</pre>
-                    {% else %}
-                    <div class="result"{% if 'html' in v %} hidden{% endif %}>
-                      Content too large, download <a href='{% url 'raw_result_content' submit.id test.name 'actual' path %}'>raw content</a>.
+                      {% endif %}
                     </div>
-                    {% endif %}
-
-                    {% if not v.expected %}
-                    <div class="result"></div>
-                    {% elif v.expected.size < max_inline_content_bytes or not max_inline_content_bytes %}
-                    <pre class="result" hidden>{{ v.expected.read }}</pre>
-                    {% else %}
-                    <div class="result" hidden>
-                      Content too large, download <a href='{% url 'raw_result_content' submit.id test.name 'expected' path %}'>raw content</a>.
-                    </div>
-                    {% endif %}
+                  </div>
                 </div>
-            </div>
+              </div>
+            {% endif %}
             {% endfor %}
         </div>
     </div>
@@ -120,4 +121,32 @@ if(el) {
     });
   });
 }
+</script>
+
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" />
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.diff').forEach((el) => {
+      let diffHtml = Diff2Html.html(el.innerHTML.trim(), {
+            drawFileList: true,
+            matching: 'lines',
+            outputFormat: 'side-by-side',
+            drawFileList: false,
+            rawTemplates: {
+              "generic-file-path": `
+                <span class="d2h-file-name-wrapper">
+                  <span class="d2h-file-name">stdout</span>
+                  <span style='margin-left: auto'>
+                    <a href="${el.getAttribute('data-actual-url')}">your output</a>   &#8594;
+                    <a href="${el.getAttribute('data-expected-url')}">expected output</a>
+                  </span>
+                </span>
+              `,
+            }
+      });
+      el.innerHTML = diffHtml;
+    });
+});
 </script>

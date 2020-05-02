@@ -183,7 +183,7 @@ LOGGING = {
     },
 }
 
-MAX_INLINE_CONTENT_BYTES = 4096
+MAX_INLINE_CONTENT_BYTES = 32768
 
 try:
     from .local_settings import *

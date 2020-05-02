@@ -41,7 +41,7 @@ class TestResult:
 
             n = file[len(self['name'])+1:]
             base = re.sub(r'\.expected$', '', n)
-            base = re.sub(r'^(file_in|html)\.', '', base)
+            base = re.sub(r'^(file_in|html|diff)\.', '', base)
             base = aliases.get(base, base)
 
             if base not in self.files:
@@ -52,6 +52,8 @@ class TestResult:
                 key = 'expected'
             elif n.startswith('html'):
                 key = 'html'
+            elif n.startswith('diff'):
+                key = 'diff'
 
             self.files[base][key] = TestFile(File(os.path.join(self.result_dir, file)))
 
@@ -71,6 +73,10 @@ class TestResult:
 
     def copy_html_result(self, name, content):
         with open(os.path.join(self.result_dir, f"{self['name']}.html.{name}"), 'w') as f:
+            f.write(content)
+
+    def copy_diff(self, name, content):
+        with open(os.path.join(self.result_dir, f"{self['name']}.diff.{name}"), 'w') as f:
             f.write(content)
 
     def copy_result_file(self, name, expected=None, actual=None, force_save=False):
