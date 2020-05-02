@@ -60,12 +60,15 @@ class GcclinterPipe:
         result = evaluation.sandbox.run(shlex.join(cmd), stderr_to_stdout=True)
 
         comments = defaultdict(list)
-        for err in json.loads(result['stdout']):
-            for pos in err['locations']:
-                comments[pos['caret']['file']].append({
-                    'line': pos['caret']['line'],
-                    'text': err['message'],
-                })
+        for line in result['stdout'].split('\n'):
+            if not line.strip():
+                continue
+            for err in json.loads(line):
+                for pos in err['locations']:
+                    comments[pos['caret']['file']].append({
+                        'line': pos['caret']['line'],
+                        'text': err['message'],
+                    })
 
         return {
             "comments": comments,

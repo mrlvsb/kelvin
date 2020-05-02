@@ -276,9 +276,9 @@ def submit_comments(request, assignment_id, login, submit_num):
         for source, comments in pipe.comments.items():
             for comment in comments:
                 try:
-                    line = min(len(result[source]), comment['line']) - 1
-                    if not any(filter(lambda c: c['text'] == comment['text'], result[source][line]['comments'])):
-                        result[source][line]['comments'].append({
+                    line = min(len(result[source]['lines']), comment['line']) - 1
+                    if not any(filter(lambda c: c['text'] == comment['text'], result[source]['lines'][line]['comments'])):
+                        result[source]['lines'][line]['comments'].append({
                             'id': -1,
                             'author': 'Kelvin',
                             'text': comment['text'],
@@ -289,10 +289,10 @@ def submit_comments(request, assignment_id, login, submit_num):
 
     for comment in Comment.objects.filter(submit_id=submit.id).order_by('id'):
         try:
-            if comment.source not in result or comment.line > len(result[comment.source]):
+            if comment.source not in result or comment.line > len(result[comment.source]['lines']):
                 continue
 
-            result[comment.source][comment.line - 1]['comments'].append(dump_comment(comment))
+            result[comment.source]['lines'][comment.line - 1]['comments'].append(dump_comment(comment))
         except KeyError:
             pass
 
