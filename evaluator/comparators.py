@@ -62,6 +62,8 @@ def text_compare(expected, actual, filters=[]):
                 "diff",
                 "-a",
                 "-u",
+                "-i",
+                "-w",
                 act.name,
                 exp.name,
             ]
