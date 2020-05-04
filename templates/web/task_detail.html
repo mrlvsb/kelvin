@@ -14,7 +14,7 @@ TODO: Make it nicer with Bootstrap
 <h2>
     {{ task.name }}
     {% if is_teacher %}
-    <a href="{% url 'admin:common_task_change' task.id %}" class="text-muted" title="Edit task"><i class="material-icons">edit</i></a>
+    <a href="{% url 'admin:common_task_change' task.id %}" class="text-muted" title="Edit task"><i class="fas fa-pen" style="font-size: 20px"></i></a>
     {% endif %}
 </h2>
 {% if assigned %}
@@ -26,7 +26,27 @@ TODO: Make it nicer with Bootstrap
 
 {% if submit %}
     <h6>
-    Submit #{{ submit.submit_num }} for student: {{ submit.student.get_full_name }} ({{ submit.student.username }}),
+    Submit 
+    {% if prev_submit %}
+        <a href="{% url 'task_detail' submit.student.username submit.assignment.id prev_submit %}" title="Previous submit"><i class="fas fa-chevron-left"></i></a>
+    {% else %}
+        <i class="fas fa-chevron-left"></i>
+    {% endif %}
+
+    {{ submit.submit_num }} / 
+    {% if late_submit %}
+    <strong class="text-danger">{{ total_submits }}</strong>
+    {% else %}
+    {{ total_submits }}
+    {% endif %}
+
+    {% if next_submit %}
+        <a href="{% url 'task_detail' submit.student.username submit.assignment.id next_submit %}" title="Next submit"><i class="fas fa-chevron-right"></i></a>
+    {% else %}
+        <i class="fas fa-chevron-right"></i>
+    {% endif %}
+    -
+    {{ submit.student.get_full_name }} ({{ submit.student.username }}),
 
     {% if submit.created_at > submit.assignment.deadline %}
     <span class="text-danger font-weight-bold" title="{{ stud.last_submit_date|date:'d.m.Y H:i' }}">
@@ -35,19 +55,12 @@ TODO: Make it nicer with Bootstrap
     {% else %}
         {{ submit.created_at|date:'d.m.Y H:i' }}
     {% endif %}
-
-    {% if prev_submit %}
-        <a href="{% url 'task_detail' submit.student.username submit.assignment.id prev_submit %}" title="Previous submit"><i class="material-icons" style="position: relative; top: 5px;">keyboard_arrow_left</i></a>
-    {% endif %}
-    {% if next_submit %}
-        <a href="{% url 'task_detail' submit.student.username submit.assignment.id next_submit %}" title="Next submit"><i class="material-icons" style="position: relative; top: 5px;">keyboard_arrow_right</i></a>
-    {% endif %}
     </h6>
     <div>
 
     {% if is_teacher %}
     <a href="{% url 'submits' submit.student.username %}">Student submits</a>
-    <a href="{% url 'reevaluate' submit.id %}" title="Reevaluate"><i class="material-icons">cached</i></a>
+    <a href="{% url 'reevaluate' submit.id %}" title="Reevaluate"><i class="fas fa-sync"></i></a>
     {% endif %}
 {% endif %}
 {% if upload != False %}
@@ -155,7 +168,7 @@ TODO: Make it nicer with Bootstrap
 
             {% if submit %}
             <div class="tab-pane" id="tab_src">
-                <a href="{% url 'submit_download' submit.assignment.id submit.student.username submit.submit_num %}" class="float-right" title="Download"><i class="material-icons">get_app</i></a>
+                <a href="{% url 'submit_download' submit.assignment.id submit.student.username submit.submit_num %}" class="float-right" title="Download"><i class="fas fa-download"></i></a>
                 <div class="comments"><submit-sources url="{% url 'submit_comments' submit.assignment.id submit.student submit.submit_num %}"></div>
             </div>
 
