@@ -135,14 +135,14 @@ def process_markdown(task_code, markdown):
         else:
             header[0].getparent().remove(header[0])
 
-    tag = root.cssselect('.announce')
-    if tag:
-        announce = html.tostring(tag[0], pretty_print=True).decode('utf-8')
-
     for tag, attr in [('a', 'href'), ('img', 'src')]:
         for el in root.iter(tag):
             if attr in el.attrib and not el.attrib[attr].startswith('http'):
                 el.attrib[attr] = reverse('task_asset', args=[task_code, el.attrib[attr]])
+
+    tag = root.cssselect('.announce')
+    if tag:
+        announce = html.tostring(tag[0], pretty_print=True).decode('utf-8')
 
     content = html.tostring(root, pretty_print=True).decode('utf-8')
     task_readme = Readme(name, announce, content)
