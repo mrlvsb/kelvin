@@ -351,7 +351,11 @@ def tar_test_data(request, task_name):
 @login_required
 def task_asset(request, task_name, path):
     task = get_object_or_404(Task, code=task_name)
-    check_is_task_accessible(request, task)
+    try:
+        check_is_task_accessible(request, task)
+    except PermissionDenied:
+        if not path.split('/')[-1].startswith('announce.'):
+            raise PermissionDenied()
 
     if '..' in path:
         raise PermissionDenied()
