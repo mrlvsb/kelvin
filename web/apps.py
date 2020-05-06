@@ -1,6 +1,9 @@
+import logging
+
 from django.apps import AppConfig
 from notifications.signals import notify
 from webpush import send_user_notification
+from pywebpush import WebPushException
 
 
 def notification_to_webpush(sender, recipient, verb, action_object, target, **kwargs):
@@ -32,7 +35,10 @@ def notification_to_webpush(sender, recipient, verb, action_object, target, **kw
         if url:
             payload['data']['url'] = url
 
-        send_user_notification(user=user, payload=payload)
+        try:
+            send_user_notification(user=user, payload=payload)
+        except WebPushException as e:
+            logging.warn("%s failed for ", e, user)
 
 class WebConfig(AppConfig):
     name = 'web'
