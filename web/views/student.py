@@ -142,7 +142,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
             data['next_submit'] = submit_nums[current_idx + 1]
 
         data['total_submits'] = submits.count()
-        data['late_submit'] = assignment.deadline and submits.reverse()[0].created_at > assignment.deadline
+        data['late_submit'] = assignment.deadline and submits.order_by('id').reverse()[0].created_at > assignment.deadline
 
         if request.GET.get('clear_notifications'):
             for notification in request.user.notifications.unread().filter(target_object_id=current_submit.id):
