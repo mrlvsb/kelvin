@@ -146,9 +146,9 @@ Vue.component('submit-sources', {
   },
   template: `
   <div>
-    <div v-for="type, path in sources">
-      <h4>{{ path }} </h4>
-      <submit-source :lines="type.lines" :source="path" :url="url" v-if="type.type == 'source'" />
+    <div v-for="type in sources">
+      <h4>{{ type.path }} </h4>
+      <submit-source :lines="type.lines" :source="type.path" :url="url" v-if="type.type == 'source'" />
       <img :src="type.src" v-if="type.type == 'img'" />
     </div>
   </div>`,

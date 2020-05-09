@@ -270,6 +270,7 @@ def submit_comments(request, assignment_id, login, submit_num):
         if mime and mime.startswith('image/'):
             result[source.virt] = {
                 'type': 'img',
+                'path': source.virt,
                 'src': reverse('submit_source', args=[submit.id, source.virt]),
             }
         else:
@@ -278,6 +279,7 @@ def submit_comments(request, assignment_id, login, submit_num):
                 lines.append({'content': line, 'comments': []})
             result[source.virt] = {
                 'type': 'source',
+                'path': source.virt,
                 'lines': lines
             }
 
@@ -307,7 +309,7 @@ def submit_comments(request, assignment_id, login, submit_num):
         except KeyError:
             pass
 
-    return HttpResponse(json.dumps(result))
+    return HttpResponse(json.dumps(sorted(result.values(), key=lambda f: (f['type'], f['path']))))
 
 def file_response(file, filename, mimetype):
     response = HttpResponse(file, mimetype)
