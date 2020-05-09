@@ -255,6 +255,6 @@ def all_tasks(request, **kwargs):
 def reevaluate(request, submit_id):
     submit = Submit.objects.get(pk=submit_id)
     submit.points = submit.max_points = None
+    submit.jobid = django_rq.enqueue(evaluate_job, submit).id
     submit.save()
-    django_rq.enqueue(evaluate_job, submit)
     return redirect(request.META.get('HTTP_REFERER', reverse('submits')) + "#result")

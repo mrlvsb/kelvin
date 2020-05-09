@@ -97,6 +97,7 @@ class Submit(models.Model):
     max_points = models.IntegerField(null=True)
     assigned_points = models.FloatField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    jobid = models.CharField(max_length=20, null=True)
 
     def path_parts(self):
         return [

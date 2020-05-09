@@ -7,6 +7,7 @@ import mimetypes
 import io
 import django_rq
 import mimetypes
+import rq
 from django.utils import timezone as datetime
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -149,6 +150,11 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
                 notification.mark_as_read()
             return redirect(request.path_info)
 
+        try:
+            data['job_status'] = django_rq.jobs.get_job_class().fetch(current_submit.jobid, connection=django_rq.queues.get_connection()).get_status()
+        except rq.exceptions.NoSuchJobError:
+            pass
+
     if request.method == 'POST':
         form = UploadSolutionForm(request.POST, request.FILES)
         if form.is_valid():
@@ -166,7 +172,8 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
                     for chunk in uploaded_file.chunks():
                         storage_file.write(chunk)
 
-            django_rq.enqueue(evaluate_job, s)
+            s.jobid = django_rq.enqueue(evaluate_job, s).id
+            s.save()
             return redirect(reverse('task_detail', args=[s.student.username, s.assignment.id, s.submit_num]) + '#result')
     else:
         form = UploadSolutionForm()
