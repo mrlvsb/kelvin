@@ -10,6 +10,7 @@ urlpatterns = [
 
     path('task/<str:student_username>/<int:assignment_id>', student_view.task_detail, name='task_detail'),
     path('task/<str:student_username>/<int:assignment_id>/<int:submit_num>', student_view.task_detail, name='task_detail'),
+    path('task/<str:student_username>/<int:assignment_id>/<int:submit_a>-<int:submit_b>.diff', student_view.submit_diff, name='submits_diff'),
 
     path('task/<int:assignment_id>', student_view.task_detail, name='task_detail'),
     path('task/<int:assignment_id>/<int:submit_num>', student_view.task_detail, name='task_detail'),

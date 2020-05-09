@@ -8,6 +8,7 @@ import io
 import django_rq
 import mimetypes
 import rq
+import subprocess
 from django.utils import timezone as datetime
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -144,6 +145,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
 
         data['total_submits'] = submits.count()
         data['late_submit'] = assignment.deadline and submits.order_by('id').reverse()[0].created_at > assignment.deadline
+        data['diff_versions'] = [(s.submit_num, s.created_at) for s in submits.order_by('id')]
 
         if request.GET.get('clear_notifications'):
             for notification in request.user.notifications.unread().filter(target_object_id=current_submit.id):
@@ -209,6 +211,32 @@ def submit_source(request, submit_id, path):
                     res['Content-type'] = mime
                 return res
     raise Http404()
+
+@login_required
+def submit_diff(request, student_username, assignment_id, submit_a, submit_b):
+    submit = get_object_or_404(Submit,
+            assignment_id=assignment_id,
+            student__username=student_username,
+            submit_num=submit_a
+    )
+
+    if not is_teacher(request.user) and request.user.username != submit.student.username:
+        raise PermissionDenied()
+
+    with tempfile.TemporaryFile('r') as diff:
+        cmd = [
+            "diff", "-ruiw",
+            str(submit_a), str(submit_b)
+        ]
+        subprocess.Popen(cmd, cwd=os.path.dirname(submit.dir()), stdout=diff).wait()
+        diff.seek(0)
+
+        out = diff.read()
+        out = re.sub(r'^(---|\+\+\+) [0-9]+/', '\\1 ', out, flags=re.M) 
+        out = "\n".join([line for line in out.split("\n") if not line.startswith('Binary file')])
+        resp = HttpResponse(out)
+        resp['Content-Type'] = 'text/x-diff'
+        return resp
 
 @login_required
 def submit_comments(request, assignment_id, login, submit_num):

@@ -174,7 +174,30 @@ TODO: Make it nicer with Bootstrap
 
             {% if submit %}
             <div class="tab-pane" id="tab_src">
-                <a href="{% url 'submit_download' submit.assignment.id submit.student.username submit.submit_num %}" class="float-right" title="Download"><i class="fas fa-download"></i></a>
+                <div class="float-right">
+                  <a href="#diff" data-toggle="collapse"><i class="fas fa-history"></i></a>
+                  <a href="{% url 'submit_download' submit.assignment.id submit.student.username submit.submit_num %}" title="Download"><i class="fas fa-download"></i></a>
+                </div>
+
+                <div id="diff" class="collapse">
+                {% for ver, submitted in diff_versions %}
+                  <div>
+                    <input type="radio" name="a"{% if ver == total_submits|add:"-1" %} checked{% endif %} value="{{ ver }}">
+                    <input type="radio" name="b"{% if ver == total_submits %} checked{% endif %} value="{{ ver }}"> #{{ ver }}
+
+                    {% if submitted > submit.assignment.deadline %}
+                    <span class="text-danger font-weight-bold">
+                        {{ submitted|timeuntil:submit.assignment.deadline }} after deadline
+                    </span>
+                    {% else %}
+                        {{ submitted|date:'d.m.Y H:i' }}
+                    {% endif %}
+
+                  </div>
+                {% endfor %}
+                <div id="diff-content"></div>
+                </div>
+
                 <div class="comments"><submit-sources url="{% url 'submit_comments' submit.assignment.id submit.student submit.submit_num %}"></div>
             </div>
 
@@ -206,5 +229,40 @@ TODO: Make it nicer with Bootstrap
 </div>
 {% endcomment %}
 
+<script>
+(function() {
+  let container = document.getElementById('diff');
+  var prev_a, prev_b;
+
+  function load_diff() {
+    let a = container.querySelector('input[name=a]:checked').value;
+    let b = container.querySelector('input[name=b]:checked').value;
+
+    if(a == prev_a && b == prev_b) {
+      return;
+    }
+    prev_a = a;
+    prev_b = b;
+
+    fetch(`/task/{{ submit.student.username }}/{{ submit.assignment.id }}/${a}-${b}.diff`)
+      .then((result) => result.text())
+      .then((diff) => {
+        let diffHtml = Diff2Html.html(diff, {
+              drawFileList: true,
+              matching: 'lines',
+              outputFormat: 'side-by-side',
+              drawFileList: false
+        });
+        document.getElementById('diff-content').innerHTML = diffHtml;
+      });
+  }
+
+
+  document.getElementById("diff").addEventListener("click", load_diff);
+  document.querySelector('a[href="#diff"]').addEventListener('click', load_diff);
+
+})();
+</script>
 
 {% endblock %}
+
