@@ -201,6 +201,7 @@ def submit_source(request, submit_id, path):
                 if mime:
                     res['Content-type'] = mime
                 return res
+    raise Http404()
 
 @login_required
 def submit_comments(request, assignment_id, login, submit_num):
