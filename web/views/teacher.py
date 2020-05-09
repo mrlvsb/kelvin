@@ -257,4 +257,4 @@ def reevaluate(request, submit_id):
     submit.points = submit.max_points = None
     submit.save()
     django_rq.enqueue(evaluate_job, submit)
-    return redirect(request.META.get('HTTP_REFERER', reverse('submits')))
+    return redirect(request.META.get('HTTP_REFERER', reverse('submits')) + "#result")

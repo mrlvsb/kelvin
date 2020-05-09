@@ -145,6 +145,14 @@ class TestSet:
     def __iter__(self):
         return iter(sorted(self.tests_dict.values(), key=lambda t: t.name))
 
+    @property
+    def required_files(self):
+        files = []
+        for pipe in self.pipeline:
+            if pipe.type == 'required_files':
+                files += pipe.files
+        return files
+
     def create_test(self, name):
         if name not in self.tests_dict:
             self.tests_dict[name] = Test(name)
@@ -177,7 +185,9 @@ class TestSet:
             for item in conf:
                 try:
                     pipe_type = item['type']
-                    pipe = getattr(pipelines, f"{item['type'].capitalize()}Pipe")(**{k: v for k, v in item.items() if k not in ['type', 'title', 'fail_on_error']})
+                    class_name = "".join([p.title() for p in item['type'].split('_')])
+                    pipe = getattr(pipelines, f"{class_name}Pipe")(**{k: v for k, v in item.items() if k not in ['type', 'title', 'fail_on_error']})
+                    pipe.type = pipe_type
                     pipe.title = item.get('title', item['type'])
                     pipe.fail_on_error = item.get('fail_on_error', False)
 

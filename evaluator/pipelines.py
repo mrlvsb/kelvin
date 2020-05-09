@@ -26,6 +26,20 @@ class CommandPipe:
             "failed": failed,
         }
 
+class RequiredFilesPipe:
+    def __init__(self, files):
+        self.files = files
+
+    def run(self, evaluation):
+        result = []
+        for f in self.files:
+            exists = os.path.exists(evaluation.sandbox.system_path(f))
+            result.append(f"<li class='text-{'success' if exists else 'danger'}'>{f}</li>")
+
+
+        return {
+            "html": f"<ul>{''.join(result)}</ul>"
+        }
 
 class TestsPipe:
     def __init__(self, executable='./main'):

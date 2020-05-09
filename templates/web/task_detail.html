@@ -90,7 +90,7 @@ TODO: Make it nicer with Bootstrap
             <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#tab_src">Source code</a>
             </li>
-            {% if inputs.tests_dict %}
+            {% if results.pipelines %}
             <li class="nav-item">
                 <a class="nav-link text-{% if submit.points and submit.points == submit.max_points %}success{%else%}danger{%endif%}" data-toggle="tab" href="#tab_result">
                     Result #{{ submit.submit_num }} 
@@ -133,6 +133,12 @@ TODO: Make it nicer with Bootstrap
         <div class="tab-content">
             <div class="tab-pane active" id="tab_assignment">
                 {{ text|safe }}
+                <h2>Required files</h2>
+                <ul>
+                {% for file in inputs.required_files %}
+                  <li>{{ file }}</li>
+                {% endfor %}
+                </ul>
             </div>
             <div class="tab-pane fade" id="tab_tests">
                 <a href="{% url 'tar_test_data' task.code %}" class="float-right">Download all tests</a>
