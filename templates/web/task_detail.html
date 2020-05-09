@@ -28,7 +28,7 @@ TODO: Make it nicer with Bootstrap
     <h6>
     Submit 
     {% if prev_submit %}
-        <a href="{% url 'task_detail' submit.student.username submit.assignment.id prev_submit %}" title="Previous submit"><i class="fas fa-chevron-left"></i></a>
+        <a href="{% url 'task_detail' submit.student.username submit.assignment.id prev_submit %}#src" title="Previous submit"><i class="fas fa-chevron-left"></i></a>
     {% else %}
         <i class="fas fa-chevron-left"></i>
     {% endif %}
@@ -41,7 +41,7 @@ TODO: Make it nicer with Bootstrap
     {% endif %}
 
     {% if next_submit %}
-        <a href="{% url 'task_detail' submit.student.username submit.assignment.id next_submit %}" title="Next submit"><i class="fas fa-chevron-right"></i></a>
+        <a href="{% url 'task_detail' submit.student.username submit.assignment.id next_submit %}#src" title="Next submit"><i class="fas fa-chevron-right"></i></a>
     {% else %}
         <i class="fas fa-chevron-right"></i>
     {% endif %}
