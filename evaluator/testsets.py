@@ -138,7 +138,15 @@ class TestSet:
             self.add_warning(e)
             self.files_cache = []
         self.gcc_flags = []
+
         self.script = None
+        path = os.path.join(self.task_path, 'script.py')
+        if os.path.exists(path):
+            try:
+                self.script = load_module(path)
+            except Exception as e:
+                self.add_warning(f"script.py: {e}\n{traceback.format_exc()}")
+
         self.pipeline = []
         self.load_tests()
 
@@ -186,7 +194,15 @@ class TestSet:
                 try:
                     pipe_type = item['type']
                     class_name = "".join([p.title() for p in item['type'].split('_')])
-                    pipe = getattr(pipelines, f"{class_name}Pipe")(**{k: v for k, v in item.items() if k not in ['type', 'title', 'fail_on_error']})
+                    pipecls = getattr(pipelines, f"{class_name}Pipe", None)
+                    if not pipecls and self.script:
+                        pipecls = getattr(self.script, f"{class_name}Pipe", None)
+
+                    if not pipecls:
+                        self.add_warning(f"Pipe {class_name}Pipe not exists")
+                        continue
+
+                    pipe = pipecls(**{k: v for k, v in item.items() if k not in ['type', 'title', 'fail_on_error']})
                     pipe.type = pipe_type
                     pipe.title = item.get('title', item['type'])
                     pipe.fail_on_error = item.get('fail_on_error', False)
@@ -271,10 +287,8 @@ class TestSet:
         except FileNotFoundError:
             pass
 
-        path = os.path.join(self.task_path, 'script.py')
-        if os.path.exists(path):
+        if self.script:
             try:
-                self.script = load_module(path)
                 generate_tests = getattr(self.script, 'gen_tests', None)
                 if generate_tests:
                     generate_tests(self)
