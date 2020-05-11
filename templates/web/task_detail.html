@@ -133,15 +133,18 @@ TODO: Make it nicer with Bootstrap
         <div class="tab-content">
             <div class="tab-pane active" id="tab_assignment">
                 {{ text|safe }}
+                {% if inputs.required_files %}
                 <h2>Required files</h2>
                 <ul>
                 {% for file in inputs.required_files %}
                   <li>{{ file }}</li>
                 {% endfor %}
                 </ul>
+                {% endif %}
             </div>
             <div class="tab-pane fade" id="tab_tests">
                 <a href="{% url 'tar_test_data' task.code %}" class="float-right">Download all tests</a>
+
                 {% for input in inputs %}
                 <h2>{{ input.title }}</h2>
                 {{ input.assignment | markdown:task.code | safe }}
