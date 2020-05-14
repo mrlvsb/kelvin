@@ -2,17 +2,14 @@
 
 {% block content %}
 
-{% for submit in submits %}
-  <div class="card mb-1">
+{% for submit, points in students %}
+<div class="card mb-1">
+  {% if submit %}
     <div class="card-header p-0">
-      <a href="{% url 'task_detail' submit.student.username submit.assignment.id submit.submit_num %}#result" class="text-muted pl-1">[Result]</a>
-      <h5 class="mb-0 pl-0" style="display: inline">
-        <button data-toggle="collapse" data-target="#submit-{{submit.student}}"
-          class="btn btn-link text-{% if submit.points and submit.points == submit.max_points %}success{%else%}danger{%endif%}"
-          >
-          {{ submit.student}} - {{ submit.student.get_full_name }} ({{submit.points}} / {{submit.max_points}})
+        <button data-toggle="collapse" data-target="#submit-{{submit.student}}" class="btn btn-link">
+          {{ submit.student}} - {{ submit.student.get_full_name }}
         </button>
-      </h5>
+        <a href="{% url 'task_detail' submit.student.username assignment.id submit.id %}#result" class="text-muted"><i class="fas fa-external-link-alt"></i></a>
       {% include 'web/teacher/form_assign_points.html' %}
     </div>
     <div id="submit-{{submit.student}}" class="collapse">
@@ -20,6 +17,13 @@
         <div class="comments"><submit-sources url="{% url 'submit_comments' submit.assignment.id submit.student submit.submit_num %}"></div>
       </div>
     </div>
-  </div>
+  {% else %}
+    <div class="card-header p-0">
+      <button class="btn">
+        {{ points.student}} - {{ points.student.get_full_name }}
+      </button>
+    </div>
+  {% endif %}
+</div>
 {% endfor %}
 {% endblock %}

@@ -182,15 +182,20 @@ def download_assignment_submits(request, assignment_id):
 def show_assignment_submits(request, assignment_id):
     assignment = get_object_or_404(AssignedTask, pk=assignment_id)
 
-    submits = []
-    for submit in get_last_submits(assignment_id):
-        submits.append(submit)
-
-    submits = sorted(submits, key=lambda submit: submit.student.username)
+    results = []
+    for result in assignedtask_results(assignment):
+        submit = None
+        if result['submits']:
+            submit = Submit.objects.get(
+                assignment_id=assignment.id,
+                student_id=result['student'].id,
+                submit_num=result['accepted_submit_num'],
+            )
+        results.append((submit, result))
 
     return render(request, 'web/submits_show_source.html', {
-        'submits': submits,
-        'assignment': assignment, 
+        'students': results,
+        'assignment': assignment,
     })
 
 @user_passes_test(is_teacher)
