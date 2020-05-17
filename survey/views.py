@@ -38,13 +38,16 @@ class SurveyError(Exception):
     pass
 
 def survey_read(path, user):
-    with open(os.path.join(base, f"{path}.yaml")) as f:
-        conf = yaml.load(f.read(), Loader=yaml.SafeLoader)
-        conf['name'] = path
-        if is_teacher(user) or ('active' in conf and conf['active']):
-            if 'questions' not in conf or not isinstance(conf['questions'], list):
-                raise SurveyError(f"Survey '{path}' does not contain list of questions in yaml")
-            return conf
+    try:
+        with open(os.path.join(base, f"{path}.yaml")) as f:
+            conf = yaml.load(f.read(), Loader=yaml.SafeLoader)
+            conf['name'] = path
+            if is_teacher(user) or ('active' in conf and conf['active']):
+                if 'questions' not in conf or not isinstance(conf['questions'], list):
+                    raise SurveyError(f"Survey '{path}' does not contain list of questions in yaml")
+                return conf
+    except Exception as e:
+        raise SurveyError(e)
 
 def available_surveys(user):
     available = []
@@ -80,7 +83,10 @@ def create_survey_form(request, conf, defaults):
                     v = v.items()
                 args[k] = v
 
-        form.fields[q['name']] = field(**args)
+        try:
+            form.fields[q['name']] = field(**args)
+        except TypeError as e:
+            raise SurveyError(f"Field {q['name']}: {e}")
 
     return form
 
