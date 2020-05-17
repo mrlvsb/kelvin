@@ -59,8 +59,8 @@ def available_surveys(user):
 
     return available
 
-def create_survey_form(request, conf):
-    form = forms.Form(request.POST if request.method == 'POST' else None)
+def create_survey_form(request, conf, defaults):
+    form = forms.Form(request.POST if request.method == 'POST' else defaults)
 
     for q in conf['questions']:
         qtype = q.get('type', None)
@@ -99,16 +99,25 @@ def show(request, survey_file):
     try:
         conf = survey_read(survey_file, request.user)
 
-        if Answer.objects.filter(student=request.user, survey_name=survey_file):
+        editable = 'editable' in conf and conf['editable']
+        answered = Answer.objects.filter(student=request.user, survey_name=survey_file)
+
+        if answered and not editable:
             return render(request, 'survey.html', {'survey': conf})
 
-        form = create_survey_form(request, conf)
+        defaults = None
+        if answered:
+            defaults = json.loads(answered[0].answers)
+
+        form = create_survey_form(request, conf, defaults)
         if request.method == 'POST' and form.is_valid():
-            answer = Answer()
-            answer.survey_name = conf['name']
-            answer.answers = json.dumps(form.cleaned_data)
-            answer.student = request.user
-            answer.save()
+            Answer.objects.update_or_create(
+                    student_id=request.user.id,
+                    survey_name=conf['name'],
+                    defaults={
+                        "answers": json.dumps(form.cleaned_data)
+                    }
+            )
             return redirect(request.path_info)
 
         return render(request, "survey.html", {
