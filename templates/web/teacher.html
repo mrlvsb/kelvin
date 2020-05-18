@@ -20,7 +20,7 @@
             <h5>{{ class.class }}</h5>
           </button>
       </div>
-      <div id="class-{{class.class.id}}" class="collapse{% if class.students|length < 50 %}show{%endif%}" aria-labelledby="headingOne" data-parent="#class-block-{{class.class.id}}">
+      <div id="class-{{class.class.id}}" class="collapse{% if class.students|length < 50 %} show{%endif%}" aria-labelledby="headingOne" data-parent="#class-block-{{class.class.id}}">
         <div class="card-body">
           <table class="table table-sm table-hover">
             <thead>
