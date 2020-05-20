@@ -135,7 +135,14 @@ def process_markdown(task_code, markdown):
         else:
             header[0].getparent().remove(header[0])
 
-    for tag, attr in [('a', 'href'), ('img', 'src')]:
+    rules = [
+        ('a', 'href'),
+        ('img', 'src'),
+        ('video', 'src'),
+        ('source', 'src'),
+    ]
+
+    for tag, attr in rules:
         for el in root.iter(tag):
             if attr in el.attrib and not el.attrib[attr].startswith('http'):
                 el.attrib[attr] = reverse('task_asset', args=[task_code, el.attrib[attr]])
