@@ -8,7 +8,7 @@ import yaml
 from django.shortcuts import render, redirect
 from django.conf import settings
 from django import forms
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
 
@@ -46,6 +46,8 @@ def survey_read(path, user):
                 if 'questions' not in conf or not isinstance(conf['questions'], list):
                     raise SurveyError(f"Survey '{path}' does not contain list of questions in yaml")
                 return conf
+    except FileNotFoundError as e:
+        raise e
     except Exception as e:
         raise SurveyError(e)
 
@@ -130,6 +132,8 @@ def show(request, survey_file):
             "form": form,
             "survey": conf,
         })
+    except FileNotFoundError as e:
+        raise Http404()
     except SurveyError as e:
         if not is_teacher(request.user):
             raise e
