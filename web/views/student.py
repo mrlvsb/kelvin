@@ -296,7 +296,6 @@ def submit_comments(request, assignment_id, login, submit_num):
             return HttpResponse(json.dumps(dump_comment(comment)))
 
     result = {}
-    videos = {}
     for source in submit.all_sources():
         mime = magic.Magic(mime=True).from_file(source.phys)
         if mime and mime.startswith('image/'):
@@ -307,13 +306,12 @@ def submit_comments(request, assignment_id, login, submit_num):
             }
         elif mime and mime.startswith("video/"):
             name = ('.'.join(source.virt.split('.')[:-1]))
-            if name not in videos:
+            if name not in result:
                 result[name] = {
                     'type': 'video',
                     'path': name,
                     'sources': [],
                 }
-
             result[name]['sources'].append(reverse('submit_source', args=[submit.id, source.virt]))
         else:
             lines = []
