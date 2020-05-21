@@ -11,3 +11,4 @@ django-notifications-hq
 Unidecode==1.1.1
 cssselect
 django-webpush==0.3.2
+python-magic==0.4.18

@@ -9,6 +9,8 @@ import django_rq
 import mimetypes
 import rq
 import subprocess
+import magic
+
 from django.utils import timezone as datetime
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -293,14 +295,25 @@ def submit_comments(request, assignment_id, login, submit_num):
             return HttpResponse(json.dumps(dump_comment(comment)))
 
     result = {}
+    videos = {}
     for source in submit.all_sources():
-        mime = mimetypes.MimeTypes().guess_type(source.phys)[0]
+        mime = magic.Magic(mime=True).from_file(source.phys)
         if mime and mime.startswith('image/'):
             result[source.virt] = {
                 'type': 'img',
                 'path': source.virt,
                 'src': reverse('submit_source', args=[submit.id, source.virt]),
             }
+        elif mime and mime.startswith("video/"):
+            name = ('.'.join(source.virt.split('.')[:-1]))
+            if name not in videos:
+                result[name] = {
+                    'type': 'video',
+                    'path': name,
+                    'sources': [],
+                }
+
+            result[name]['sources'].append(reverse('submit_source', args=[submit.id, source.virt]))
         else:
             lines = []
             for line in highlight_code_json(source.phys):
@@ -337,7 +350,12 @@ def submit_comments(request, assignment_id, login, submit_num):
         except KeyError:
             pass
 
-    return HttpResponse(json.dumps(sorted(result.values(), key=lambda f: (f['type'], f['path']))))
+    priorities = {
+        'video': 0,
+        'img': 1,
+        'source': 2,
+    }
+    return HttpResponse(json.dumps(sorted(result.values(), key=lambda f: (priorities[f['type']], f['path']))))
 
 def file_response(file, filename, mimetype):
     response = HttpResponse(file, mimetype)

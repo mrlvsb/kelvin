@@ -150,6 +150,9 @@ Vue.component('submit-sources', {
       <h4>{{ type.path }} </h4>
       <submit-source :lines="type.lines" :source="type.path" :url="url" v-if="type.type == 'source'" />
       <img :src="type.src" v-if="type.type == 'img'" />
+      <video v-if="type.type == 'video'" controls>
+        <source :src="src" v-for="src in type.sources"></source>
+      </video>
     </div>
   </div>`,
   mounted() {
