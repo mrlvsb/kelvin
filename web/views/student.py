@@ -211,6 +211,7 @@ def submit_source(request, submit_id, path):
                 mime = mimetypes.MimeTypes().guess_type(s.phys)[0]
                 if mime:
                     res['Content-type'] = mime
+                res['Accept-Ranges'] = 'bytes'
                 return res
     raise Http404()
 
