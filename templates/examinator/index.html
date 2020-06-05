@@ -1,0 +1,28 @@
+{% extends 'web/layout.html' %}
+
+{% load static %}
+
+{% block content %}
+<h1>Exams</h1>
+
+<table class="table">
+  {% for exam in exams %}
+  <tr>
+    <td>
+      <a href="/exams/take/#{{ exam.id }}">
+        {{ exam.subject }} {{ exam.begin | date:"d.m.Y G:i" }}
+      </a>
+    </td>
+
+    {% if is_teacher %}
+    <td>
+      {% for student in exam.students %}
+        {{ student }}<br>
+      {% endfor %}
+    </td>
+    {% endif %}
+  </tr>
+  {% endfor %}
+</table>
+
+{% endblock %}

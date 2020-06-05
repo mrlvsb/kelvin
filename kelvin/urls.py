@@ -35,5 +35,6 @@ urlpatterns = [
     path('api/', include('api.urls')),
     path('django-rq/', include('django_rq.urls')),
     path('survey/', include('survey.urls')),
-    path('webpush/', include('webpush.urls'))
+    path('webpush/', include('webpush.urls')),
+    path('exams/', include('examinator.urls')),
 ]

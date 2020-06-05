@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django_cas_ng',
     'notifications',
     'webpush',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -78,7 +79,7 @@ TEMPLATES = [
 FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
 
 WSGI_APPLICATION = 'kelvin.wsgi.application'
-
+ASGI_APPLICATION = 'kelvin.routing.application'
 
 # Database
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
@@ -155,6 +156,15 @@ RQ_QUEUES = {
         'PORT': 6379,
         'DB': 0,
     }
+}
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
 }
 
 LOGGING = {
