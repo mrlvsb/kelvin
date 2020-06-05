@@ -145,12 +145,15 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
             headers = self.scope['headers']
             useragent = ""
+            ip = ""
             for k, v in headers:
                 if k == b"user-agent":
                     useragent = v.decode('utf-8')
+                elif k == b"x-real-ip":
+                    ip = v.decode('utf-8')
 
             await self.log('connect', {
-                "ip": self.scope['client'][0],
+                "ip": ip,
                 "useragent": useragent,
             })
 

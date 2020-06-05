@@ -8,9 +8,9 @@ https://docs.djangoproject.com/en/dev/howto/deployment/asgi/
 """
 
 import os
+import django
+from channels.routing import get_default_application
 
-from django.core.asgi import get_asgi_application
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'kaliber.settings')
-
-application = get_asgi_application()
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "kelvin.settings")
+django.setup()
+application = get_default_application()

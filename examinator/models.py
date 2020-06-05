@@ -9,9 +9,14 @@ from django.db import models
 
 BASE = "exams"
 
+class ExamException(Exception):
+    pass
 
 class Exam:
     def __init__(self, exam_id):
+        if '..' in exam_id:
+            raise ExamException(f"[{exam_id}] Invalid path")
+
         self.id = exam_id
         self.students = []
         self.begin = None
@@ -24,8 +29,9 @@ class Exam:
                 lines = [i.strip() for i in f.read().splitlines()]
                 self.begin = datetime.datetime.strptime(lines[0], "%d. %m. %Y %H:%M")
                 self.students = lines[1:]
+                self.questions = self.get_questions()
         except FileNotFoundError as e:
-            pass
+            raise ExamException(f"[{exam_id}] Exam file does not exist: {e}")
 
     def is_finished(self):
         return os.path.exists(os.path.join(self.dir, "finished"))
@@ -47,7 +53,7 @@ class Exam:
         if self.questions:
             return self.questions
 
-        with open(os.path.join(BASE, self.id, "assignment.md")) as markdown:
+        with open(os.path.join(BASE, self.id, "questions.md")) as markdown:
             p = subprocess.Popen(["pandoc", "--self-contained"], stdout=subprocess.PIPE, stdin=subprocess.PIPE, cwd=self.dir)
             out = p.communicate(input=markdown.read().encode('utf-8'))
             out = out[0].decode('utf-8')
