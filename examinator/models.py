@@ -60,15 +60,25 @@ class Exam:
             root = html.fromstring(out)
             questions = root.cssselect('body > ol > li')
 
-            def strip(s):
+            seconds = 3 * 60
+            self.questions = []
+            for question in questions:
+                s = html.tostring(question, pretty_print=True).decode('utf-8')
                 s = re.sub(r'^<li>', '', s)
                 s = re.sub(r'<li>$', '', s)
-                return s
+                s = s.strip()
+ 
+                match = re.match(r"^(<p>)?\[(\d+)\]", s)
+                if match:
+                    seconds = int(match.group(2))
+                    s = re.sub(r"^(<p>)?\[(\d+)\]\s*", '\1', s)
 
-            questions = [strip(html.tostring(question, pretty_print=True).decode('utf-8')) for question in questions]
+                self.questions.append({
+                        "question": s.strip(),
+                        "seconds": seconds,
+                })
 
-            self.questions = questions
-            return questions
+            return self.questions
 
     def get_answers(self, student):
         base_dir = os.path.join(BASE, self.id, student)

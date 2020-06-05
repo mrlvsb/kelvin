@@ -25,7 +25,7 @@ async def current_question(channel_layer, exam):
             return None
 
         return {
-            "question": questions[question_idx - 1],
+            "question": questions[question_idx - 1]['question'],
             'seconds_left': max(0, int(int(time_end.decode('utf-8')) - time.time())),
             'current_question': question_idx,
         }
@@ -40,10 +40,19 @@ class BeatConsumer(AsyncConsumer):
             return await conn.hexists(key(exam), "pause")
 
     async def schedule(self, exam):
+        seconds = 0
         async with self.channel_layer.connection(0) as conn:
+            cur = await conn.hget(key(exam), "idx")
+            if cur:
+                cur = int(cur.decode('utf-8'))
+            else:
+                cur = 0
+
+            seconds = exam.get_questions()[cur - 1]['seconds']
+
             pipe = conn.multi_exec()
             pipe.hincrby(key(exam), 'idx', 1)
-            pipe.hset(key(exam), 'time_end', int(time.time() + 5))
+            pipe.hset(key(exam), 'time_end', int(time.time() + seconds))
             current_idx, _ = await pipe.execute()
 
         if current_idx - 1 >= len(exam.get_questions()):
@@ -59,7 +68,7 @@ class BeatConsumer(AsyncConsumer):
             question = await current_question(self.channel_layer, exam)
             await self.channel_layer.group_send("bcast", {**{'type': 'question'}, **question})
 
-            await asyncio.sleep(5+1)
+            await asyncio.sleep(seconds + 1)
             if await self.is_paused(exam):
                 return
             await self.schedule(exam)
