@@ -4,6 +4,7 @@ import datetime
 import subprocess
 import lxml.html as html
 import re
+import json
 
 from django.db import models
 
@@ -108,6 +109,11 @@ class Exam:
                 return f.read()
         except FileNotFoundError:
             return ""
+
+    def add_log(self, student, data):
+        with open(os.path.join(self.dir, student, "log.json"), "a") as f:
+            json.dump(data, f)
+            f.write("\n")
 
 
 

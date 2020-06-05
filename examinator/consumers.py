@@ -94,10 +94,13 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         data['mutation'] = event
         data['event'] = event
         data['student'] = self.scope['user'].username
+        data['timestamp'] = time.time()
 
         for k, v in data.items():
             if isinstance(v, bool):
                 data[k] = 1 if v else 0
+
+        self.exam.add_log(data['student'], data)
 
         async with self.channel_layer.connection(0) as conn:
             conn.xadd(key(self.exam) + ":stream", data)
