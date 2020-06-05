@@ -47,6 +47,7 @@ class BeatConsumer(AsyncConsumer):
                 cur = int(cur.decode('utf-8'))
             else:
                 cur = 0
+                exam.prepare_start()
 
             seconds = exam.get_questions()[cur - 1]['seconds']
 
@@ -115,9 +116,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         self.is_teacher = await database_sync_to_async(is_teacher)(self.scope['user'])
 
         init = {
-            "mutation": "init",
+            "action": "init",
             "total_questions": len(self.exam.get_questions()),
             "state": "not_started",
+            "expected_start": self.exam.begin.strftime('%d. %m. %Y %H:%M'),
         }
 
         question = await current_question(self.channel_layer, self.exam)
@@ -167,7 +169,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             })
 
             await self.increment_sessions(1)
-
+            if question:
+                init['answer'] = self.exam.get_student_answer(self.scope['user'].username, question['current_question'])
 
             init['role'] = 'student';
             await self.accept()

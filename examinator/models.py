@@ -36,6 +36,20 @@ class Exam:
     def is_finished(self):
         return os.path.exists(os.path.join(self.dir, "finished"))
 
+    def answer_filename(self, student, question):
+        return os.path.join(self.dir, student, f"{question:02}")
+
+    def prepare_start(self):
+        for student in self.students:
+            base = os.path.join(self.dir, student)
+            try:
+                os.mkdir(base)
+            except FileExistsError:
+                pass
+            for i in range(1, len(self.get_questions()) + 1):
+                with open(self.answer_filename(student, i), "a") as f:
+                    pass
+
     def finish(self):
         with open(os.path.join(self.dir, "finished"), "w")as f:
             f.write("")
@@ -46,7 +60,9 @@ class Exam:
             os.mkdir(base)
         except FileExistsError:
             pass
-        with open(os.path.join(base, str(question_num)), "w") as f:
+        with open(self.answer_filename(student, question_num), "w") as f:
+            if answer and answer[-1] != "\n":
+                answer += "\n"
             f.write(answer)
 
     def get_questions(self):
@@ -81,18 +97,18 @@ class Exam:
             return self.questions
 
     def get_answers(self, student):
-        base_dir = os.path.join(BASE, self.id, student)
         answers = []
         for i in range(1, len(self.get_questions()) + 1):
-            answer = ""
-            try:
-                with open(os.path.join(base_dir, str(i))) as f:
-                    answer = f.read()
-            except FileNotFoundError:
-                pass
-            answers.append(answer)
-
+            answers.append(self.get_student_answer(student, i))
         return answers
+
+    def get_student_answer(self, student, question):
+        try:
+            with open(self.answer_filename(student, question)) as f:
+                return f.read()
+        except FileNotFoundError:
+            return ""
+
 
 
 def all_exams():
