@@ -40,13 +40,17 @@ class Exam:
     def answer_filename(self, student, question):
         return os.path.join(self.dir, student, f"{question:02}")
 
+    def ensure_dir(self, student):
+        base = os.path.join(self.dir, student)
+        try:
+            os.mkdir(base)
+        except FileExistsError:
+            pass
+
+
     def prepare_start(self):
         for student in self.students:
-            base = os.path.join(self.dir, student)
-            try:
-                os.mkdir(base)
-            except FileExistsError:
-                pass
+            self.ensure_dir(student)
             for i in range(1, len(self.get_questions()) + 1):
                 with open(self.answer_filename(student, i), "a") as f:
                     pass
@@ -56,11 +60,7 @@ class Exam:
             f.write("")
 
     def save_answer(self, student, question_num, answer):
-        base = os.path.join(self.dir, student)
-        try:
-            os.mkdir(base)
-        except FileExistsError:
-            pass
+        self.ensure_dir(student)
         with open(self.answer_filename(student, question_num), "w") as f:
             if answer and answer[-1] != "\n":
                 answer += "\n"
@@ -111,6 +111,7 @@ class Exam:
             return ""
 
     def add_log(self, student, data):
+        self.ensure_dir(student)
         with open(os.path.join(self.dir, student, "log.json"), "a") as f:
             json.dump(data, f)
             f.write("\n")

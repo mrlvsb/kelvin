@@ -11,7 +11,13 @@ import asyncio
 from .models import Exam
 
 def key(exam):
-    return f"question:{exam.id}"
+    return f"exam:{exam.id}"
+
+def exam_bcast_group(exam):
+    return f"exam-{exam.id.replace('/', '_')}"
+
+def exam_bcast_teacher_group(exam):
+    return f"exam-{exam.id.replace('/', '_')}-teacher"
 
 async def current_question(channel_layer, exam):
     async with channel_layer.connection(0) as conn:
@@ -57,7 +63,7 @@ class BeatConsumer(AsyncConsumer):
             current_idx, _ = await pipe.execute()
 
         if current_idx - 1 >= len(exam.get_questions()):
-            await self.channel_layer.group_send('bcast', {
+            await self.channel_layer.group_send(exam_bcast_group(self.exam), {
                 'type': 'change_state',
                 'state': 'finished',
             })
@@ -67,7 +73,7 @@ class BeatConsumer(AsyncConsumer):
         else:
             # broadcast new question
             question = await current_question(self.channel_layer, exam)
-            await self.channel_layer.group_send("bcast", {**{'type': 'question'}, **question})
+            await self.channel_layer.group_send(exam_bcast_group(exam), {**{'type': 'question'}, **question})
 
             await asyncio.sleep(seconds + 1)
             if await self.is_paused(exam):
@@ -82,10 +88,8 @@ def allow_teacher(fn):
     return _fn
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
-    groups = ['bcast']
-
     def student_key(self):
-        return f"question:{self.exam.id}:{self.scope['user']}"
+        return f"exam:{self.exam.id}:{self.scope['user']}"
 
     async def log(self, event, data = None):
         if not data:
@@ -105,7 +109,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         async with self.channel_layer.connection(0) as conn:
             conn.xadd(key(self.exam) + ":stream", data)
 
-        await self.channel_layer.group_send("teacher", {**data, **{
+        await self.channel_layer.group_send(exam_bcast_teacher_group(self.exam), {**data, **{
             'type': 'log_send',
         }})
 
@@ -139,7 +143,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             students = []
             for s in self.exam.students:
                 async with self.channel_layer.connection(0) as conn:
-                    online = int(await conn.hget(f"question:{self.exam.id}:{s}", "sessions") or 0)
+                    online = int(await conn.hget(f"exam:{self.exam.id}:{s}", "sessions") or 0)
                     students.append({
                         'student': s,
                         'sessions': online,
@@ -152,7 +156,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             init['role'] = 'teacher'
             init['students'] = students
             await self.send_json(init)
-            await self.channel_layer.group_add("teacher", self.channel_name)
+            await self.channel_layer.group_add(exam_bcast_teacher_group(self.exam), self.channel_name)
         else:
             if self.scope['user'].username not in self.exam.students:
                 return
@@ -178,6 +182,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             init['role'] = 'student';
             await self.accept()
             await self.send_json(init)
+        await self.channel_layer.group_add(exam_bcast_group(self.exam), self.channel_name)
 
     async def disconnect(self, close_code):
         if not self.is_teacher:
@@ -224,7 +229,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             'exam_id': self.exam.id,
         })
 
-        await self.channel_layer.group_send('bcast', {
+        await self.channel_layer.group_send(exam_bcast_group(self.exam), {
             'type': 'change_state',
             'state': 'paused',
         })
