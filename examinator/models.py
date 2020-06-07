@@ -7,6 +7,7 @@ import re
 import json
 
 from django.db import models
+from django.urls import reverse
 
 BASE = "exams"
 
@@ -140,6 +141,27 @@ class Exam:
                 return f.read()
         except FileNotFoundError:
             return ""
+
+    def save_upload(self, student, filename, data):
+        filename = filename.replace('..', '').replace('/', '_')
+
+        base = os.path.join(self.dir, student, "uploads")
+        try:
+            os.mkdir(base)
+        except FileExistsError:
+            pass
+        with open(os.path.join(base, filename), "wb") as f:
+            f.write(data)
+
+    def get_uploads(self, student):
+        base = os.path.join(self.dir, student, "uploads")
+        try:
+            return [{
+                'filename': f,
+                'url': reverse('exam_upload', args=[self.id, student, f]), 
+            } for f in os.listdir(base)]
+        except FileNotFoundError:
+            pass
 
     def add_log(self, student, data):
         self.ensure_dir(student)

@@ -8,6 +8,7 @@ from channels.db import database_sync_to_async
 import time
 import logging
 import asyncio
+import base64
 from .models import Exam
 
 def key(exam):
@@ -161,6 +162,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             await self.channel_layer.group_add(exam_bcast_teacher_group(self.exam), self.channel_name)
         else:
             if self.scope['user'].username not in self.exam.students:
+                logging.error(f"{self.scope['user'].username} not on exam!")
                 return
 
             headers = self.scope['headers']
@@ -184,6 +186,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             init['role'] = 'student';
             if init['state'] == 'finished':
                 init['my_answers'] = self.exam.get_answers(self.scope['user'].username) 
+                init["uploads"] = self.exam.get_uploads(self.scope['user'].username)
 
             await self.accept()
             await self.send_json(init)
@@ -250,6 +253,13 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         print(content)
         self.exam.save_points(content['student'], content.get('question'), content.get('points', ''), content.get('note', ''))
 
+    async def receive_upload(self, content):
+        self.exam.save_upload(self.scope['user'].username, content['filename'], base64.b64decode(content['data']))
+
+        await self.send_json({
+            'mutation': 'init',
+            'uploads': self.exam.get_uploads(self.scope['user'].username)
+        })
 
     async def receive_keydown(self, content):
         async with self.channel_layer.connection(0) as conn:
