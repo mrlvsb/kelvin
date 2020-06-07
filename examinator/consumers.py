@@ -149,7 +149,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     students.append({
                         'student': s,
                         'sessions': online,
-                        'answers': self.exam.get_answers(s)
+                        'answers': self.exam.get_answers(s),
+                        "uploads": self.exam.get_uploads(s),
                     })
 
             await self.accept()
