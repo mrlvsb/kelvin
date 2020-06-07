@@ -54,7 +54,7 @@ class BeatConsumer(AsyncConsumer):
             if cur:
                 cur = int(cur.decode('utf-8'))
             else:
-                cur = 0
+                cur = 1
                 exam.prepare_start()
 
             seconds = exam.get_questions()[cur - 1]['seconds']
