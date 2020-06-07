@@ -46,6 +46,7 @@ class BeatConsumer(AsyncConsumer):
             return await conn.hexists(key(exam), "pause")
 
     async def schedule(self, exam):
+        logging.info(f"Scheduling question for {exam.id}")
         seconds = 0
         async with self.channel_layer.connection(0) as conn:
             cur = await conn.hget(key(exam), "idx")
@@ -63,7 +64,7 @@ class BeatConsumer(AsyncConsumer):
             current_idx, _ = await pipe.execute()
 
         if current_idx - 1 >= len(exam.get_questions()):
-            await self.channel_layer.group_send(exam_bcast_group(self.exam), {
+            await self.channel_layer.group_send(exam_bcast_group(exam), {
                 'type': 'change_state',
                 'state': 'finished',
             })
@@ -155,6 +156,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             init['all_questions'] = self.exam.get_questions()
             init['role'] = 'teacher'
             init['students'] = students
+
             await self.send_json(init)
             await self.channel_layer.group_add(exam_bcast_teacher_group(self.exam), self.channel_name)
         else:
@@ -180,6 +182,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 init['answer'] = self.exam.get_student_answer(self.scope['user'].username, question['current_question'])
 
             init['role'] = 'student';
+            if init['state'] == 'finished':
+                init['my_answers'] = self.exam.get_answers(self.scope['user'].username) 
+
             await self.accept()
             await self.send_json(init)
         await self.channel_layer.group_add(exam_bcast_group(self.exam), self.channel_name)
@@ -208,6 +213,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             'state': event['state'],
         })
 
+        if not self.is_teacher:
+            await self.send_json({
+                'mutation': 'init',
+                'my_answers': self.exam.get_answers(self.scope['user'].username)
+            })
+
     # handling input
     @allow_teacher
     async def receive_start(self, content):
@@ -233,6 +244,11 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             'type': 'change_state',
             'state': 'paused',
         })
+
+    @allow_teacher
+    async def receive_save_points(self, content):
+        print(content)
+        self.exam.save_points(content['student'], content.get('question'), content.get('points', ''), content.get('note', ''))
 
 
     async def receive_keydown(self, content):

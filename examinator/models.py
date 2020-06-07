@@ -99,9 +99,40 @@ class Exam:
 
     def get_answers(self, student):
         answers = []
+
+        p = []
+        try:
+            with open(os.path.join(self.dir, student, "points.json")) as f:
+                p = json.load(f)
+        except (FileNotFoundError, json.decoder.JSONDecodeError):
+            pass
+
         for i in range(1, len(self.get_questions()) + 1):
-            answers.append(self.get_student_answer(student, i))
+            result = {}
+            result['answer'] = self.get_student_answer(student, i)
+            if len(p) >= i:
+                result = {**result, **p[i - 1]}
+
+            answers.append(result)
         return answers
+
+    def save_points(self, student, question, points, note):
+        path = os.path.join(self.dir, student, "points.json")
+
+        data = [{} for i in range(len(self.get_questions()))]
+        try:
+            with open(path) as f:
+                data = json.load(f)
+        except (FileNotFoundError, json.decoder.JSONDecodeError):
+            pass
+
+        data[question - 1] = {
+            'points': points,
+            'note': note
+        }
+
+        with open(path, "w") as f:
+            json.dump(data, f)
 
     def get_student_answer(self, student, question):
         try:
