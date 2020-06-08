@@ -37,6 +37,7 @@
                 {% endcomment %}
                 <li class="nav-item"><a class="nav-link" href="{% url 'admin:index' %}">Admin</a></li>
                 {% endif %}
+                <li class="nav-item"><a class="nav-link" href="/exams/">Exams</a></li>
               </ul>
               {% if user.is_authenticated %}
               <div class="my-2 my-lg-0">
