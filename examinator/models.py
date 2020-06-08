@@ -30,7 +30,7 @@ class Exam:
             with open(os.path.join(self.dir, "description")) as f:
                 lines = [i.strip() for i in f.read().splitlines()]
                 self.begin = datetime.datetime.strptime(lines[0], "%d. %m. %Y %H:%M")
-                self.students = lines[1:]
+                self.students = [stud.strip() for stud in lines[1:] if len(stud.strip())]
                 self.questions = self.get_questions()
         except FileNotFoundError as e:
             raise ExamException(f"[{exam_id}] Exam file does not exist: {e}")
