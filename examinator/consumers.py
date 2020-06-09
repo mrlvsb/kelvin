@@ -140,7 +140,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         if question:
             init = {**init, **question}
             async with self.channel_layer.connection(0) as conn:
-                init['state'] = 'paused' if conn.hexists(key(self.exam), 'pause') else 'running'
+                init['state'] = 'paused' if await conn.hexists(key(self.exam), 'pause') else 'running'
 
         if self.exam.is_finished():
             init['state'] = 'finished'
