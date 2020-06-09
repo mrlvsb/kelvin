@@ -190,6 +190,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'exams': {
+            'handlers': ['console', 'mail_admins'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
     },
 }
 

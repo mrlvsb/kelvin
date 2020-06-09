@@ -11,6 +11,8 @@ import asyncio
 import base64
 from .models import Exam
 
+logger = logging.getLogger("exams")
+
 def key(exam):
     return f"exam:{exam.id}"
 
@@ -40,14 +42,14 @@ async def current_question(channel_layer, exam):
 class BeatConsumer(AsyncConsumer):
     async def next_question(self, data):
         exam = Exam(data['exam_id'])
-        await self.schedule(exam)
+        logger.info(f"Starting exam {exam.id}")
+        asyncio.create_task(self.schedule(exam))
 
     async def is_paused(self, exam):
         async with self.channel_layer.connection(0) as conn:
             return await conn.hexists(key(exam), "pause")
 
     async def schedule(self, exam):
-        logging.info(f"Scheduling question for {exam.id}")
         seconds = 0
         async with self.channel_layer.connection(0) as conn:
             cur = await conn.hget(key(exam), "idx")
@@ -57,6 +59,8 @@ class BeatConsumer(AsyncConsumer):
                 cur = 1
                 exam.prepare_start()
 
+            logger.info(f"Scheduling next question {cur} for {exam.id}")
+
             seconds = exam.get_questions()[cur - 1]['seconds']
 
             pipe = conn.multi_exec()
@@ -65,6 +69,7 @@ class BeatConsumer(AsyncConsumer):
             current_idx, _ = await pipe.execute()
 
         if current_idx - 1 >= len(exam.get_questions()):
+            logger.info(f"Exam {exam.id} finished")
             await self.channel_layer.group_send(exam_bcast_group(exam), {
                 'type': 'change_state',
                 'state': 'finished',
@@ -163,7 +168,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             await self.channel_layer.group_add(exam_bcast_teacher_group(self.exam), self.channel_name)
         else:
             if self.scope['user'].username not in self.exam.students:
-                logging.error(f"{self.scope['user'].username} not on exam!")
+                logger.error(f"{self.scope['user'].username} not on exam!")
                 return
 
             headers = self.scope['headers']
