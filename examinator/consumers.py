@@ -280,3 +280,13 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         action = content['action']
         await getattr(self, f'receive_{action}')(content)
 
+
+import sys
+if sys.argv[1:] == ["runworker", "heartbeat"]:
+    from django_rq.queues import get_connection
+    redis = get_connection()
+    for k in redis.keys("exam:*"):
+        k = k.decode('utf-8')
+        if k.count(':') == 1:
+            logger.info(f"Pausing exam {k}")
+            redis.hset(k, "pause", 1)
