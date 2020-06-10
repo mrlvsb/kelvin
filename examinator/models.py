@@ -133,7 +133,7 @@ class Exam:
         }
 
         with open(path, "w") as f:
-            json.dump(data, f)
+            json.dump(data, f, ensure_ascii=False)
 
     def get_student_answer(self, student, question):
         try:
@@ -166,7 +166,7 @@ class Exam:
     def add_log(self, student, data):
         self.ensure_dir(student)
         with open(os.path.join(self.dir, student, "log.json"), "a") as f:
-            json.dump(data, f)
+            json.dump(data, f, ensure_ascii=False)
             f.write("\n")
 
 
