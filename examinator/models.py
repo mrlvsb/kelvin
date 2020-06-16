@@ -82,14 +82,14 @@ class Exam:
             self.questions = []
             for question in questions:
                 s = html.tostring(question, pretty_print=True).decode('utf-8')
-                s = re.sub(r'^<li>', '', s)
-                s = re.sub(r'<li>$', '', s)
+                s = re.sub(r'^\s*<li>', '', s)
+                s = re.sub(r'</li>\s*$', '', s)
                 s = s.strip()
  
                 match = re.match(r"^(<p>)?\[(\d+)\]", s)
                 if match:
                     seconds = int(match.group(2))
-                    s = re.sub(r"^(<p>)?\[(\d+)\]\s*", '\1', s)
+                    s = re.sub(r"^(<p>)?\[(\d+)\]\s*", '\\1', s)
 
                 self.questions.append({
                         "question": s.strip(),
