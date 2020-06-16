@@ -51,24 +51,27 @@ class BeatConsumer(AsyncConsumer):
 
     async def schedule(self, exam):
         seconds = 0
+        finished = False
         async with self.channel_layer.connection(0) as conn:
             cur = await conn.hget(key(exam), "idx")
             if cur:
                 cur = int(cur.decode('utf-8'))
             else:
-                cur = 1
+                cur = 0
                 exam.prepare_start()
 
-            logger.info(f"Scheduling next question {cur} for {exam.id}")
 
-            seconds = exam.get_questions()[cur - 1]['seconds']
+            if cur < len(exam.get_questions()):
+                seconds = exam.get_questions()[cur]['seconds']
+                logger.info(f"Scheduling next question {cur+1} [{seconds}s] for {exam.id}")
+                pipe = conn.multi_exec()
+                pipe.hincrby(key(exam), 'idx', 1)
+                pipe.hset(key(exam), 'time_end', int(time.time() + seconds))
+                current_idx, _ = await pipe.execute()
+            else:
+                finished = True
 
-            pipe = conn.multi_exec()
-            pipe.hincrby(key(exam), 'idx', 1)
-            pipe.hset(key(exam), 'time_end', int(time.time() + seconds))
-            current_idx, _ = await pipe.execute()
-
-        if current_idx - 1 >= len(exam.get_questions()):
+        if finished:
             logger.info(f"Exam {exam.id} finished")
             await self.channel_layer.group_send(exam_bcast_group(exam), {
                 'type': 'change_state',
