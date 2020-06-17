@@ -175,5 +175,8 @@ def all_exams():
     exams = []
     for d in glob.glob(BASE + "/**/description", recursive=True):
         d = d[len(BASE)+1:]
+
+        if d.split('/')[-2] == 'template':
+            continue
         exams.append(Exam(os.path.dirname(d)))
-    return exams
+    return sorted(exams, reverse=True, key=lambda exam: exam.dir.split('/')[1] + str(exam.begin.timestamp()))

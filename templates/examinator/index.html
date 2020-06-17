@@ -9,7 +9,7 @@
   {% for exam in exams %}
   <tr>
     <td>
-      <a href="/exams/take/#{{ exam.id }}">
+      <a href="/exams/take/#{{ exam.id }}"{%if exam.is_finished %} class="text-muted"{% endif%}>
         {{ exam.subject }} {{ exam.begin | date:"d.m.Y G:i" }}
       </a>
     </td>
