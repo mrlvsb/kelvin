@@ -17,6 +17,9 @@ logger = logging.getLogger("exams")
 def key(exam):
     return f"exam:{exam.id}"
 
+def student_vars_key(exam, student):
+    return f"exam:{exam.id.replace('/', '_')}:{student}:vars"
+
 def exam_bcast_group(exam):
     return f"exam-{exam.id.replace('/', '_')}"
 
@@ -160,14 +163,26 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     except User.DoesNotExist:
                         u = None
 
-                    students.append({
+                    variables = await conn.hgetall(student_vars_key(self.exam, s))
+                    if variables:
+                        mapper = {
+                            'fullscreen': int,
+                            'tab_focused': int,
+                        }
+                        try:
+                            variables = {k.decode('utf-8'): mapper.get(k.decode('utf-8'), str)(v.decode('utf-8')) for k, v in variables.items()}
+                        except Exception as e:
+                            logger.exception(e)
+                        print(variables)
+
+                    students.append({**variables, **{
                         'student': s,
                         'first_name': u.first_name if u else '',
                         'last_name': u.last_name if u else '',
                         'sessions': online,
                         'answers': self.exam.get_answers(s),
                         "uploads": self.exam.get_uploads(s),
-                    })
+                    }})
 
             await self.accept()
 
@@ -285,6 +300,20 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         self.exam.save_answer(self.scope['user'].username, content['question'], content['answer'])
 
     async def receive_log(self, content):
+        if not self.is_teacher:
+            async with self.channel_layer.connection(0) as conn:
+                print(content)
+                value = None
+                if content['event'] == 'fullscreen':
+                    value = int(content.get('fullscreen', 0))
+                elif content['event'] == 'tab_focused':
+                    value = int(content.get('tab_focused', 0))
+                elif content['event'] == 'resize':
+                    value = f"{content.get('width', 0)}x{content.get('height', 0)}"
+
+                if value is not None:
+                    await conn.hset(student_vars_key(self.exam, self.scope['user'].username), content['event'], value)
+
         await self.log(content['event'], content)
 
     async def receive_json(self, content):
