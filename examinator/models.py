@@ -8,6 +8,7 @@ import json
 
 from django.db import models
 from django.urls import reverse
+from django.contrib.auth.models import User
 
 BASE = "exams"
 
@@ -25,6 +26,7 @@ class Exam:
         self.dir = os.path.join(BASE, exam_id)
         self.subject = exam_id.split('/')[0]
         self.questions = None
+        self.student_objs_cache = None
 
         try:
             with open(os.path.join(self.dir, "description")) as f:
@@ -47,6 +49,16 @@ class Exam:
         except FileExistsError:
             pass
 
+    def student_objs(self):
+        if self.student_objs_cache:
+            return self.student_objs_cache
+
+        students = []
+        for stud in self.students:
+            students.append((stud, User.objects.filter(username=stud).first()))
+
+        self.student_objs_cache = students
+        return students
 
     def prepare_start(self):
         for student in self.students:

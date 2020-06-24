@@ -16,11 +16,16 @@
 
     {% if is_teacher %}
     <td>
-      {% if exam.students|length > 10 %}
-        <span class="text-muted">{{ exam.students|length }} students</span>
+      {% if exam.student_objs|length > 10 %}
+        <span class="text-muted">{{ exam.student_objs|length }} students</span>
       {% else %}
-        {% for student in exam.students %}
-          {{ student }}<br>
+        {% for login, student in exam.student_objs %}
+        <strong>{{ login }}</strong> 
+        {% if student %}
+          {{ student.last_name }} {{ student.first_name }}<br>
+        {% else %}
+          <span class="text-danger">NOT FOUND</span>
+        {% endif %}
         {% endfor %}
       {% endif %}
     </td>
