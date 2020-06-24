@@ -4,6 +4,7 @@ import datetime
 from channels.generic.websocket import WebsocketConsumer, AsyncJsonWebsocketConsumer, AsyncConsumer
 from common.utils import is_teacher
 from channels.db import database_sync_to_async
+from django.contrib.auth.models import User
 
 import time
 import logging
@@ -154,8 +155,15 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             for s in self.exam.students:
                 async with self.channel_layer.connection(0) as conn:
                     online = int(await conn.hget(f"exam:{self.exam.id}:{s}", "sessions") or 0)
+                    try:
+                        u = await database_sync_to_async(lambda: User.objects.get(username=s))()
+                    except User.DoesNotExist:
+                        u = None
+
                     students.append({
                         'student': s,
+                        'first_name': u.first_name if u else '',
+                        'last_name': u.last_name if u else '',
                         'sessions': online,
                         'answers': self.exam.get_answers(s),
                         "uploads": self.exam.get_uploads(s),
