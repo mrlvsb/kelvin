@@ -20,6 +20,8 @@ from .comparators import text_compare, binary_compare, image_compare
 from .utils import copyfile
 from kelvin.settings import BASE_DIR
 
+from rq import get_current_job
+
 logger = logging.getLogger("evaluator")
 
 def env_build(env):
@@ -69,17 +71,27 @@ class Evaluation:
         return os.path.join(self.task_path, path)
 
     def run(self):
+        job = get_current_job()
+        job.meta['actions'] = len(self.tests.pipeline)
+        job.meta['current_action'] = 0
+        job.save_meta()
+
         result = EvaluationResult(self.result_path)
         for pipe in self.tests.pipeline:
             logger.info(f"executing {pipe.id}")
             res = pipe.run(self)
-            res['id'] = pipe.id
             if res:
+                res['id'] = pipe.id
                 res['title'] = pipe.title
                 result.pipelines.append(res)
 
                 if 'failed' in res and res['failed']:
                     break
+
+            job.meta['current_action'] += 1
+            job.save_meta()
+
+
 
         result.save(os.path.join(self.result_path, 'result.json'))
         return result
