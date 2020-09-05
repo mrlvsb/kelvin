@@ -24,15 +24,30 @@ class DockerPipe:
             self.image
         ]
 
-        with open(os.path.join(result_dir, "stdout"), "w") as stdout, open(os.path.join(result_dir, "stderr"), "w") as stderr:
+        def res_path(p):
+            return os.path.join(result_dir, p)
+
+        with open(res_path("stdout"), "w") as stdout, open(res_path("stderr"), "w") as stderr:
             p = subprocess.Popen(args, stdout=stdout, stderr=stderr)
             p.communicate()
 
+        result = {}
         try:
-            with open(evaluation.sandbox.system_path("piperesult.json")) as f:
-                return json.load(f)
+            with open(os.path.join(evaluation.sandbox.system_path("piperesult.json"))) as f:
+                result = json.load(f)
         except FileNotFoundError:
             pass
+
+        if 'failed' not in result:
+            result['failed'] = p.returncode != 0
+
+        for f in ['stdout', 'stderr']:
+            if os.path.getsize(res_path(f)) == 0:
+                os.unlink(res_path(f))
+        if not os.listdir(result_dir):
+            os.unlink(result_dir)
+
+        return result
 
 class CommandPipe:
     def __init__(self, commands):

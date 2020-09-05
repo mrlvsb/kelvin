@@ -189,7 +189,7 @@ class TestSet:
         if not isinstance(conf, list):
             self.add_warning('pipeline is not a list')
         else:
-            counters = defaultdict(lambda: 0)
+            counter = 1
             for item in conf:
                 try:
                     pipe_type = item['type']
@@ -208,8 +208,8 @@ class TestSet:
                     pipe.title = item.get('title', item['type'])
                     pipe.fail_on_error = item.get('fail_on_error', False)
 
-                    pipe.id = f"{item['type']}_{counters[item['type']]}"
-                    counters[pipe_type] += 1
+                    pipe.id = f"{counter:03}_{item['type']}"
+                    counter += 1
 
                     self.pipeline.append(pipe)
                 except Exception as e:
