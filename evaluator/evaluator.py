@@ -18,6 +18,7 @@ from . import testsets
 from .results import EvaluationResult, TestResult
 from .comparators import text_compare, binary_compare, image_compare
 from .utils import copyfile
+from kelvin.settings import BASE_DIR
 
 logger = logging.getLogger("evaluator")
 
@@ -25,7 +26,7 @@ def env_build(env):
     if not env:
         env = {}
 
-    return [shlex.quote(f"-E{k}={v}") for k, v in env.items()]
+    return ['-E' + shlex.quote(f"{k}={v}") for k, v in env.items()]
 
 def rand_str(N):
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=N))
@@ -54,7 +55,7 @@ class Evaluation:
     def __init__(self, task_path : str, result_path: str, sandbox, meta=None):
         self.sandbox = sandbox
         self.task_path = task_path
-        self.result_path = result_path
+        self.result_path = os.path.join(BASE_DIR, result_path)
         self.tests = testsets.TestSet(task_path, meta)
 
         try:

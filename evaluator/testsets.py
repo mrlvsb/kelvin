@@ -198,11 +198,12 @@ class TestSet:
                     if not pipecls and self.script:
                         pipecls = getattr(self.script, f"{class_name}Pipe", None)
 
-                    if not pipecls:
-                        self.add_warning(f"Pipe {class_name}Pipe not exists")
-                        continue
+                    args = {k: v for k, v in item.items() if k not in ['type', 'title', 'fail_on_error']}
+                    if pipecls:
+                        pipe = pipecls(**args)
+                    else:
+                        pipe = pipelines.DockerPipe(f'kelvin/{pipe_type}', **args)
 
-                    pipe = pipecls(**{k: v for k, v in item.items() if k not in ['type', 'title', 'fail_on_error']})
                     pipe.type = pipe_type
                     pipe.title = item.get('title', item['type'])
                     pipe.fail_on_error = item.get('fail_on_error', False)

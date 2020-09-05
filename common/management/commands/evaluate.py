@@ -6,7 +6,6 @@ from django.shortcuts import render
 from evaluator.evaluator import evaluate, evaluate_score
 from evaluator.testsets import TestSet
 from evaluator.results import EvaluationResult
-from web.task_utils import render_markdown, highlight_code
 
 
 class Command(BaseCommand):
@@ -26,9 +25,9 @@ class Command(BaseCommand):
 
         r = render(None, 'web/task_detail.html', {
             'results': result,
-            'text': render_markdown(opts['task_dir'], None),
+            'text': '',
             'inputs': TestSet(opts['task_dir'], {}),
-            'source': highlight_code(opts['solution']),
+            'source': '',
             'max_inline_content_bytes': 1024 * 50,
             'task': {
                 'name': os.path.basename(os.path.normpath(opts['task_dir'])),
