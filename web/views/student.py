@@ -155,7 +155,11 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
             return redirect(request.path_info)
 
         try:
-            data['job_status'] = django_rq.jobs.get_job_class().fetch(current_submit.jobid, connection=django_rq.queues.get_connection()).get_status()
+            job = django_rq.jobs.get_job_class().fetch(current_submit.jobid, connection=django_rq.queues.get_connection())
+            status = job.get_status()
+            if status == 'queued':
+                status += f' {job.get_position() + 1}'
+            data['job_status'] = status
         except rq.exceptions.NoSuchJobError:
             pass
 
