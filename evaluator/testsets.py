@@ -297,7 +297,8 @@ class TestSet:
 
     def load_readme(self):
         try:
-            readme = load_readme(self.task_path)
+            task_relpath = os.path.relpath(self.task_path, os.path.join(BASE_DIR, "tasks"))
+            readme = load_readme(task_relpath)
             if self.script:
                 fn = getattr(self.script, 'readme_vars', None)
                 if fn:
