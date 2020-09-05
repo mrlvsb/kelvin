@@ -12,7 +12,7 @@ import yaml
 
 from . import filters, pipelines
 from .utils import parse_human_size
-from web.task_utils import process_markdown
+from web.task_utils import load_readme
 from kelvin.settings import BASE_DIR
 from django.template import Context, Template
 
@@ -297,20 +297,17 @@ class TestSet:
 
     def load_readme(self):
         try:
-            tasks_dir = os.path.realpath(os.path.join(BASE_DIR, "tasks"))
-            task_code = os.path.relpath(os.path.realpath(self.task_path), tasks_dir)
-            with open(os.path.join(self.task_path, "readme.md")) as f:
-                readme = f.read()
-                if self.script:
-                    fn = getattr(self.script, 'readme_vars', None)
-                    if fn:
-                        try:
-                            t = Template(readme)
-                            c = Context(fn(self))
-                            readme = t.render(c)
-                        except Exception as e:
-                            self.add_warning(f"script.py: {e}\n{traceback.format_exc()}")
+            readme = load_readme(self.task_path)
+            if self.script:
+                fn = getattr(self.script, 'readme_vars', None)
+                if fn:
+                    try:
+                        t = Template(readme.content)
+                        c = Context(fn(self))
+                        readme.content = t.render(c)
+                    except Exception as e:
+                        self.add_warning(f"script.py: {e}\n{traceback.format_exc()}")
 
-                return process_markdown(task_code, readme)
+            return readme
         except FileNotFoundError:
             pass

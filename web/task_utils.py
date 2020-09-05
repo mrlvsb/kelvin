@@ -105,7 +105,11 @@ class Readme:
 def load_readme(task_code):
     try:
         task_dir = os.path.join(BASE_DIR, "tasks", task_code)
-        with open(os.path.join(task_dir, "readme.md")) as f:
+        readmes = [f for f in os.listdir(task_dir) if f.lower() == "readme.md"]
+        if not readmes:
+            return
+
+        with open(os.path.join(task_dir, readmes[0])) as f:
             return process_markdown(task_code, f.read())
     except FileNotFoundError:
         pass
