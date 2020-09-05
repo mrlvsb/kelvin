@@ -95,3 +95,11 @@ class TestsPipe:
         return {
             "tests": results,
         }
+
+class SleepPipe:
+    def __init__(self, seconds=1):
+        self.seconds = seconds
+
+    def run(self, evaluation):
+        import time
+        time.sleep(self.seconds)
