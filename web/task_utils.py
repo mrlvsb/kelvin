@@ -127,7 +127,13 @@ def process_markdown(task_code, markdown):
     out = p.communicate(input=markdown.encode('utf-8'))
     out = out[0].decode('utf-8')
 
-    root = html.fromstring(out)
+    try:
+        root = html.fromstring(out)
+    except lxml.etree.ParserError as e:
+        if str(e) == "Document is empty":
+            root = html.fromstring("<p></p>")
+        else:
+            raise e
     header = root.cssselect('h1')
     name = ""
     announce = ""
