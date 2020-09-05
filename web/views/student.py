@@ -420,7 +420,7 @@ def task_asset(request, task_name, path):
         if not path.split('/')[-1].startswith('announce.'):
             raise PermissionDenied()
 
-    if '..' in path:
+    if '..' in path or path in ['config.yml', 'script.py']:
         raise PermissionDenied()
 
     try:
