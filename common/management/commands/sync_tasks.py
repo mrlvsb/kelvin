@@ -58,12 +58,24 @@ class Command(BaseCommand):
                 abbr = parts[0].upper()
                 subject = Subject.objects.get(abbr=abbr)
 
-                task, _ = Task.objects.get_or_create(code=relative_path, defaults={
+                search = {}
+                try:
+                    with open(os.path.join(root, ".taskid")) as f:
+                        search['id'] = int(f.read())
+                except:
+                    search['code'] = relative_path
+
+                task, _ = Task.objects.get_or_create(**search, defaults={
                     'subject': subject
                 })
+                task.code = relative_path
                 task.name = readme.name
                 task.announce = True if readme.announce else False
                 task.save()
+
+                if 'id' not in search:
+                    with open(os.path.join(root, ".taskid"), 'w') as f:
+                        f.write(str(task.id))
 
                 if re.match("^[0-9]{4}W|S$", parts[1]):
                     year = parts[1][0:4]
