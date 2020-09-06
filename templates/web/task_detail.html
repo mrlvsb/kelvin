@@ -235,6 +235,9 @@ TODO: Make it nicer with Bootstrap
 <script>
 (function() {
   let container = document.getElementById('diff');
+  if(!container) {
+    return;
+  }
   var prev_a, prev_b;
 
   function load_diff() {
