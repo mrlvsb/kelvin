@@ -423,8 +423,8 @@ def task_asset(request, task_name, path):
     if '..' in path or path in ['config.yml', 'script.py']:
         raise PermissionDenied()
 
+    system_path = os.path.join("tasks", task_name, path)
     try:
-        system_path = os.path.join("tasks", task_name, path)
         with open(system_path, 'rb') as f:
             resp = HttpResponse(f)
             mime = mimetypes.MimeTypes().guess_type(system_path)
@@ -432,6 +432,15 @@ def task_asset(request, task_name, path):
                 resp['Content-Type'] = f"{mime[0]};charset=utf-8"
             return resp
     except FileNotFoundError as e:
+        archive_ext = '.tar.gz'
+        if system_path.endswith(archive_ext):
+            directory = system_path[:-len(archive_ext)]
+            if os.path.isdir(directory):
+                with io.BytesIO() as f:
+                    with tarfile.open(fileobj=f, mode="w:gz") as tar:
+                        tar.add(directory, recursive=True, arcname='')
+                    f.seek(0)
+                    return file_response(f, os.path.basename(system_path), "application/tar")
         raise Http404()
 
 @login_required
