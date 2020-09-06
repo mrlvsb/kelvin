@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.contrib.auth.models import User
 
-from common.models import Task, Subject, AssignedTask, Class
+from common.models import Task, Subject, AssignedTask, Class, Submit
 from web.task_utils import load_readme 
 
 DAYS = ["PO", "UT", "ST", "CT", "PA", "SO", "NE"]
@@ -15,9 +15,28 @@ DAYS = ["PO", "UT", "ST", "CT", "PA", "SO", "NE"]
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('dir', nargs='?')
+        parser.add_argument('--delete-missing', help='Remove tasks that no longer exists on FS. Only tasks without submits are removed', choices=['empty', 'with_submits'], nargs='?', const='empty')
 
     def handle(self, *args, **opts):
         tasks_dir = os.path.realpath(os.path.join(settings.BASE_DIR, 'tasks'))
+
+        if opts['delete_missing']:
+            for task in Task.objects.all():
+                fullpath = os.path.join(tasks_dir, task.code)
+                if not os.path.isdir(fullpath):
+                    print(task.code)
+                    delete = opts['delete_missing'] == 'with_submits'
+
+                    if not delete:
+                        assigned_ids = AssignedTask.objects.filter(task_id=task.id).values_list('id', flat=True)
+                        submits = Submit.objects.filter(assignment_id__in=assigned_ids)
+                        delete = len(submits) == 0
+
+                    if delete:
+                        task.delete()
+                        print("deleted")
+                    else:
+                        print("not deleted")
 
         if not opts['dir']:
             target_dir = tasks_dir
