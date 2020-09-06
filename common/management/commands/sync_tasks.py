@@ -44,6 +44,8 @@ class Command(BaseCommand):
             target_dir = os.path.realpath(opts['dir'])
 
         for root, dirs, files in os.walk(target_dir):
+            if '/.git' in root:
+                continue
             relative_path = os.path.relpath(root, tasks_dir)
             print(relative_path)
             readme = load_readme(relative_path)
