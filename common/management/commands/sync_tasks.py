@@ -7,10 +7,11 @@ from django.conf import settings
 from django.contrib.auth.models import User
 
 from common.models import Task, Subject, AssignedTask, Class, Submit
+from common.utils import parse_time_interval
 from web.task_utils import load_readme 
 
 DAYS = ["PO", "UT", "ST", "CT", "PA", "SO", "NE"]
-
+DATE_FORMAT = "%d. %m. %Y %H:%M"
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
@@ -47,10 +48,10 @@ class Command(BaseCommand):
             if '/.git' in root:
                 continue
             relative_path = os.path.relpath(root, tasks_dir)
-            print(relative_path)
             readme = load_readme(relative_path)
             if not readme:
                 continue
+            print(relative_path)
 
             try:
                 parts = relative_path.split('/')
@@ -99,17 +100,38 @@ class Command(BaseCommand):
                                     time__minute=lecture.group("minute")
                             )
 
-                        task_dir = parts[-1]
-                        match = re.match("^w(?P<week>[0-9]{2})", task_dir)
+                        assign_text = readme.meta.get('assigned')
+                        match = re.match("^w(?P<week>[0-9]{2})", parts[-1])
                         if match:
+                            assign_text = f"{match.group('week')}. week"
+
+                        if assign_text:
                             for clazz in classess:
-                                start = datetime.datetime.combine(clazz.semester.begin + datetime.timedelta(days=DAYS.index(clazz.day)), clazz.time)
-                                start += datetime.timedelta(days=7 * int(match.group('week')))
+                                assigned = self.parse_assign_date(assign_text, clazz)
+                                if assigned:
+                                    defaults = {
+                                        "assigned": assigned,
+                                    }
 
-                                assigned, _ = AssignedTask.objects.update_or_create(task=task, clazz=clazz, defaults={
-                                    "assigned": start
-                                })
-                                print(f"Assigned to {clazz} at {assigned.assigned}")
+                                    if 'points' in readme.meta:
+                                        defaults['max_points'] = readme.meta['points']
 
-            except Subject.DoesNotExist:
-                print(f"unknown subject: {abbr}")
+                                    if 'deadline' in readme.meta:
+                                        if readme.meta['deadline'].startswith('+'):
+                                            defaults['deadline'] = assigned + parse_time_interval(readme.meta['deadline'][1:])
+                                        else:
+                                            defaults['deadline'] = datetime.datetime.strptime(readme.meta['deadline'], DATE_FORMAT)
+
+                                    assigned, _ = AssignedTask.objects.update_or_create(task=task, clazz=clazz, defaults=defaults)
+                                    print(f"Assigned to {clazz}: {defaults}")
+
+            except Exception as e:
+                print(e)
+    
+    def parse_assign_date(self, text, clazz):
+        match = re.match(r'^\s*(?P<week>\d+)\. week\s*$', text)
+        if match:
+            return datetime.datetime.combine(clazz.semester.begin + datetime.timedelta(days=DAYS.index(clazz.day)), clazz.time) + \
+                    datetime.timedelta(days=7 * int(match.group('week')))
+
+        return datetime.datetime.strptime(text, DATE_FORMAT)

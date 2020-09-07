@@ -1,4 +1,5 @@
 import os
+import re
 import hashlib
 import subprocess
 
@@ -94,10 +95,11 @@ def highlight_code_json(path):
         return ["-- source code not found --"]
 
 class Readme:
-    def __init__(self, name, announce, content):
+    def __init__(self, name, announce, content, meta=None):
         self.name = name
         self.announce = announce
         self.content = content
+        self.meta = meta if meta else {}
 
     def __str__(self):
         return self.content
@@ -122,6 +124,13 @@ def process_markdown(task_code, markdown):
     out = caches['default'].get(key)
     if out:
         return out
+
+    meta = {}
+    meta_match = re.match(r'^\s*---\s*(.*?)\n---\s*\n', markdown, re.DOTALL)
+    if meta_match:
+        for line in meta_match.group(1).splitlines():
+            k, v = map(str.strip, line.split(':', 1))
+            meta[k] = v
 
     p = subprocess.Popen(["pandoc"], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
     out = p.communicate(input=markdown.encode('utf-8'))
@@ -162,6 +171,6 @@ def process_markdown(task_code, markdown):
         announce = html.tostring(tag[0], pretty_print=True).decode('utf-8')
 
     content = html.tostring(root, pretty_print=True).decode('utf-8')
-    task_readme = Readme(name, announce, content)
+    task_readme = Readme(name, announce, content, meta)
     caches['default'].set(key, task_readme)
     return task_readme
