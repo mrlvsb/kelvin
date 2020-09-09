@@ -1,4 +1,5 @@
 {% extends 'web/layout.html' %}
+{% load markdown %}
 
 {% block content %}
 
@@ -14,6 +15,7 @@
 <div class="card mb-2">
     <div class="card-header"><h5>{{ node.class }}</h5></div>
     <div class="card-body"> 
+        {{ node.class.summary | markdown:'' | safe }}
         <table class="table table-bordered table-sm table-hover">
             <thead>
                 <tr>

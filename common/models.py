@@ -24,7 +24,7 @@ class Semester(models.Model):
     winter = models.BooleanField()
 
     def __str__(self):
-        return f"{self.year}/{'W' if self.winter else 'S'}"
+        return f"{self.year}{'W' if self.winter else 'S'}"
 
 class Subject(models.Model):
     name = models.CharField(max_length=60)
@@ -65,6 +65,30 @@ class Class(models.Model):
 
     def __str__(self):
         return f"{self.subject.abbr} {self.code} {self.day} {self.time:%H:%M} {self.teacher.last_name if self.teacher else ''}"
+
+    @property
+    def timeslot(self):
+        return f"{self.day}{self.time.hour:02}{self.time.minute:02}"
+
+    def summary(self):
+        path = os.path.join(
+            "tasks",
+            self.subject.abbr,
+            str(self.semester),
+            self.teacher.username,
+            self.timeslot
+        )
+
+        while path:
+            try:
+                with open(os.path.join(path, "summary.md")) as f:
+                    return f.read()
+            except FileNotFoundError:
+                pass
+            path = path[:-1]
+
+        return ""
+
 
     class Meta:
             verbose_name_plural = "classes"
