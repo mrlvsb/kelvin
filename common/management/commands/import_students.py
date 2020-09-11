@@ -31,7 +31,8 @@ class Command(BaseCommand):
     def handle(self, *args, **opts):
         subject = Subject.objects.get(abbr=opts['subject'])
 
-        year, half = opts['semester'].split('/')
+        year = opts['semester'][:-1]
+        half = opts['semester'][-1]
         semester = Semester.objects.get(year=year, winter=half=='W')
 
         doc = parse(opts['file']).getroot()
