@@ -53,3 +53,9 @@ python -m evaluator.tests
 ### Favicon
 
 Generated from [favicon.io](https://favicon.io/favicon-generator/) with Didact Gothic font.
+
+## Importing students
+Download 'Rozvrhove skupiny' from edison as html and run:
+```
+$ ./manage.py import_students /tmp/all.html UPR 2020W
+```
