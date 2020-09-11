@@ -76,9 +76,16 @@ class Command(BaseCommand):
                 class_in_db[c].save()
 
         for row in doc.xpath('//table[@class="dataTable"]//tr')[1:]:
+            def clean_name(s):
+                for remove in ['Ing', 'Bc', 'BA', 'MBA', 'Mgr', 'MgrA', '.', ',']:
+                    s = s.replace(remove, '')
+
+                return ' '.join(s.split()).strip()
+
+
             login = row.xpath('./td[2]/a/text()')[0].strip()
             email = row.xpath('./td[2]/a/@href')[0].replace('mailto:', '').strip()
-            name = row.xpath('./td[3]/a/text()')[0].replace(', Ing.', '').replace(', Bc.', '')
+            name = clean_name(row.xpath('./td[3]/a/text()')[0])
             lastname, firstname = name.strip().split(' ', 1)
 
             member_of = []
