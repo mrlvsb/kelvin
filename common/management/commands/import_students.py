@@ -32,8 +32,8 @@ class Command(BaseCommand):
         subject = Subject.objects.get(abbr=opts['subject'])
 
         year = opts['semester'][:-1]
-        half = opts['semester'][-1]
-        semester = Semester.objects.get(year=year, winter=half=='W')
+        is_winter = opts['semester'][-1] == 'W'
+        semester = Semester.objects.get(year=year, winter=is_winter)
 
         doc = parse(opts['file']).getroot()
 
@@ -95,18 +95,25 @@ class Command(BaseCommand):
                 created = True
 
             for i, el in enumerate(row.xpath('.//input')):
+                clazz = classes[i]
                 if "checked" in el.attrib:
-                        clazz = classes[i]
-                        if not self.is_allowed(clazz, opts):
-                            continue
+                    if not self.is_allowed(clazz, opts):
+                        continue
 
-                        if user not in class_in_db[clazz].students.all():
-                            member_of.append(clazz)
-                            class_in_db[clazz].students.add(user)
+                    if user not in class_in_db[clazz].students.all():
+                        member_of.append(clazz)
+                        class_in_db[clazz].students.add(user)
+                else:
+                    class_in_db[clazz].students.remove(user)
+
+
             for clazz in default_classes:
                 if user not in clazz.students.all():
                     member_of.append(clazz.code)
                     clazz.students.add(user)
 
-            print(f"{login} {firstname:>15} {lastname:>15} {('created' if created else ''):>5} {', '.join(member_of)}")
+            classess = []
+            for c in Class.objects.filter(students__username=login, semester__year=year, semester__winter=is_winter):
+                classess.append(f"{c.timeslot} {c.teacher.username}")
+            print(f"{login} {firstname:>15} {lastname:>15} {('created' if created else ''):>5} {', '.join(classess)}")
 
