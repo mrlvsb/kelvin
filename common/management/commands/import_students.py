@@ -66,6 +66,13 @@ class Command(BaseCommand):
                 class_in_db[c].time = s[7]
                 class_in_db[c].subject = subject
                 class_in_db[c].semester = semester
+
+                first_name, last_name = label.replace(',', '').replace('Ph.D.', '').strip().split(' ')[-2:]
+                if first_name and last_name:
+                    teacher = User.objects.filter(first_name=first_name, last_name=last_name)
+                    if teacher:
+                        class_in_db[c].teacher = teacher[0]
+
                 class_in_db[c].save()
 
         for row in doc.xpath('//table[@class="dataTable"]//tr')[1:]:
