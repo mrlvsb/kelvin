@@ -43,7 +43,7 @@ class Command(BaseCommand):
         default_classes = []
         for code in opts['class_code']:
             try:
-                default_classes.append(Class.objects.current_semester().get(code=code, subject__abbr=opts['subject']))
+                default_classes.append(Class.objects.get(semester__year=year, semester__winter=is_winter, code=code, subject__abbr=opts['subject']))
             except Class.DoesNotExist:
                 print(f"Class with code {code} does not exist.")
                 exit(1)
