@@ -110,7 +110,7 @@ class Command(BaseCommand):
                     if user not in class_in_db[clazz].students.all():
                         member_of.append(clazz)
                         class_in_db[clazz].students.add(user)
-                else:
+                elif clazz in class_in_db:
                     class_in_db[clazz].students.remove(user)
 
 

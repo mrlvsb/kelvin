@@ -131,7 +131,7 @@ class Command(BaseCommand):
     def parse_assign_date(self, text, clazz):
         match = re.match(r'^\s*(?P<week>\d+)\. week\s*$', text)
         if match:
-            return datetime.datetime.combine(clazz.semester.begin + datetime.timedelta(days=DAYS.index(clazz.day)), clazz.time) + \
-                    datetime.timedelta(days=7 * int(match.group('week')))
+            return datetime.datetime.combine(clazz.semester.begin + datetime.timedelta(days=DAYS.index(clazz.day.upper())), clazz.time) + \
+                    datetime.timedelta(days=7 * (int(match.group('week')) - 1))
 
         return datetime.datetime.strptime(text, DATE_FORMAT)
