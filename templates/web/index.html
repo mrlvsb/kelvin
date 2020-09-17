@@ -22,7 +22,8 @@
                     <th>Task</th>
                     <th>Assigned</th>
                     <th>Deadline</th>
-                    <th>Points</th>
+                    <th>Earned points</th>
+                    <th>Max points</th>
                 </tr>
             </thead>
             {% for task in node.tasks  %}
@@ -51,6 +52,11 @@
                 <td>
                     {% if task.assigned_points is not None %}
                       {{ task.assigned_points }}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if task.assignment.max_points is not None %}
+                      {{ task.assignment.max_points }}
                     {% endif %}
                 </td>
             </tr>
