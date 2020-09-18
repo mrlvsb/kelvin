@@ -139,8 +139,7 @@ def show(request, survey_file):
             raise e
         return HttpResponse(e)
 
-@user_passes_test(is_teacher)
-def show_csv(request, survey_file):
+def all_answers(survey_file):
     answers = []
     for answer in Answer.objects.filter(survey_name=survey_file):
         data = {}
@@ -152,7 +151,12 @@ def show_csv(request, survey_file):
             data[k] = v
 
         answers.append(data)
+    return answers
 
+
+@user_passes_test(is_teacher)
+def show_csv(request, survey_file):
+    answers = all_answers(survey_file)
     conf = survey_read(survey_file, request.user)
     if not answers or not conf:
         return HttpResponse(status=204)
@@ -192,3 +196,10 @@ def show_edison_csv(request, survey_file):
 
         response = HttpResponse(out.getvalue(), 'text/plain; charset=utf-8')
         return response
+
+@user_passes_test(is_teacher)
+def answers(request, survey_file):
+    return render(request, 'answers.html', {
+        'answers': all_answers(survey_file),
+        'title': survey_file,
+    })
