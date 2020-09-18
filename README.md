@@ -2,6 +2,19 @@
 
 Kelvin - The Ultimate Code Examinator
 
+```
+kelvin
+├── api (deprecated? will be removed?)
+├── evaluator (pipeline for evaluating, linting submits)
+│   ├── images (docker images for custom pipeline actions)
+│   └── pipelines.py (integrated pipeline actions - evaluating in isolate, ...)
+├── kelvin (base configuration of the application)
+├── examinator (real-time exams module without frontend)
+├── survey (module for easy surveys defined in yaml)
+└── web (web interface for the kelvin)
+```
+
+
 ## Implementation
 
 ### Needed System Libraries
@@ -17,21 +30,6 @@ libldap2-dev libsasl2-dev libcap-dev
 $ ./manage.py rqworker
 ```
 
-## How to create a new task
-
-1. Create a new directory in `/srv/kelvin/kelvin/tasks`.
-2. Create `readme.md` and some input (small_numbers.in) and output (small_output.out) files.
-3. Optionally create a configuration file `config.yml`.
-4. Add a new Task record in admin (choose a name, ented directory).
-5. Assign the task to a Class.
-
-
-## Task options in `config.yml`
-
-- filters:
-  - TrailingSpaces - Removes spaces at the end of each line
-  - Strip - stdout.strip()
-
 ## Reevaluate a submit
 
 ```
@@ -43,12 +41,6 @@ $ ./manage.py rqworker
 $ ./manage.py evaluate ./tasks/gaura/komb_05_strings/ ./submit.c
 $ chromium /tmp/eval/result.html
 ```
-
-## Run evaluator tests
-```
-python -m evaluator.tests
-```
-
 
 ### Favicon
 
