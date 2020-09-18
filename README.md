@@ -55,7 +55,12 @@ python -m evaluator.tests
 Generated from [favicon.io](https://favicon.io/favicon-generator/) with Didact Gothic font.
 
 ## Importing students
-Download 'Rozvrhove skupiny' from edison as html and run:
+Download 'Rozvrhove skupiny' from edison as html and run to import students according to their class:
+```sh
+$ ./manage.py import_students prezencni.html UPR 2020W
 ```
-$ ./manage.py import_students /tmp/all.html UPR 2020W
+
+Ignore lectures and exercises and import all students to already existing class 'komb' in the current semester and subject:
+```sh
+$ ./manage.py import_students komb.html UPR 2020W --no-lectures --no-exercises --class-code komb
 ```
