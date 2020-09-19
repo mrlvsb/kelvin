@@ -150,11 +150,18 @@ CAS_SERVER_URL = 'https://www.sso.vsb.cz/'
 CAS_CREATE_USER = False
 CAS_FORCE_CHANGE_USERNAME_CASE = 'upper'
 
+CACHES = {
+    'default': {
+        'BACKEND': 'redis_cache.RedisCache',
+        'LOCATION': [
+            '127.0.0.1:6379'
+        ]
+    }
+}
+
 RQ_QUEUES = {
     'default': {
-        'HOST': 'localhost',
-        'PORT': 6379,
-        'DB': 0,
+        'USE_REDIS_CACHE': 'default',
     }
 }
 
