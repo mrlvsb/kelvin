@@ -3,6 +3,9 @@ import io
 import csv
 import tarfile
 import tempfile
+import re
+import json
+import subprocess
 from shutil import copyfile
 from collections import OrderedDict
 
@@ -14,8 +17,8 @@ from django.urls import reverse
 from django.utils import timezone as tz
 from django.conf import settings
 from django.db.models import Max, Min, Count
+from django.core.cache import caches
 
-import mosspy
 import django_rq
 from unidecode import unidecode
 
@@ -24,6 +27,7 @@ from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from evaluator.testsets import TestSet
 from common.evaluate import get_meta, evaluate_job
 from common.utils import is_teacher
+from common.moss import check_task
 
 @user_passes_test(is_teacher)
 def teacher_task(request, task_id):
@@ -41,9 +45,64 @@ def teacher_task(request, task_id):
 
 @user_passes_test(is_teacher)
 def teacher_task_moss_check(request, task_id):
-    submits = Submit.objects.filter(assignment__task__id=task_id).order_by('-submit_num')
-    return redirect(send_to_moss(submits))
+    cache = caches['default']
+    key = f'moss.{task_id}'
+    key_job = f'moss.job.{task_id}'
 
+    task = get_object_or_404(Task, pk=task_id)
+
+    job_id = cache.get(key_job)
+    if job_id:
+        job = django_rq.jobs.get_job_class().fetch(job_id, connection=django_rq.queues.get_connection())
+        status = job.get_status()
+        if status == 'queued':
+            status += f' {job.get_position() + 1}'
+        return render(request, "web/moss.html", {
+            "status": status,
+            "task": task,
+        })
+
+    if request.method == 'POST' or not cache.get(key):
+        job = django_rq.enqueue(check_task, task_id)
+        cache.set(key_job, job.id, timeout=None)
+        return redirect(request.path_info)
+
+    threshold = {
+        "percent": int(request.GET.get("percent", 5)),
+        "lines": int(request.GET.get("lines", 1)),
+    }
+
+    matches = []
+    for match in cache.get(key):
+        if min(match['first_percent'], match['second_percent']) > threshold['percent']:
+            matches.append(match)
+
+
+    max_percent = 0
+    for d in matches:
+        percent = max(int(d['first_percent']), int(d['second_percent']))
+        if percent > max_percent:
+           max_percent = percent
+
+    with tempfile.NamedTemporaryFile("w") as out:
+        print("graph G{", file=out)
+        for d in matches:
+            M = max(float(d['first_percent']), float(d['second_percent']))
+            c = 255 - M / max_percent * 255
+            color = "#{c:02x}{c:02x}{c:02x}".format(c=int(c))
+            print(f"{d['first_login']} -- {d['second_login']} [shape=box, color=\"{color}\", href=\"{d['link']}\", label=\"{M}%\"];", file=out)
+        print("}", file=out)
+        out.flush()
+
+        graph = subprocess.check_output(["dot", "-T", "svg", out.name]).decode('utf-8')
+        graph = re.sub(r'width="[^"]+" height="[^"]+"', '', graph)
+
+        return render(request, 'web/moss.html', {
+            "matches": matches,
+            "graph": graph,
+            "threshold": threshold,
+            "task": task,
+        })
 
 @user_passes_test(is_teacher)
 def all_classes(request):
@@ -98,39 +157,6 @@ def teacher_list(request, **class_conditions):
         'classes': result,
         'subjects': Subject.objects.filter(class__teacher=request.user.id, **current_semester_conds('class__')).distinct(),
     })
-
-def send_to_moss(submits):
-    m = mosspy.Moss(settings.MOSS_USERID, "c")
-
-    with tempfile.TemporaryDirectory() as temp_dir:
-        processed = set()
-        for submit in submits:
-            if submit.student_id not in processed:
-                dst = os.path.join(temp_dir, f"{submit.student.username}.c")
-                with open(dst, "w") as dst_f:
-                    for source in submit.all_sources():
-                        try:
-                            with open(source.phys) as src_f:
-                                dst_f.write(src_f.read())
-                        except UnicodeDecodeError:
-                            # TODO: student can bypass plagiarism check
-                            print(submit.student_id)
-                m.addFile(dst)
-
-                processed.add(submit.student_id)
-
-        return m.send()
-
-@user_passes_test(is_teacher)
-def moss_check(request, assignment_id):
-    submits = Submit.objects.filter(assignment_id=assignment_id).order_by('-submit_num')
-
-    assignment = AssignedTask.objects.get(id=assignment_id)
-    assignment.moss_url = send_to_moss(submits)
-    assignment.save()
-
-    return redirect(assignment.moss_url)
-
 
 @user_passes_test(is_teacher)
 def submits(request, student_username=None):

@@ -36,7 +36,7 @@
                     {{ assignment.task.name }}
                     <a href="{% url 'admin:common_assignedtask_change' assignment.id %}" class="text-muted" title="Edit"><i class="fas fa-pen"></i></a>
                     <div>
-                      <a href="{% url 'moss_check' assignment.id %}" title="Send to MOSS"><i class="fas fa-check-double"></i></a>
+                      <a href="{% url 'teacher_task_moss_check' assignment.task.id %}" title="Send to MOSS"><i class="fas fa-check-double"></i></a>
                       {% if assignment.moss_url %}
                       <a href="{{ assignment.moss_url }}">moss result</a>
                       {% endif %}

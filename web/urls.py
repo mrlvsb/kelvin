@@ -38,7 +38,6 @@ urlpatterns = [
 
     path('teacher/task/<int:task_id>', teacher_view.teacher_task, name='teacher_task'),
     path('teacher/task/<int:task_id>/moss', teacher_view.teacher_task_moss_check, name='teacher_task_moss_check'),
-    path('moss_send/<int:assignment_id>', teacher_view.moss_check, name='moss_check'),
     path('submits', teacher_view.submits, name='submits'),
     path('submits/<str:student_username>', teacher_view.submits, name='submits'),
 
