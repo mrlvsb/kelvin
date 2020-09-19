@@ -1,0 +1,67 @@
+{% extends 'web/layout.html' %}
+
+{% block content %}
+<h1>MOSS for {{ task.name }}</h1>
+{% if status %}
+  <div style="text-align: center; font-size: 30px">
+    {{ status }}
+  </div>
+  <meta http-equiv="refresh" content="1" />
+{% else %}
+  <form method="post" class="float-right">
+     {% csrf_token %}
+    <button class="btn btn-sm btn-primary"><i class="fa fa-sync"></i></button>
+  </form>
+
+  <form class="form-inline">
+    <div class="input-group input-group-sm mr-2">
+    <input type="number" min="0" max="100" class="form-control form-control-sm" name="percent" value={{threshold.percent}} />
+      <div class="input-group-append">
+        <div class="input-group-text">%</div>
+      </div>
+    </div>
+
+    <div class="input-group input-group-sm mr-2">
+      <input type="number" min="0" max="1000" placeholder="Max lines" class="form-control form-control-sm" name="lines" value={{threshold.lines}} />
+      <div class="input-group-append">
+        <div class="input-group-text">lines</div>
+      </div>
+    </div>
+    <input type="submit" class="btn btn-sm btn-primary" value="Filter">
+  </form>
+
+  <div id="graph">
+    {{ graph | safe }}
+  </div>
+
+  <style>
+  #graph svg {
+    width: 100%;
+    height: auto;
+    min-height: 300px;
+  }
+  table td {
+    white-space: nowrap;
+    width: 1%;
+  }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+  <script>svgPanZoom('#graph svg')</script>
+
+  <table class="table table-sm">
+    {% for match in matches %}
+    <tr>
+      <td>{{ match.first_login }}</td>
+      <td>{{ match.first_percent }}%</td>
+      <td>{{ match.second_login }}</td>
+      <td>{{ match.second_percent }}%</td>
+      <td>{{ match.lines }}</td>
+      <td>
+        <a href="{{ match.link }}"><i class="fa fa-search"></i></a>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+{% endif %}
+
+{% endblock %}

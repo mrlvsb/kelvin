@@ -1,0 +1,17 @@
+{% extends 'web/layout.html' %}
+
+{% block content %}
+<h1 style="display: inline-block; margin-right: 5px;">{{ title }}</h1> <span class="text-muted">({{ answers | length }})</span>
+{%for answer in answers %}
+  <dl>
+  {% for q, a in answer.items %}
+    {% if q != 'login' and q != 'submitted' %}
+      <dt>{{ q }}</dt>
+      <dd>{{ a }}</dd>
+    {% endif %}
+  {% endfor %}
+  </dl>
+  <hr>
+{% endfor %}
+{% endblock %}
+
