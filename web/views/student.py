@@ -3,13 +3,15 @@ import os
 import re
 import tarfile
 import tempfile
-import mimetypes
 import io
+import zipfile
+
 import django_rq
 import mimetypes
 import rq
 import subprocess
 import magic
+from django.core.files.uploadedfile import UploadedFile
 
 from django.utils import timezone as datetime
 
@@ -88,6 +90,19 @@ def get(submit):
         "results": results,
     }
     return data
+
+
+def store_uploaded_file(submit: Submit, name: str, file):
+    path = submit.source_path(name)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    if isinstance(file, UploadedFile):
+        with open(path, "wb") as storage_file:
+            for chunk in file.chunks():
+                storage_file.write(chunk)
+    elif isinstance(file, zipfile.ZipFile):
+        file.extract(name, path=submit.dir())
+    else:
+        raise Exception(f"Invalid file type {type(file)}")
 
 
 @login_required()
@@ -178,11 +193,15 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
             s.save()
 
             for uploaded_file in request.FILES.getlist('solution'):
-                path = s.source_path(uploaded_file.name)
-                os.makedirs(os.path.dirname(path), exist_ok=True)
-                with open(path, "wb") as storage_file:
-                    for chunk in uploaded_file.chunks():
-                        storage_file.write(chunk)
+                name = uploaded_file.name
+                extension = os.path.splitext(name)[1]
+                if extension == ".zip":
+                    with zipfile.ZipFile(uploaded_file, "r") as archive:
+                        for file in archive.filelist:
+                            if not file.is_dir():
+                                store_uploaded_file(s, file.filename, archive)
+                else:
+                    store_uploaded_file(s, uploaded_file.name, uploaded_file)
 
             s.jobid = django_rq.enqueue(evaluate_job, s).id
             s.save()
@@ -243,7 +262,7 @@ def submit_diff(request, student_username, assignment_id, submit_a, submit_b):
         diff.seek(0)
 
         out = diff.read()
-        out = re.sub(r'^(---|\+\+\+) [0-9]+/', '\\1 ', out, flags=re.M) 
+        out = re.sub(r'^(---|\+\+\+) [0-9]+/', '\\1 ', out, flags=re.M)
         out = "\n".join([line for line in out.split("\n") if not line.startswith('Binary file')])
         resp = HttpResponse(out)
         resp['Content-Type'] = 'text/x-diff'
@@ -446,7 +465,7 @@ def task_asset(request, task_name, path):
 @login_required
 def raw_result_content(request, submit_id, test_name, result_type, file):
     submit = get_object_or_404(Submit, pk=submit_id)
-    
+
     if submit.student_id != request.user.id and not is_teacher(request.user):
         raise PermissionDenied()
 
