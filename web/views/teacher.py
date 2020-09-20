@@ -212,6 +212,8 @@ def show_assignment_submits(request, assignment_id):
     for result in assignedtask_results(assignment):
         submit = None
         if result['submits']:
+            if 'accepted_submit_num' not in result:
+                continue
             submit = Submit.objects.get(
                 assignment_id=assignment.id,
                 student_id=result['student'].id,
