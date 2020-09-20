@@ -62,9 +62,9 @@ def teacher_task_moss_check(request, task_id):
             "task": task,
         })
 
-    if request.method == 'POST' or not cache.get(key):
+    if request.method == 'POST' or cache.get(key) is None:
         job = django_rq.enqueue(check_task, task_id)
-        cache.set(key_job, job.id, timeout=None)
+        cache.set(key_job, job.id, timeout=60*60*8)
         return redirect(request.path_info)
 
     threshold = {
