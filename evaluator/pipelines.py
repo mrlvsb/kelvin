@@ -2,6 +2,7 @@ import json
 import yaml
 import os
 import shlex
+import html
 from collections import defaultdict
 import subprocess
 import tempfile
@@ -40,6 +41,15 @@ class DockerPipe:
 
         if 'failed' not in result:
             result['failed'] = p.returncode != 0
+
+
+        try:
+            path = os.path.join(evaluation.sandbox.system_path("result.html"))
+            with open(path) as f:
+                result['html'] = f.read()
+            os.unlink(path)
+        except FileNotFoundError as e:
+            pass
 
         for f in ['stdout', 'stderr']:
             if os.path.getsize(res_path(f)) == 0:

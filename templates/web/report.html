@@ -3,7 +3,12 @@
 
 {% for result in results %}
   {% if result.html or result.tests %}
-    <h5>{{ result.title }}</h5>
+  <h5{% if result.failed %} class="text-danger"{% endif %}>
+      {{ result.title }}
+      {% if result.failed %} 
+        - FAILED
+      {% endif %}
+    </h5>
     {% if result.html %}
     {{ result.html | safe }}
     {% endif %}

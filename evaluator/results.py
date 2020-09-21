@@ -164,6 +164,7 @@ class EvaluationResult:
                     pipe.title = pipe_json.get('title', '')
                     pipe.html = pipe_json.get('html', '')
                     pipe.comments = pipe_json.get('comments', {})
+                    pipe.failed = pipe_json.get('failed', False)
                     for test_json in pipe_json.get('tests', []):
                         result_dir = os.path.join(self.result_dir, pipe.id)
 
