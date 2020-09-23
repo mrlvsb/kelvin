@@ -6,11 +6,12 @@ import tempfile
 import re
 import json
 import subprocess
+import datetime
 from shutil import copyfile
 from collections import OrderedDict
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -22,12 +23,13 @@ from django.core.cache import caches
 import django_rq
 from unidecode import unidecode
 
-from common.models import Submit, Class, Task, AssignedTask, Subject, assignedtask_results, current_semester_conds
+from common.models import Submit, Class, Task, AssignedTask, Subject, assignedtask_results, current_semester_conds, current_semester
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from evaluator.testsets import TestSet
 from common.evaluate import get_meta, evaluate_job
 from common.utils import is_teacher
 from common.moss import check_task
+from web.task_utils import load_readme, process_markdown 
 
 @user_passes_test(is_teacher)
 def teacher_task(request, task_id):
@@ -291,3 +293,114 @@ def reevaluate(request, submit_id):
     submit.jobid = django_rq.enqueue(evaluate_job, submit).id
     submit.save()
     return redirect(request.META.get('HTTP_REFERER', reverse('submits')) + "#result")
+
+@user_passes_test(is_teacher)
+def edit_task(request, task_id=None):
+    task = Task()
+    subject_abbr = request.GET.get('subject_abbr')
+
+    if not task_id and not subject_abbr:
+        return HttpResponseBadRequest()
+
+    if task_id:
+        task = Task.objects.get(id=task_id)
+        subject_abbr = task.subject.abbr
+
+    if request.method == 'POST':
+        code = request.POST.get('dir')
+        if '..' in code:
+            return HttpResponseBadRequest()
+
+        if not task_id:
+            task = Task()
+            task.subject = Subject.objects.get(abbr=subject_abbr)
+        else:
+            if task.code != request.POST.get('dir'):
+                os.rename(
+                        os.path.join("tasks", task.code),
+                        os.path.join("tasks", request.POST.get('dir'))
+                )
+
+        task.code = request.POST.get('dir')
+
+        os.makedirs(task.dir(), exist_ok=True)
+        readme_path = task.readme_path()
+        if not readme_path:
+            readme_path = os.path.join(task.dir(), "readme.md")
+
+        with open(readme_path, "w") as f:
+            f.write(request.POST.get('text'))
+
+        task.name = load_readme(task.code).name
+        if not task.name:
+            task.name = task.code
+        task.save()
+
+        fields = [
+            request.POST.getlist('class'),
+            request.POST.getlist('assign_date'),
+            request.POST.getlist('assign_time'),
+            request.POST.getlist('deadline_date'),
+            request.POST.getlist('deadline_time'),
+        ]
+
+        max_pts = request.POST.get('max_points')
+        if max_pts == '':
+            max_pts = None
+
+        for class_id, assign_date, assign_time, deadline_date, deadline_time in zip(*fields):
+            #assign = class_id in request.POST.getlist('class_assign')
+            assign = assign_date and assign_time
+            if assign:
+                def to_datetime(date, time):
+                    if not date or not time:
+                        return None
+                    d = datetime.datetime.strptime(date, "%Y-%m-%d")
+                    hour, minute = map(int, time.split(':'))
+                    return d.replace(hour=hour, minute=minute)
+
+                AssignedTask.objects.update_or_create(task_id=task.id, clazz_id=class_id, defaults={
+                    'assigned': to_datetime(assign_date, assign_time),
+                    'deadline': to_datetime(deadline_date, deadline_time),
+                    'max_points': max_pts,
+                })
+            else:
+                AssignedTask.objects.filter(task__id=task.id, clazz_id=class_id).delete()
+
+        return redirect(reverse('edit_task', kwargs={'task_id': task.id}))
+
+    classes = Class.objects.filter(
+            subject__abbr=subject_abbr,
+            teacher__username=request.user.username,
+            **current_semester_conds(),
+    )
+
+    cl = []
+    for clazz in classes:
+        cl.append({
+            "class": clazz,
+            "assigned": AssignedTask.objects.filter(task_id=task.id, clazz_id=clazz.id).first() if task_id else None,
+        })
+
+    max_points = None
+    markdown = ""
+    if task_id:
+        assigned = AssignedTask.objects.filter(task_id=task.id)
+        if assigned:
+            max_points = assigned.first().max_points
+        markdown = task.markdown()
+    else:
+        task.code = os.path.join(
+                subject_abbr,
+                str(current_semester()),
+                request.user.username,
+        )
+        markdown = "# Task title"
+
+
+    return render(request, "web/edit_task.html", {
+        'classes': cl,
+        'task': task,
+        'max_points': max_points,
+        'markdown': markdown,
+    })

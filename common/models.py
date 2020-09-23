@@ -13,6 +13,13 @@ def current_semester_conds(prefix=''):
         f'{prefix}semester__end__gte': timezone.now()
     }
 
+def current_semester():
+    return Semester.objects.filter(
+            begin__lte=timezone.now(),
+            end__gte=timezone.now()
+        ).first()
+
+
 class ClassManager(models.Manager):
     def current_semester(self):
         return self.filter(**current_semester_conds())
@@ -50,6 +57,22 @@ class Task(models.Model):
 
     def __str__(self):
         return self.name
+
+    def readme_path(self):
+        readmes = [f for f in os.listdir(self.dir()) if f.lower() == "readme.md"]
+        if readmes:
+            return os.path.join(self.dir(), readmes[0])
+        return None
+
+
+    def markdown(self):
+        try:
+            readme = self.readme_path()
+            if readme:
+                with open(readme) as f:
+                    return f.read()
+        except FileNotFoundError:
+            return ""
 
 class Class(models.Model):
     code = models.CharField(max_length=20)

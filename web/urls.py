@@ -8,6 +8,9 @@ from .views import common as common_view
 urlpatterns = [
     path('', common_view.index, name='index'),
 
+    path('task/edit', teacher_view.edit_task, name='edit_task'),
+    path('task/edit/<int:task_id>', teacher_view.edit_task, name='edit_task'),
+
     path('task/<str:student_username>/<int:assignment_id>', student_view.task_detail, name='task_detail'),
     path('task/<str:student_username>/<int:assignment_id>/<int:submit_num>', student_view.task_detail, name='task_detail'),
     path('task/<str:student_username>/<int:assignment_id>/<int:submit_a>-<int:submit_b>.diff', student_view.submit_diff, name='submits_diff'),

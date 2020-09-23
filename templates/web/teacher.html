@@ -14,7 +14,7 @@
 <div class="card mb-2" style="position: initial">
       <div class="card-header">
           <div class="float-right">
-            <a href="{% url 'admin:common_assignedtask_add' %}?clazz={{ class.class.id }}" title="Assign new task"><i class="fas fa-calendar-plus"></i></a>
+            <a href="{% url 'edit_task' %}?subject_abbr={{ class.class.subject.abbr }}" title="Assign new task"><i class="fas fa-calendar-plus"></i></a>
             <a href="{% url 'download_csv_per_class' class.class.id %}" title="Download CSV with results for all task"><i class="fas fa-file-csv"></i></a>
           </div>
           <button class="btn btn-link" data-toggle="collapse" data-target="#class-{{class.class.id}}" aria-expanded="true" aria-controls="collapseOne">
@@ -34,7 +34,7 @@
                   <a href="{% url 'teacher_task' assignment.task.id %}">{{ assignment.task.code_name }}</a>
                   <div class="more-content">
                     {{ assignment.task.name }}
-                    <a href="{% url 'admin:common_assignedtask_change' assignment.id %}" class="text-muted" title="Edit"><i class="fas fa-pen"></i></a>
+                    <a href="{% url 'edit_task' assignment.task.id %}" class="text-muted" title="Edit"><i class="fas fa-pen"></i></a>
                     <div>
                       <a href="{% url 'teacher_task_moss_check' assignment.task.id %}" title="Send to MOSS"><i class="fas fa-check-double"></i></a>
                       {% if assignment.moss_url %}
