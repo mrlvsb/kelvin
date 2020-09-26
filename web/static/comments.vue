@@ -87,7 +87,6 @@ Vue.component('submit-source', {
       </tr>
     </template>
   </table>
-</div>
 `,
   data() { 
     return {
@@ -146,7 +145,13 @@ Vue.component('submit-sources', {
   template: `
   <div>
     <div v-for="type in sources">
-      <h4>{{ type.path }} </h4>
+      <div class="submit-file-header">
+        <h4>{{ type.path }} </h4>
+        <i class="fas fa-copy icon copy"
+           title="Zkopírovat obsah souboru"
+           v-if="type.content"
+           :data-clipboard-text="type.content"></i>
+      </div>
       <submit-source :lines="type.lines" :source="type.path" :url="url" v-if="type.type == 'source'" />
       <img :src="type.src" v-if="type.type == 'img'" />
       <video v-if="type.type == 'video'" controls>
