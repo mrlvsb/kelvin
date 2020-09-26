@@ -1,7 +1,7 @@
 <form class="form-inline float-right" action="{% url 'submit_assign_points' submit.id %}" method="POST">
   {% csrf_token %} 
   <div class="input-group input-group-sm mt-1 mr-1">
-    <input type="number" name="assigned_points" step="any" min=0 max="{{ submit.assignment.max_points }}" class="form-control" placeholder="points" style="width: 70px" value="{{ submit.assigned_points }}">
+    <input type="number" name="assigned_points" step="any" min=-100 max="{{ submit.assignment.max_points }}" class="form-control" placeholder="points" style="width: 70px" value="{{ submit.assigned_points }}">
     <div class="input-group-append">
       <div class="input-group-text"> / {{ submit.assignment.max_points }}</div>
     </div>

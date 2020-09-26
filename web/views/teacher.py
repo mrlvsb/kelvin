@@ -143,7 +143,7 @@ def teacher_list(request, **class_conditions):
                 score['assignment'] = assignment
 
                 if 'assigned_points' in score and score['assigned_points'] is not None and int(assignment.max_points or 0) > 0:
-                    ratio = min(1, score['assigned_points'] / assignment.max_points)
+                    ratio = max(0, min(1, score['assigned_points'] / assignment.max_points))
                     green = int(ratio * 200)
                     red = int((1 - ratio) * 255)
                     score['color'] = f'#{red:02X}{green:02X}00'
