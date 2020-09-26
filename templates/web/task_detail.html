@@ -184,7 +184,7 @@ TODO: Make it nicer with Bootstrap
             {% if submit %}
             <div class="tab-pane" id="tab_src">
                 <div class="float-right">
-                  <a href="#diff" data-toggle="collapse"><i class="fas fa-history"></i></a>
+                  <a href="#diff" data-toggle="collapse" title="Diff vs previous version(s)"><i class="fas fa-history"></i></a>
                   <a href="{% url 'submit_download' submit.assignment.id submit.student.username submit.submit_num %}" title="Download"><i class="fas fa-download"></i></a>
                 </div>
 
@@ -207,7 +207,7 @@ TODO: Make it nicer with Bootstrap
                 <div id="diff-content"></div>
                 </div>
 
-                <div class="comments"><submit-sources url="{% url 'submit_comments' submit.assignment.id submit.student submit.submit_num %}"></div>
+              <div class="comments"><submit-sources url="{% url 'submit_comments' submit.assignment.id submit.student submit.submit_num %}"></submit-sources></div>
             </div>
 
             <div class="tab-pane" id="tab_result">

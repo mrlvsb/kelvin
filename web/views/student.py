@@ -342,12 +342,14 @@ def submit_comments(request, assignment_id, login, submit_num):
             result[name]['sources'].append(reverse('submit_source', args=[submit.id, source.virt]))
         else:
             lines = []
-            for line in highlight_code_json(source.phys):
+            content, formatted_lines = highlight_code_json(source.phys)
+            for line in formatted_lines:
                 lines.append({'content': line, 'comments': []})
             result[source.virt] = {
                 'type': 'source',
                 'path': source.virt,
-                'lines': lines
+                'lines': lines,
+                'content': content
             }
 
     # add comments from pipeline

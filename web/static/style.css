@@ -162,3 +162,11 @@ h3 {
 [id^=class-] table tr td:nth-of-type(2) ~ td, [id^=class-] table tr th:nth-of-type(2) ~ th {
   text-align: center;
 } 
+
+.submit-file-header {
+  display: flex;
+}
+.submit-file-header > .icon {
+  margin: 0 10px;
+  align-self: center;
+}

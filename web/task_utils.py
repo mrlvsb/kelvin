@@ -81,18 +81,18 @@ class HtmlLineFormatter(HtmlFormatter):
 def highlight_code_json(path):
     try:
         if os.path.getsize(path) > 500 * 1024:
-            return ['-- File too large --']
+            return None, ['-- File too large --']
         with open(path) as f:
             text = f.read()
             try:
                 tokens = guess_lexer_for_filename(path, text).get_tokens(text)
-                return HtmlLineFormatter().format(tokens)
+                return text, HtmlLineFormatter().format(tokens)
             except ClassNotFound:
-                return text.splitlines()
+                return text, text.splitlines()
     except UnicodeDecodeError:
-        return ["-- source code contains binary data --"]
+        return None, ["-- source code contains binary data --"]
     except FileNotFoundError:
-        return ["-- source code not found --"]
+        return None, ["-- source code not found --"]
 
 class Readme:
     def __init__(self, name, announce, content, meta=None):
