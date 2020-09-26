@@ -37,8 +37,7 @@ Vue.component('submit-source-comment', {
   template: `
   <div class="comment">
     <span v-on:dblclick="editing = canEdit">
-      <b>{{ author }}</b>: 
-      <span v-if="!editing">{{ text }}</span>
+      <b>{{ author }}</b>: <span v-if="!editing">{{ text }}</span>
     </span>
     <div v-if="editing">
       <submit-source-form :save="edit" :text="text" /> 
