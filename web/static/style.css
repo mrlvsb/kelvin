@@ -113,7 +113,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 }
 
 .sourcecode pre {
-  margin: 0px;
+  margin: 0;
 }
 
 .sourcecode .comment-add {
@@ -126,6 +126,15 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 .sourcecode .comment-add:hover {
   background-image: url('/static/plus.svg');
+}
+
+.sourcecode .comment {
+  padding: 5px;
+  background: #EFEF40D9;
+  white-space: normal;
+  word-break: break-all;
+  border: 2px solid #BFBFBF;
+  border-radius: 5px;
 }
 
 h1 {

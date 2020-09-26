@@ -35,10 +35,10 @@ Vue.component('submit-source-form', {
 Vue.component('submit-source-comment', {
   props: ['id', 'author', 'text', 'canEdit', 'editComment'],
   template: `
-  <div>
-    <span style="background: yellow" v-on:dblclick="editing = canEdit">
+  <div class="comment">
+    <span v-on:dblclick="editing = canEdit">
       <b>{{ author }}</b>: 
-      <span v-if="!editing" style="white-space: pre">{{ text }}</span>
+      <span v-if="!editing">{{ text }}</span>
     </span>
     <div v-if="editing">
       <submit-source-form :save="edit" :text="text" /> 
