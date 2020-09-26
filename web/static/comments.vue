@@ -149,7 +149,7 @@ Vue.component('submit-sources', {
       <div class="submit-file-header">
         <h4>{{ type.path }} </h4>
         <i class="fas fa-copy icon copy"
-           title="Zkopírovat obsah souboru"
+           title="Copy file content into clipboard"
            v-if="type.content"
            :data-clipboard-text="type.content"></i>
       </div>
