@@ -1,3 +1,4 @@
+import logging
 import os
 import io
 import csv
@@ -8,6 +9,7 @@ import json
 import subprocess
 import datetime
 from shutil import copyfile
+from django.core.mail import send_mail
 from collections import OrderedDict
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -228,6 +230,36 @@ def show_assignment_submits(request, assignment_id):
         'assignment': assignment,
     })
 
+
+def send_assigned_points_email(request, assigned_points: float, submit: Submit):
+    student = submit.student
+    if not student.email:
+        return
+
+    task = submit.assignment.task
+    subject = task.subject
+    user = request.user
+    task_name = task.name
+    task_url = request.build_absolute_uri(reverse("task_detail", kwargs={
+        "student_username": student.username,
+        "assignment_id": submit.assignment_id,
+        "submit_num": submit.submit_num
+    }))
+    teacher_name = f"{user.first_name} {user.last_name}"
+    text = f"""
+{teacher_name} ohodnotil vaše řešení úkolu "{task_name}": {assigned_points} bod(ů)
+Vaše řešení si můžete prohlédnout zde: {task_url}
+    """.strip()
+
+    send_mail(
+        f"Kelvin - nové hodnocení v předmětu {subject.name}",
+        text,
+        "kelvin@vsb.cz",
+        [student.email],
+        fail_silently=False,
+    )
+
+
 @user_passes_test(is_teacher)
 def submit_assign_points(request, submit_id):
     submit = get_object_or_404(Submit, pk=submit_id)
@@ -235,6 +267,12 @@ def submit_assign_points(request, submit_id):
     points = None
     if request.POST['assigned_points'] != '':
         points = request.POST['assigned_points']
+
+    if submit.assigned_points != points:
+        try:
+            send_assigned_points_email(request, submit.assigned_points, submit)
+        except BaseException as e:
+            logging.error(f"Error during email send: {e}")
 
     submit.assigned_points = points
     submit.save()
