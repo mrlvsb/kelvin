@@ -132,7 +132,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   padding: 5px;
   background: #EFEF40D9;
   white-space: pre-line;
-  word-break: break-all;
+  word-break: break-word;
   border: 2px solid #BFBFBF;
   border-radius: 5px;
 }
