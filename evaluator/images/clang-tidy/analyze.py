@@ -17,6 +17,7 @@ class OffsetToLine:
         for line, threshold in enumerate(self.files[path]):
             if threshold > offset:
                 return line + 1
+        return len(self.files[path])
 
     def build(self, path):
         offsets = []
