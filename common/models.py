@@ -181,6 +181,13 @@ class Submit(models.Model):
     def notification_str(self):
         return f"{self.assignment.task.name} #{self.submit_num}"
 
+    def notification_url(self):
+        return reverse('task_detail', kwargs={
+            'student_username': self.student.username,
+            'assignment_id': self.assignment.id,
+            'submit_num': self.submit_num
+        }) + '?clear_notifications=1#src'
+
 class Comment(models.Model):
     submit = models.ForeignKey(Submit, on_delete=models.CASCADE)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

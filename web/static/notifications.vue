@@ -45,8 +45,7 @@ Vue.component('notifications', {
 
                 <a :href="item.action_object_url" v-if="item.action_object_url">{{ item.action_object }}</a>
                 <span v-else>{{ item.action_object }}</span>
-                on 
-                {{ item.target }}
+                <span v-if="item.target">on {{ item.target }}</span>
                 (<timeago :datetime="item.timestamp"></timeago>)
               </li>
             </template>

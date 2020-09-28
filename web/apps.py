@@ -6,7 +6,7 @@ from webpush import send_user_notification
 from pywebpush import WebPushException
 
 
-def notification_to_webpush(sender, recipient, verb, action_object, target, **kwargs):
+def notification_to_webpush(sender, recipient, verb, action_object, **kwargs):
     from common.models import Comment
     def fmt(obj):
         if obj:
@@ -15,7 +15,8 @@ def notification_to_webpush(sender, recipient, verb, action_object, target, **kw
             return str(obj)
         return ""
 
-    msg = (f"{fmt(sender)} {verb} {fmt(action_object)} {fmt(target)}")
+    target = kwargs.get("target")
+    msg = (f"{fmt(sender)} {verb} {fmt(action_object)} {fmt(target)}".strip())
     body = msg
 
     if isinstance(action_object, Comment):
