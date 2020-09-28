@@ -47,9 +47,10 @@ Vue.component('notifications', {
                 <span v-else>{{ item.action_object }}</span>
                 on 
                 {{ item.target }}
+                (<timeago :datetime="item.timestamp"></timeago>)
               </li>
             </template>
-            <li class="list-group-item p-1 text-center" v-else>There are no notifications!</span>
+            <span class="list-group-item p-1 text-center" v-else>There are no notifications!</span>
 					</div>
 				</ul>
     </div>
@@ -124,6 +125,11 @@ Vue.component('notifications', {
       });
     }
   },
+});
+
+Vue.use(window.VueTimeago, {
+  name: 'Timeago',
+  locale: 'en'
 });
 
 new Vue({
