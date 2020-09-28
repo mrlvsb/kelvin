@@ -146,8 +146,9 @@ Vue.component('submit-sources', {
   <div>
     <div v-for="type in sources">
       <div class="submit-file-header">
-        <h4>{{ type.path }} </h4>
+        <h4 style="margin: 0">{{ type.path }} </h4>
         <i class="fas fa-copy icon copy"
+           style="color: #007bff; cursor: pointer"
            title="Copy file content into clipboard"
            v-if="type.content"
            :data-clipboard-text="type.content"></i>
