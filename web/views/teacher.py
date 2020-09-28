@@ -321,10 +321,13 @@ def edit_task(request, task_id=None):
             task.subject = Subject.objects.get(abbr=subject_abbr)
         else:
             if task.code != request.POST.get('dir'):
-                os.rename(
-                        os.path.join("tasks", task.code),
-                        os.path.join("tasks", request.POST.get('dir'))
-                )
+                try:
+                    os.rename(
+                            os.path.join("tasks", task.code),
+                            os.path.join("tasks", request.POST.get('dir'))
+                    )
+                except FileNotFoundError as e:
+                    pass
 
         task.code = request.POST.get('dir')
 
