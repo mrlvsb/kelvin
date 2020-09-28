@@ -129,7 +129,6 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
             })
         raise Http404()
 
-
     data = {
         # TODO: task and deadline can be combined into assignment ad deal with it in template
         'task': assignment.task,
@@ -164,6 +163,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         data['late_submit'] = assignment.deadline and submits.order_by('id').reverse()[0].created_at > assignment.deadline
         data['diff_versions'] = [(s.submit_num, s.created_at) for s in submits.order_by('id')]
 
+        # TODO: implement this properly
         if request.GET.get('clear_notifications'):
             for notification in request.user.notifications.unread().filter(target_object_id=current_submit.id):
                 notification.mark_as_read()
@@ -205,6 +205,10 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
 
             s.jobid = django_rq.enqueue(evaluate_job, s).id
             s.save()
+
+            notify.send(sender=request.user, recipient=[assignment.clazz.teacher],
+                        verb='submitted', action_object=s)
+
             return redirect(reverse('task_detail', args=[s.student.username, s.assignment.id, s.submit_num]) + '#result')
     else:
         form = UploadSolutionForm()
