@@ -316,10 +316,11 @@ def submit_comments(request, assignment_id, login, submit_num):
 
             return HttpResponse()
         else:
-            comment.text = data['text']
-            comment.save()
+            if comment.text != data['text']:
+                comment.text = data['text']
+                comment.save()
 
-            notify.send(sender=request.user, recipient=comment_recipients(submit, request.user), verb='updated', action_object=comment, target=submit)
+                notify.send(sender=request.user, recipient=comment_recipients(submit, request.user), verb='updated', action_object=comment, target=submit)
             return HttpResponse(json.dumps(dump_comment(comment)))
 
     result = {}
