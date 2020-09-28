@@ -21,6 +21,7 @@ from django.db.models import Max, Min, Count
 from django.core.cache import caches
 
 import django_rq
+from notifications.signals import notify
 from unidecode import unidecode
 
 from common.models import Submit, Class, Task, AssignedTask, Subject, assignedtask_results, current_semester_conds, current_semester
@@ -234,7 +235,11 @@ def submit_assign_points(request, submit_id):
 
     points = None
     if request.POST['assigned_points'] != '':
-        points = request.POST['assigned_points']
+        points = float(request.POST['assigned_points'])
+
+    if submit.assigned_points != points:
+        notify.send(sender=request.user, recipient=[submit.student],
+                    verb='assigned points to', action_object=submit)
 
     submit.assigned_points = points
     submit.save()
