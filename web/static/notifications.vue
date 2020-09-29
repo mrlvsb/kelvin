@@ -46,7 +46,9 @@ Vue.component('notifications', {
                 <a :href="item.action_object_url" v-if="item.action_object_url">{{ item.action_object }}</a>
                 <span v-else>{{ item.action_object }}</span>
                 <span v-if="item.target">on {{ item.target }}</span>
-                (<timeago :datetime="item.timestamp"></timeago>)
+                (<timeago
+                  :datetime="item.timestamp"
+                  :title="new Date(item.timestamp).toLocaleString('cs')"></timeago>)
               </li>
             </template>
             <span class="list-group-item p-1 text-center" v-else>There are no notifications!</span>
