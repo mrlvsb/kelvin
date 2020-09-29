@@ -135,6 +135,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   word-break: break-word;
   border: 2px solid #BFBFBF;
   border-radius: 5px;
+  max-width: 800px;
 }
 
 h1 {
