@@ -83,9 +83,11 @@ class Exam:
             return self.questions
 
         with open(os.path.join(BASE, self.id, "questions.md")) as markdown:
-            p = subprocess.Popen(["pandoc", "--self-contained"], stdout=subprocess.PIPE, stdin=subprocess.PIPE, cwd=self.dir)
-            out = p.communicate(input=markdown.read().encode('utf-8'))
-            out = out[0].decode('utf-8')
+            p = subprocess.Popen(["pandoc", "--self-contained", '--metadata', 'title=exam'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.dir)
+            out, err = p.communicate(input=markdown.read().encode('utf-8'))
+            if p.returncode != 0:
+                return [{'question': f'<span style="color: red; font-size: 20px">{err.decode("utf-8")}</span>', 'seconds': 1000}]
+            out = out.decode('utf-8')
             root = html.fromstring(out)
             questions = root.cssselect('body > ol > li')
 
