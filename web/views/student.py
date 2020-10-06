@@ -179,7 +179,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
                     percent = job.meta['current_action'] * 100 // job.meta['actions']
                     status = f'evaluating {percent}%'
             data['job_status'] = status
-        except (rq.exceptions.NoSuchJobError | AttributeError):
+        except rq.exceptions.NoSuchJobError:
             pass
 
     if request.method == 'POST':
