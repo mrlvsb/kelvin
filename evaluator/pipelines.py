@@ -16,7 +16,7 @@ class DockerPipe:
         result_dir = os.path.join(evaluation.result_path, self.id)
         os.mkdir(result_dir)
 
-        env = ['-e' + shlex.quote(f"PIPE_{k.upper()}={v}") for k, v in self.kwargs.items()]
+        env = [f"-ePIPE_{k.upper()}={v}" for k, v in self.kwargs.items()]
         args = [
             'docker', 'run', '--rm',
             '-w', '/work',
