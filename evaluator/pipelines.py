@@ -16,7 +16,7 @@ class DockerPipe:
         result_dir = os.path.join(evaluation.result_path, self.id)
         os.mkdir(result_dir)
 
-        env = ['-e' + shlex.quote(f"PIPE_{k.upper()}={v}") for k, v in self.kwargs.items()]
+        env = [f"-ePIPE_{k.upper()}={v}" for k, v in self.kwargs.items()]
         args = [
             'docker', 'run', '--rm',
             '-w', '/work',
@@ -55,7 +55,7 @@ class DockerPipe:
             if os.path.getsize(res_path(f)) == 0:
                 os.unlink(res_path(f))
         if not os.listdir(result_dir):
-            os.unlink(result_dir)
+            os.rmdir(result_dir)
 
         return result
 
