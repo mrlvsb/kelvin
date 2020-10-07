@@ -95,7 +95,7 @@ class Command(BaseCommand):
                         lecture = re.match("^(?P<day>" + '|'.join(DAYS) + ")(?P<hour>[0-9]{2})(?P<minute>[0-9]{2})$", parts[3])
                         if lecture:
                             classess = classess.filter(
-                                    day=lecture.group("day"),
+                                    day__iexact=lecture.group("day"),
                                     time__hour=lecture.group("hour"),
                                     time__minute=lecture.group("minute")
                             )
@@ -108,7 +108,9 @@ class Command(BaseCommand):
                         if assign_text:
                             for clazz in classess:
                                 assigned = self.parse_assign_date(assign_text, clazz)
-                                if assigned:
+                                if not assigned:
+                                    print(f"Invalid assign date: {assigned}")
+                                else:
                                     defaults = {
                                         "assigned": assigned,
                                     }
