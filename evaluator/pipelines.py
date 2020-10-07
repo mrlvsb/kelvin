@@ -55,7 +55,7 @@ class DockerPipe:
             if os.path.getsize(res_path(f)) == 0:
                 os.unlink(res_path(f))
         if not os.listdir(result_dir):
-            os.unlink(result_dir)
+            os.rmdir(result_dir)
 
         return result
 
