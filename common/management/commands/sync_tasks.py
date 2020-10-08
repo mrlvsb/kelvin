@@ -1,17 +1,12 @@
 import os
 import re
-import datetime
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.contrib.auth.models import User
 
 from common.models import Task, Subject, AssignedTask, Class, Submit
-from common.utils import parse_time_interval
 from web.task_utils import load_readme 
-
-DAYS = ["PO", "UT", "ST", "CT", "PA", "SO", "NE"]
-DATE_FORMAT = "%d. %m. %Y %H:%M"
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
@@ -45,7 +40,7 @@ class Command(BaseCommand):
             target_dir = os.path.realpath(opts['dir'])
 
         for root, dirs, files in os.walk(target_dir):
-            if '/.git' in root:
+            if '.git' in root:
                 continue
             relative_path = os.path.relpath(root, tasks_dir)
             readme = load_readme(relative_path)
@@ -59,9 +54,11 @@ class Command(BaseCommand):
                 abbr = parts[0].upper()
                 subject = Subject.objects.get(abbr=abbr)
 
+                taskid_path = os.path.join(root, ".taskid")
+
                 search = {}
                 try:
-                    with open(os.path.join(root, ".taskid")) as f:
+                    with open(taskid_path) as f:
                         search['id'] = int(f.read())
                 except:
                     search['code'] = relative_path
@@ -75,65 +72,10 @@ class Command(BaseCommand):
                 task.save()
 
                 if 'id' not in search:
-                    with open(os.path.join(root, ".taskid"), 'w') as f:
+                    with open(taskid_path, 'w') as f:
                         f.write(str(task.id))
+                    print("Creating .task_id")
 
-                if re.match("^[0-9]{4}W|S$", parts[1]):
-                    year = parts[1][0:4]
-                    winter = parts[1][4]
-
-                    teacher = User.objects.filter(username=parts[2])
-                    if teacher:
-                        teacher = teacher[0]
-                        classess = Class.objects.filter(
-                                teacher__pk=teacher.id,
-                                subject__abbr=abbr,
-                                semester__year=year,
-                                semester__winter=winter == 'W',
-                        )
-
-                        lecture = re.match("^(?P<day>" + '|'.join(DAYS) + ")(?P<hour>[0-9]{2})(?P<minute>[0-9]{2})$", parts[3])
-                        if lecture:
-                            classess = classess.filter(
-                                    day__iexact=lecture.group("day"),
-                                    time__hour=lecture.group("hour"),
-                                    time__minute=lecture.group("minute")
-                            )
-
-                        assign_text = readme.meta.get('assigned')
-                        match = re.match("^w(?P<week>[0-9]{2})", parts[-1])
-                        if match:
-                            assign_text = f"{match.group('week')}. week"
-
-                        if assign_text:
-                            for clazz in classess:
-                                assigned = self.parse_assign_date(assign_text, clazz)
-                                if not assigned:
-                                    print(f"Invalid assign date: {assigned}")
-                                else:
-                                    defaults = {
-                                        "assigned": assigned,
-                                    }
-
-                                    if 'points' in readme.meta:
-                                        defaults['max_points'] = readme.meta['points']
-
-                                    if 'deadline' in readme.meta:
-                                        if readme.meta['deadline'].startswith('+'):
-                                            defaults['deadline'] = assigned + parse_time_interval(readme.meta['deadline'][1:])
-                                        else:
-                                            defaults['deadline'] = datetime.datetime.strptime(readme.meta['deadline'], DATE_FORMAT)
-
-                                    assigned, _ = AssignedTask.objects.update_or_create(task=task, clazz=clazz, defaults=defaults)
-                                    print(f"Assigned to {clazz}: {defaults}")
-
+                os.chmod(taskid_path, 0o600)
             except Exception as e:
                 print(e)
-    
-    def parse_assign_date(self, text, clazz):
-        match = re.match(r'^\s*(?P<week>\d+)\. week\s*$', text)
-        if match:
-            return datetime.datetime.combine(clazz.semester.begin + datetime.timedelta(days=DAYS.index(clazz.day.upper())), clazz.time) + \
-                    datetime.timedelta(days=7 * (int(match.group('week')) - 1))
-
-        return datetime.datetime.strptime(text, DATE_FORMAT)
