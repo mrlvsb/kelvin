@@ -1,19 +1,22 @@
-import csv
-import datetime
+import sys
+
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
-from common.models import Class
+
+from common.utils import ldap_search_user
 
 class Command(BaseCommand):
-    def add_arguments(self, parser):
-        parser.add_argument('file', help='CSV file with list of students from edison')
-
     def handle(self, *args, **opts):
-        with open(opts['file'], newline='') as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                User.objects.update_or_create(
-                    username=row['username'],
-                    defaults=row
-                )
-                self.stdout.write(self.style.SUCCESS(f"Creating: {row}"))
+        for line in sys.stdin:
+            login = line.rstrip().upper()
+
+            info = ldap_search_user(login)
+            if not info:
+                print(f"User {login} not found")
+                continue
+
+            _, created = User.objects.update_or_create(
+                username=login,
+                defaults=info
+            )
+            print(f"{login} {'created' if created else 'updated'}")
