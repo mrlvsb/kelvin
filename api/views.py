@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
@@ -115,6 +115,22 @@ def class_detail_list(request, **class_conditions):
 
     return JsonResponse({'classes': result})
 
+@user_passes_test(is_teacher)
+def subject_list(request, subject_abbr):
+    subject = get_object_or_404(Subject, abbr=subject_abbr)
+
+    classes = []
+    for clazz in Class.objects.filter(subject__abbr=subject_abbr, **current_semester_conds()):
+        classes.append({
+            'id': clazz.id,
+            'teacher_username': clazz.teacher.username if clazz.teacher else None,
+            'timeslot': clazz.timeslot,
+            'code': clazz.code,
+            'week_offset': clazz.week_offset,
+        })
+
+
+    return JsonResponse({'classes': classes})
 
 @user_passes_test(is_teacher)
 def info(request):
@@ -160,7 +176,6 @@ def task_detail(request, task_id=None):
         task.code = data['path']
 
         os.makedirs(task.dir(), exist_ok=True)
-        task.name = load_readme(task.code).name
         if not task.name:
             task.name = task.code
         task.save()
@@ -175,11 +190,9 @@ def task_detail(request, task_id=None):
                 print(parse_datetime(cl['assigned']))
             else:
                 AssignedTask.objects.filter(task__id=task.id, clazz_id=cl['id']).delete()
+    else:
+        task = Task.objects.get(id=task_id)
 
-        return JsonResponse({})
-
-    task = Task.objects.get(id=task_id)
-    subject_abbr='UPR'
     result = {
         'id': task.id,
         'path': task.code,
@@ -214,14 +227,14 @@ def task_detail(request, task_id=None):
                 }
 
     classes = Class.objects.filter(
-            subject__abbr=subject_abbr,
+            subject__abbr=task.subject.abbr,
             teacher__username=request.user.username,
             **current_semester_conds(),
     )
     for clazz in classes:
         item = {
             'id': clazz.id,
-            'name': clazz.timeslot,
+            'timeslot': clazz.timeslot,
             'week_offset': -1,
         }
 
@@ -229,13 +242,7 @@ def task_detail(request, task_id=None):
         if assigned:
             item['assigned'] = assigned.assigned
             item['deadline'] = assigned.deadline
-
-        try:
-            days = ['po', 'ut', 'st', 'ct', 'pa', 'so', 'ne']
-            day = days.index(clazz.day.lower())
-            item['week_offset'] = day * 60 * 60 * 24 + clazz.time.hour * 60 * 60 + clazz.time.minute * 60
-        except ValueError as e:
-            pass
+            item['week_offset'] = clazz.week_offset
 
         result['classes'].append(item)
 

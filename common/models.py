@@ -93,6 +93,21 @@ class Class(models.Model):
     def timeslot(self):
         return f"{self.day}{self.time.hour:02}{self.time.minute:02}"
 
+    @property
+    def week_offset(self):
+        def fix(s):
+            s = s.replace('ú', 'u')
+            s = s.replace('č', 'c')
+            s = s.replace('á', 'a')
+            return s
+
+        try:
+            days = ['po', 'ut', 'st', 'ct', 'pa', 'so', 'ne']
+            self.day = days.index(fix(self.day.lower()))
+            return self.day * 60 * 60 * 24 + self.time.hour * 60 * 60 + self.time.minute * 60
+        except ValueError as e:
+            return 0
+
     def summary(self):
         path = os.path.join(
             "tasks",

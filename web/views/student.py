@@ -27,6 +27,7 @@ from ..task_utils import highlight_code_json
 
 from common.models import Submit, Class, AssignedTask, Task, Comment, assignedtask_results
 from common.evaluate import evaluate_job
+from web.task_utils import load_readme
 from api.models import UserToken
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from ..forms import UploadSolutionForm
@@ -459,6 +460,12 @@ def task_asset(request, task_name, path):
             os.makedirs(os.path.dirname(system_path), exist_ok=True)
             with open(system_path, 'wb') as f:
                 f.write(request.body)
+
+            if path == 'readme.md':
+                task.name = load_readme(task.code).name
+                if not task.name:
+                    task.name = task.code
+                task.save()
             return HttpResponse(status=204)
         elif request.method == 'DELETE':
             os.unlink(system_path)

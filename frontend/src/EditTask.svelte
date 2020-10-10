@@ -17,23 +17,22 @@
       if(params.id) {
         loadTask(params.id);
       } else {
+          const res = await fetch('/api/subject/' + params.subject);
+          const json = await res.json();
+
           task = {
-              'classes': [],
+              'classes': json['classes'].filter(c => c.teacher_username == $user.username),
               'path': [params.subject, $semester['abbr'], $user.username].join('/'),
-              'files': {
-                  'readme.md': {
-                    'type': 'file',
-                    'content': '# task name\n',
-                  },
-              },
           };
+          fs.createFile('readme.md', '# Task Title');
+          fs.open('readme.md');
       }
   });
 
   $: if(syncPathWithTitle) {
-    const readme = openedFiles['readme.md'];
+    const readme = $openedFiles['/readme.md'];
     if(readme) {
-      const title = readme.split('\n')[0]
+      const title = readme.content.split('\n')[0]
         .toLowerCase()
         .replace(/^\s*#\s*|\s*$/g, '')
         .replace(/( |\/|\\)/g, '_')
@@ -72,12 +71,19 @@
 
 
   async function save() {
-    let res = await fetch('/api/tasks/' + task.id, {
+    let res = await fetch('/api/tasks/' + (task.id ? task.id : ''), {
       method: 'POST',
       body: JSON.stringify(task),
     })
 
+    const json = await res.json();
+    fs.setEndpointUrl(json.files_uri);
+
     await openedFiles.save();
+
+    if(!task.id) {
+      push('/task/edit/' + json.id);
+    }
   }
 
   function keydown(evt) {
@@ -100,7 +106,7 @@
     <table class="table table-hover"> 
 			{#each task.classes as clazz} 
       <tr class:table-success={clazz.assigned}>
-        <td>{ clazz.name }</td>
+        <td>{ clazz.timeslot }</td>
         <td>
           <TimeRange timeOffsetInWeek={clazz.week_offset} bind:from={clazz.assigned} bind:to={clazz.deadline} semesterBeginDate={$semester.begin} />
         </td>

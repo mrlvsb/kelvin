@@ -51,7 +51,7 @@ function getInode(path, root) {
 }
 
 function createFs() {
-  const { subscribe, set, update } = writable({});
+  const { subscribe, set, update } = writable({'root': {}});
 
   return {
     subscribe,
@@ -64,7 +64,13 @@ function createFs() {
         endpoint_url
       })
     },
-    createFile: (path) => {
+    setEndpointUrl: (endpoint_url) => {
+      update(conf => {
+        conf['endpoint_url'] = endpoint_url;
+        return conf;
+      })
+    },
+    createFile: (path, content) => {
       path = absolutePath(path);
 
       update(fs => {
@@ -72,7 +78,7 @@ function createFs() {
         const dirInode = getInode(parts.slice(0, -1).join('/'), fs['root']);
         dirInode['files'][parts[parts.length - 1]] = {
           'type': 'file',
-          'content': '',
+          'content': content || '',
         };
 
         return fs;
