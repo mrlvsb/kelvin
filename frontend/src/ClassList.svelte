@@ -3,7 +3,7 @@
   import {fetch} from './api.js'
   import ClassDetail from './ClassDetail.svelte'
 
-  let classes = [];
+  let classes = null;
   onMount(async () => {
     classes = await refetch();
   });
@@ -15,6 +15,10 @@
   }
 </script>
 
-{#each classes as clazz}
-  <ClassDetail clazz={clazz} on:update={async () => classes = await refetch()} />
-{/each}
+{#if !classes}
+  Loading...
+{:else}
+  {#each classes as clazz}
+    <ClassDetail clazz={clazz} on:update={async () => classes = await refetch()} />
+  {/each}
+{/if}
