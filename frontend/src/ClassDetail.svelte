@@ -58,6 +58,10 @@ tr th:last-of-type {
 tr td:not(:nth-of-type(1)):not(:nth-of-type(2)) {
   text-align: center;
 }
+
+.card-body {
+  overflow-x: auto;
+}
 </style>
 
 <div class="card mb-2" style="position: initial">
