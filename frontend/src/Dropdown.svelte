@@ -1,5 +1,8 @@
 <script>
   export let shown = false;
+  let left;
+  let top;
+  let btnEl;
 
   function clickOutside(node) {
     const handleClick = event => {
@@ -15,14 +18,21 @@
       }
     }
   }
+
+  function toggle() {
+    left = btnEl.offsetLeft;
+    top = btnEl.offsetTop + btnEl.clientHeight; 
+    shown = !shown;
+  }
 </script>
+<style>
+.dropdown-menu {
+  max-height: 400px;
+  overflow-y: auto;
+}
+</style>
 
-
-<div class="dropdown" use:clickOutside>
-  <button class="btn btn-secondary dropdown-toggle" on:click|preventDefault={() => shown = true}>
-    <span class="iconify" data-icon="cil:clock"></span>
-  </button>
-  <div class="dropdown-menu" class:show={shown}>
-    <slot></slot>
-  </div>
+<button class="btn btn-sm btn-primary dropdown-toggle" on:click|preventDefault={toggle} bind:this={btnEl}></button>
+<div class="dropdown-menu" class:show={shown} style="left: {left}px; top: {top}px;" use:clickOutside>
+  <slot></slot>
 </div>

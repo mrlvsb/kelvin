@@ -94,6 +94,13 @@
   }
 </script>
 
+<style>
+td:first-of-type, td:last-of-type {
+  vertical-align: middle;
+  width: 1%;
+}
+</style>
+
 <svelte:window on:keydown={keydown} />
 
 {#if task != null}
@@ -110,7 +117,7 @@
         <td>
           <TimeRange timeOffsetInWeek={clazz.week_offset} bind:from={clazz.assigned} bind:to={clazz.deadline} semesterBeginDate={$semester.begin} />
         </td>
-        <td style="width: 1%">
+        <td>
           <button style="border: 0; background: none" on:click|preventDefault={() => {clazz.assigned = null; clazz.deadline = null}}>&times;</button>
         </td>
 			{/each}
