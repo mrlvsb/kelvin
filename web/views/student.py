@@ -16,7 +16,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.utils import timezone as datetime
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone as tz
@@ -446,10 +446,24 @@ def task_asset(request, task_name, path):
         if not path.split('/')[-1].startswith('announce.'):
             raise PermissionDenied()
 
-    if '..' in path or path in ['config.yml', 'script.py']:
+    if '..' in path or (path in ['config.yml', 'script.py'] and not is_teacher(request.user)):
         raise PermissionDenied()
 
     system_path = os.path.join("tasks", task_name, path)
+    if request.method in ['PUT', 'DELETE']:
+        if not is_teacher(request.user):
+            raise PermissionDenied()
+
+        if request.method == 'PUT':
+            with open(system_path, 'wb') as f:
+                f.write(request.body)
+            return HttpResponse(status=204)
+        elif request.method == 'DELETE':
+            os.unlink(system_path)
+            return HttpResponse(status=204)
+        else:
+            return HttpResponseBadRequest()
+
     try:
         with open(system_path, 'rb') as f:
             resp = HttpResponse(f)
@@ -532,3 +546,6 @@ def project(request, project_type):
     with open(os.path.join(BASE_DIR, "projects", project_type, "assigned", f"{request.user.username}.html")) as f:
         return HttpResponse(f.read(), 'text/html')
 
+@login_required
+def ui(request):
+    return render(request, 'web/ui.html')

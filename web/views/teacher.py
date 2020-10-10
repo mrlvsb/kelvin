@@ -11,7 +11,7 @@ from shutil import copyfile
 from collections import OrderedDict
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from django.urls import reverse
