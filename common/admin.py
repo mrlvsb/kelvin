@@ -124,47 +124,7 @@ class MyUserAdmin(UserAdmin):
     def is_teacher(self, obj):
         return obj.groups.filter(name='teachers').exists()
 
-class TaskForm(forms.ModelForm):
-    assignment = forms.CharField(
-            widget=forms.Textarea(attrs={'style': 'max-height: 300px; height: 300px; width: 95%;'}),
-            strip=False
-    )
-
-    class Meta:
-        model = models.Task
-        fields = "__all__"
-        exclude = ('name', )
-
-    def __init__(self, *args, **kwargs):
-        super(TaskForm, self).__init__(*args, **kwargs)
-
-        if self.instance.pk:
-            try:
-                with open(os.path.join(self.instance.dir(), "readme.md")) as f:
-                    self.fields['assignment'].initial = f.read()
-            except FileNotFoundError:
-                self.fields['assignment'].initial = 'readme not found...'
-        else:
-            self.fields['assignment'].initial = '# task name\n'
-
-    def save(self, commit=True):
-        code = self.cleaned_data['code']
-        path = os.path.join("tasks", code)
-
-        os.makedirs(path, exist_ok=True)
-        path = os.path.join(path, "readme.md")
-        with open(path, "w") as f:
-            f.write(self.cleaned_data['assignment'])
-
-        task = super(TaskForm, self).save(commit=False)
-        task.name = load_readme(task.code).name
-        if not task.name:
-            task.name = task.code
-        task.save()
-        return task
-
 class TaskAdmin(admin.ModelAdmin):
-    form = TaskForm
     list_filter = ('subject', )
     search_fields = ['name', 'subject__abbr']
 
