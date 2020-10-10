@@ -50,6 +50,13 @@
 <style>
 td, th {
   white-space: nowrap;
+  width: 1%;
+}
+tr th:last-of-type {
+  width: 100%;
+}
+tr td:not(:nth-of-type(1)):not(:nth-of-type(2)) {
+  text-align: center;
 }
 </style>
 
@@ -133,6 +140,7 @@ td, th {
               </div>
             </th>
             {/each}
+            <th></th>
           </tr>
         </thead>
 
@@ -150,6 +158,7 @@ td, th {
               {/if}
             </td>
           {/each}
+          <td></td>
         </tr>
         {/each}
         </tbody>
