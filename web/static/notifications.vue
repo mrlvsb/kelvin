@@ -86,6 +86,10 @@ Vue.component('notifications', {
         if (!(reg.showNotification) || Notification.permission === 'denied' || !('PushManager' in window)) {
           return;
         }
+        let key = document.querySelector('meta[name="django-webpush-vapid-key"]').content;
+        if(!key) {
+          return;
+        }
 
 				reg.pushManager.getSubscription().then((sub) => {
             if(sub) {
@@ -93,7 +97,6 @@ Vue.component('notifications', {
               return false;
             }
 
-            let key = document.querySelector('meta[name="django-webpush-vapid-key"]').content;
             return reg.pushManager.subscribe({
               userVisibleOnly: true,
               applicationServerKey: urlB64ToUint8Array(key),
