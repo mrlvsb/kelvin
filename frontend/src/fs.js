@@ -163,6 +163,10 @@ function createFs() {
     open: async (path) => {
       path = absolutePath(path);
       const inode = getInode(path, get(fs)['root']);
+      if(!inode) {
+        return;
+      }
+
       if(inode.type == 'dir') {
         currentPath.set(path);
       } else {
