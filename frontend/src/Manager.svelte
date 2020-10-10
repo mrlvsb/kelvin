@@ -78,6 +78,17 @@ textarea {
       await fs.upload(file.name, file);
     }
   }
+
+  function textareaKeyDown(e) {
+    if (e.key == 'Tab') {
+      e.preventDefault();
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+
+      this.value = this.value.substring(0, start) + "\t" + this.value.substring(end);
+      this.selectionStart = this.selectionEnd = start + 1;
+    }
+  }
 </script>
 
 <div>
@@ -134,7 +145,7 @@ textarea {
     </ul>
 
     {#if $currentOpenedFile}
-      <textarea class="form-control" rows=20 bind:value={$openedFiles[$currentOpenedFile].content}></textarea>
+      <textarea class="form-control" rows=20 bind:value={$openedFiles[$currentOpenedFile].content} on:keydown={textareaKeyDown}></textarea>
     {/if}
   </div>
 </div>
