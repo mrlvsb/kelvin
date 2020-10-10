@@ -24,6 +24,13 @@ ul input {
   cursor: pointer;
 }
 
+.nav-item span {
+  padding: 3px 6px;
+}
+textarea {
+  border-top: 0;
+}
+
 </style>
 
 <script>

@@ -66,7 +66,7 @@ $: if(instanceTo) {
         {/each}
       </Dropdown>
     </div>
-    <input bind:this={fromEl} class="fom-control" bind:value={from}>
+    <input bind:this={fromEl} class="fom-control" bind:value={from} placeholder="Assigned">
   </div>
 
   <div class="input-group input-group-sm col-sm-6">
@@ -78,6 +78,6 @@ $: if(instanceTo) {
         <span class="dropdown-item" on:click={() => addDeadline(60*24*7)}>week</span>
       </Dropdown>
     </div>
-    <input bind:this={toEl} class="form-control" bind:value={to}>
+    <input bind:this={toEl} class="form-control" bind:value={to} placeholder="Deadline">
   </div>
 </div>
