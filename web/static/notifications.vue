@@ -100,7 +100,7 @@ Vue.component('notifications', {
             return reg.pushManager.subscribe({
               userVisibleOnly: true,
               applicationServerKey: urlB64ToUint8Array(key),
-            });
+            }).catch(error => {}); // ignore errors if user clicks to disable notifications
 				}).then((sub) => {
           if(!sub) {
             // already registered
