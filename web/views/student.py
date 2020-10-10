@@ -5,6 +5,7 @@ import tarfile
 import tempfile
 import io
 import zipfile
+import shutil
 
 import django_rq
 import mimetypes
@@ -450,16 +451,25 @@ def task_asset(request, task_name, path):
         raise PermissionDenied()
 
     system_path = os.path.join("tasks", task_name, path)
-    if request.method in ['PUT', 'DELETE']:
+    if request.method not in ['HEAD', 'GET']:
         if not is_teacher(request.user):
             raise PermissionDenied()
 
         if request.method == 'PUT':
+            os.makedirs(os.path.dirname(system_path), exist_ok=True)
             with open(system_path, 'wb') as f:
                 f.write(request.body)
             return HttpResponse(status=204)
         elif request.method == 'DELETE':
             os.unlink(system_path)
+            return HttpResponse(status=204)
+        elif request.method == 'MOVE':
+            dst = request.headers['Destination']
+            if '..' in dst:
+                raise PermissionDenied()
+            system_dst = os.path.join("tasks", task_name, dst.lstrip('/'))
+            os.makedirs(os.path.dirname(system_dst), exist_ok=True)
+            shutil.move(system_path, system_dst)
             return HttpResponse(status=204)
         else:
             return HttpResponseBadRequest()

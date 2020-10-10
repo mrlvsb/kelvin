@@ -6,12 +6,11 @@
   import {push} from 'svelte-spa-router'
   import {semester, user} from './global.js'
   import {fetch} from './api.js'
+  import {fs, currentPath, cwd, openedFiles} from './fs.js'
 
   export let params = {}
 
-  let openedFiles = {};
   let task = null;
-  let openFile;
   let syncPathWithTitle = params.subject;
 
   onMount(async () => {
@@ -66,25 +65,30 @@
   async function loadTask(id) {
     const req = await fetch('/api/tasks/' + id);
     task = await req.json();
-    openedFiles = {};
+    fs.setRoot(task.files, task.files_uri);
+    fs.open('readme.md');
     push('/task/edit/' + task.id);
   }
 
 
   async function save() {
-      let res = await fetch('/api/tasks/' + task.id, {
-        method: 'POST',
-        body: JSON.stringify(task),
-      })
+    let res = await fetch('/api/tasks/' + task.id, {
+      method: 'POST',
+      body: JSON.stringify(task),
+    })
 
-      await Promise.all(Object.entries(openedFiles).map(([path, content]) => {
-        return fetch(task.files_uri + path, {
-          method: 'PUT',
-          body: content,
-        });
-      }));
+    await openedFiles.save();
+  }
+
+  function keydown(evt) {
+    if(evt.ctrlKey && String.fromCharCode(event.which).toLowerCase() == 's') {
+      save();
+      evt.preventDefault();
     }
+  }
 </script>
+
+<svelte:window on:keydown={keydown} />
 
 {#if task != null}
 	<div class="input-group mb-1">
@@ -108,7 +112,7 @@
 	</div>
 
   <div class="form-group">
-    <Manager files={task.files} bind:openedFiles={openedFiles} files_uri={task.files_uri} />
+    <Manager />
 	</div>
 
   <button class="btn btn-primary" on:click|preventDefault={save}>Save</button>

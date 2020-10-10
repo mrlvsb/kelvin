@@ -28,123 +28,53 @@ ul input {
 
 <script>
   import {clickOutside} from './utils.js';
-
-  export let files;
-	let current = null;
-  export let openedFiles = {};
-
-	let path = [];
-  export let files_uri;
-
-  function getInode(path) {
-    if(path.length == 0) {
-      return {'files': files};
-    }
-
-    let root = files;
-    const parts = path.split('/');
-    for(const dir of parts.slice(0, -1)) {
-      root = root[dir]['files'];
-    }
-
-    return root[parts[parts.length - 1]];
-  }
-
-  $: dirFiles = getInode(path.join('/'))['files'];
-
-  async function openFile(path) {
-    if(!(path in openedFiles)) {
-      const inode = getInode(path);
-      if(inode.content !== undefined) {
-        openedFiles[path] = inode.content;
-      } else {
-        const res = await fetch([files_uri.replace(/\/+$/, ''), path].join('/'));
-        openedFiles[path] = await res.text();
-      }
-    }
-    current = path;
-  }
-
-	async function open(name, inode) {
-		if(inode.type == 'dir') {
-			path = [...path, name];
-    } else {
-      openFile([...path, name].join('/'));
-		}
-  }
-
-  function createDir(e) {
-    if(e.keyCode == 13) {
-      console.log(path + e.target.value);
-      newDirName = false;
-
-      getInode(path)['files'][e.target.value] = {
-        'type': 'dir',
-        'files': {},
-      };
-    }
-  }
-
-  openFile('readme.md')
-  let newDirName = false;
-
-  async function addToUploadQueue(evt) {
-    for(const file of evt.target.files) {
-      await fetch(files_uri + file.name, {
-        method: 'PUT',
-        body: file,
-      });
-    }
-  }
+  import {fetch} from './api.js'
+  import {fs, currentPath, cwd, openedFiles, currentOpenedFile} from './fs.js'
 
   let renamingPath = null;
-
   let ctxMenu = null;
-  function showCtxMenu(e, path) {
-    ctxMenu = {
-      left: e.pageX,
-      top: e.pageY,
-      selected: path,
-    };
-  }
+  let newDirName = false;
 
-  async function remove(path) {
-    await fetch(files_uri + path, {
-      method: 'DELETE',
-    });
-
-    const parts = path.split('/');
-    let root = files;
-    for(const dir of parts.slice(0, -1)) {
-      root = root[dir]['files'];
-    }
-
-    delete root[parts[parts.length - 1]];
-    path = path;
+  function newFile() {
+    let name = 'newfile.txt';
+    renamingPath = fs.createFile('newfile.txt');
   }
 
   function finishRename(e) {
     if(e.keyCode == 13) {
-      console.log(e.target.value, renamingPath);
+      fs.rename(renamingPath, e.target.value);
       renamingPath = null;
     }
   }
 
-  function newFile() {
-    let name = 'newfile.txt';
-    getInode(path)['files'][name] = {
-      type: 'file',
-      content: '',
+  function showCtxMenu(e, path) {
+    ctxMenu = {
+      left: e.pageX,
+      top: e.pageY,
+      selected: $currentPath + '/' + path,
     };
-    path = path;
-    renamingPath = path + name;
-
   }
 
+  async function remove(path) {
+    await fs.remove(path);
+  }
+
+  function createDir(e) {
+    if(e.keyCode == 13) {
+      newDirName = false;
+      fs.mkdir(e.target.value);
+    }
+  }
+
+  async function addToUploadQueue(evt) {
+    for(const file of evt.target.files) {
+      await fs.upload(file.name, file);
+    }
+  }
 </script>
 
 <div>
-  {path.join('/')}/
+  {$currentPath}
 </div>
 <div class="d-flex">
   <div class="tree">
@@ -161,45 +91,48 @@ ul input {
         <label>
         <input id="manager-file-upload" type="file" style="display: none" multiple on:change={addToUploadQueue}>
       </span>
-    </div>
+      </div>
     <ul>
-      {#if path.length}
-      <li on:click={() => path = path.slice(0, -1)}>..</li>
+      {#if $currentPath != '/'}
+        <li on:click={() => currentPath.up()}>
+          <span class="iconify" data-icon="ic:baseline-folder"></span>
+          ..
+        </li>
       {/if}
       {#if newDirName !== false}
       <li class="newdir">
           <span class="iconify" data-icon='ic:baseline-folder'></span>
-          <input type="text" on:keyup|preventDefault={createDir}>
+          <input type="text" on:keyup|preventDefault={createDir} autofocus>
       </li>
       {/if}
-      {#each Object.entries(dirFiles) as [name, inode]}
-        <li on:click={open(name, inode)} on:contextmenu|preventDefault={(e) => showCtxMenu(e, [...path, name].join('/'))} style="white-space: nowrap">
+      {#each $cwd as inode (inode)}
+        <li on:contextmenu|preventDefault={(e) => showCtxMenu(e, inode.name)} style="white-space: nowrap">
           <span class="iconify" data-icon="{inode.type == 'dir' ? 'ic:baseline-folder' : 'ic:outline-insert-drive-file'}"></span>
-          {#if renamingPath == path + name}
-            <input value={name} on:keyup={finishRename}>
+          {#if renamingPath == $currentPath + '/' + inode.name}
+            <input value={inode.name} on:keyup={finishRename} autofocus>
           {:else}
-            {name}
+            <span on:click={() => fs.open(inode.name)}>{inode.name}</span>
           {/if}
-        </li>
+          </li>
       {/each}
     </ul>
   </div>
   <div class="w-100">
     <ul class="nav nav-tabs">
-      {#each Object.entries(openedFiles) as [path, _]}
-      <li class="nav-item" on:click={() => openFile(path)} style="cursor: pointer">
-        <span class="nav-link" class:active={path === current}>{path.split('/').slice(-1)[0]}</span>
+      {#each Object.entries($openedFiles) as [path, file]}
+      <li class="nav-item" on:click={() => fs.open(path)} style="cursor: pointer">
+        <span class="nav-link" class:active={path === $currentOpenedFile}>{path.split('/').slice(-1)[0]}</span>
       </li>
       {/each}
     </ul>
 
-    {#if current}
-      <textarea class="form-control" rows=20 bind:value={openedFiles[current]}></textarea>
+    {#if $currentOpenedFile}
+      <textarea class="form-control" rows=20 bind:value={$openedFiles[$currentOpenedFile].content}></textarea>
     {/if}
   </div>
 </div>
 
-{#if ctxMenu}
+{#if ctxMenu && ctxMenu.selected != '/readme.md'}
   <div class="dropdown-menu show" style="position: absolute; top: {ctxMenu.top}px; left: {ctxMenu.left}px" use:clickOutside on:click_outside={() => ctxMenu = null}>
     <span class="dropdown-item" on:click={() => {renamingPath = ctxMenu.selected; ctxMenu = null}}><span class="iconify" data-icon="wpf:rename"></span> rename</span>
     <span class="dropdown-item" on:click={() => {remove(ctxMenu.selected); ctxMenu = null}}><span class="iconify" data-icon="wpf:delete"></span> delete</span>
