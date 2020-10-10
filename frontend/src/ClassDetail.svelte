@@ -117,11 +117,11 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)) {
               <a href="{ assignment.task_link }">{ assignment.short_name }</a>
               <div class="more-content">
                 {assignment.name}
-                <a href="/task/edit/{assignment.task_id}" use:link class="text-muted" title="Edit"><i class="fas fa-pen"></i></a>
+                <a href="/task/edit/{assignment.task_id}" use:link class="text-muted" title="Edit"><span class="iconify" data-icon="clarity:edit-solid"></span></a>
                 <div>
-                  <a href="{assignment.moss_link}" title="Send to MOSS"><i class="fas fa-check-double"></i></a>
-                  <a href="{assignment.sources_link}" title="Download all source codes"><i class="fas fa-download"></i></a>
-                  <a href="{assignment.csv_link}" title="Download CSV with results"><i class="fas fa-file-csv"></i></a>
+                  <a href="{assignment.moss_link}" title="Send to MOSS"><span class="iconify" data-icon="bx:bx-check-double"></span></a>
+                  <a href="{assignment.sources_link}" title="Download all source codes"><span class="iconify" data-icon="fe:download" data-inline="false"></span></a>
+                  <a href="{assignment.csv_link}" title="Download CSV with results"><span class="iconify" data-icon="la:file-csv-solid"></span></a>
                 </div>
                 <dl>
                   <dt>Assigned</dt>
