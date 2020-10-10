@@ -22,6 +22,7 @@ import datetime
 from django.utils.dateparse import parse_datetime
 
 from web.views.teacher import teacher_list 
+from common.utils import ldap_search_user
 
 
 
@@ -150,6 +151,39 @@ def info(request):
     }
 
     return JsonResponse(res)
+
+@user_passes_test(is_teacher)
+def add_student_to_class(request, class_id):
+    clazz = get_object_or_404(Class, id=class_id)
+
+    data = json.loads(request.body.decode('utf-8'))
+    username = data['username']
+
+    errors = []
+
+    for username in data['username']:
+        username = username.strip().upper()
+        user = None
+        try:
+            print(username)
+            user = User.objects.get(username__iexact=username)
+        except User.DoesNotExist:
+            info = ldap_search_user(username)
+            if info:
+                user = User(**info)
+                user.username = username
+                user.save()
+ 
+        if user:
+            clazz.students.add(user)
+        else:
+            errors.append(username)
+
+
+    return JsonResponse({
+        'success': not errors,
+        'not_found': errors,
+    })
 
 @user_passes_test(is_teacher)
 def task_detail(request, task_id=None):
