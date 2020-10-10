@@ -15,7 +15,10 @@ loading
                 <a href="{clazz.csv_link}" title="Download CSV with results for all task"><i class="fas fa-file-csv"></i></a>
               </div>
               <button class="btn btn-link">
-                <h5>{clazz.subject_abbr} {clazz.timeslot} {clazz.code} {clazz.teacher_username}</h5>
+                <h5>
+                  {clazz.subject_abbr} {clazz.timeslot} {clazz.code} {clazz.teacher_username}
+                  <span class="text-muted">({clazz.students.length} students)</span>
+                </h5>
               </button>
           </div>
           <div> 
