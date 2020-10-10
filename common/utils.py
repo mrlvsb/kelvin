@@ -24,11 +24,23 @@ def parse_time_interval(text):
 
 def ldap_search_user(login):
     global LDAP_CONNECTION
+
+    def connect():
+        global LDAP_CONNECTION
+        LDAP_CONNECTION = ldap.ldapobject.ReconnectLDAPObject('ldap://ldap.vsb.cz')
+
     if not LDAP_CONNECTION:
-        LDAP_CONNECTION = ldap.initialize('ldap://ldap.vsb.cz')
+        connect()
+
+    def get():
+        return LDAP_CONNECTION.search_s("", ldap.SCOPE_SUBTREE, f"(cn={login})", ["sn", "givenname", "mail"])
 
     # TODO: escape needed?
-    res = LDAP_CONNECTION.search_s("", ldap.SCOPE_SUBTREE, f"(cn={login})", ["sn", "givenname", "mail"])
+    try:
+        res = get()
+    except ldap.UNAVAILABLE:
+        connect()
+        res = get()
 
     if not res:
         return None
