@@ -1,5 +1,6 @@
 <script>
   import {push, link} from 'svelte-spa-router'
+  import CopyToClipboard from './CopyToClipboard.svelte'
   let classes = fetch('/api/classes').then(res => res.json()).then(res => res['classes']);
 </script>
 
@@ -23,7 +24,15 @@ loading
               <table class="table table-sm table-hover">
                 <thead>
                   <tr>
-                    <th>Login</th>
+                    <th style="white-space: nowrap">
+                      Login<!--
+                      --><CopyToClipboard content={clazz.students.map(s => s.username).join('\n')} title='Copy logins to clipboard'>
+                        <span class="iconify" data-icon="clarity:clipboard-line"></span>
+                      </CopyToClipboard><!--
+                      --><CopyToClipboard content={clazz.students.map(s => s.username + '@vsb.cz').join('\n')} title='Copy emails to clipboard'>
+                        <span class="iconify" data-icon="ic:round-alternate-email"></span>
+                      </CopyToClipboard>
+                    </th>
                     <th>Student</th>
                     {#each clazz.assignments as assignment}
                     <th class="more-hover">
