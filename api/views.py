@@ -252,6 +252,7 @@ def task_detail(request, task_id=None):
             'path': '_'
         })).rstrip('_'),
         'errors': errors,
+        'task_link': reverse('teacher_task', kwargs={'task_id': task.id}),
     }
 
     assigned = AssignedTask.objects.filter(task_id=task.id)
