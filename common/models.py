@@ -42,7 +42,7 @@ class Subject(models.Model):
 
 class Task(models.Model):
     name = models.CharField(max_length=60)
-    code = models.CharField(max_length=60, verbose_name='Directory')
+    code = models.CharField(max_length=60, verbose_name='Directory', unique=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     announce = models.BooleanField(default=False)
 
