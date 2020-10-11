@@ -141,6 +141,11 @@ td:first-of-type, td:last-of-type {
 		<div class="input-group mb-1">
 			<AutoComplete bind:value={task.path} onChange={loadTask} on:click={() => syncPathWithTitle = false} />
 			<input type="number" min="1" class="form-control" style="max-width: 120px" bind:value={task.max_points} placeholder="Max points">
+      {#if task.task_link}
+      <div class="input-group-append">
+        <a class="btn btn-outline-info" href={task.task_link} target=_blank><span class="iconify" data-icon="bx:bx-link-external"></span></a>
+      </div>
+      {/if}
 		</div>
 
 		<div class="form-group">
