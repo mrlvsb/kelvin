@@ -188,6 +188,7 @@ def add_student_to_class(request, class_id):
 
 @user_passes_test(is_teacher)
 def task_detail(request, task_id=None):
+    errors = []
     if request.method == 'POST':
         data = json.loads(request.body.decode('utf-8'))
 
@@ -232,7 +233,12 @@ def task_detail(request, task_id=None):
                     'max_points': data.get('max_points', None),
                 })
             else:
-                AssignedTask.objects.filter(task__id=task.id, clazz_id=cl['id']).delete()
+                submits = Submit.objects.filter(assignment__task_id=task.id, assignment__clazz_id=cl['id']).count()
+                if submits == 0:
+                    AssignedTask.objects.filter(task__id=task.id, clazz_id=cl['id']).delete()
+                else:
+                    clazz = Class.objects.get(id=cl['id'])
+                    errors.append(f"Could not deassign from class {str(clazz)}, because it already contains {submits} submits")
     else:
         task = Task.objects.get(id=task_id)
 
@@ -245,6 +251,7 @@ def task_detail(request, task_id=None):
             'task_name': task.code,
             'path': '_'
         })).rstrip('_'),
+        'errors': errors,
     }
 
     assigned = AssignedTask.objects.filter(task_id=task.id)

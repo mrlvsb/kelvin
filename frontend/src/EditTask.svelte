@@ -77,6 +77,8 @@
     })
 
     const json = await res.json();
+    task['classes'] = json['classes'];
+    task['errors'] = json['errors'];
     fs.setEndpointUrl(json.files_uri);
 
     await openedFiles.save();
@@ -104,6 +106,16 @@ td:first-of-type, td:last-of-type {
 <svelte:window on:keydown={keydown} />
 
 {#if task != null}
+  {#if task['errors'].length}
+  <div class="alert alert-danger">
+    <ul class="m-0">
+      {#each task['errors'] as error}
+        <li>{error}</li>
+      {/each}
+    </ul>
+  </div>
+  {/if}
+
 	<div class="input-group mb-1">
     <AutoComplete bind:value={task.path} onChange={loadTask} on:click={() => syncPathWithTitle = false} />
     <input type="number" min="1" class="form-control" style="max-width: 120px" bind:value={task.max_points} placeholder="Max points">
