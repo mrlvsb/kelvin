@@ -177,7 +177,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
             if status == 'queued':
                 status += f' {job.get_position() + 1}'
             elif status == 'started':
-                if 'actions' in job.meta:
+                if 'actions' in job.meta and job.meta['actions'] > 0:
                     percent = job.meta['current_action'] * 100 // job.meta['actions']
                     status = f'evaluating {percent}%'
             data['job_status'] = status
