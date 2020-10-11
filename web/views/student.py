@@ -259,41 +259,40 @@ def submit_diff(request, student_username, assignment_id, submit_a, submit_b):
     if not is_teacher(request.user) and request.user.username != submit.student.username:
         raise PermissionDenied()
 
-    with tempfile.TemporaryFile('r', errors='ignore') as diff:
-        base_dir = os.path.dirname(submit.dir())
+    base_dir = os.path.dirname(submit.dir())
+    dir_a = os.path.join(base_dir, str(submit_a))
+    dir_b = os.path.join(base_dir, str(submit_b))
 
-        dir_a = os.path.join(base_dir, str(submit_a))
-        dir_b = os.path.join(base_dir, str(submit_b))
+    files_a = os.listdir(dir_a)
+    files_b = os.listdir(dir_b)
 
-        files_a = os.listdir(dir_a)
-        files_b = os.listdir(dir_b)
+    def get_patch(p1, p2):
+        # python3.7 does not support errors on TemporaryFile
+        with tempfile.NamedTemporaryFile('r') as diff:
+            subprocess.Popen(["diff", "-ruiwN"] + [p1, p2], cwd=base_dir, stdout=diff).wait()
+            with open(diff.name, errors='ignore') as out:
+                return out.read()
 
-        diff_cmd = ["diff", "-ruiwN"]
+    # TODO: find better diffing tool that handles file renames
+    if len(files_a) == 1 and len(files_b) == 1:
+        with tempfile.TemporaryDirectory() as p1, tempfile.TemporaryDirectory() as p2:
+            with open(os.path.join(p1, "main.c"), 'w') as out:
+                with open(os.path.join(dir_a, files_a[0]), errors='ignore') as inp:
+                    out.write(inp.read())
+            with open(os.path.join(p2, "main.c"), 'w') as out:
+                with open(os.path.join(dir_b, files_b[0]), errors='ignore') as inp:
+                    out.write(inp.read())
 
-        # TODO: find better diffing tool that handles file renames
-        if len(files_a) == 1 and len(files_b) == 1:
-            with tempfile.TemporaryDirectory() as p1, tempfile.TemporaryDirectory() as p2:
-                with open(os.path.join(p1, "main.c"), 'w') as out:
-                    with open(os.path.join(dir_a, files_a[0]), errors='ignore') as inp:
-                        out.write(inp.read())
-                with open(os.path.join(p2, "main.c"), 'w') as out:
-                    with open(os.path.join(dir_b, files_b[0]), errors='ignore') as inp:
-                        out.write(inp.read())
-                subprocess.Popen(diff_cmd + [p1, p2], cwd=base_dir, stdout=diff).wait()
-                diff.seek(0)
-                out = diff.read()
-                out = re.sub(r'^(---|\+\+\+) /tmp/[^/]+/', '\\1 ', out, flags=re.M)
-        else:
-            diff_paths = [str(submit_a), str(submit_b)]
-            subprocess.Popen(diff_cmd + diff_paths, cwd=base_dir, stdout=diff).wait()
-            diff.seek(0)
-            out = diff.read()
-            out = re.sub(r'^(---|\+\+\+) [0-9]+/', '\\1 ', out, flags=re.M)
+            out = get_patch(p1, p2)
+            out = re.sub(r'^(---|\+\+\+) /tmp/[^/]+/', '\\1 ', out, flags=re.M)
+    else:
+        out = get_patch(str(submit_a), str(submit_b))
+        out = re.sub(r'^(---|\+\+\+) [0-9]+/', '\\1 ', out, flags=re.M)
 
-        out = "\n".join([line for line in out.split("\n") if not line.startswith('Binary file')])
-        resp = HttpResponse(out)
-        resp['Content-Type'] = 'text/x-diff'
-        return resp
+    out = "\n".join([line for line in out.split("\n") if not line.startswith('Binary file')])
+    resp = HttpResponse(out)
+    resp['Content-Type'] = 'text/x-diff'
+    return resp
 
 @login_required
 def submit_comments(request, assignment_id, login, submit_num):
