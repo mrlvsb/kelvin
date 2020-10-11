@@ -483,9 +483,11 @@ def task_asset(request, task_name, path):
                 f.write(request.body)
 
             if path == 'readme.md':
-                task.name = load_readme(task.code).name
+                readme = load_readme(task.code)
+                task.name = readme.name
                 if not task.name:
                     task.name = task.code
+                task.announce = True if readme.announce else False
                 task.save()
             return HttpResponse(status=204)
         elif request.method == 'DELETE':
