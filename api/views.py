@@ -167,7 +167,6 @@ def add_student_to_class(request, class_id):
         username = username.strip().upper()
         user = None
         try:
-            print(username)
             user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
             info = ldap_search_user(username)
@@ -232,7 +231,6 @@ def task_detail(request, task_id=None):
                     'deadline': parse_datetime(cl['deadline']) if cl.get('deadline', None) else None,
                     'max_points': data.get('max_points', None),
                 })
-                print(parse_datetime(cl['assigned']))
             else:
                 AssignedTask.objects.filter(task__id=task.id, clazz_id=cl['id']).delete()
     else:
