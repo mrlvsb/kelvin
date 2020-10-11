@@ -7,11 +7,13 @@
   import {semester, user} from './global.js'
   import {fetch} from './api.js'
   import {fs, currentPath, cwd, openedFiles} from './fs.js'
+  import SyncLoader from './SyncLoader.svelte';
 
   export let params = {}
 
   let task = null;
   let syncPathWithTitle = params.subject;
+	let syncing = false;
 
   onMount(async () => {
       if(params.id) {
@@ -71,6 +73,7 @@
 
 
   async function save() {
+    syncing = true;
     let res = await fetch('/api/tasks/' + (task.id ? task.id : ''), {
       method: 'POST',
       body: JSON.stringify(task),
@@ -86,6 +89,7 @@
     if(!task.id) {
       push('/task/edit/' + json.id);
     }
+    syncing = false;
   }
 
   function keydown(evt) {
@@ -106,39 +110,48 @@ td:first-of-type, td:last-of-type {
 <svelte:window on:keydown={keydown} />
 
 {#if task != null}
-  {#if task['errors'].length}
-  <div class="alert alert-danger">
-    <ul class="m-0">
-      {#each task['errors'] as error}
-        <li>{error}</li>
-      {/each}
-    </ul>
-  </div>
-  {/if}
-
-	<div class="input-group mb-1">
-    <AutoComplete bind:value={task.path} onChange={loadTask} on:click={() => syncPathWithTitle = false} />
-    <input type="number" min="1" class="form-control" style="max-width: 120px" bind:value={task.max_points} placeholder="Max points">
+<div style="position: relative">
+	{#if syncing}
+	<div style="position: absolute; top: 50%; left: 50%">
+		<SyncLoader />
 	</div>
+	{/if}
+	<div>
+		{#if task['errors'].length}
+		<div class="alert alert-danger">
+			<ul class="m-0">
+				{#each task['errors'] as error}
+					<li>{error}</li>
+				{/each}
+			</ul>
+		</div>
+		{/if}
 
-	<div class="form-group">
-    <table class="table table-hover"> 
-			{#each task.classes as clazz} 
-      <tr class:table-success={clazz.assigned}>
-        <td>{ clazz.timeslot }</td>
-        <td>
-          <TimeRange timeOffsetInWeek={clazz.week_offset} bind:from={clazz.assigned} bind:to={clazz.deadline} semesterBeginDate={$semester.begin} />
-        </td>
-        <td>
-          <button style="border: 0; background: none" on:click|preventDefault={() => {clazz.assigned = null; clazz.deadline = null}}>&times;</button>
-        </td>
-			{/each}
-    </table>
+		<div class="input-group mb-1">
+			<AutoComplete bind:value={task.path} onChange={loadTask} on:click={() => syncPathWithTitle = false} />
+			<input type="number" min="1" class="form-control" style="max-width: 120px" bind:value={task.max_points} placeholder="Max points">
+		</div>
+
+		<div class="form-group">
+			<table class="table table-hover"> 
+				{#each task.classes as clazz} 
+				<tr class:table-success={clazz.assigned}>
+					<td>{ clazz.timeslot }</td>
+					<td>
+						<TimeRange timeOffsetInWeek={clazz.week_offset} bind:from={clazz.assigned} bind:to={clazz.deadline} semesterBeginDate={$semester.begin} />
+					</td>
+					<td>
+						<button style="border: 0; background: none" on:click|preventDefault={() => {clazz.assigned = null; clazz.deadline = null}}>&times;</button>
+					</td>
+				{/each}
+			</table>
+		</div>
+
+		<div class="form-group">
+			<Manager />
+		</div>
+
+		<button class="btn btn-primary" on:click|preventDefault={save}>Save</button>
 	</div>
-
-  <div class="form-group">
-    <Manager />
-	</div>
-
-  <button class="btn btn-primary" on:click|preventDefault={save}>Save</button>
+</div>
 {/if}
