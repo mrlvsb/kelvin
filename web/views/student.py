@@ -259,9 +259,9 @@ def submit_diff(request, student_username, assignment_id, submit_a, submit_b):
     if not is_teacher(request.user) and request.user.username != submit.student.username:
         raise PermissionDenied()
 
-    with tempfile.TemporaryFile('r') as diff:
+    with tempfile.TemporaryFile('r', errors='ignore') as diff:
         cmd = [
-            "diff", "-ruiw",
+            "diff", "-ruiwN",
             str(submit_a), str(submit_b)
         ]
         subprocess.Popen(cmd, cwd=os.path.dirname(submit.dir()), stdout=diff).wait()
