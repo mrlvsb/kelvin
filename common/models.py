@@ -150,6 +150,13 @@ class SourcePath:
         self.virt = virt
         self.phys = phys
 
+def submit_assignment_path(assignment):
+    return [
+        f"{assignment.clazz.semester.year}-{'W' if assignment.clazz.semester.winter else 'S'}",
+        assignment.clazz.subject.abbr,
+        assignment.clazz.code.replace('/', '')
+    ]
+
 class Submit(models.Model):
     assignment = models.ForeignKey(AssignedTask, on_delete=models.CASCADE)
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -163,9 +170,7 @@ class Submit(models.Model):
 
     def path_parts(self):
         return [
-            f"{self.assignment.clazz.semester.year}-{'W' if self.assignment.clazz.semester.winter else 'S'}",
-            self.assignment.clazz.subject.abbr,
-            self.assignment.clazz.code.replace('/', ''),
+            *submit_assignment_path(self.assignment),
             self.assignment.task.code,
             f"{self.student.username}",
             f"{self.submit_num}"

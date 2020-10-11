@@ -1,9 +1,9 @@
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
 from django.urls import reverse
-from common.models import Submit, Class, Task, AssignedTask, Subject, assignedtask_results, current_semester_conds, current_semester
+from common.models import Submit, Class, Task, AssignedTask, Subject, assignedtask_results, current_semester_conds, current_semester, submit_assignment_path
 from .models import UserToken
 from django.db import transaction
 import django_rq
@@ -19,11 +19,13 @@ from web.task_utils import load_readme
 import os
 import json
 import datetime
+import logging
 from django.utils.dateparse import parse_datetime
 
 from web.views.teacher import teacher_list 
 from common.utils import ldap_search_user
 
+logger = logging.getLogger(__name__)
 
 
 @user_passes_test(is_teacher)
@@ -200,12 +202,21 @@ def task_detail(request, task_id=None):
             task = Task.objects.get(id=task_id)
             if task.code != data['path']:
                 try:
-                    os.rename(
+                    os.renames(
                             os.path.join("tasks", task.code),
                             os.path.join("tasks", data['path'])
                     )
                 except FileNotFoundError as e:
-                    pass
+                    logger.warn(e)
+
+                for assignment in AssignedTask.objects.filter(task_id=task.id):
+                    try:
+                        os.renames(
+                            os.path.join("submits", *submit_assignment_path(assignment), task.code),
+                            os.path.join("submits", *submit_assignment_path(assignment), data['path']),
+                        )
+                    except FileNotFoundError as e:
+                        logger.warn(e)
 
         task.code = data['path']
 
