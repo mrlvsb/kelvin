@@ -31,7 +31,7 @@
 
   $: if(syncPathWithTitle) {
     const readme = $openedFiles['/readme.md'];
-    if(readme) {
+    if(readme && task) {
       const title = readme.content.split('\n')[0]
         .toLowerCase()
         .replace(/^\s*#\s*|\s*$/g, '')
