@@ -7,6 +7,7 @@
   const dispatch = createEventDispatcher();
 
   export let clazz;
+  export let showStudentsList = clazz['students'].length < 50; 
 
   let addStudentError = [];
   let showAddStudents = false;
@@ -77,96 +78,100 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)) {
           <span class="iconify" data-icon="la:file-csv-solid"></span>
         </a>
       </div>
-      <button class="btn">
+      <button class="btn" on:click={() => showStudentsList = !showStudentsList}>
           {clazz.subject_abbr} {clazz.timeslot} {clazz.code} {clazz.teacher_username}
           <span class="text-muted">({clazz.students.length} students)</span>
       </button>
   </div>
   <div> 
+  {#if showStudentsList || showAddStudents}
     <div class="card-body">
       {#if showAddStudents}
-      <form class="col-sm-3 p-0 mb-2" on:submit|preventDefault={(e) => addStudent(e.target.closest('form'), clazz.id)}>
-        <div class="input-group input-group-sm">
-          <textarea class="form-control" placeholder="Add student logins to this class"></textarea>
-          <div class="input-group-append">
-            <button class="btn btn-primary">+</button>
+        <form class="col-sm-3 p-0 mb-2" on:submit|preventDefault={(e) => addStudent(e.target.closest('form'), clazz.id)}>
+          <div class="input-group input-group-sm">
+            <textarea class="form-control" placeholder="Add student logins to this class"></textarea>
+            <div class="input-group-append">
+              <button class="btn btn-primary">+</button>
+            </div>
           </div>
-        </div>
-      </form>
-      {#if addStudentError}
-        <span class="text-danger">{addStudentError}</span>
-      {/if}
+        </form>
+        {#if addStudentError}
+          <span class="text-danger">{addStudentError}</span>
+        {/if}
       {/if}
 
-      {@html clazz.summary}
-      <table class="table table-sm table-hover">
-        <thead>
-          <tr>
-            <th>
-              Login<!--
-              --><CopyToClipboard content={clazz.students.map(s => s.username).join('\n')} title='Copy logins to clipboard'>
-                <span class="iconify" data-icon="clarity:clipboard-line"></span>
-              </CopyToClipboard><!--
-              --><CopyToClipboard content={clazz.students.map(s => s.username + '@vsb.cz').join('\n')} title='Copy emails to clipboard'>
-                <span class="iconify" data-icon="ic:round-alternate-email"></span>
-              </CopyToClipboard>
-            </th>
-            <th>Student</th>
-            {#each clazz.assignments as assignment}
-            <th class="more-hover">
-              <a href="{ assignment.task_link }">{ assignment.short_name }</a>
-              <div class="more-content">
-                {assignment.name}
-                <a href="/task/edit/{assignment.task_id}" use:link class="text-muted" title="Edit"><span class="iconify" data-icon="clarity:edit-solid"></span></a>
-                <div>
-                  <a href="{assignment.moss_link}" title="Send to MOSS"><span class="iconify" data-icon="bx:bx-check-double"></span></a>
-                  <a href="{assignment.sources_link}" title="Download all source codes"><span class="iconify" data-icon="fe:download" data-inline="false"></span></a>
-                  <a href="{assignment.csv_link}" title="Download CSV with results"><span class="iconify" data-icon="la:file-csv-solid"></span></a>
+      {#if showStudentsList}
+        {@html clazz.summary}
+        <table class="table table-sm table-hover">
+          <thead>
+            <tr>
+              <th>
+                Login<!--
+                --><CopyToClipboard content={clazz.students.map(s => s.username).join('\n')} title='Copy logins to clipboard'>
+                  <span class="iconify" data-icon="clarity:clipboard-line"></span>
+                </CopyToClipboard><!--
+                --><CopyToClipboard content={clazz.students.map(s => s.username + '@vsb.cz').join('\n')} title='Copy emails to clipboard'>
+                  <span class="iconify" data-icon="ic:round-alternate-email"></span>
+                </CopyToClipboard>
+              </th>
+              <th>Student</th>
+              {#each clazz.assignments as assignment}
+              <th class="more-hover">
+                <a href="{ assignment.task_link }">{ assignment.short_name }</a>
+                <div class="more-content">
+                  {assignment.name}
+                  <a href="/task/edit/{assignment.task_id}" use:link class="text-muted" title="Edit"><span class="iconify" data-icon="clarity:edit-solid"></span></a>
+                  <div>
+                    <a href="{assignment.moss_link}" title="Send to MOSS"><span class="iconify" data-icon="bx:bx-check-double"></span></a>
+                    <a href="{assignment.sources_link}" title="Download all source codes"><span class="iconify" data-icon="fe:download" data-inline="false"></span></a>
+                    <a href="{assignment.csv_link}" title="Download CSV with results"><span class="iconify" data-icon="la:file-csv-solid"></span></a>
+                  </div>
+                  <dl>
+                    <dt>Assigned</dt>
+                    <dd>
+                      {assignment.assigned}
+                    </dd>
+
+                    <dt>Deadline</dt>
+                    <dd>
+                      {assignment.deadline}
+                    </dd>
+
+                    {#if assignment.max_points}
+                    <dt>Max points</dt>
+                    <dd>
+                      {assignment.max_points} 
+                    </dd>
+                    {/if}
+                  </dl>
                 </div>
-                <dl>
-                  <dt>Assigned</dt>
-                  <dd>
-                    {assignment.assigned}
-                  </dd>
+              </th>
+              {/each}
+              <th></th>
+            </tr>
+          </thead>
 
-                  <dt>Deadline</dt>
-                  <dd>
-                    {assignment.deadline}
-                  </dd>
-
-                  {#if assignment.max_points}
-                  <dt>Max points</dt>
-                  <dd>
-                    {assignment.max_points} 
-                  </dd>
-                  {/if}
-                </dl>
-              </div>
-            </th>
+          <tbody>
+          {#each clazz.students as student}
+          <tr>
+            <td>{ student.username }</td>
+            <td>{ student.last_name } { student.first_name }</td>
+            {#each clazz.assignments.map(i => i.students[student.username]) as result}
+              <td>
+                {#if result.submits != 0}
+                  <a href={result.link} style="color: {result.color}">
+                    { isNaN(parseFloat(result.assigned_points)) ? '?' : result.assigned_points}
+                  </a>
+                {/if}
+              </td>
             {/each}
-            <th></th>
+            <td></td>
           </tr>
-        </thead>
-
-        <tbody>
-        {#each clazz.students as student}
-        <tr>
-          <td>{ student.username }</td>
-          <td>{ student.last_name } { student.first_name }</td>
-          {#each clazz.assignments.map(i => i.students[student.username]) as result}
-            <td>
-              {#if result.submits != 0}
-                <a href={result.link} style="color: {result.color}">
-                  { isNaN(parseFloat(result.assigned_points)) ? '?' : result.assigned_points}
-                </a>
-              {/if}
-            </td>
           {/each}
-          <td></td>
-        </tr>
-        {/each}
-        </tbody>
-      </table>
+          </tbody>
+        </table>
+      {/if}
     </div>
+    {/if}
   </div>
 </div>
