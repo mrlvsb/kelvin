@@ -118,6 +118,18 @@ function createFs() {
         }
       });
 
+      openedFiles.update(openedFiles => {
+        if(openedFiles[oldPath]) {
+          openedFiles[newPath] = openedFiles[oldPath];
+          delete openedFiles[oldPath];
+        }
+        return openedFiles;
+      });
+
+      currentOpenedFile.update(current => {
+        return current == oldPath ? newPath : current;
+      });
+
       const oldName = basename(oldPath);
       const newName = basename(newPath);
 
