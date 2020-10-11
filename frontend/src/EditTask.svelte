@@ -34,6 +34,13 @@
   $: if(syncPathWithTitle) {
     const readme = $openedFiles['/readme.md'];
     if(readme && task) {
+      let parts = [params.subject, $semester['abbr'], $user.username];
+
+      let classes = task['classes'].filter(c => c.assigned);
+      if(classes.length == 1) {
+        parts.push(classes[0].timeslot);
+      }
+
       const title = readme.content.split('\n')[0]
         .toLowerCase()
         .replace(/^\s*#\s*|\s*$/g, '')
@@ -57,9 +64,13 @@
             };
             return map[c] ? map[c] : c;
         })
-        .join('') 
+        .join('');
 
-        task['path'] = [params.subject, $semester['abbr'], $user.username, title].join('/')
+        if(title) {
+          parts.push(title);
+        }
+
+        task['path'] =  parts.join('/')
     }
   }
 
@@ -117,7 +128,7 @@ td:first-of-type, td:last-of-type {
 	</div>
 	{/if}
 	<div>
-		{#if task['errors'].length}
+		{#if task['errors'] && task['errors'].length}
 		<div class="alert alert-danger">
 			<ul class="m-0">
 				{#each task['errors'] as error}
