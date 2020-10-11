@@ -16,7 +16,13 @@ class DockerPipe:
         result_dir = os.path.join(evaluation.result_path, self.id)
         os.mkdir(result_dir)
 
-        env = [f"-ePIPE_{k.upper()}={v}" for k, v in self.kwargs.items()]
+        def fmt_value(v):
+            if isinstance(v, list):
+                return json.dumps(v)
+            return v
+
+
+        env = [f"-ePIPE_{k.upper()}={fmt_value(v)}" for k, v in self.kwargs.items()]
         args = [
             'docker', 'run', '--rm',
             '-w', '/work',
