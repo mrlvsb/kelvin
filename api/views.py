@@ -285,14 +285,13 @@ def task_detail(request, task_id=None):
         item = {
             'id': clazz.id,
             'timeslot': clazz.timeslot,
-            'week_offset': -1,
+            'week_offset': clazz.week_offset,
         }
 
         assigned = AssignedTask.objects.filter(task_id=task.id, clazz_id=clazz.id).first()
         if assigned:
             item['assigned'] = assigned.assigned
             item['deadline'] = assigned.deadline
-            item['week_offset'] = clazz.week_offset
 
         result['classes'].append(item)
 
