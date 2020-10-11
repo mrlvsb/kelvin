@@ -260,15 +260,36 @@ def submit_diff(request, student_username, assignment_id, submit_a, submit_b):
         raise PermissionDenied()
 
     with tempfile.TemporaryFile('r', errors='ignore') as diff:
-        cmd = [
-            "diff", "-ruiwN",
-            str(submit_a), str(submit_b)
-        ]
-        subprocess.Popen(cmd, cwd=os.path.dirname(submit.dir()), stdout=diff).wait()
-        diff.seek(0)
+        base_dir = os.path.dirname(submit.dir())
 
-        out = diff.read()
-        out = re.sub(r'^(---|\+\+\+) [0-9]+/', '\\1 ', out, flags=re.M)
+        dir_a = os.path.join(base_dir, str(submit_a))
+        dir_b = os.path.join(base_dir, str(submit_b))
+
+        files_a = os.listdir(dir_a)
+        files_b = os.listdir(dir_b)
+
+        diff_cmd = ["diff", "-ruiwN"]
+
+        # TODO: find better diffing tool that handles file renames
+        if len(files_a) == 1 and len(files_b) == 1:
+            with tempfile.TemporaryDirectory() as p1, tempfile.TemporaryDirectory() as p2:
+                with open(os.path.join(p1, "main.c"), 'w') as out:
+                    with open(os.path.join(dir_a, files_a[0]), errors='ignore') as inp:
+                        out.write(inp.read())
+                with open(os.path.join(p2, "main.c"), 'w') as out:
+                    with open(os.path.join(dir_b, files_b[0]), errors='ignore') as inp:
+                        out.write(inp.read())
+                subprocess.Popen(diff_cmd + [p1, p2], cwd=base_dir, stdout=diff).wait()
+                diff.seek(0)
+                out = diff.read()
+                out = re.sub(r'^(---|\+\+\+) /tmp/[^/]+/', '\\1 ', out, flags=re.M)
+        else:
+            diff_paths = [str(submit_a), str(submit_b)]
+            subprocess.Popen(diff_cmd + diff_paths, cwd=base_dir, stdout=diff).wait()
+            diff.seek(0)
+            out = diff.read()
+            out = re.sub(r'^(---|\+\+\+) [0-9]+/', '\\1 ', out, flags=re.M)
+
         out = "\n".join([line for line in out.split("\n") if not line.startswith('Binary file')])
         resp = HttpResponse(out)
         resp['Content-Type'] = 'text/x-diff'
