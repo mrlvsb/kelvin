@@ -6,7 +6,7 @@ from .views import notification as notification_view
 from .views import common as common_view
 
 urlpatterns = [
-    path('', common_view.index, name='index'),
+    path('old', common_view.index, name='index'),
 
     path('task/edit', teacher_view.edit_task, name='edit_task'),
     path('task/edit/<int:task_id>', teacher_view.edit_task, name='edit_task'),
@@ -63,5 +63,5 @@ urlpatterns = [
     path('upr.py', student_view.uprpy, name='upr.py'),
 
     path('project/<str:project_type>', student_view.project, name='project'),
-    path('ui', student_view.ui),
+    path('', student_view.ui),
 ]
