@@ -22,13 +22,13 @@
 
 		instanceFrom = flatpickr(fromEl, opts);
 		instanceTo = flatpickr(toEl, opts);
-  } 
+  }
 
-  function setWeek(n) {
+  function weekDate(n) {
     let date = new Date(semesterBeginDate.getTime());
     date.setDate(date.getDate() + 7 * n);
     date.setSeconds(timeOffsetInWeek);
-    from = date;
+    return date;
   }
 
   function addDeadline(minutes) {
@@ -62,7 +62,10 @@ $: if(instanceTo) {
       <Dropdown>
         <span class="dropdown-item" on:click={() => from = new Date()}>Now</span>
         {#each {length: 14} as _, i}
-          <span class="dropdown-item" on:click={() => setWeek(i)}>Week {i + 1}</span>
+          <span class="dropdown-item" on:click={() => from = weekDate(i)}>
+            Week {i + 1}
+            {#if weekDate(i) <= new Date() && new Date() <= weekDate(i + 1) }↩{/if}
+          </span>
         {/each}
       </Dropdown>
     </div>
