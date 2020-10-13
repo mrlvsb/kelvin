@@ -107,3 +107,8 @@ backups/
 submit_results/
 submits/
 tasks/
+
+web/static/frontend.css
+web/static/frontend.css.map
+web/static/frontend.js
+web/static/frontend.js.map
