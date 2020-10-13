@@ -468,7 +468,8 @@ def task_asset(request, task_name, path):
         if not path.split('/')[-1].startswith('announce.'):
             raise PermissionDenied()
 
-    if '..' in path or (path in ['config.yml', 'script.py'] and not is_teacher(request.user)):
+    deny_files = ['config.yml', 'script.py', 'solution.c', 'solution.cpp']
+    if '..' in path or (path in deny_files and not is_teacher(request.user)):
         raise PermissionDenied()
 
     system_path = os.path.join("tasks", task_name, path)
