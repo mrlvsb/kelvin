@@ -5,6 +5,8 @@
   import 'codemirror/mode/clike/clike.js';
   import 'codemirror/mode/yaml/yaml.js';
   import 'codemirror/mode/markdown/markdown.js';
+  import 'codemirror/addon/display/fullscreen.js';
+  import 'codemirror/addon/display/fullscreen.css';
 
   export let value;
   export let filename;
@@ -27,6 +29,16 @@
   $: if(editorEl && !editor) {
       editor = CodeMirror.fromTextArea(editorEl, {
         mode: toMode(filename),
+        extraKeys: {
+          "F11": function(cm) {
+            cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+          },
+          "Esc": function(cm) {
+            if(cm.getOption("fullScreen")) {
+                cm.setOption("fullScreen", false);
+            }
+          }
+        }
       });
 
       editor.on('change', doc => {
