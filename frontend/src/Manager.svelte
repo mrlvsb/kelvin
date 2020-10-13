@@ -121,7 +121,7 @@ ul input {
       {/each}
     </ul>
   </div>
-  <div class="w-100">
+  <div class="w-100" style="overflow: hidden">
     <ul class="nav nav-tabs">
       {#each Object.entries($openedFiles) as [path, file]}
       <li class="nav-item" on:click={() => fs.open(path)} style="cursor: pointer">
