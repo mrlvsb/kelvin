@@ -63,5 +63,5 @@ urlpatterns = [
     path('upr.py', student_view.uprpy, name='upr.py'),
 
     path('project/<str:project_type>', student_view.project, name='project'),
-    path('ui', student_view.ui),
+    path('old', teacher_view.teacher_list),
 ]

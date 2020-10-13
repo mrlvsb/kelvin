@@ -8,15 +8,14 @@ from django.conf import settings
 from django.urls import reverse
 from api.models import UserToken
 
-from .teacher import teacher_list
-from .student import student_index
+from .student import student_index, ui
 from common.utils import is_teacher
 from api.backends import hash_token
 
 @login_required()
 def index(request):
     if is_teacher(request.user):
-        return teacher_list(request)
+        return ui(request)
     return student_index(request)
 
 @login_required()
