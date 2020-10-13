@@ -31,6 +31,12 @@
     return date;
   }
 
+  function weekStart(n) {
+    let date = new Date(semesterBeginDate.getTime());
+    date.setDate(date.getDate() + 7 * n);
+    return date;
+  }
+
   function addDeadline(minutes) {
     let date = new Date(from);
     date.setMinutes(date.getMinutes() + minutes);
@@ -64,7 +70,7 @@ $: if(instanceTo) {
         {#each {length: 14} as _, i}
           <span class="dropdown-item" on:click={() => from = weekDate(i)}>
             Week {i + 1}
-            {#if weekDate(i) <= new Date() && new Date() <= weekDate(i + 1) }↩{/if}
+            {#if weekStart(i) <= new Date() && new Date() <= weekStart(i + 1) }↩{/if}
           </span>
         {/each}
       </Dropdown>
