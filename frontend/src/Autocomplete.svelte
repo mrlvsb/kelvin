@@ -25,11 +25,20 @@
     background: #5bc0de;
     cursor: pointer;
   }
+
+  .ssh-button {
+    position: absolute;
+    right: 0;
+    top: -5px;
+    font-family: monospace;
+  }
 </style>
 
 <script>
   import {onMount} from 'svelte';
   import {clickOutside} from './utils.js'
+  import CopyToClipboard from './CopyToClipboard.svelte'
+  import {user} from './global.js';
   import { createEventDispatcher } from 'svelte';
   const dispatch = createEventDispatcher();
 
@@ -68,6 +77,12 @@
 </script>
 <div class="form-control" use:clickOutside on:click_outside={() => focused = false}>
   <input bind:value={value} required placeholder="Task directory" on:focus={() => focused = true} on:click={() => dispatch('click')} on:keyup={keyup}>
+
+  <CopyToClipboard content={`ssh -t ${$user.username.toLowerCase()}@kelvin.cs.vsb.cz 'cd /srv/kelvin/kelvin/tasks/${value} && exec bash'`} title='Copy ssh command to clipboard'>
+    <span class="btn btn-sm btn-outline-dark ssh-button">ssh</span>
+  </CopyToClipboard>
+
+
   {#if filtered.length && focused}
   <ul>
     {#each filtered as item, i}
