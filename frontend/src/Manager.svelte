@@ -27,16 +27,13 @@ ul input {
 .nav-item span {
   padding: 3px 6px;
 }
-textarea {
-  border-top: 0;
-}
-
 </style>
 
 <script>
   import {clickOutside} from './utils.js';
   import {fetch} from './api.js'
   import {fs, currentPath, cwd, openedFiles, currentOpenedFile} from './fs.js'
+  import Editor from './Editor.svelte'
 
   let renamingPath = null;
   let ctxMenu = null;
@@ -76,17 +73,6 @@ textarea {
   async function addToUploadQueue(evt) {
     for(const file of evt.target.files) {
       await fs.upload(file.name, file);
-    }
-  }
-
-  function textareaKeyDown(e) {
-    if (e.key == 'Tab') {
-      e.preventDefault();
-      const start = this.selectionStart;
-      const end = this.selectionEnd;
-
-      this.value = this.value.substring(0, start) + "\t" + this.value.substring(end);
-      this.selectionStart = this.selectionEnd = start + 1;
     }
   }
 </script>
@@ -145,7 +131,7 @@ textarea {
     </ul>
 
     {#if $currentOpenedFile}
-      <textarea class="form-control" rows=20 bind:value={$openedFiles[$currentOpenedFile].content} on:keydown={textareaKeyDown}></textarea>
+      <Editor filename={$currentOpenedFile} bind:value={$openedFiles[$currentOpenedFile].content} />
     {/if}
   </div>
 </div>
