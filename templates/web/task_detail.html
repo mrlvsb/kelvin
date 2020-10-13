@@ -14,7 +14,7 @@ TODO: Make it nicer with Bootstrap
 <h2>
     {{ task.name }}
     {% if is_teacher %}
-    <a href="{% url 'edit_task' task.id %}" class="text-muted" title="Edit task"><i class="fas fa-pen" style="font-size: 20px"></i></a>
+    <a href="/#{% url 'edit_task' task.id %}" class="text-muted" title="Edit task"><i class="fas fa-pen" style="font-size: 20px"></i></a>
     {% endif %}
 </h2>
 {% if assigned %}
