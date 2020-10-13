@@ -26,10 +26,13 @@
     cursor: pointer;
   }
 
-  .ssh-button {
+  .btn-group {
     position: absolute;
-    right: 0;
-    top: -5px;
+    right: 5px;
+    top: 5px;
+  }
+
+  .btn-group .btn {
     font-family: monospace;
   }
 </style>
@@ -78,9 +81,14 @@
 <div class="form-control" use:clickOutside on:click_outside={() => focused = false}>
   <input bind:value={value} required placeholder="Task directory" on:focus={() => focused = true} on:click={() => dispatch('click')} on:keyup={keyup}>
 
-  <CopyToClipboard content={`ssh -t ${$user.username.toLowerCase()}@kelvin.cs.vsb.cz 'cd /srv/kelvin/kelvin/tasks/${value} && exec bash'`} title='Copy ssh command to clipboard'>
-    <span class="btn btn-sm btn-outline-dark ssh-button">ssh</span>
-  </CopyToClipboard>
+  <div class="btn-group">
+    <span class="btn btn-sm btn-outline-dark">
+      <CopyToClipboard content={`${$user.username.toLowerCase()}@kelvin.cs.vsb.cz:/srv/kelvin/kelvin/tasks/${value}`} title='Copy path for scp/rsync to the clipboard'>path</CopyToClipboard>
+    </span>
+    <span class="btn btn-sm btn-outline-dark">
+      <CopyToClipboard content={`ssh -t ${$user.username.toLowerCase()}@kelvin.cs.vsb.cz 'cd /srv/kelvin/kelvin/tasks/${value} && exec bash'`} title='Copy ssh command to the clipboard'>ssh</CopyToClipboard>
+    </span>
+  </div>
 
 
   {#if filtered.length && focused}
