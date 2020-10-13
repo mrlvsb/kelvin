@@ -1,4 +1,5 @@
 <script>
+  import {onDestroy} from 'svelte';
   import CodeMirror from 'codemirror';
   import 'codemirror/lib/codemirror.css';
   import 'codemirror/mode/clike/clike.js';
@@ -40,6 +41,12 @@
   $: if(editor) {
     editor.setOption('mode', toMode(filename));
   }
+
+  onDestroy(() => {
+    if(editor) {
+      editor.toTextArea();
+    }
+  });
 </script>
 <style>
 :global(.CodeMirror) {
