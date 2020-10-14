@@ -136,8 +136,6 @@ class AutoGraderPipe:
         if total <= 0:
             return
 
-        points = success / total
-
         s = Submit.objects.get(id=evaluation.tests.meta['submit_id'])
-        s.assigned_points = points
+        s.assigned_points = success * s.assignment.max_points / total
         s.save()
