@@ -7,6 +7,7 @@ import re
 import json
 import subprocess
 import datetime
+import rq
 from shutil import copyfile
 from collections import OrderedDict
 
@@ -56,10 +57,13 @@ def teacher_task_moss_check(request, task_id):
 
     job_id = cache.get(key_job)
     if job_id:
-        job = django_rq.jobs.get_job_class().fetch(job_id, connection=django_rq.queues.get_connection())
-        status = job.get_status()
-        if status == 'queued':
-            status += f' {job.get_position() + 1}'
+        try:
+            job = django_rq.jobs.get_job_class().fetch(job_id, connection=django_rq.queues.get_connection())
+            status = job.get_status()
+            if status == 'queued':
+                status += f' {job.get_position() + 1}'
+        except (rq.exceptions.NoSuchJobError, AttributeError):
+            status = 'unknown'
         return render(request, "web/moss.html", {
             "status": status,
             "task": task,
