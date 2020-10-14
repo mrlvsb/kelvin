@@ -44,6 +44,18 @@
       editor.on('change', doc => {
         value = doc.getValue();
       });
+
+      let timer;
+      let observer = new MutationObserver(muts => {
+          if(timer) {
+            clearInterval(timer);
+          }
+          timer = setTimeout(() => editor.refresh(), 100);
+      });
+      observer.observe(
+        document.querySelector('.CodeMirror'),
+        {attributes: true}
+      );
   }
 
   $: if(editor && editor.getValue() != value) {
@@ -65,7 +77,9 @@
   border: 1px solid #ced4da;
   border-top: 0;
   border-radius: .25rem;
+  min-height: 600px;
+  resize: vertical;
 }
 </style>
 
-<textarea class="form-control" rows=20 bind:this={editorEl} bind:value={value}></textarea>
+<textarea class="form-control" bind:this={editorEl} bind:value={value}></textarea>
