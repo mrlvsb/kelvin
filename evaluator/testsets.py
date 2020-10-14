@@ -193,7 +193,7 @@ class TestSet:
             for item in conf:
                 try:
                     pipe_type = item['type']
-                    class_name = "".join([p.title() for p in item['type'].split('_')])
+                    class_name = "".join([p.title() for p in re.split('_|-', item['type'])])
                     pipecls = getattr(pipelines, f"{class_name}Pipe", None)
                     if not pipecls and self.script:
                         pipecls = getattr(self.script, f"{class_name}Pipe", None)

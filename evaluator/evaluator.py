@@ -58,6 +58,7 @@ class Evaluation:
         self.sandbox = sandbox
         self.task_path = task_path
         self.result_path = os.path.join(BASE_DIR, result_path)
+        self.result = None
         self.tests = testsets.TestSet(task_path, meta)
 
         try:
@@ -76,14 +77,14 @@ class Evaluation:
         job.meta['current_action'] = 0
         job.save_meta()
 
-        result = EvaluationResult(self.result_path)
+        self.result = EvaluationResult(self.result_path)
         for pipe in self.tests.pipeline:
             logger.info(f"executing {pipe.id}")
             res = pipe.run(self)
             if res:
                 res['id'] = pipe.id
                 res['title'] = pipe.title
-                result.pipelines.append(res)
+                self.result.pipelines.append(res)
 
                 if 'failed' in res and res['failed']:
                     break
@@ -91,10 +92,8 @@ class Evaluation:
             job.meta['current_action'] += 1
             job.save_meta()
 
-
-
-        result.save(os.path.join(self.result_path, 'result.json'))
-        return result
+        self.result.save(os.path.join(self.result_path, 'result.json'))
+        return self.result
 
     def evaluate(self, runner, test: testsets.Test, executable, env=None, title=None):
         filters = self.tests.filters + test.filters
@@ -306,18 +305,3 @@ def evaluate(task_path, submit_path, result_path, meta=None):
 
 
     return evaluation.run()
-
-def evaluate_score(result):
-    return 0, 0
-    points = 0
-    max_points = 0
-    for i in result:
-        if i['gcc']['exit_code'] != 0:
-            points = max_points = 0
-            break
-        for test in i['tests']:
-            if test['success']:
-                points += 1
-            max_points += 1
-    return points, max_points
-

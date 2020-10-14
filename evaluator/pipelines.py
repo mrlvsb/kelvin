@@ -6,6 +6,7 @@ import html
 from collections import defaultdict
 import subprocess
 import tempfile
+from common.models import Submit
 
 class DockerPipe:
     def __init__(self, image, **kwargs):
@@ -119,3 +120,24 @@ class SleepPipe:
     def run(self, evaluation):
         import time
         time.sleep(self.seconds)
+
+class AutoGraderPipe:
+    def run(self, evaluation):
+        if 'submit_id' not in evaluation.tests.meta:
+            return
+
+        total = 0
+        success = 0
+        for action in evaluation.result.pipelines:
+            if 'tests' in action:
+                total += len(action['tests'])
+                success += len(list(filter(lambda t: t['success'], action['tests'])))
+
+        if total <= 0:
+            return
+
+        points = success / total
+
+        s = Submit.objects.get(id=evaluation.tests.meta['submit_id'])
+        s.assigned_points = points
+        s.save()

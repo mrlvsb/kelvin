@@ -1,5 +1,5 @@
 import django_rq
-from evaluator.evaluator import evaluate, evaluate_score
+from evaluator.evaluator import evaluate
 from common.models import Submit
 import os
 
@@ -17,12 +17,9 @@ def evaluate_job(s: Submit):
         *s.path_parts(),
     )
 
-    result = evaluate(
+    evaluate(
         "tasks/{}".format(s.assignment.task.code),
         s.dir(),
         result_path,
-        get_meta(s.student.username),
+        {**get_meta(s.student.username), 'submit_id': s.id},
     )
-
-    s.points, s.max_points = evaluate_score(result)
-    s.save()
