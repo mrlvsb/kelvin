@@ -154,6 +154,18 @@ function createFs() {
         delete inode['files'][basename(path)];
         return fs;
       });
+
+      openedFiles.update(openedFiles => {
+        if(openedFiles[path]) {
+          delete openedFiles[path];
+
+          currentOpenedFile.update(current => {
+            return Object.keys(openedFiles).length ? Object.keys(openedFiles)[0] : null;
+          });
+        }
+        return openedFiles;
+      });
+
     },
 
     upload: async (path, file) => {
