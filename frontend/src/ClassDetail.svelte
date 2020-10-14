@@ -46,6 +46,19 @@
       addStudentError = 'Error: ' + err;
     }
   }
+
+  let reevaluateLoading = false;
+  async function reevaluateAssignment(assignment) {
+    reevaluateLoading = true;
+    const submit_ids = Object.values(assignment.students)
+      .map(stud => stud['accepted_submit_id'])
+      .filter(id => id);
+
+    for(const submit_id of submit_ids) {
+      await fetch('/reevaluate/' + submit_id);
+    }
+    reevaluateLoading = false;
+  }
 </script>
 
 <style>
@@ -62,6 +75,21 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)) {
 
 .card-body {
   overflow-x: auto;
+}
+
+.spin {
+  animation-name: spin;
+  animation-duration: 2000ms;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+@keyframes spin {
+  from {
+    transform:rotate(0deg);
+  }
+  to {
+    transform:rotate(360deg);
+  }
 }
 </style>
 
@@ -125,6 +153,9 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)) {
                     <a href="{assignment.moss_link}" title="Send to MOSS"><span class="iconify" data-icon="bx:bx-check-double"></span></a>
                     <a href="{assignment.sources_link}" title="Download all source codes"><span class="iconify" data-icon="fe:download" data-inline="false"></span></a>
                     <a href="{assignment.csv_link}" title="Download CSV with results"><span class="iconify" data-icon="la:file-csv-solid"></span></a>
+                    <button class="btn btn-link p-0" class:spin={reevaluateLoading} title='Reevaluate latest submits' on:click={() => reevaluateAssignment(assignment)}>
+                      <span class="iconify" data-icon="bx:bx-refresh"></span>
+                    </button>
                   </div>
                   <dl>
                     <dt>Assigned</dt>

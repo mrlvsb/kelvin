@@ -255,10 +255,12 @@ def assignedtask_results(assignment, **kwargs):
                 student_submit_stats['max_points'] = submit.max_points
                 student_submit_stats['assigned_points'] = submit.assigned_points
                 student_submit_stats['accepted_submit_num'] = submit.submit_num
+                student_submit_stats['accepted_submit_id'] = submit.id
 
         if submit.assigned_points is not None:
             student_submit_stats['submits_with_assigned_pts'] += 1
             student_submit_stats['assigned_points'] = submit.assigned_points
             student_submit_stats['accepted_submit_num'] = submit.submit_num
+            student_submit_stats['accepted_submit_id'] = submit.id
 
     return sorted(results.values(), key=lambda s: s['student'].username)
