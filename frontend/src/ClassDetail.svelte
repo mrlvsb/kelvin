@@ -2,6 +2,7 @@
   import {push, link} from 'svelte-spa-router'
   import {fetch} from './api.js'
   import CopyToClipboard from './CopyToClipboard.svelte'
+  import {timeInWords, formatDateTime} from './utils.js'
 
   import { createEventDispatcher } from 'svelte';
   const dispatch = createEventDispatcher();
@@ -160,13 +161,15 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)) {
                   <dl>
                     <dt>Assigned</dt>
                     <dd>
-                      {assignment.assigned}
+                      {formatDateTime(assignment.assigned)}{#if new Date(assignment.assigned) > new Date()}, {timeInWords(new Date() - new Date(assignment.assigned))}{/if}
                     </dd>
 
+                    {#if assignment.deadline}
                     <dt>Deadline</dt>
                     <dd>
-                      {assignment.deadline}
+                      {formatDateTime(assignment.deadline)}{#if new Date(assignment.deadline) > new Date()}, {timeInWords(new Date() - new Date(assignment.deadline))}{/if}
                     </dd>
+                    {/if}
 
                     {#if assignment.max_points}
                     <dt>Max points</dt>
