@@ -65,6 +65,7 @@ def class_detail_list(request, **class_conditions):
         for assignment in clazz.assignedtask_set.all().order_by('id'):
             assignment_data = {
                 'task_id': assignment.task_id,
+                'task_link': reverse('teacher_task', kwargs={'task_id': assignment.task_id}),
                 'assignment_id': assignment.id,
                 'name': assignment.task.name,
                 'short_name': assignment.task.code_name(),
@@ -109,7 +110,6 @@ def class_detail_list(request, **class_conditions):
             'timeslot': clazz.timeslot,
             'code': clazz.code,
             'subject_abbr': clazz.subject.abbr,
-            'task_link': reverse('teacher_task', kwargs={'task_id': assignment.task_id}),
             'csv_link': reverse('download_csv_per_class', kwargs={'class_id': assignment.clazz_id}),
             'assignments': assignments,
             'summary': clazz.summary(),
