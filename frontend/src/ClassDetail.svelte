@@ -97,13 +97,13 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)) {
 <div class="card mb-2" style="position: initial">
   <div class="card-header p-0">
       <div class="float-right p-2">
-        <span style="cursor: pointer" on:click={() => showAddStudents = !showAddStudents}>
+        <button class="p-0 btn btn-link" on:click={() => showAddStudents = !showAddStudents}>
           <span class="iconify" data-icon="ant-design:user-add-outlined"></span>
-        </span>
-        <a href="/task/add/{clazz.subject_abbr}" use:link title="Assign new task" style="color: black">
+        </button>
+        <a href="/task/add/{clazz.subject_abbr}" use:link title="Assign new task">
           <span class="iconify" data-icon="bx:bx-calendar-plus"></span>
         </a>
-        <a href="{clazz.csv_link}" title="Download CSV with results for all task" style="color: black">
+        <a href="{clazz.csv_link}" title="Download CSV with results for all task">
           <span class="iconify" data-icon="la:file-csv-solid"></span>
         </a>
       </div>
@@ -149,7 +149,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)) {
                 <a href="{ assignment.task_link }">{ assignment.short_name }</a>
                 <div class="more-content">
                   {assignment.name}
-                  <a href="/task/edit/{assignment.task_id}" use:link class="text-muted" title="Edit"><span class="iconify" data-icon="clarity:edit-solid"></span></a>
+                  <a href="/task/edit/{assignment.task_id}" use:link title="Edit"><span class="iconify" data-icon="clarity:edit-solid"></span></a>
                   <div>
                     <a href="{assignment.moss_link}" title="Send to MOSS"><span class="iconify" data-icon="bx:bx-check-double"></span></a>
                     <a href="{assignment.sources_link}" title="Download all source codes"><span class="iconify" data-icon="fe:download" data-inline="false"></span></a>
