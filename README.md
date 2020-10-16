@@ -4,7 +4,7 @@ Kelvin - The Ultimate Code Examinator
 
 ```
 kelvin
-├── api (deprecated? will be removed?)
+├── api
 ├── evaluator (pipeline for evaluating, linting submits)
 │   ├── images (docker images for custom pipeline actions)
 │   └── pipelines.py (integrated pipeline actions - evaluating in isolate, ...)
@@ -14,37 +14,46 @@ kelvin
 └── web (web interface for the kelvin)
 ```
 
-
-## Implementation
-
-### Needed System Libraries
-
-On Debian/Ubuntu:
-
+## Getting started
+### First installation
+- docker
+- <a href="https://github.com/trnila/isolate">isolate</a>
 ```
-libldap2-dev libsasl2-dev libcap-dev
+sudo apt install libldap2-dev libsasl2-dev libcap-dev pandoc
 ```
 
-## Start worker
+### Installing dependencies after the pull
+```
+$ pip install -r requirements.txt
+$ cd frontend && npm install
+```
+
+### Start a web server
+```
+$ ./manage.py runserver
+```
+
+### Start a worker
 ```
 $ ./manage.py rqworker
 ```
 
-## Reevaluate a submit
+### Continuously building the frontend
+```
+$ cd frontend && npm run dev
+```
 
+## Useful commands
+### Reevaluate a submit
 ```
 ./manage.py reevaluate --id <submit-id>
 ```
 
-## Run testing evaluation
+### Run testing evaluation
 ```
 $ ./manage.py evaluate ./tasks/gaura/komb_05_strings/ ./submit.c
 $ chromium /tmp/eval/result.html
 ```
-
-### Favicon
-
-Generated from [favicon.io](https://favicon.io/favicon-generator/) with Didact Gothic font.
 
 ## Importing students
 Download 'Rozvrhove skupiny' from edison as html and run to import students according to their class:
