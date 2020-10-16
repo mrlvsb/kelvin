@@ -137,8 +137,8 @@ ul input {
 </div>
 
 {#if ctxMenu && ctxMenu.selected != '/readme.md'}
-  <div class="dropdown-menu show" style="position: absolute; top: {ctxMenu.top}px; left: {ctxMenu.left}px" use:clickOutside on:click_outside={() => ctxMenu = null}>
-    <span class="dropdown-item" on:click={() => {renamingPath = ctxMenu.selected; ctxMenu = null}}><span class="iconify" data-icon="wpf:rename"></span> rename</span>
-    <span class="dropdown-item" on:click={() => {remove(ctxMenu.selected); ctxMenu = null}}><span class="iconify" data-icon="wpf:delete"></span> delete</span>
+  <div class="dropdown-menu show" style="position: fixed; top: {ctxMenu.top}px; left: {ctxMenu.left}px" use:clickOutside on:click_outside={() => ctxMenu = null}>
+    <button class="dropdown-item" on:click|preventDefault={() => {renamingPath = ctxMenu.selected; ctxMenu = null}}><span class="iconify" data-icon="wpf:rename"></span> rename</button>
+    <button class="dropdown-item" on:click|preventDefault={() => {remove(ctxMenu.selected); ctxMenu = null}}><span class="iconify" data-icon="wpf:delete"></span> delete</button>
   </div>
 {/if}
