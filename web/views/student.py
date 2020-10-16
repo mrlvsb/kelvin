@@ -274,7 +274,7 @@ def submit_diff(request, student_username, assignment_id, submit_a, submit_b):
                 return out.read()
 
     # TODO: find better diffing tool that handles file renames
-    if len(files_a) == 1 and len(files_b) == 1:
+    if len(files_a) == 1 and os.path.isfile(files_a[0]) and len(files_b) == 1 and os.path.isfile(files_b[0]):
         with tempfile.TemporaryDirectory() as p1, tempfile.TemporaryDirectory() as p2:
             with open(os.path.join(p1, "main.c"), 'w') as out:
                 with open(os.path.join(dir_a, files_a[0]), errors='ignore') as inp:
