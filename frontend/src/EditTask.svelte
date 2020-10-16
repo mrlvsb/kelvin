@@ -133,9 +133,9 @@ td:not(:nth-of-type(2)) {
 {#if task != null}
 <div style="position: relative">
 	{#if syncing}
-	<div style="position: absolute; top: 50%; left: 50%">
-		<SyncLoader />
-	</div>
+    <div style="position: absolute; top: 50%; left: 50%; z-index: 1">
+      <SyncLoader />
+    </div>
 	{/if}
 	<div>
 		{#if task['errors'] && task['errors'].length}
