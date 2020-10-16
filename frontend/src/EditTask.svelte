@@ -109,12 +109,22 @@
       evt.preventDefault();
     }
   }
+
+  function assignPointsToAll(max_pts) {
+    task.classes = task.classes.map(cl => {
+      if(cl.assigned) {
+        cl.max_points = max_pts;
+      }
+      return cl;
+    });
+  }
 </script>
 
 <style>
-td:first-of-type, td:last-of-type {
+td:not(:nth-of-type(2)) {
   vertical-align: middle;
   width: 1%;
+  white-space: nowrap;
 }
 </style>
 
@@ -140,7 +150,6 @@ td:first-of-type, td:last-of-type {
 
 		<div class="input-group mb-1">
 			<AutoComplete bind:value={task.path} onChange={loadTask} on:click={() => syncPathWithTitle = false} />
-			<input type="number" min="1" class="form-control" style="max-width: 120px" bind:value={task.max_points} placeholder="Max points">
       {#if task.task_link}
       <div class="input-group-append">
         <a class="btn btn-outline-info" href={task.task_link} target=_blank><span class="iconify" data-icon="bx:bx-link-external"></span></a>
@@ -156,8 +165,18 @@ td:first-of-type, td:last-of-type {
 					<td>
 						<TimeRange timeOffsetInWeek={clazz.week_offset} bind:from={clazz.assigned} bind:to={clazz.deadline} semesterBeginDate={$semester.begin} />
 					</td>
+          <td style="width: 1%">
+            <div class="input-group" style="flex-wrap: nowrap">
+              <input class="form-control form-control-sm" type="number" min=0 step=1 disabled={!clazz.assigned} bind:value={clazz.max_points} placeholder="Max points" style="max-width: 110px; width: 110px" />
+              <div class="input-group-append">
+                <button class="btn btn-sm btn-secondary" disabled={!clazz.assigned} on:click|preventDefault={() => assignPointsToAll(clazz.max_points)} title="Set points to all assigned classes">
+                  <span class="iconify" data-icon="mdi:content-duplicate"></span>
+                </button>
+              </div>
+            </div>
+          </td>
 					<td>
-						<button style="border: 0; background: none" on:click|preventDefault={() => {clazz.assigned = null; clazz.deadline = null}}>&times;</button>
+            <button class="btn p-0" on:click|preventDefault={() => {clazz.assigned = null; clazz.deadline = null; clazz.max_points = null}}>&times;</button>
 					</td>
 				{/each}
 			</table>

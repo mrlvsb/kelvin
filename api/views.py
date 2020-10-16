@@ -230,7 +230,7 @@ def task_detail(request, task_id=None):
                 AssignedTask.objects.update_or_create(task_id=task.id, clazz_id=cl['id'], defaults={
                     'assigned': parse_datetime(cl['assigned']),
                     'deadline': parse_datetime(cl['deadline']) if cl.get('deadline', None) else None,
-                    'max_points': data.get('max_points', None),
+                    'max_points': cl.get('max_points', None),
                 })
             else:
                 submits = Submit.objects.filter(assignment__task_id=task.id, assignment__clazz_id=cl['id']).count()
@@ -254,10 +254,6 @@ def task_detail(request, task_id=None):
         'errors': errors,
         'task_link': reverse('teacher_task', kwargs={'task_id': task.id}),
     }
-
-    assigned = AssignedTask.objects.filter(task_id=task.id)
-    if assigned:
-        result['max_points'] = assigned.first().max_points
 
     ignore_list = ['.git', '.taskid', '.']
     for root, subdirs, files in os.walk(task.dir()):
@@ -293,6 +289,7 @@ def task_detail(request, task_id=None):
         if assigned:
             item['assigned'] = assigned.assigned
             item['deadline'] = assigned.deadline
+            item['max_points'] = assigned.max_points
 
         result['classes'].append(item)
 
