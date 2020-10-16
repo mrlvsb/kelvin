@@ -158,27 +158,29 @@ td:not(:nth-of-type(2)) {
 		</div>
 
 		<div class="form-group">
-			<table class="table table-hover"> 
-				{#each task.classes as clazz} 
-				<tr class:table-success={clazz.assigned}>
-					<td>{ clazz.timeslot }</td>
-					<td>
-						<TimeRange timeOffsetInWeek={clazz.week_offset} bind:from={clazz.assigned} bind:to={clazz.deadline} semesterBeginDate={$semester.begin} />
-					</td>
-          <td style="width: 1%">
-            <div class="input-group" style="flex-wrap: nowrap">
-              <input class="form-control form-control-sm" type="number" min=0 step=1 disabled={!clazz.assigned} bind:value={clazz.max_points} placeholder="Max points" style="max-width: 110px; width: 110px" />
-              <div class="input-group-append">
-                <button class="btn btn-sm btn-secondary" disabled={!clazz.assigned} on:click|preventDefault={() => assignPointsToAll(clazz.max_points)} title="Set points to all assigned classes">
-                  <span class="iconify" data-icon="mdi:content-duplicate"></span>
-                </button>
+      <table class="table table-hover table-striped"> 
+        <tbody>
+          {#each task.classes as clazz} 
+          <tr class:table-success={clazz.assigned}>
+            <td>{ clazz.timeslot }</td>
+            <td>
+              <TimeRange timeOffsetInWeek={clazz.week_offset} bind:from={clazz.assigned} bind:to={clazz.deadline} semesterBeginDate={$semester.begin} />
+            </td>
+            <td style="width: 1%">
+              <div class="input-group" style="flex-wrap: nowrap">
+                <input class="form-control form-control-sm" type="number" min=0 step=1 disabled={!clazz.assigned} bind:value={clazz.max_points} placeholder="Max points" style="max-width: 110px; width: 110px" />
+                <div class="input-group-append">
+                  <button class="btn btn-sm btn-secondary" disabled={!clazz.assigned} on:click|preventDefault={() => assignPointsToAll(clazz.max_points)} title="Set points to all assigned classes">
+                    <span class="iconify" data-icon="mdi:content-duplicate"></span>
+                  </button>
+                </div>
               </div>
-            </div>
-          </td>
-					<td>
-            <button class="btn p-0" on:click|preventDefault={() => {clazz.assigned = null; clazz.deadline = null; clazz.max_points = null}}>&times;</button>
-					</td>
-				{/each}
+            </td>
+            <td>
+              <button class="btn p-0" on:click|preventDefault={() => {clazz.assigned = null; clazz.deadline = null; clazz.max_points = null}}>&times;</button>
+            </td>
+          {/each}
+        </tbody>
 			</table>
 		</div>
 
