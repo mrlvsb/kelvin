@@ -22,6 +22,12 @@
 
 		instanceFrom = flatpickr(fromEl, opts);
 		instanceTo = flatpickr(toEl, opts);
+    instanceTo.config.onOpen.push(() => {
+      if(!from) {
+        from = new Date();
+        setTimeout(() => instanceTo.open(), 0);
+      }
+    });
   }
 
   function weekDate(n) {
@@ -38,6 +44,10 @@
   }
 
   function addDeadline(minutes) {
+    if(!from) {
+      from = new Date();
+    }
+
     let date = new Date(from);
     date.setMinutes(date.getMinutes() + minutes);
     to = date;
