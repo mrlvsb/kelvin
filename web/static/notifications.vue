@@ -47,7 +47,7 @@ Vue.component('notifications', {
                   <strong v-else>{{ item.actor }}</strong>
                   {{ item.verb }} 
 
-                  <a :href="item.action_object_url" v-if="item.action_object_url">{{ item.action_object }}</a>
+                  <a v-on:click={markReadRedirect(item.id)} :href="item.action_object_url" v-if="item.action_object_url">{{ item.action_object }}</a>
                   <span v-else>{{ item.action_object }}</span>
                   <span v-if="item.target">on {{ item.target }}</span>
                   (<timeago
@@ -72,6 +72,14 @@ Vue.component('notifications', {
       if(item) {
         axios.post('/notification/mark_as_read/' + id).then(() => {
           item.unread = false;
+        });
+      }
+    },
+    markReadRedirect(id) {
+      const item = this.notifications.find((item) => item.id == id);
+      if(item) {
+        axios.post('/notification/mark_as_read/' + id).then(() => {
+            document.location.href = item.action_object_url;
         });
       }
     },
