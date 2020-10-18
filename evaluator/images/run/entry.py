@@ -25,7 +25,7 @@ with open("result.html", "w") as f:
 
             if not job.get('hide', False):
                 out.seek(0)
-                f.write(f"<code>$ {html.escape(job.get('cmd_show', job['cmd']))}</code><br>")
+                f.write(f"<code style='color: #444; font-weight: bold'>$ {html.escape(job.get('cmd_show', job['cmd']))}</code><br>")
                 f.write(f"<pre>{html.escape(out.read())}</pre>")
 
         if p.returncode:
