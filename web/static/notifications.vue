@@ -39,16 +39,21 @@ Vue.component('notifications', {
 					<div style="max-height: 300px; overflow-y: auto; font-size: 80%;">
             <template v-if="notifications.length > 0">
               <li v-for="(item, _) in notifications" class='list-group-item p-1' v-bind:class="{'list-group-item-light': !item.unread}">
-                <strong v-if="item.actor_full_name">{{ item.actor_full_name }}</strong>
-                <strong v-else>{{ item.actor }}</strong>
-                {{ item.verb }} 
+                <div style="float: right">
+                  <button v-bind:class="{'invisible': !item.unread}" class="btn p-0" v-on:click={markRead(item.id)}>&times;</button>
+                </div>
+                <div>
+                  <strong v-if="item.actor_full_name">{{ item.actor_full_name }}</strong>
+                  <strong v-else>{{ item.actor }}</strong>
+                  {{ item.verb }} 
 
-                <a :href="item.action_object_url" v-if="item.action_object_url">{{ item.action_object }}</a>
-                <span v-else>{{ item.action_object }}</span>
-                <span v-if="item.target">on {{ item.target }}</span>
-                (<timeago
-                  :datetime="item.timestamp"
-                  :title="new Date(item.timestamp).toLocaleString('cs')"></timeago>)
+                  <a :href="item.action_object_url" v-if="item.action_object_url">{{ item.action_object }}</a>
+                  <span v-else>{{ item.action_object }}</span>
+                  <span v-if="item.target">on {{ item.target }}</span>
+                  (<timeago
+                    :datetime="item.timestamp"
+                    :title="new Date(item.timestamp).toLocaleString('cs')"></timeago>)
+                </div>
               </li>
             </template>
             <span class="list-group-item p-1 text-center" v-else>There are no notifications!</span>
@@ -61,6 +66,14 @@ Vue.component('notifications', {
       axios.post('/notification/mark_as_read').then(() => {
         this.refresh();
       });
+    },
+    markRead(id) {
+      const item = this.notifications.find((item) => item.id == id);
+      if(item) {
+        axios.post('/notification/mark_as_read/' + id).then(() => {
+          item.unread = false;
+        });
+      }
     },
     refresh() {
       axios.get('/notification/all').then((response) => {
