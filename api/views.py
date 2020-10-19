@@ -110,7 +110,7 @@ def class_detail_list(request, **class_conditions):
             'timeslot': clazz.timeslot,
             'code': clazz.code,
             'subject_abbr': clazz.subject.abbr,
-            'csv_link': reverse('download_csv_per_class', kwargs={'class_id': assignment.clazz_id}),
+            'csv_link': reverse('download_csv_per_class', kwargs={'class_id': clazz.id}),
             'assignments': assignments,
             'summary': clazz.summary(),
             'students': list(clazz.students.all().order_by('username').values('username', 'first_name', 'last_name')),
