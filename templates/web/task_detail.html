@@ -160,7 +160,7 @@ TODO: Make it nicer with Bootstrap
                 <div class="text-muted">exit code: {{ input.exit_code }}</div>
                 {% endif %}
 
-                {% for path, file in input.files.items %}
+                {% for path, file in input.sorted_files %}
                 <div class="card mb-3">
                     <div class="card-header">
                         <h5>

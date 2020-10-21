@@ -84,7 +84,27 @@ class Test:
     @property
     def title(self):
         return self._title if self._title else self.name
-    
+
+    def sorted_files(self):
+        def sorter(item):
+            name = item[0]
+            f = item[1]
+
+            if name == 'stdin':
+                return (0, 'stdin')
+
+            if f.input:
+                return (1, name)
+
+            if name == 'stdout':
+                return (2, 'stdout')
+
+            return (3, name)
+
+        sorted_values = list(self.files.items())
+        sorted_values.sort(key=sorter)
+        return list(sorted_values)
+
     @title.setter
     def title(self, value):
         self._title = value
