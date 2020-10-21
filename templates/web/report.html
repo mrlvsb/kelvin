@@ -1,5 +1,4 @@
 {% if submit %}
-<input type="checkbox" id="checkbox-only-errors" checked> <label for="checkbox-only-errors">show only errors</label>
 
 {% for result in results %}
   {% if result.html or result.tests %}
@@ -11,6 +10,11 @@
     </h5>
     {% if result.html %}
     {{ result.html | safe }}
+    {% endif %}
+
+
+    {% if result.tests %}
+    <input type="checkbox" id="checkbox-only-errors" checked> <label for="checkbox-only-errors">show only failed tests</label>
     {% endif %}
 
     {% for test in result.tests %}
