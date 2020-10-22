@@ -17,9 +17,11 @@ from evaluator.testsets import TestSet
 from common.models import current_semester, Subject
 from web.task_utils import load_readme
 import os
+import re
 import json
 import datetime
 import logging
+from shutil import copytree, ignore_patterns
 from django.utils.dateparse import parse_datetime
 
 from web.views.teacher import teacher_list 
@@ -295,6 +297,30 @@ def task_detail(request, task_id=None):
 
     return JsonResponse(result)
  
+@user_passes_test(is_teacher)
+def duplicate_task(request, task_id):
+    template = get_object_or_404(Task, pk=task_id)
+
+    new_path = template.dir()
+    for user in User.objects.filter(groups__name='teacher'):
+        new_path = new_path.replace(user.username, request.user.username)
+
+    i = 1
+    while os.path.exists(new_path):
+        new_path = re.sub(r"(_copy_[0-9]+$|$)", f'_copy_{i}', new_path, count=1)
+        i += 1
+
+    copytree(template.dir(), new_path, ignore=ignore_patterns('.taskid'))
+
+    copied_task = template
+    copied_task.id = None
+    copied_task.code = Task.path_to_code(new_path)
+    copied_task.save()
+
+    return JsonResponse({
+        'id': copied_task.id,
+    })
+
 
 @csrf_exempt
 @transaction.atomic

@@ -118,6 +118,16 @@
       return cl;
     });
   }
+
+  async function duplicateTask() {
+      let res = await fetch(`/api/tasks/${task.id}/duplicate`, {
+        method: 'POST',
+      })
+
+      let json = await res.json();
+      push('/task/edit/' + json.id);
+      loadTask(json.id);
+  }
 </script>
 
 <style>
@@ -151,6 +161,11 @@ td:not(:nth-of-type(2)) {
 		<div class="input-group mb-1">
 			<AutoComplete bind:value={task.path} onChange={loadTask} on:click={() => syncPathWithTitle = false} />
       {#if task.task_link}
+      <div class="input-group-append">
+        <button class="btn btn-outline-info" title="Duplicate this task" on:click={duplicateTask}>
+          <span class="iconify" data-icon="ant-design:copy-outlined"></span>
+        </button>
+      </div>
       <div class="input-group-append">
         <a class="btn btn-outline-info" href={task.task_link} target=_blank><span class="iconify" data-icon="bx:bx-link-external"></span></a>
       </div>

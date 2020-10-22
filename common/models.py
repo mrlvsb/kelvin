@@ -46,6 +46,10 @@ class Task(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     announce = models.BooleanField(default=False)
 
+    def path_to_code(path):
+        path = os.path.realpath(os.path.abspath(path))
+        return os.path.relpath(path, os.path.abspath("./tasks"))
+
     def dir(self):
         return os.path.join("tasks", self.code)
 
