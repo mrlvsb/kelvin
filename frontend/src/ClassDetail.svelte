@@ -154,6 +154,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)) {
                     <a href="{assignment.moss_link}" title="Send to MOSS"><span class="iconify" data-icon="bx:bx-check-double"></span></a>
                     <a href="{assignment.sources_link}" title="Download all source codes"><span class="iconify" data-icon="fe:download" data-inline="false"></span></a>
                     <a href="{assignment.csv_link}" title="Download CSV with results"><span class="iconify" data-icon="la:file-csv-solid"></span></a>
+                    <a href="/assignment/show/{assignment.assignment_id}" title="Show all source codes"><span class="iconify" data-icon="bx-bx-code-alt"></span></a>
                     <button class="btn btn-link p-0" class:spin={reevaluateLoading} title='Reevaluate latest submits' on:click={() => reevaluateAssignment(assignment)}>
                       <span class="iconify" data-icon="bx:bx-refresh"></span>
                     </button>
