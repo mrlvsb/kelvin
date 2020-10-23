@@ -7,6 +7,7 @@ from collections import defaultdict
 import subprocess
 import tempfile
 from common.models import Submit
+from common.utils import points_to_color 
 
 class DockerPipe:
     def __init__(self, image, **kwargs):
@@ -122,6 +123,11 @@ class SleepPipe:
         time.sleep(self.seconds)
 
 class AutoGraderPipe:
+    def __init__(self, propose=False, after_deadline_multiplier=0, overwrite=False):
+        self.propose = propose
+        self.after_deadline_multiplier = max(0, min(1.0, after_deadline_multiplier))
+        self.overwrite = overwrite
+
     def run(self, evaluation):
         if 'submit_id' not in evaluation.tests.meta:
             return
@@ -137,5 +143,14 @@ class AutoGraderPipe:
             return
 
         s = Submit.objects.get(id=evaluation.tests.meta['submit_id'])
-        s.assigned_points = success * s.assignment.max_points / total
-        s.save()
+        is_after_deadline = s.assignment.deadline and s.assignment.deadline < s.created_at
+        points = success * s.assignment.max_points * (self.after_deadline_multiplier if is_after_deadline else 1) / total
+
+        if self.propose:
+            return {
+                "html": f"Kelvin proposes <span style='color: {points_to_color(points, s.assignment.max_points)}'>{points}</span> points from maximal {s.assignment.max_points} points."
+            }
+        else:
+            if (s.assigned_points is not None and self.overwrite) or s.assigned_points is None:
+                s.assigned_points = points
+                s.save()

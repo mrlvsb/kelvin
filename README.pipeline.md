@@ -161,6 +161,9 @@ Manually assigned points are replaced when the submit is reevaluated - you have 
 ```yaml
 pipeline:
   - type: autograder
+    propose: false                 # show points in result instead of assigning them directly
+    overwrite: false               # overwrite points if they are already assigned to THAT submit
+    after_deadline_multiplier: 0.9 # give only 90% of maximal points for submits after the deadline
 ```
 
 ## clang-tidy

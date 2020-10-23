@@ -7,6 +7,12 @@ LDAP_CONNECTION = None
 def is_teacher(user):
     return user.groups.filter(name='teachers').exists()
 
+def points_to_color(points, max_points):
+    ratio = max(0, min(1, points / max_points))
+    green = int(ratio * 200)
+    red = int((1 - ratio) * 255)
+    return f'#{red:02X}{green:02X}00'
+
 def parse_time_interval(text):
     patterns = [
         r"(?P<days>\d+)\s*(d|day|days)",

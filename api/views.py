@@ -11,7 +11,7 @@ from evaluator.evaluator import evaluate
 from common.evaluate import evaluate_job
 from django.http import JsonResponse
 from django.contrib.auth.decorators import user_passes_test
-from common.utils import is_teacher
+from common.utils import is_teacher, points_to_color
 from common.models import Task, Class, current_semester_conds
 from evaluator.testsets import TestSet 
 from common.models import current_semester, Subject
@@ -84,10 +84,7 @@ def class_detail_list(request, **class_conditions):
 
             for score in assignedtask_results(assignment):
                 if 'assigned_points' in score and score['assigned_points'] is not None and int(assignment.max_points or 0) > 0:
-                    ratio = max(0, min(1, score['assigned_points'] / assignment.max_points))
-                    green = int(ratio * 200)
-                    red = int((1 - ratio) * 255)
-                    score['color'] = f'#{red:02X}{green:02X}00'
+                    score['color'] = points_to_color(score['assigned_points'], assignment.max_points)
                 score['student'] = score['student'].username
 
 
