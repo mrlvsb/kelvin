@@ -60,6 +60,13 @@
     }
     reevaluateLoading = false;
   }
+  function studentPoints(clazz, student) {
+      return clazz.assignments
+          .map(i => i.students[student.username])
+          .filter(result => result && result.submits != 0 && !isNaN(parseFloat(result.assigned_points)))
+          .map(result => parseFloat(result.assigned_points))
+          .reduce((acc, val) => acc + val, 0);
+  }
 </script>
 
 <style>
@@ -67,10 +74,11 @@ td, th {
   white-space: nowrap;
   width: 1%;
 }
-tr th:last-of-type {
+tr th:last-of-type,td:last-of-type {
   width: 100%;
+  text-align: right;
 }
-tr td:not(:nth-of-type(1)):not(:nth-of-type(2)) {
+tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
   text-align: center;
 }
 
@@ -146,7 +154,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)) {
               <th>Student</th>
               {#each clazz.assignments as assignment}
               <th class="more-hover">
-                <a href="{ assignment.task_link }">{ assignment.short_name }</a>
+                <a href="{ assignment.task_link }">{ assignment.short_name } ({ assignment.max_points }b)</a>
                 <div class="more-content">
                   {assignment.name}
                   <a href="/task/edit/{assignment.task_id}" use:link title="Edit"><span class="iconify" data-icon="clarity:edit-solid"></span></a>
@@ -182,7 +190,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)) {
                 </div>
               </th>
               {/each}
-              <th></th>
+              <th>Celkem</th>
             </tr>
           </thead>
 
@@ -200,7 +208,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)) {
                 {/if}
               </td>
             {/each}
-            <td></td>
+            <td>{studentPoints(clazz, student)}</td>
           </tr>
           {/each}
           </tbody>
