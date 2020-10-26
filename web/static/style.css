@@ -159,6 +159,10 @@ h3 {
   text-align: left;
 }
 
+.more-hover {
+  position: relative;
+}
+
 .more-hover:hover .more-content {
   position: absolute;
   display: block;
