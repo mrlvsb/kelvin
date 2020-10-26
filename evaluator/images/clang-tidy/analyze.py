@@ -27,19 +27,28 @@ class OffsetToLine:
                     offsets.append(offset)
         return offsets
 
-cmd = [
-    'clang-tidy',
-    f"--export-fixes=/tmp/fixes.yaml",
-]
-
 s = os.environ.get('PIPE_CHECKS', '')
 if s:
     checks = json.loads(s)
-    print(f"Checks: {s}")
+else:
+    checks = [
+        '*',
+        '-cppcoreguidelines-avoid-magic-numbers',
+        '-readability-magic-numbers',
+        '-cert-*',
+        '-llvm-include-order',
+        '-cppcoreguidelines-init-variables',
+        '-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling',
+        '-bugprone-narrowing-conversions',
+        '-cppcoreguidelines-narrowing-conversions',
+    ]
 
-    cmd.append(f"--checks={','.join(checks)}")
-
-cmd += [os.path.basename(f) for f in os.listdir() if f.endswith(".c") or f.endswith(".cpp")]
+cmd = [
+    'clang-tidy',
+    f"--export-fixes=/tmp/fixes.yaml",
+    f"--checks={','.join(checks)}",
+    *[os.path.basename(f) for f in os.listdir() if f.endswith(".c") or f.endswith(".cpp")]
+]
 
 print(cmd)
 subprocess.Popen(cmd).wait()
