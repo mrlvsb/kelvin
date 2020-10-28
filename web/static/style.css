@@ -130,12 +130,21 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 .sourcecode .comment {
   padding: 5px;
-  background: #EFEF40D9;
   white-space: pre-line;
   word-break: break-word;
-  border: 2px solid #BFBFBF;
+  border: 2px solid #000000;
   border-radius: 5px;
   max-width: 800px;
+  margin-bottom: 1px;
+}
+.sourcecode .comment.teacher {
+  background: #FFFF1ED9;
+}
+.sourcecode .comment.student {
+  background: #71F740;
+}
+.sourcecode .comment.automated {
+  background: #7DB4E4;
 }
 
 h1 {

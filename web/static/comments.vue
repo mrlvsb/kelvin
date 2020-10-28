@@ -33,9 +33,9 @@ Vue.component('submit-source-form', {
 });
 
 Vue.component('submit-source-comment', {
-  props: ['id', 'author', 'text', 'canEdit', 'editComment'],
+  props: ['id', 'author', 'text', 'canEdit', 'type', 'editComment'],
   template: `
-  <div class="comment">
+  <div class="comment" :class="type">
     <span v-on:dblclick="editing = canEdit">
       <b>{{ author }}</b>: <span v-if="!editing">{{ text }}</span>
     </span>
@@ -73,7 +73,13 @@ Vue.component('submit-source', {
       <tr v-for="(comment, index) in line.comments">
         <td></td>
         <td>
-          <submit-source-comment :id="comment.id" :author="comment.author" :text="comment.text" :canEdit="comment.can_edit" :editComment="editComment" />
+          <submit-source-comment
+              :id="comment.id"
+              :author="comment.author"
+              :text="comment.text"
+              :canEdit="comment.can_edit"
+              :type="comment.type"
+              :editComment="editComment" />
         </td>
       </tr>
 
