@@ -307,14 +307,19 @@ def submit_comments(request, assignment_id, login, submit_num):
     if not is_teacher(request.user) and request.user.username != submit.student.username:
         raise PermissionDenied()
 
+    def get_comment_type(comment):
+        if comment.author == comment.submit.student:
+            return 'student'
+        return 'teacher'
+
     def dump_comment(comment):
         return {
             'id': comment.id,
             'author': comment.author.get_full_name(),
             'text': comment.text,
             'can_edit': comment.author == request.user,
+            'type': get_comment_type(comment)
         }
-
 
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -394,6 +399,7 @@ def submit_comments(request, assignment_id, login, submit_num):
                             'author': 'Kelvin',
                             'text': comment['text'],
                             'can_edit': False,
+                            'type': 'automated'
                         })
                 except KeyError:
                     pass
