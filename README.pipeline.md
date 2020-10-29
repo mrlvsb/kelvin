@@ -211,6 +211,10 @@ pipeline:
         cmd_show: ./main
 
       - '# apt install faketime # executed but hidden from the output'
+      
+      - cmd: timeout 5 ./main || true
+        cmd_show: ./main
+        asciinema: true
 ```
 
 
