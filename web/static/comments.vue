@@ -144,15 +144,17 @@ Vue.component('submit-sources', {
   },
   template: `
   <div>
-    <div v-for="type in sources">
+    <div v-for="(type, index) in sources">
       <div class="submit-file-header">
         <h4 style="margin: 0">{{ type.path }} </h4>
         <i class="fas fa-copy icon copy"
            style="color: #007bff; cursor: pointer"
            title="Copy file content into clipboard"
            v-if="type.content"
-           :data-clipboard-text="type.content"></i>
+           :data-clipboard-target="'#source-content-' + index"></i>
       </div>
+      <div style="opacity:0; position:absolute; z-index:-1; left:-9999px; white-space: pre"
+           :id="'source-content-' + index">{{ type.content }}</div>
       <submit-source :lines="type.lines" :source="type.path" :url="url" v-if="type.type == 'source'" />
       <img :src="type.src" v-if="type.type == 'img'" />
       <video v-if="type.type == 'video'" controls>
