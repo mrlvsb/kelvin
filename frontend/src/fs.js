@@ -75,7 +75,7 @@ function createFs() {
 
       update(fs => {
         const parts = path.split('/');
-        const dirInode = getInode(parts.slice(0, -1).join('/'), fs['root']);
+        const dirInode = getInode(parts.slice(0, -1).join('/') || '/', fs['root']);
         dirInode['files'][parts[parts.length - 1]] = {
           'type': 'file',
           'content': content || '',
