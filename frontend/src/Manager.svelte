@@ -31,7 +31,6 @@ ul input {
 
 <script>
   import {clickOutside} from './utils.js';
-  import {fetch} from './api.js'
   import {fs, currentPath, cwd, openedFiles, currentOpenedFile} from './fs.js'
   import Editor from './Editor.svelte'
 
@@ -70,6 +69,37 @@ ul input {
       await fs.upload(file.name, file);
     }
   }
+
+  async function openConfigYaml() {
+    const fileName = '/config.yml';
+
+    if(!await fs.open(fileName)) {
+      fs.createFile(fileName, `
+# https://github.com/mrlvsb/kelvin/blob/master/README.pipeline.md
+pipeline:
+  # compile submitted source codes
+  #- type: gcc
+  #  flags: -Wall -Wextra -g -fsanitize=address -lm -static-libasan -Wno-unused-variable
+
+  # add hints from clang-tidy as comments
+  #- type: clang-tidy 
+
+  # run tests
+  #- type: tests
+
+  # run custom commands
+  #- type: run
+  #  commands:
+  #    - ./main 123 | wc -l
+
+  # automatically assign points from the test results
+  #- type: auto_grader
+      
+`.trim());
+
+      await fs.open(fileName);
+    }
+  }
 </script>
 
 <div>
@@ -90,7 +120,10 @@ ul input {
         <label>
         <input id="manager-file-upload" type="file" style="display: none" multiple on:change={addToUploadQueue}>
       </span>
-      </div>
+      <span on:click={openConfigYaml}>
+        <span class="iconify" data-icon="vscode-icons:file-type-light-config"></span>
+      </span>
+    </div>
     <ul>
       {#if $currentPath != '/'}
         <li on:click={() => currentPath.up()}>

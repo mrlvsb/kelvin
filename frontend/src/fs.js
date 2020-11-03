@@ -188,7 +188,7 @@ function createFs() {
       path = absolutePath(path);
       const inode = getInode(path, get(fs)['root']);
       if(!inode) {
-        return;
+        return false;
       }
 
       if(inode.type == 'dir') {
@@ -214,6 +214,8 @@ function createFs() {
 
         currentOpenedFile.set(path);
       }
+      
+      return true;
     }
   };
 };
