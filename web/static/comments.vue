@@ -5,9 +5,9 @@ axios.defaults.headers.common = {
 Vue.component('submit-source-form', {
   props: ['save', 'text', 'required'],
   template: `
-  <form>
+  <form v-on:submit.prevent="submit">
       <textarea class="form-control mb-1" v-on:keydown="keydown($event)" ref="text" :disabled="sending" style="line-height: 100%" rows=4>{{ text }}</textarea>
-      <input type="submit" class="btn btn-sm btn-primary" v-on:click="submit" :disabled="sending" value='Send'>
+      <input type="submit" class="btn btn-sm btn-primary" :disabled="sending" value='Send'>
   </form>`,
   data() {
     return {
