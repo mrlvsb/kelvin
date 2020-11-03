@@ -39,11 +39,6 @@ ul input {
   let ctxMenu = null;
   let newDirName = false;
 
-  function newFile() {
-    let name = 'newfile.txt';
-    renamingPath = fs.createFile('newfile.txt');
-  }
-
   function finishRename(e) {
     if(e.keyCode == 13) {
       fs.rename(renamingPath, e.target.value);
@@ -83,7 +78,7 @@ ul input {
 <div class="d-flex">
   <div class="tree">
     <div class="action-buttons">
-      <span on:click={() => newFile()}>
+      <span on:click={() => renamingPath = '/' + fs.createFile('newfile.txt')}>
         <span class="iconify" data-icon="bx:bxs-file-plus"></span>
       </span>
       <span on:click={() => newDirName = ''}>
