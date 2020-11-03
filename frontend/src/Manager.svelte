@@ -159,7 +159,14 @@ pipeline:
     </ul>
 
     {#if $currentOpenedFile}
-      <Editor filename={$currentOpenedFile} bind:value={$openedFiles[$currentOpenedFile].content} />
+      <div>
+        {#if $currentOpenedFile === '/config.yml'}
+        <a href="https://github.com/mrlvsb/kelvin/blob/master/README.pipeline.md" target="_blank" style="position: absolute; z-index: 3; right: 5px;">
+          <span class="iconify" data-icon="entypo:help"></span>
+        </a>
+        {/if}
+        <Editor filename={$currentOpenedFile} bind:value={$openedFiles[$currentOpenedFile].content} />
+      </div>
     {/if}
   </div>
 </div>
