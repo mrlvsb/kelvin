@@ -7,7 +7,6 @@ import base64
 from io import StringIO
 
 with open("result.html", "w") as f:
-    asciinema_initialized = False
     for job in json.loads(os.getenv('PIPE_COMMANDS')):
         if isinstance(job, str):
             job = {
@@ -27,13 +26,6 @@ with open("result.html", "w") as f:
             cmd = ['asciinema', 'rec', '-c', job['cmd'], '/tmp/out.cast']
             p = subprocess.Popen(cmd, env={'TERM': 'xterm', 'HOME': '/tmp'})
             p.wait()
-
-            if not asciinema_initialized:
-                f.write("""
-                    <script src="https://cdn.jsdelivr.net/npm/asciinema-player@2.6.1/resources/public/js/asciinema-player.min.js"></script>
-                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciinema-player@2.6.1/resources/public/css/asciinema-player.css">
-                """)
-                asciinema_initialized = True
 
             with open("/tmp/out.cast", "rb") as record:
                 f.write(f"<asciinema-player preload src='data:application/json;base64,{base64.b64encode(record.read()).decode('utf-8')}' />")

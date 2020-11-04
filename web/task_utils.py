@@ -159,6 +159,7 @@ def process_markdown(task_code, markdown):
         ('img', 'src'),
         ('video', 'src'),
         ('source', 'src'),
+        ('asciinema-player', 'src'),
     ]
 
     for tag, attr in rules:
