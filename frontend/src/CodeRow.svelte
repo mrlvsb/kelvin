@@ -40,7 +40,6 @@
   
   :global(.comment) {
     padding: 5px;
-    white-space: pre-line;
     word-break: break-word;
     border: 2px solid #000000;
     border-radius: 5px;
