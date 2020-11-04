@@ -22,6 +22,7 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone as tz
 from django.urls import reverse
+from django.contrib.contenttypes.models import ContentType
 
 from ..task_utils import highlight_code_json
 
@@ -341,10 +342,10 @@ def submit_comments(request, assignment_id, login, submit_num):
             raise PermissionDenied()
 
         if not data['text']:
-            notifications = Notification.objects.all()
-            for n in notifications:
-                if n.action_object == comment:
-                    n.delete()
+            Notification.objects.filter(
+                action_object_object_id=comment.id,
+                action_object_content_type=ContentType.objects.get_for_model(Comment)
+            ).delete()
             comment.delete()
 
             return HttpResponse('{}')
