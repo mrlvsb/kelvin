@@ -28,5 +28,5 @@ textarea {
   }
 </script>
 
-<textarea class="form-control mb-1" rows=4 on:keydown={keydown} bind:value={comment} {disabled}></textarea>
+<textarea class="form-control mb-1" rows=4 on:keydown={keydown} bind:value={comment} {disabled} autofocus></textarea>
 <button class="btn btn-sm btn-primary" on:click|preventDefault={submit} {disabled}>Add the comment</button>
