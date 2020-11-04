@@ -347,7 +347,7 @@ def submit_comments(request, assignment_id, login, submit_num):
                     n.delete()
             comment.delete()
 
-            return HttpResponse()
+            return HttpResponse('{}')
         else:
             if comment.text != data['text']:
                 comment.text = data['text']
