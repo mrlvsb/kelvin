@@ -1,8 +1,7 @@
 <script>
     import { createEventDispatcher } from 'svelte'
-    import hljs from 'highlight.js';
-    import 'highlight.js/styles/github.css';
     import CodeRow from './CodeRow.svelte'
+    import hljs from 'highlight.js/lib/core'
 
     export let code;
     export let comments;
