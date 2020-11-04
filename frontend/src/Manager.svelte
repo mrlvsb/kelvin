@@ -27,6 +27,11 @@ ul input {
 .nav-item span {
   padding: 3px 6px;
 }
+
+:global(.editor-container .CodeMirror) {
+  border-top: 0;
+  min-height: 600px;
+}
 </style>
 
 <script>
@@ -159,7 +164,7 @@ pipeline:
     </ul>
 
     {#if $currentOpenedFile}
-      <div>
+      <div class="editor-container">
         {#if $currentOpenedFile === '/config.yml'}
         <a href="https://github.com/mrlvsb/kelvin/blob/master/README.pipeline.md" target="_blank" style="position: absolute; z-index: 3; right: 5px;">
           <span class="iconify" data-icon="entypo:help"></span>

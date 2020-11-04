@@ -57,7 +57,7 @@
     padding-left: 20px;
   }
   :global(.comment p:last-of-type:first-of-type) {
-    display: inline-block;
+    display: inline;
   }
   :global(.comment p:last-of-type) {
     margin-bottom: 0;

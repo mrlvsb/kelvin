@@ -10,6 +10,9 @@
 
   export let value;
   export let filename;
+  export let autofocus = false;
+  export let disabled = true;
+  export let extraKeys = {};
 
   function toMode(filename) {
     const parts = filename.split('.');
@@ -29,6 +32,8 @@
   $: if(editorEl && !editor) {
       editor = CodeMirror.fromTextArea(editorEl, {
         mode: toMode(filename),
+        autofocus,
+        readOnly: disabled,
         extraKeys: {
           "F11": function(cm) {
             cm.setOption("fullScreen", !cm.getOption("fullScreen"));
@@ -37,7 +42,8 @@
             if(cm.getOption("fullScreen")) {
                 cm.setOption("fullScreen", false);
             }
-          }
+          },
+          ...extraKeys,
         }
       });
 
@@ -66,6 +72,10 @@
     editor.setOption('mode', toMode(filename));
   }
 
+  $: if(editor) {
+    editor.setOption('readOnly', disabled);
+  }
+
   onDestroy(() => {
     if(editor) {
       editor.toTextArea();
@@ -75,9 +85,7 @@
 <style>
 :global(.CodeMirror) {
   border: 1px solid #ced4da;
-  border-top: 0;
   border-radius: .25rem;
-  min-height: 600px;
   resize: vertical;
 }
 </style>
