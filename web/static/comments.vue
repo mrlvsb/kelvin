@@ -175,9 +175,10 @@ Vue.component('submit-sources', {
       })
   },
 });
-
+/*
 document.querySelectorAll('.comments').forEach((el) => {
   new Vue({
     el: el,
   })
 });
+*/
