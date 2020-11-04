@@ -1,3 +1,9 @@
+<style>
+textarea {
+  line-height: normal;
+}
+</style>
+
 <script>
     import { createEventDispatcher } from 'svelte';
     export let comment = '';
@@ -8,6 +14,12 @@
   function keydown(evt) {
     if (evt.ctrlKey && evt.keyCode == 13) {
       submit();
+    } else if(evt.key == 'Tab') {
+      evt.preventDefault();
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      this.value = this.value.substring(0, start) + "\t" + this.value.substring(end);
+      this.selectionStart = this.selectionEnd = start + 1;
     }
   }
 

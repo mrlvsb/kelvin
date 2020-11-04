@@ -8,7 +8,8 @@
     marked.setOptions({
       highlight: function(code, lang) {
         return hljs.highlight(lang, code).value;
-      }
+      },
+      breaks: true,
     });
 
     function sanitize(string) {

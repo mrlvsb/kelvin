@@ -37,14 +37,30 @@
   tr.linecode td:first-of-type::before {
     content: counter(my-sec-counter);
   }
+  tr.linecode td:last-of-type {
+    width: 100%;
+  }
   
   :global(.comment) {
     padding: 5px;
     word-break: break-word;
     border: 2px solid #000000;
     border-radius: 5px;
-    max-width: 800px;
+    max-width: 1000px;
     margin-bottom: 1px;
+  }
+  :global(.comment p) {
+    margin-bottom: 4px;
+    white-space: pre-line;
+  }
+  :global(.comment ul, .comment ol) {
+    padding-left: 20px;
+  }
+  :global(.comment p:last-of-type:first-of-type) {
+    display: inline-block;
+  }
+  :global(.comment p:last-of-type) {
+    margin-bottom: 0;
   }
   :global(.comment.teacher) {
     background: #FFFF1ED9;
