@@ -375,7 +375,7 @@ def submit_comments(request, assignment_id, login, submit_num):
                 }
             result[name]['sources'].append(reverse('submit_source', args=[submit.id, source.virt]))
         else:
-            content = None
+            content = ''
             error = None
             try:
                 if os.path.getsize(source.phys) > 500 * 1024:
@@ -401,9 +401,9 @@ def submit_comments(request, assignment_id, login, submit_num):
         for source, comments in pipe.comments.items():
             for comment in comments:
                 try:
-                    line = min(len(result[source]['lines']), comment['line']) - 1
-                    if not any(filter(lambda c: c['text'] == comment['text'], result[source]['lines'][line]['comments'])):
-                        result[source].setdefault(line, []).append({
+                    line = min(result[source]['content'].count('\n'), comment['line']) - 1
+                    if not any(filter(lambda c: c['text'] == comment['text'], result[source]['comments'].setdefault(line, []))):
+                        result[source]['comments'].setdefault(line, []).append({
                             'id': -1,
                             'author': 'Kelvin',
                             'text': comment['text'],
@@ -411,7 +411,7 @@ def submit_comments(request, assignment_id, login, submit_num):
                             'type': 'automated'
                         })
                 except KeyError as e:
-                    logging.error(e)
+                    logging.exception(e)
 
     for comment in Comment.objects.filter(submit_id=submit.id).order_by('id'):
         try:
@@ -422,7 +422,7 @@ def submit_comments(request, assignment_id, login, submit_num):
             line = 0 if comment.line > max_lines else comment.line
             result[comment.source]['comments'].setdefault(comment.line - 1, []).append(dump_comment(comment))
         except KeyError as e:
-            logging.error(e)
+            logging.exception(e)
 
     priorities = {
         'video': 0,
