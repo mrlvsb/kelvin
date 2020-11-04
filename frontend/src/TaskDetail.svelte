@@ -6,7 +6,7 @@
   import {fetch} from './api.js'
 
   export let url;
-  let sources = [];
+  let sources = null;
 
   async function saveComment(evt) {
     if(evt.detail.id === undefined) {
@@ -72,33 +72,28 @@
   }
 </style>
 
-{#each sources as source}
-  <h2>
-    {source.path}{#if source.type == 'source'}<CopyToClipboard content={() => source.content} title='Copy the source code to the clipboard'><span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px"></span></CopyToClipboard>{/if}
-  </h2>
-  {#if source.type == 'source'}
-    <SubmitSource
-      code={source.content}
-      comments={source.lines.map((i) => i.comments)}
-      on:saveComment={(evt) => {evt.detail.source = source.path; saveComment(evt)}} />
-  {:else if source.type === 'img'}
-    <img src={source.src} />
-  {:else if source.type === 'video'}
-    <video controls>
-      {#each source.sources as src}
-        <source {src} />
-      {/each}
-    </video>
-  {:else}The preview cannot be shown.{/if}
-{/each}
-
-<!--
-  {#await sources}
+{#if sources === null}
   <div class="d-flex justify-content-center">
     <SyncLoader />
   </div>
-{:then sources}
-{:catch}
-  <p class="alert alert-danger">Failed to load the submit's source code.</p>
-{/await}
--->
+{:else}
+  {#each sources as source}
+    <h2>
+      {source.path}{#if source.type == 'source'}<CopyToClipboard content={() => source.content} title='Copy the source code to the clipboard'><span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px"></span></CopyToClipboard>{/if}
+    </h2>
+    {#if source.type == 'source'}
+      <SubmitSource
+        code={source.content}
+        comments={source.lines.map((i) => i.comments)}
+        on:saveComment={(evt) => {evt.detail.source = source.path; saveComment(evt)}} />
+    {:else if source.type === 'img'}
+      <img src={source.src} />
+    {:else if source.type === 'video'}
+      <video controls>
+        {#each source.sources as src}
+          <source {src} />
+        {/each}
+      </video>
+    {:else}The preview cannot be shown.{/if}
+  {/each}
+{/if}
