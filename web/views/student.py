@@ -12,19 +12,18 @@ import mimetypes
 import rq
 import subprocess
 import magic
+import logging
 from django.core.files.uploadedfile import UploadedFile
 
 from django.utils import timezone as datetime
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone as tz
 from django.urls import reverse
 from django.contrib.contenttypes.models import ContentType
-
-from ..task_utils import highlight_code_json
 
 from common.models import Submit, Class, AssignedTask, Task, Comment, assignedtask_results
 from common.evaluate import evaluate_job
@@ -333,7 +332,7 @@ def submit_comments(request, assignment_id, login, submit_num):
         comment.save()
 
         notify.send(sender=request.user, recipient=comment_recipients(submit, request.user), verb='added new', action_object=comment, target=submit)
-        return HttpResponse(json.dumps(dump_comment(comment)))
+        return JsonResponse(dump_comment(comment))
     elif request.method == 'PATCH':
         data = json.loads(request.body)
         comment = get_object_or_404(Comment, id=data['id'])
@@ -355,7 +354,7 @@ def submit_comments(request, assignment_id, login, submit_num):
                 comment.save()
 
                 notify.send(sender=request.user, recipient=comment_recipients(submit, request.user), verb='updated', action_object=comment, target=submit)
-            return HttpResponse(json.dumps(dump_comment(comment)))
+            return JsonResponse(dump_comment(comment))
 
     result = {}
     for source in submit.all_sources():
@@ -376,15 +375,24 @@ def submit_comments(request, assignment_id, login, submit_num):
                 }
             result[name]['sources'].append(reverse('submit_source', args=[submit.id, source.virt]))
         else:
-            lines = []
-            content, formatted_lines = highlight_code_json(source.phys)
-            for line in formatted_lines:
-                lines.append({'content': line, 'comments': []})
+            content = None
+            error = None
+            try:
+                if os.path.getsize(source.phys) > 500 * 1024:
+                    error = 'File too large'
+                with open(source.phys) as f:
+                    content = f.read()
+            except UnicodeDecodeError:
+                error = "source code contains binary data"
+            except FileNotFoundError:
+                error = "source code not found"
+
             result[source.virt] = {
                 'type': 'source',
                 'path': source.virt,
-                'lines': lines,
-                'content': content
+                'content': content,
+                'error': error,
+                'comments': {},
             }
 
     # add comments from pipeline
@@ -395,31 +403,33 @@ def submit_comments(request, assignment_id, login, submit_num):
                 try:
                     line = min(len(result[source]['lines']), comment['line']) - 1
                     if not any(filter(lambda c: c['text'] == comment['text'], result[source]['lines'][line]['comments'])):
-                        result[source]['lines'][line]['comments'].append({
+                        result[source].setdefault(line, []).append({
                             'id': -1,
                             'author': 'Kelvin',
                             'text': comment['text'],
                             'can_edit': False,
                             'type': 'automated'
                         })
-                except KeyError:
-                    pass
+                except KeyError as e:
+                    logging.error(e)
 
     for comment in Comment.objects.filter(submit_id=submit.id).order_by('id'):
         try:
-            if comment.source not in result or comment.line > len(result[comment.source]['lines']):
+            if comment.source not in result:
                 continue
 
-            result[comment.source]['lines'][comment.line - 1]['comments'].append(dump_comment(comment))
-        except KeyError:
-            pass
+            max_lines = result[comment.source]['content'].count('\n')
+            line = 0 if comment.line > max_lines else comment.line
+            result[comment.source]['comments'].setdefault(comment.line - 1, []).append(dump_comment(comment))
+        except KeyError as e:
+            logging.error(e)
 
     priorities = {
         'video': 0,
         'img': 1,
         'source': 2,
     }
-    return HttpResponse(json.dumps(sorted(result.values(), key=lambda f: (priorities[f['type']], f['path']))))
+    return JsonResponse({'sources': sorted(result.values(), key=lambda f: (priorities[f['type']], f['path']))})
 
 def file_response(file, filename, mimetype):
     response = HttpResponse(file, mimetype)
