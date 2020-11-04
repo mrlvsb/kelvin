@@ -21,7 +21,8 @@ with open("result.html", "w") as f:
             job['cmd'] = job['cmd'][1:]
             job['hide'] = True
 
-        f.write(f"<code style='color: #444; font-weight: bold'>$ {html.escape(job.get('cmd_show', job['cmd']))}</code><br>")
+        if not job.get('hide', False):
+            f.write(f"<code style='color: #444; font-weight: bold'>$ {html.escape(job.get('cmd_show', job['cmd']))}</code><br>")
         if job.get('asciinema', False):
             cmd = ['asciinema', 'rec', '-c', job['cmd'], '/tmp/out.cast']
             p = subprocess.Popen(cmd, env={'TERM': 'xterm', 'HOME': '/tmp'})
