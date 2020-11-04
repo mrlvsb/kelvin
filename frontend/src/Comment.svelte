@@ -7,7 +7,10 @@
 
     marked.setOptions({
       highlight: function(code, lang) {
-        return hljs.highlight(lang, code).value;
+        if(lang) {
+          return hljs.highlight(lang, code).value;
+        }
+        return hljs.highlightAuto(code).value;
       },
       breaks: true,
     });
