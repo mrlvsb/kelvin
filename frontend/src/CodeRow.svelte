@@ -79,6 +79,7 @@
   import { createEventDispatcher } from 'svelte'
   import CommentForm from './CommentForm.svelte'
   import Comment from './Comment.svelte'
+  import {user} from './global.js'
 
   export let line;
   export let lineNumber;
@@ -118,7 +119,7 @@
     {/each}
 
     {#if showAddingForm}
-      <div class="comment teacher">
+      <div class="comment {$user.teacher ? 'teacher' : 'student'}">
         <CommentForm on:save={addNewComment} disabled={addingInProgress} />
       </div>
     {/if}

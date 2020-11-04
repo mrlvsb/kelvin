@@ -16,6 +16,7 @@ from common.models import Task, Class, current_semester_conds
 from evaluator.testsets import TestSet 
 from common.models import current_semester, Subject
 from web.task_utils import load_readme
+from django.contrib.auth.decorators import login_required
 import os
 import re
 import json
@@ -134,13 +135,14 @@ def subject_list(request, subject_abbr):
 
     return JsonResponse({'classes': classes})
 
-@user_passes_test(is_teacher)
+@login_required
 def info(request):
     res = {}
     res['user'] = {
         'id': request.user.id,
         'username': request.user.username,
-        'name': request.user.get_full_name()
+        'name': request.user.get_full_name(),
+        'teacher': is_teacher(request.user),
     }
 
     semester = current_semester();
