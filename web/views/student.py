@@ -532,6 +532,15 @@ def task_asset(request, task_name, path):
                     return file_response(f, os.path.basename(system_path), "application/tar")
         raise Http404()
 
+
+# Files with these extensions will be opened in the browser directly
+DIRECT_SHOW_EXTENSIONS = [
+    ".html",
+    ".svg",
+    ".png",
+    ".jpg"
+]
+
 @login_required
 def raw_result_content(request, submit_id, test_name, result_type, file):
     submit = get_object_or_404(Submit, pk=submit_id)
@@ -546,9 +555,16 @@ def raw_result_content(request, submit_id, test_name, result_type, file):
                     if result_type in test.files[file]:
                         if result_type == "html":
                             return HttpResponse(test.files[file][result_type].read(),
-                                                'text/html' if result_type == 'html' else 'text/plain')
+                                                content_type='text/html')
                         else:
-                            return file_response(test.files[file][result_type].open('rb'), f"{test_name}.{result_type}", 'text/plain')
+                            file_content = test.files[file][result_type].open('rb')
+                            file_name = f"{result_type}-{file}"
+                            extension = os.path.splitext(file)[1]
+                            file_mime = mimetypes.MimeTypes().guess_type(file)[0]
+
+                            if extension in DIRECT_SHOW_EXTENSIONS and file_mime:
+                                return HttpResponse(file_content, content_type=file_mime)
+                            return file_response(file_content, file_name, "text/plain")
     raise Http404()
 
 
