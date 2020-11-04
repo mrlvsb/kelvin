@@ -90,15 +90,19 @@
   const dispatch = createEventDispatcher();
 
   function addNewComment(evt) {
-    addingInProgress = true;
-    dispatch('saveComment', {
-      line: lineNumber,
-      text: evt.detail,
-      success: function() {
-        dispatch('showCommentForm', -1);
-        addingInProgress = false;
-      },
-    });
+    if(evt.detail === '') {
+      dispatch('showCommentForm', -1);
+    } else {
+      addingInProgress = true;
+      dispatch('saveComment', {
+        line: lineNumber,
+        text: evt.detail,
+        success: function() {
+          dispatch('showCommentForm', -1);
+          addingInProgress = false;
+        },
+      });
+    }
   }
   
 </script>
