@@ -23,7 +23,13 @@
       });
 
       const json = await res.json();
-      sources.find(s => s.path === evt.detail.source).lines[evt.detail.line - 1].comments.push(json);
+
+      sources = sources.map(source => {
+        if(source.path === evt.detail.source) {
+          (source.comments[evt.detail.line - 1] = source.comments[evt.detail.line - 1] || []).push(json);
+        }
+        return source;
+      });
     } else {
       const res = await fetch(url, {
         method: 'PATCH',
@@ -36,22 +42,25 @@
         })
       });
 
-      for(let source of sources) {
-        for(let line of source.lines) {
-          for(const commentIdx in line.comments) {
-            if(line.comments[commentIdx].id === evt.detail.id) {
-              if(evt.detail.text == '') {
-                line.comments.splice(commentIdx, 1);
-              } else {
-                line.comments[commentIdx].text = evt.detail.text;
+      sources = sources.map(source => {
+        if(evt.detail.text == '') {
+          source.comments = Object.fromEntries(Object.entries(source.comments).map(([lineNum, comments]) => {
+            return [lineNum, comments.filter(comment => comment.id !== evt.detail.id)];
+          }));
+        } else {
+          source.comments = Object.fromEntries(Object.entries(source.comments).map(([lineNum, comments]) => {
+            return [lineNum, comments.map(comment => {
+              if(comment.id === evt.detail.id) {
+                  comment.text = evt.detail.text;
               }
-            }
-          }
+              return comment;
+            })];
+          }));
         }
-      }
+        return source;
+      });
     }
     
-    sources = sources;
     if(evt.detail.success) {
       evt.detail.success();
     }
@@ -59,7 +68,7 @@
 
   async function load() {
     const res = await fetch(url);
-    sources = await res.json();
+    sources = (await res.json())['sources'];
   }
 
   load();
@@ -84,7 +93,7 @@
     {#if source.type == 'source'}
       <SubmitSource
         code={source.content}
-        comments={source.lines.map((i) => i.comments)}
+        comments={source.comments}
         on:saveComment={(evt) => {evt.detail.source = source.path; saveComment(evt)}} />
     {:else if source.type === 'img'}
       <img src={source.src} />
