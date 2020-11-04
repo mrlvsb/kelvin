@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import SubmitSource from "./SubmitSource.svelte";
   import SyncLoader from "./SyncLoader.svelte";
+  import CopyToClipboard from './CopyToClipboard.svelte'
   import {fetch} from './api.js'
 
   export let url;
@@ -72,7 +73,9 @@
 </style>
 
 {#each sources as source}
-  <h2>{source.path}</h2>
+  <h2>
+    {source.path}{#if source.type == 'source'}<CopyToClipboard content={() => source.content} title='Copy the source code to the clipboard'><span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px"></span></CopyToClipboard>{/if}
+  </h2>
   {#if source.type == 'source'}
     clipboard
     <SubmitSource

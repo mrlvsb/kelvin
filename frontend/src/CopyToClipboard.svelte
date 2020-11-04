@@ -7,7 +7,7 @@ export let title = 'Copy to clipboard';
 let tooltip;
 
 function copy(e) {
-    navigator.clipboard.writeText(content);
+    navigator.clipboard.writeText(typeof(content) === 'function' ? content() : content);
 
     let container = e.target.closest('.tooltip-container');
     tooltip = {
