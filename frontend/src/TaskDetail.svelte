@@ -77,7 +77,6 @@
     {source.path}{#if source.type == 'source'}<CopyToClipboard content={() => source.content} title='Copy the source code to the clipboard'><span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px"></span></CopyToClipboard>{/if}
   </h2>
   {#if source.type == 'source'}
-    clipboard
     <SubmitSource
       code={source.content}
       comments={source.lines.map((i) => i.comments)}
