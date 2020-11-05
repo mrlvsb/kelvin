@@ -6,7 +6,6 @@
   }
   
   tr td:first-of-type {
-    position: relative;
     text-align: right;
     color: #7e7e7e;
     user-select: none;
@@ -16,15 +15,10 @@
   }
   
   tr td:first-of-type span {
-    position: absolute;
     padding-left: 4px;
     font-weight: bold;
     color: black;
     visibility: hidden;
-  }
-  
-  tr td:first-of-type span:hover {
-    transform: scale(2);
   }
   
   tr:hover td:first-of-type span {
