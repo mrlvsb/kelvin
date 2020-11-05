@@ -18,4 +18,4 @@
 </script>
 
 <Editor bind:value={comment} filename="comment.md" {disabled} autofocus extraKeys={{'Ctrl-Enter': submit}} /> 
-<button class="btn btn-sm btn-primary mt-1" on:click|preventDefault={submit} {disabled}>Add the comment</button>
+<button class="btn btn-sm btn-primary mt-1" on:click|preventDefault={submit} {disabled}>Add comment</button>
