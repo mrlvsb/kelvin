@@ -11,7 +11,7 @@
   export let value;
   export let filename;
   export let autofocus = false;
-  export let disabled = true;
+  export let disabled = false;
   export let extraKeys = {};
 
   function toMode(filename) {
