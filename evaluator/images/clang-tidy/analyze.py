@@ -41,6 +41,8 @@ else:
         '-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling',
         '-bugprone-narrowing-conversions',
         '-cppcoreguidelines-narrowing-conversions',
+        '-android-cloexec-fopen',
+        '-readability-braces-around-statements',
     ]
 
 cmd = [
