@@ -15,20 +15,6 @@
       breaks: true,
     });
 
-    function sanitize(string) {
-      const map = {
-          '&': '&amp;',
-          '<': '&lt;',
-          '>': '&gt;',
-          '"': '&quot;',
-          "'": '&#x27;',
-          "/": '&#x2F;',
-      };
-      const reg = /[&<>"'/]/ig;
-      return string.replace(reg, (match)=>(map[match]));
-    }
-
-
     export let author;
     export let text;
     export let type;
@@ -37,6 +23,11 @@
     export let url = null;
 
     const dispatch = createEventDispatcher();
+
+    const sanitizeOpts = {
+      USE_PROFILES: {html: true},
+      FORBID_TAGS: ['style', 'iframe', 'frame', 'img', 'video', 'audio', 'script']
+    };
 
     let editing = false;
     let sending = false;
@@ -62,7 +53,7 @@
         </a>
       {/if}
     {:else}
-      {@html DOMPurify.sanitize(marked(sanitize(text)))}
+      {@html DOMPurify.sanitize(marked(text), sanitizeOpts)}
     {/if}
   {:else}
     <CommentForm comment={text} on:save={updateComment} disabled={sending} />
