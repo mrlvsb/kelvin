@@ -210,6 +210,12 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
             s.jobid = django_rq.enqueue(evaluate_job, s).id
             s.save()
 
+            # delete previous notifications
+            Notification.objects.filter(
+                action_object_object_id__in=submits,
+                action_object_content_type=ContentType.objects.get_for_model(Submit)
+            ).delete()
+
             notify.send(sender=request.user, recipient=[assignment.clazz.teacher],
                         verb='submitted', action_object=s)
 
