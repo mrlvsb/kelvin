@@ -408,7 +408,8 @@ def submit_comments(request, assignment_id, login, submit_num):
                             'author': 'Kelvin',
                             'text': comment['text'],
                             'can_edit': False,
-                            'type': 'automated'
+                            'type': 'automated',
+                            'url': comment.get('url', None),
                         })
                 except KeyError as e:
                     logging.exception(e)

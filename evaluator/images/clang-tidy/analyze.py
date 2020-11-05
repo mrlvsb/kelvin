@@ -53,6 +53,10 @@ cmd = [
 print(cmd)
 subprocess.Popen(cmd).wait()
 
+urls = {}
+with open("/urls.json") as f:
+    urls = json.load(f)
+
 offset_to_line = OffsetToLine('')
 comments = defaultdict(list)
 try:
@@ -69,6 +73,7 @@ try:
                     'line': offset_to_line.to_line(source, note['FileOffset']),
                     'text': note['Message'],
                     'source': err['DiagnosticName'],
+                    'url': urls.get(err['DiagnosticName'], None)
                 })
             
     with open('piperesult.json', 'w') as out:

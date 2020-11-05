@@ -34,6 +34,7 @@
     export let type;
     export let id;
     export let can_edit;
+    export let url = null;
 
     const dispatch = createEventDispatcher();
 
@@ -51,5 +52,19 @@
 </script>
 
 <div class="comment {type}" on:dblclick={() => editing = can_edit}>
-  <strong>{author}</strong>: {#if !editing}{@html DOMPurify.sanitize(marked(sanitize(text)))}{:else}<CommentForm comment={text} on:save={updateComment} disabled={sending} />{/if}
+  <strong>{author}</strong>: 
+  {#if !editing}
+    {#if type == 'automated'}
+      {text}
+      {#if url}
+        <a href="{url}">
+          <span class="iconify" data-icon="entypo:help"></span>
+        </a>
+      {/if}
+    {:else}
+      {@html DOMPurify.sanitize(marked(sanitize(text)))}
+    {/if}
+  {:else}
+    <CommentForm comment={text} on:save={updateComment} disabled={sending} />
+  {/if}
 </div>
