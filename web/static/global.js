@@ -1,3 +1,0 @@
-$(function() {
-    new ClipboardJS(".copy");
-});
