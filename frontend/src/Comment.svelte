@@ -8,7 +8,13 @@
     marked.setOptions({
       highlight: function(code, lang) {
         if(lang) {
-          return hljs.highlight(lang, code).value;
+          try {
+            return hljs.highlight(lang, code).value;
+          } catch (err) {
+            if(typeof(Sentry) !== 'undefined') {
+              Sentry.captureException(err);
+            }
+          }
         }
         return hljs.highlightAuto(code).value;
       },
