@@ -23,6 +23,17 @@ hljs.registerLanguage('makefile', makefile);
 import App from './App.svelte'
 import TaskDetail from './TaskDetail.svelte'
 
+import AnsiUp from 'ansi_up'
+
+customElements.define('kelvin-terminal-output', class extends HTMLElement {
+    connectedCallback() {
+        setTimeout(() => {
+            const res = (new (AnsiUp.default)()).ansi_to_html(this.innerText);
+            this.innerHTML = '<pre>' + res + '</pre>';
+        }, 0);
+    }
+});
+
 
 function createElement(name, component) {
 	customElements.define('kelvin-' + name, class extends HTMLElement {

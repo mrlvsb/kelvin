@@ -30,11 +30,11 @@ with open("result.html", "w") as out:
     out.write(f"<code style='color: #444; font-weight: bold'>$ {shlex_join(compile_cmd)}</code>")
 
     with open('/tmp/out', 'w+', errors='ignore') as gcc_out:
-        p = subprocess.Popen(compile_cmd, stdout=gcc_out, stderr=gcc_out)
+        p = subprocess.Popen([*compile_cmd, '-fdiagnostics-color=always'], stdout=gcc_out, stderr=gcc_out)
         p.wait()
 
         gcc_out.seek(0)
-        #out.write(f"<pre>{html.escape(gcc_out.read())}</pre>")
+        out.write(f"<kelvin-terminal-output>{html.escape(gcc_out.read())}</kelvin-terminal-output>")
 
 p = subprocess.Popen([*compile_cmd, '-fdiagnostics-format=json'], stderr=subprocess.PIPE)
 stdout, stderr = p.communicate()
