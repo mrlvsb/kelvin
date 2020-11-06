@@ -43,6 +43,7 @@ else:
         '-cppcoreguidelines-narrowing-conversions',
         '-android-cloexec-fopen',
         '-readability-braces-around-statements',
+        '-google-readability-todo',
     ]
 
 cmd = [
