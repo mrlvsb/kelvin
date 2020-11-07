@@ -88,6 +88,16 @@
   border-radius: .25rem;
   resize: vertical;
 }
+
+:global(.disabled > .CodeMirror) {
+  background: #eee;
+}
+
+:global(.disabled > .CodeMirror .CodeMirror-cursors) {
+  display: none;
+}
 </style>
 
-<textarea class="form-control" bind:this={editorEl} bind:value={value}></textarea>
+<div class:disabled={disabled}>
+  <textarea class="form-control" bind:this={editorEl} bind:value={value}></textarea>
+</div>
