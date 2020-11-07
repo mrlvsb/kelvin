@@ -334,8 +334,8 @@ def submit_comments(request, assignment_id, login, submit_num):
         comment.submit = submit
         comment.author = request.user
         comment.text = data['text']
-        comment.source = data['source']
-        comment.line = data['line']
+        comment.source = data.get('source', None)
+        comment.line = data.get('line', None)
         comment.save()
 
         notify.send(sender=request.user, recipient=comment_recipients(submit, request.user), verb='added new', action_object=comment, target=submit)
@@ -421,14 +421,15 @@ def submit_comments(request, assignment_id, login, submit_num):
                 except KeyError as e:
                     logging.exception(e)
 
+    summary_comments = []
     for comment in Comment.objects.filter(submit_id=submit.id).order_by('id'):
         try:
-            if comment.source not in result:
-                continue
-
-            max_lines = result[comment.source]['content'].count('\n')
-            line = 0 if comment.line > max_lines else comment.line
-            result[comment.source]['comments'].setdefault(comment.line - 1, []).append(dump_comment(comment))
+            if not comment.source:
+                summary_comments.append(dump_comment(comment))
+            else:
+                max_lines = result[comment.source]['content'].count('\n')
+                line = 0 if comment.line > max_lines else comment.line
+                result[comment.source]['comments'].setdefault(comment.line - 1, []).append(dump_comment(comment))
         except KeyError as e:
             logging.exception(e)
 
@@ -437,7 +438,10 @@ def submit_comments(request, assignment_id, login, submit_num):
         'img': 1,
         'source': 2,
     }
-    return JsonResponse({'sources': sorted(result.values(), key=lambda f: (priorities[f['type']], f['path']))})
+    return JsonResponse({
+        'sources': sorted(result.values(), key=lambda f: (priorities[f['type']], f['path'])),
+        'summary_comments': summary_comments,
+    })
 
 def file_response(file, filename, mimetype):
     response = HttpResponse(file, mimetype)

@@ -8,7 +8,7 @@
     import { createEventDispatcher } from 'svelte';
     import Editor from './Editor.svelte'
     export let comment = '';
-    export let disabled = true;
+    export let disabled = false;
 
     const dispatch = createEventDispatcher();
 
