@@ -218,8 +218,8 @@ class Comment(models.Model):
     submit = models.ForeignKey(Submit, on_delete=models.CASCADE)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     text = models.TextField()
-    source = models.CharField(max_length=255)
-    line = models.IntegerField()
+    source = models.CharField(max_length=255, null=True, blank=True)
+    line = models.IntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

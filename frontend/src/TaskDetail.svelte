@@ -1,28 +1,47 @@
 <script>
-  import { onMount } from "svelte";
   import SubmitSource from "./SubmitSource.svelte";
   import SyncLoader from "./SyncLoader.svelte";
   import CopyToClipboard from './CopyToClipboard.svelte'
   import {fetch} from './api.js'
+  import CommentForm from './CommentForm.svelte'
+  import Comment from './Comment.svelte'
 
   export let url;
   let sources = null;
+  let summaryComments = [];
 
-  async function saveComment(evt) {
-    if(evt.detail.id === undefined) {
-      const res = await fetch(url, {
+  async function addNewComment(comment) {
+    const res = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          text: evt.detail.text,
-          source: evt.detail.source,
-          line: evt.detail.line,
-        })
+        body: JSON.stringify(comment)
       });
 
-      const json = await res.json();
+      return await res.json();
+  }
+
+  async function updateComment(id, text) {
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: id,
+        text: text,
+      })
+    });
+  }
+
+  async function saveComment(evt) {
+    if(evt.detail.id === undefined) {
+      const json = await addNewComment({
+        text: evt.detail.text,
+        source: evt.detail.source,
+        line: evt.detail.line,
+      });
 
       sources = sources.map(source => {
         if(source.path === evt.detail.source) {
@@ -31,17 +50,8 @@
         return source;
       });
     } else {
-      const res = await fetch(url, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: evt.detail.id,
-          text: evt.detail.text,
-        })
-      });
-
+      await updateComment(evt.detail.id, evt.detail.text);
+      
       sources = sources.map(source => {
         if(evt.detail.text == '') {
           source.comments = Object.fromEntries(Object.entries(source.comments).map(([lineNum, comments]) => {
@@ -66,11 +76,44 @@
     }
   }
 
-  async function load() {
-    const res = await fetch(url);
-    sources = (await res.json())['sources'];
+  async function addSummaryComment(evt) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: evt.detail
+      })
+    });
+
+    summaryComments = [...summaryComments, await res.json()];
   }
 
+  async function updateSummaryComment(evt) {
+    await updateComment(evt.detail.id, evt.detail.text);
+
+    summaryComments = summaryComments.map(c => {
+      if(c.id === evt.detail.id) {
+        if(evt.detail.text === '') {
+          return null;
+        }
+        c.text = evt.detail.text;
+      }
+      return c;
+    }).filter(c => c !== null);
+
+    if(evt.detail.success) {
+      evt.detail.success();
+    }
+  }
+
+  async function load() {
+    const res = await fetch(url);
+    const json = await res.json();
+    sources = json['sources'];
+    summaryComments = json['summary_comments'];
+  }
   load();
 </script>
 
@@ -86,6 +129,13 @@
     <SyncLoader />
   </div>
 {:else}
+  
+  {#each summaryComments as comment}
+    <Comment {...comment} on:saveComment={updateSummaryComment} />
+  {/each}
+
+  <CommentForm on:save={addSummaryComment} />
+
   {#each sources as source}
     <h2>
       {source.path}{#if source.type == 'source'}<CopyToClipboard content={() => source.content} title='Copy the source code to the clipboard'><span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px"></span></CopyToClipboard>{/if}
