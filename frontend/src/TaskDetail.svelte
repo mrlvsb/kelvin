@@ -3,8 +3,7 @@
   import SyncLoader from "./SyncLoader.svelte";
   import CopyToClipboard from './CopyToClipboard.svelte'
   import {fetch} from './api.js'
-  import CommentForm from './CommentForm.svelte'
-  import Comment from './Comment.svelte'
+  import SummaryComments from './SummaryComments.svelte'
 
   export let url;
   let sources = null;
@@ -17,9 +16,19 @@
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(comment)
-      });
+    });
 
-      return await res.json();
+    const json = await res.json();
+    if(!comment.source) {
+      summaryComments = [...summaryComments, json];
+    } else {
+      sources = sources.map(source => {
+        if(source.path === comment.source) {
+          (source.comments[comment.line - 1] = source.comments[comment.line - 1] || []).push(json);
+        }
+        return source;
+      });
+    }
   }
 
   async function updateComment(id, text) {
@@ -33,78 +42,37 @@
         text: text,
       })
     });
-  }
 
-  async function saveComment(evt) {
-    if(evt.detail.id === undefined) {
-      const json = await addNewComment({
-        text: evt.detail.text,
-        source: evt.detail.source,
-        line: evt.detail.line,
-      });
-
-      sources = sources.map(source => {
-        if(source.path === evt.detail.source) {
-          (source.comments[evt.detail.line - 1] = source.comments[evt.detail.line - 1] || []).push(json);
+    function update(items) {
+      return items.map(c => {
+        if(c.id === id) {
+          if(text === '') {
+            return null;
+          }
+          c.text = text;
         }
-        return source;
-      });
-    } else {
-      await updateComment(evt.detail.id, evt.detail.text);
-      
-      sources = sources.map(source => {
-        if(evt.detail.text == '') {
-          source.comments = Object.fromEntries(Object.entries(source.comments).map(([lineNum, comments]) => {
-            return [lineNum, comments.filter(comment => comment.id !== evt.detail.id)];
-          }));
-        } else {
-          source.comments = Object.fromEntries(Object.entries(source.comments).map(([lineNum, comments]) => {
-            return [lineNum, comments.map(comment => {
-              if(comment.id === evt.detail.id) {
-                  comment.text = evt.detail.text;
-              }
-              return comment;
-            })];
-          }));
-        }
-        return source;
-      });
+        return c;
+      }).filter(c => c !== null);
     }
-    
-    if(evt.detail.success) {
-      evt.detail.success();
-    }
-  }
 
-  async function addSummaryComment(evt) {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: evt.detail
-      })
+    sources = sources.map(source => {
+      source.comments = Object.fromEntries(Object.entries(source.comments).map(([lineNum, comments]) => {
+        return [lineNum, update(comments)];
+      }));
+      return source;
     });
 
-    summaryComments = [...summaryComments, await res.json()];
+    summaryComments = update(summaryComments);
   }
 
-  async function updateSummaryComment(evt) {
-    await updateComment(evt.detail.id, evt.detail.text);
-
-    summaryComments = summaryComments.map(c => {
-      if(c.id === evt.detail.id) {
-        if(evt.detail.text === '') {
-          return null;
-        }
-        c.text = evt.detail.text;
-      }
-      return c;
-    }).filter(c => c !== null);
-
-    if(evt.detail.success) {
-      evt.detail.success();
+  async function saveComment(comment) {
+    if(comment.id) {
+      await updateComment(comment.id, comment.text);
+    } else {
+      await addNewComment(comment);
+    }
+    if(comment.success) {
+      comment.success();
     }
   }
 
@@ -129,12 +97,7 @@
     <SyncLoader />
   </div>
 {:else}
-  
-  {#each summaryComments as comment}
-    <Comment {...comment} on:saveComment={updateSummaryComment} />
-  {/each}
-
-  <CommentForm on:save={addSummaryComment} />
+  <SummaryComments {summaryComments} on:saveComment={evt => saveComment(evt.detail)}/>
 
   {#each sources as source}
     <h2>
@@ -144,7 +107,7 @@
       <SubmitSource
         code={source.content}
         comments={source.comments}
-        on:saveComment={(evt) => {evt.detail.source = source.path; saveComment(evt)}} />
+        on:saveComment={evt => saveComment({...evt.detail, source: source.path})} />
     {:else if source.type === 'img'}
       <img src={source.src} />
     {:else if source.type === 'video'}
