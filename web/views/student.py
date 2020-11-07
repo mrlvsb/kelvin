@@ -139,7 +139,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         'text':  testset.load_readme(),
         'inputs': testset,
         'max_inline_content_bytes': MAX_INLINE_CONTENT_BYTES,
-        'upload': not is_teacher(request.user),
+        'upload': not is_teacher(request.user) or request.user.username == student_username,
     }
 
     current_submit = None
@@ -216,8 +216,9 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
                 action_object_content_type=ContentType.objects.get_for_model(Submit)
             ).delete()
 
-            notify.send(sender=request.user, recipient=[assignment.clazz.teacher],
-                        verb='submitted', action_object=s)
+            if not is_teacher(request.user):
+                notify.send(sender=request.user, recipient=[assignment.clazz.teacher],
+                            verb='submitted', action_object=s)
 
             return redirect(reverse('task_detail', args=[s.student.username, s.assignment.id, s.submit_num]) + '#result')
     else:

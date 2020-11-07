@@ -7,6 +7,8 @@ from django.conf import settings
 from django.urls import reverse
 from django.contrib.auth.models import User
 
+from .utils import is_teacher
+
 def current_semester_conds(prefix=''):
     return {
         f'{prefix}semester__begin__lte': timezone.now(),
@@ -246,6 +248,9 @@ def assignedtask_results(assignment, **kwargs):
 
     assignment_submits = Submit.objects.filter(assignment_id=assignment.id, **kwargs).select_related('student').order_by('id')
     for submit in assignment_submits:
+        if submit.student.username not in results and is_teacher(submit.student):
+            continue
+
         student_submit_stats = results[submit.student.username]
         student_submit_stats['submits'] += 1
 

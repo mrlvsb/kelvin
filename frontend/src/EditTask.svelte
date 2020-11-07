@@ -13,7 +13,19 @@
 
   let task = null;
   let syncPathWithTitle = params.subject;
-	let syncing = false;
+  let syncing = false;
+  let taskLink = null;
+
+  $: {
+    if(task) {
+      const clazz = task.classes.find(clazz => clazz.assignment_id >= 1);
+      if(clazz) {
+        taskLink = `/task/${$user.username}/${clazz.assignment_id}`
+      } else {
+        taskLink = task.task_link
+      }
+    }
+  }
 
   onMount(async () => {
       if(params.id) {
@@ -160,14 +172,14 @@ td:not(:nth-of-type(2)) {
 
 		<div class="input-group mb-1">
 			<AutoComplete bind:value={task.path} onChange={loadTask} on:click={() => syncPathWithTitle = false} />
-      {#if task.task_link}
+      {#if taskLink}
       <div class="input-group-append">
         <button class="btn btn-outline-info" title="Duplicate this task" on:click={duplicateTask}>
           <span class="iconify" data-icon="ant-design:copy-outlined"></span>
         </button>
       </div>
       <div class="input-group-append">
-        <a class="btn btn-outline-info" href={task.task_link} target=_blank><span class="iconify" data-icon="bx:bx-link-external"></span></a>
+        <a class="btn btn-outline-info" href={taskLink} target=_blank><span class="iconify" data-icon="bx:bx-link-external"></span></a>
       </div>
       {/if}
 		</div>

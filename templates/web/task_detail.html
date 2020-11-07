@@ -107,7 +107,7 @@ TODO: Make it nicer with Bootstrap
 
             {% endif %}
 
-            {% if is_teacher %}
+            {% if is_teacher and not upload%}
               {% if submit and submit.assignment.max_points is not None %}
                 <li class="nav-item ml-auto">
                   {% include 'web/teacher/form_assign_points.html' %}

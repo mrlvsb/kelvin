@@ -288,6 +288,7 @@ def task_detail(request, task_id=None):
 
         assigned = AssignedTask.objects.filter(task_id=task.id, clazz_id=clazz.id).first()
         if assigned:
+            item['assignment_id'] = assigned.id
             item['assigned'] = assigned.assigned
             item['deadline'] = assigned.deadline
             item['max_points'] = assigned.max_points

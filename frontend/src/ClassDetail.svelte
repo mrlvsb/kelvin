@@ -1,6 +1,7 @@
 <script>
   import {push, link} from 'svelte-spa-router'
   import {fetch} from './api.js'
+  import {user} from './global.js'
   import CopyToClipboard from './CopyToClipboard.svelte'
   import {timeInWords, formatDateTime} from './utils.js'
 
@@ -154,7 +155,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
               <th>Student</th>
               {#each clazz.assignments as assignment}
               <th class="more-hover">
-                <a href="{ assignment.task_link }">{ assignment.short_name }{#if assignment.max_points > 0}&nbsp;({ assignment.max_points }b){/if}</a>
+                <a href="/task/{ $user.username }/{ assignment.assignment_id }">{ assignment.short_name }{#if assignment.max_points > 0}&nbsp;({ assignment.max_points }b){/if}</a>
                 <div class="more-content">
                   {assignment.name}
                   <a href="/task/edit/{assignment.task_id}" use:link title="Edit"><span class="iconify" data-icon="clarity:edit-solid"></span></a>
