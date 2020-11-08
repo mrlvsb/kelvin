@@ -80,15 +80,39 @@ def text_compare(expected, actual, filters=[]):
 
 
 def binary_compare(f1, f2):
-    f1 = open_me(f1, 'b', block_size=4)
-    f2 = open_me(f2, 'b', block_size=4)
+    print(f1)
+    f1 = open_me(f1, 'b', block_size=1)
+    f2 = open_me(f2, 'b', block_size=1)
 
-    errors = []
-    for a, b in zip(f1, f2):
-        if a != b:
-            errors.append("not matches!!!")
+    try:
+        expected = f1
+        actual = f2
 
-    return (False if errors else True, ''.join(errors))
+        with tempfile.NamedTemporaryFile('wt') as exp, tempfile.NamedTemporaryFile('wt') as act, tempfile.TemporaryFile() as out:
+            exp.write(" ".join([x.hex() for x in expected]))
+            exp.flush()
+            act.write(" ".join([x.hex() for x in actual]))
+            act.flush()
+
+            cmd = [
+                "diff",
+                "-a",
+                "-u",
+                "-i",
+                "-w",
+                act.name,
+                exp.name,
+            ]
+
+            p = subprocess.Popen(cmd, stdout=out)
+            p.communicate()
+
+            success = p.returncode == 0
+
+            out.seek(0)
+            return success, None, out.read().decode('utf-8')
+    except UnicodeDecodeError as e:
+        return False, str(e)
 
 
 def to_base64(array):
