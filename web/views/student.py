@@ -213,7 +213,8 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
             # delete previous notifications
             Notification.objects.filter(
                 action_object_object_id__in=submits,
-                action_object_content_type=ContentType.objects.get_for_model(Submit)
+                action_object_content_type=ContentType.objects.get_for_model(Submit),
+                verb='submitted',
             ).delete()
 
             if not is_teacher(request.user):
