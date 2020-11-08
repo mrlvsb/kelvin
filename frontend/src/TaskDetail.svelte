@@ -4,10 +4,34 @@
   import CopyToClipboard from './CopyToClipboard.svelte'
   import {fetch} from './api.js'
   import SummaryComments from './SummaryComments.svelte'
+import { user } from "./global";
 
   export let url;
   let sources = null;
   let summaryComments = [];
+
+  function updateCommentProps(id, newProps) {
+    function update(items) {
+      return items.map(c => {
+        if(c.id == id) {
+          if(newProps === null) {
+            return null;
+          }
+          return {...c, ...newProps};
+        }
+        return c;
+      }).filter(c => c !== null);
+    }
+
+    sources = sources.map(source => {
+      source.comments = Object.fromEntries(Object.entries(source.comments).map(([lineNum, comments]) => {
+        return [lineNum, update(comments)];
+      }));
+      return source;
+    });
+
+    summaryComments = update(summaryComments);
+  }
 
   async function addNewComment(comment) {
     const res = await fetch(url, {
@@ -43,26 +67,7 @@
       })
     });
 
-    function update(items) {
-      return items.map(c => {
-        if(c.id === id) {
-          if(text === '') {
-            return null;
-          }
-          c.text = text;
-        }
-        return c;
-      }).filter(c => c !== null);
-    }
-
-    sources = sources.map(source => {
-      source.comments = Object.fromEntries(Object.entries(source.comments).map(([lineNum, comments]) => {
-        return [lineNum, update(comments)];
-      }));
-      return source;
-    });
-
-    summaryComments = update(summaryComments);
+    updateCommentProps(id, text === '' ? null : {text});
   }
 
   async function saveComment(comment) {
@@ -73,6 +78,28 @@
     }
     if(comment.success) {
       comment.success();
+    }
+  }
+
+  async function setNotification(evt) {
+    async function walk(comments) {
+      if(comments.filter(c => c.id === evt.detail.comment_id).length) {
+        for(const comment of comments) {
+          if(comment.unread && comment.author_id !== $user.id && comment.notification_id) {
+            await fetch('/notification/mark_as_read/' + comment.notification_id, {
+              'method': 'POST',
+            });
+            updateCommentProps(comment.id, {unread: evt.detail.unread});
+          }
+        }
+      }
+    }
+
+    await walk(summaryComments);
+    for(const source of sources) {
+      for(const comments of Object.values(source.comments)) {
+        await walk(comments);
+      }
     }
   }
 
@@ -97,7 +124,7 @@
     <SyncLoader />
   </div>
 {:else}
-  <SummaryComments {summaryComments} on:saveComment={evt => saveComment(evt.detail)}/>
+  <SummaryComments {summaryComments} on:saveComment={evt => saveComment(evt.detail)} on:setNotification={setNotification} />
 
   {#each sources as source}
     <h2>
@@ -107,6 +134,7 @@
       <SubmitSource
         code={source.content}
         comments={source.comments}
+        on:setNotification={setNotification}
         on:saveComment={evt => saveComment({...evt.detail, source: source.path})} />
     {:else if source.type === 'img'}
       <img src={source.src} />

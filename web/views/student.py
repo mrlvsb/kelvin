@@ -319,13 +319,28 @@ def submit_comments(request, assignment_id, login, submit_num):
             return 'student'
         return 'teacher'
 
+    notifications = {c.action_object.id: c for c in Notification.objects.filter(
+        target_object_id=submit.id,
+        target_content_type=ContentType.objects.get_for_model(Submit)
+    )}
+
     def dump_comment(comment):
+        notification = notifications.get(comment.id, None)
+        unread = False
+        notification_id = None
+        if notification:
+            unread = notification.unread
+            notification_id = notification.id
+
         return {
             'id': comment.id,
             'author': comment.author.get_full_name(),
+            'author_id': comment.author.id,
             'text': comment.text,
             'can_edit': comment.author == request.user,
-            'type': get_comment_type(comment)
+            'type': get_comment_type(comment),
+            'unread': unread,
+            'notification_id': notification_id,
         }
 
     if request.method == 'POST':
