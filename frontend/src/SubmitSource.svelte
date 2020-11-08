@@ -45,6 +45,7 @@
       comments={comments[lineNumber]}
       showAddingForm={addingCommentToLine === lineNumber + 1}
       on:showCommentForm={(evt) => (addingCommentToLine = evt.detail)}
+      on:setNotification
       on:saveComment />
   {/each}
 </table>

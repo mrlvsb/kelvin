@@ -4,6 +4,7 @@
     import marked from 'marked'
     import hljs from 'highlight.js/lib/core'
     import DOMPurify from 'dompurify';
+    import { user } from './global';
 
     marked.setOptions({
       highlight: function(code, lang) {
@@ -22,11 +23,14 @@
     });
 
     export let author;
+    export let author_id = null;
     export let text;
     export let type;
     export let id;
     export let can_edit;
     export let url = null;
+    export let unread = null;
+    export let notification_id = null;
 
     const dispatch = createEventDispatcher();
 
@@ -46,9 +50,16 @@
         success: () => editing = sending = false,
       })
     }
+
+    function handleNotification() {
+      dispatch('setNotification', {
+        comment_id: id,
+        unread: !unread,
+      })
+    }
 </script>
 
-<div class="comment {type}" on:dblclick={() => editing = can_edit}>
+<div class="comment comment-{unread ? 'unread' : 'read'} {type}" on:dblclick={() => editing = can_edit}>
   <strong>{author}</strong>: 
   {#if !editing}
     {#if type == 'automated'}
@@ -58,7 +69,12 @@
           <span class="iconify" data-icon="entypo:help"></span>
         </a>
       {/if}
-    {:else}
+    {:else if $user}
+      {#if unread && type != 'automated' && author_id != $user.id}
+        <button class="btn p-0 float-right" on:click|preventDefault={handleNotification} style="line-height: normal">
+          <span class="iconify" data-icon="cil-check"></span>
+        </button>
+      {/if}
       {@html DOMPurify.sanitize(marked(text), sanitizeOpts)}
     {/if}
   {:else}

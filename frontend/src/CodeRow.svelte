@@ -59,8 +59,14 @@
   :global(.comment.teacher) {
     background: #FFFF1ED9;
   }
+  :global(.comment.teacher.comment-read) {
+    background: #FFFF1E49;
+  }
   :global(.comment.student) {
     background: #71F740;
+  }
+  :global(.comment.student.comment-read) {
+    background: #71F74050;
   }
   :global(.comment.automated) {
     background: #7DB4E4;
@@ -109,7 +115,7 @@
   <td>
     <pre>{@html line}</pre>
     {#each comments||[] as comment}
-      <Comment {...comment} on:saveComment />
+      <Comment {...comment} on:saveComment on:setNotification />
     {/each}
 
     {#if showAddingForm}

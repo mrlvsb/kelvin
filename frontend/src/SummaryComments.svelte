@@ -29,7 +29,7 @@ button {
 </style>
 
 {#each summaryComments as comment}
-    <Comment {...comment} on:saveComment />
+    <Comment {...comment} on:saveComment on:setNotification />
 {/each}
 
 {#if showForm}
