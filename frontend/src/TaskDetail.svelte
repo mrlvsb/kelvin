@@ -44,15 +44,20 @@ import { user } from "./global";
 
     const json = await res.json();
     if(!comment.source) {
-      summaryComments = [...summaryComments, json];
+      summaryComments = [
+        ...await Promise.all(summaryComments.map(markCommentAsRead)),
+        json
+      ];
     } else {
-      sources = sources.map(source => {
+      sources = await Promise.all(sources.map(async source => {
         if(source.path === comment.source) {
-          (source.comments[comment.line - 1] = source.comments[comment.line - 1] || []).push(json);
+          let comments = await Promise.all((source.comments[comment.line - 1] || []).map(markCommentAsRead));
+          source.comments[comment.line - 1] = [...comments, json];
         }
         return source;
-      });
+      }));
     }
+
   }
 
   async function updateComment(id, text) {
@@ -79,6 +84,16 @@ import { user } from "./global";
     if(comment.success) {
       comment.success();
     }
+  }
+
+  async function markCommentAsRead(comment) {
+    if(comment.unread && comment.author_id !== $user.id && comment.notification_id) {
+      await fetch('/notification/mark_as_read/' + comment.notification_id, {
+        'method': 'POST',
+      });
+      comment.unread = false;
+    }
+    return comment;
   }
 
   async function setNotification(evt) {
