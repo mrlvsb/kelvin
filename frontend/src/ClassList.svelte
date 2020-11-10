@@ -15,7 +15,16 @@
   async function refetch() {
     let req = await fetch('/api/classes');
     let res = await req.json();
-    return res['classes'];
+    return res['classes'].map(c => {
+      c.assignments = c.assignments.map(assignment => {
+        assignment.assigned = new Date(assignment.assigned);
+        if(assignment.deadline) {
+          assignment.deadline = new Date(assignment.deadline);
+        }
+        return assignment;
+      });
+      return c;
+    });
   }
 
   $: {
