@@ -4,7 +4,8 @@
   import CopyToClipboard from './CopyToClipboard.svelte'
   import {fetch} from './api.js'
   import SummaryComments from './SummaryComments.svelte'
-import { user } from "./global";
+  import { user } from "./global";
+  import { notifications } from './notifications.js'
 
   export let url;
   let sources = null;
@@ -88,9 +89,7 @@ import { user } from "./global";
 
   async function markCommentAsRead(comment) {
     if(comment.unread && comment.author_id !== $user.id && comment.notification_id) {
-      await fetch('/notification/mark_as_read/' + comment.notification_id, {
-        'method': 'POST',
-      });
+      await notifications.markRead(comment.notification_id);
       comment.unread = false;
     }
     return comment;
@@ -101,9 +100,7 @@ import { user } from "./global";
       if(comments.filter(c => c.id === evt.detail.comment_id).length) {
         for(const comment of comments) {
           if(comment.unread && comment.author_id !== $user.id && comment.notification_id) {
-            await fetch('/notification/mark_as_read/' + comment.notification_id, {
-              'method': 'POST',
-            });
+            await notifications.markRead(comment.notification_id);
             updateCommentProps(comment.id, {unread: evt.detail.unread});
           }
         }
