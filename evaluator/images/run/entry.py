@@ -28,7 +28,7 @@ with open("result.html", "w") as f:
             p.wait()
 
             with open("/tmp/out.cast", "rb") as record:
-                f.write(f"<asciinema-player preload src='data:application/json;base64,{base64.b64encode(record.read()).decode('utf-8')}' />")
+                f.write(f"<asciinema-player preload src='data:application/json;base64,{base64.b64encode(record.read()).decode('utf-8')}'></asciinema-player>")
         else:
             with open('/tmp/out', 'w+', errors='ignore') as out:
                 p = subprocess.Popen(job['cmd'], shell=True, stdout=out, stderr=out)

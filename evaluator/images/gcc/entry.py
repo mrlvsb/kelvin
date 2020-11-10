@@ -20,7 +20,7 @@ for root, dirs, files in os.walk('.'):
         if f.split('.')[-1] in ['c', 'cpp']:
             sources.append(os.path.join(root, f))
 
-compile_cmd = ["gcc", *shlex.split(flags), "-o", output, *sources]
+compile_cmd = ["gcc", *sources, "-o", output, *shlex.split(flags)]
 
 with open("result.html", "w") as out:
     if not sources:
@@ -35,7 +35,7 @@ with open("result.html", "w") as out:
 
         gcc_out.seek(0)
         out.write(f"<kelvin-terminal-output>{html.escape(gcc_out.read())}</kelvin-terminal-output>")
-
+"""
 p = subprocess.Popen([*compile_cmd, '-fdiagnostics-format=json'], stderr=subprocess.PIPE)
 stdout, stderr = p.communicate()
 comments = defaultdict(list)
@@ -51,5 +51,5 @@ for err in json.loads(stderr.decode('utf-8')):
 
 with open('piperesult.json', 'w') as out:
     json.dump({"comments": comments}, out, indent=4, sort_keys=True)
-
+"""
 exit(p.returncode)
