@@ -14,7 +14,7 @@ async function enablePushNotifications() {
 </script>
 
 {#if $notifications}
-<span style="position: relative">
+<span style="position: relative" use:clickOutside on:click_outside={() => show = false}>
     <span on:click={() => show = !show} style="cursor: pointer">
       <img src="/static/notify_icon.png" style="height: 15px;" />
       {#if $notifications.unread_count > 0}
@@ -23,7 +23,7 @@ async function enablePushNotifications() {
     </span>
 
     {#if show}
-    <div style="position: absolute; width: 300px; right: 0px; z-index: 2; background: whitesmoke;" use:clickOutside on:click_outside|stopPropagation={() => show = false}>
+    <div style="position: absolute; width: 300px; right: 0px; z-index: 2; background: whitesmoke;">
 				<ul class="list-group">
 					<li class="list-group-item" style="background-color: rgba(0,0,0,.03)">
             Notifications {#if $notifications.unread_count > 0}({$notifications.unread_count}){/if}
