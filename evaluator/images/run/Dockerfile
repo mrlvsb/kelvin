@@ -1,4 +1,4 @@
-FROM debian
-RUN apt update && apt install -y gcc g++ python3 asciinema
+FROM kelvin/base
+RUN apt install -y asciinema
 ADD entry.py /
 CMD /entry.py
