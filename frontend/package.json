@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "codemirror": "^5.58.1",
-    "sirv-cli": "^1.0.0"
+    "sirv-cli": "^1.0.0",
+    "timeago-simple": "^1.2.4"
   }
 }

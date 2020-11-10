@@ -1,9 +1,9 @@
 <script>
-  import {push, link} from 'svelte-spa-router'
+  import {link} from 'svelte-spa-router'
   import {fetch} from './api.js'
   import {user} from './global.js'
   import CopyToClipboard from './CopyToClipboard.svelte'
-  import {timeInWords, formatDateTime} from './utils.js'
+  import TimeAgo from './TimeAgo.svelte'
 
   import { createEventDispatcher } from 'svelte';
   const dispatch = createEventDispatcher();
@@ -171,13 +171,13 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
                   <dl>
                     <dt>Assigned</dt>
                     <dd>
-                      {formatDateTime(assignment.assigned)}{#if new Date(assignment.assigned) > new Date()}, {timeInWords(new Date() - new Date(assignment.assigned))}{/if}
+                      {assignment.assigned.toLocaleString('cs')}{#if assignment.assigned > new Date()}, <TimeAgo datetime={assignment.assigned} />{/if}
                     </dd>
 
                     {#if assignment.deadline}
                     <dt>Deadline</dt>
                     <dd>
-                      {formatDateTime(assignment.deadline)}{#if new Date(assignment.deadline) > new Date()}, {timeInWords(new Date() - new Date(assignment.deadline))}{/if}
+                      {assignment.deadline.toLocaleString('cs')}{#if assignment.deadline > new Date()}, <TimeAgo datetime={assignment.deadline} />{/if}
                     </dd>
                     {/if}
 
