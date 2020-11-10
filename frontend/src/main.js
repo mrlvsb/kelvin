@@ -22,7 +22,7 @@ hljs.registerLanguage('makefile', makefile);
 
 import App from './App.svelte'
 import TaskDetail from './TaskDetail.svelte'
-
+import Notifications from './Notifications.svelte'
 import AnsiUp from 'ansi_up'
 
 customElements.define('kelvin-terminal-output', class extends HTMLElement {
@@ -59,3 +59,4 @@ function createElement(name, component) {
 
 createElement('app', App);
 createElement('submit-sources', TaskDetail);
+createElement('notifications', Notifications);
