@@ -68,6 +68,14 @@
           .map(result => parseFloat(result.assigned_points))
           .reduce((acc, val) => acc + val, 0);
   }
+
+  let showFullTaskNames = false;
+  function getAssignmentShortName(assignment, index, showFullTaskNames) {
+      if (showFullTaskNames) {
+          return assignment.short_name;
+      }
+      return "#" + (index + 1).toString();
+  }
 </script>
 
 <style>
@@ -105,8 +113,10 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
 
 <div class="card mb-2" style="position: initial">
   <div class="card-header p-0">
-      <div class="float-right p-2">
-        <button class="p-0 btn btn-link" on:click={() => showAddStudents = !showAddStudents}>
+      <div class="float-right p-2" style="display: flex; align-items: center;">
+        <button class="p-0 btn btn-link"
+                on:click={() => showAddStudents = !showAddStudents}
+                title="Add user to class">
           <span class="iconify" data-icon="ant-design:user-add-outlined"></span>
         </button>
         <a href="/task/add/{clazz.subject_abbr}" use:link title="Assign new task">
@@ -115,6 +125,15 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
         <a href="{clazz.csv_link}" title="Download CSV with results for all task">
           <span class="iconify" data-icon="la:file-csv-solid"></span>
         </a>
+        <button class="p-0 btn btn-link"
+                on:click={() => showFullTaskNames = !showFullTaskNames}
+                title="Show full task names">
+          {#if showFullTaskNames }
+            <span><span class="iconify" data-icon="la:eye"></span></span>
+          {:else}
+            <span><span class="iconify" data-icon="la:eye-slash"></span></span>
+          {/if}
+        </button>
       </div>
       <button class="btn" on:click={() => showStudentsList = !showStudentsList}>
           {clazz.subject_abbr} {clazz.timeslot} {clazz.code} {clazz.teacher_username}
@@ -153,9 +172,9 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
                 </CopyToClipboard>
               </th>
               <th>Student</th>
-              {#each clazz.assignments as assignment}
+              {#each clazz.assignments as assignment, index}
               <th class="more-hover">
-                <a href="/task/{ $user.username }/{ assignment.assignment_id }">{ assignment.short_name }{#if assignment.max_points > 0}&nbsp;({ assignment.max_points }b){/if}</a>
+                <a href="/task/{ $user.username }/{ assignment.assignment_id }">{ getAssignmentShortName(assignment, index, showFullTaskNames) }{#if assignment.max_points > 0}&nbsp;({ assignment.max_points }b){/if}</a>
                 <div class="more-content">
                   {assignment.name}
                   <a href="/task/edit/{assignment.task_id}" use:link title="Edit"><span class="iconify" data-icon="clarity:edit-solid"></span></a>
