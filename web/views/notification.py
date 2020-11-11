@@ -16,6 +16,8 @@ def mark_as_read(request, notification_id=None):
 
         if notification_id:
             notifications = notifications.filter(pk=notification_id)
+        else:
+            notifications = notifications.filter(public=True)
 
         for notification in notifications:
             notification.mark_as_read()
