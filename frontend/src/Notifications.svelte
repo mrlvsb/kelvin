@@ -11,6 +11,13 @@ async function enablePushNotifications() {
   }
 }
 
+async function openNotification(notification) {
+  if(notification.public) {
+    await notifications.markRead(notification.id);
+  }
+  document.location.href = notification.action_object_url;
+}
+
 </script>
 
 {#if $notifications}
@@ -40,7 +47,7 @@ async function enablePushNotifications() {
               </button>
             </div>
 					</li>
-					<div style="max-height: 300px; overflow-y: auto; font-size: 80%;">
+					<div style="max-height: 300px; overflow-y: auto; font-size: 80% !important;">
             {#if $notifications.notifications.length > 0}
               {#each $notifications.notifications as item}
               <li class='list-group-item p-1' class:list-group-item-light={!item.unread}>
@@ -52,7 +59,7 @@ async function enablePushNotifications() {
                   { item.verb }
 
                   {#if item.action_object_url}
-                    <a href="{item.action_object_url}">
+                    <a href={item.action_object_url} on:click|preventDefault={() => openNotification(item)}>
                       { item.action_object }
                     </a>
                   {:else}
