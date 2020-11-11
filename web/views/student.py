@@ -348,7 +348,14 @@ def submit_comments(request, assignment_id, login, submit_num):
         comment.line = data.get('line', None)
         comment.save()
 
-        notify.send(sender=request.user, recipient=comment_recipients(submit, request.user), verb='added new', action_object=comment, target=submit)
+        notify.send(
+            sender=request.user,
+            recipient=comment_recipients(submit, request.user),
+            verb='added new',
+            action_object=comment,
+            target=submit,
+            public=False,
+        )
         return JsonResponse({**dump_comment(comment), **{'unread': True}})
     elif request.method == 'PATCH':
         data = json.loads(request.body)
@@ -370,7 +377,14 @@ def submit_comments(request, assignment_id, login, submit_num):
                 comment.text = data['text']
                 comment.save()
 
-                notify.send(sender=request.user, recipient=comment_recipients(submit, request.user), verb='updated', action_object=comment, target=submit)
+                notify.send(
+                    sender=request.user,
+                    recipient=comment_recipients(submit, request.user),
+                    verb='updated',
+                    action_object=comment,
+                    target=submit,
+                    public=False,
+                )
             return JsonResponse(dump_comment(comment))
 
     result = {}
