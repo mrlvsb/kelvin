@@ -4,6 +4,7 @@ from notifications.models import Notification
 from webpush import send_user_notification
 from pywebpush import WebPushException
 from common.models import Comment
+import logging
 
 
 @receiver(django.db.models.signals.post_save, sender=Notification)
@@ -44,4 +45,4 @@ def send_webpush_notification(sender, instance, created, **kwargs):
     try:
         send_user_notification(user=notification.recipient, payload=payload)
     except WebPushException as e:
-        logging.warn("%s failed for ", e, user)
+        logging.warn("%s failed for %s", e, notification.recipient)
