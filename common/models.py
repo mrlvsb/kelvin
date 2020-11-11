@@ -212,7 +212,7 @@ class Submit(models.Model):
             'student_username': self.student.username,
             'assignment_id': self.assignment.id,
             'submit_num': self.submit_num
-        }) + '?clear_notifications=1#src'
+        }) + '#src'
 
 class Comment(models.Model):
     submit = models.ForeignKey(Submit, on_delete=models.CASCADE)
@@ -233,7 +233,7 @@ class Comment(models.Model):
             'student_username': self.submit.student.username,
             'assignment_id': self.submit.assignment.id,
             'submit_num': self.submit.submit_num
-        }) + '?clear_notifications=1#src'
+        }) + '#src'
 
 User.add_to_class('notification_str', lambda self: self.get_full_name())
 

@@ -5,8 +5,11 @@ from django.forms.models import model_to_dict
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import SuspiciousOperation
+from django.views.decorators.csrf import csrf_exempt
+
 
 @login_required
+@csrf_exempt
 def mark_as_read(request, notification_id=None):
     if request.method == 'POST':
         notifications = request.user.notifications.unread()

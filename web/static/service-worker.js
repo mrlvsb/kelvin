@@ -11,9 +11,15 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  if(event.notification.data && event.notification.data.url) {
-    event.waitUntil(
-      clients.openWindow(event.notification.data.url)
-    );  
+  if(event.notification.data) {
+    if(event.notification.data.notification_id) {
+      fetch('/notification/mark_as_read/' + event.notification.data.notification_id, { method: 'POST' });
+    }
+
+    if(event.notification.data.url) {
+      event.waitUntil(
+        clients.openWindow(event.notification.data.url)
+      );
+    }
   }
 });
