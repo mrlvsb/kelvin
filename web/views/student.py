@@ -364,13 +364,12 @@ def submit_comments(request, assignment_id, login, submit_num):
         if comment.author != request.user:
             raise PermissionDenied()
 
-        if not data['text']:
-            Notification.objects.filter(
-                action_object_object_id=comment.id,
-                action_object_content_type=ContentType.objects.get_for_model(Comment)
-            ).delete()
-            comment.delete()
+        Notification.objects.filter(
+            action_object_object_id=comment.id,
+            action_object_content_type=ContentType.objects.get_for_model(Comment)
+        ).delete()
 
+        if not data['text']:
             return HttpResponse('{}')
         else:
             if comment.text != data['text']:
