@@ -165,12 +165,6 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         data['late_submit'] = assignment.deadline and submits.order_by('id').reverse()[0].created_at > assignment.deadline
         data['diff_versions'] = [(s.submit_num, s.created_at) for s in submits.order_by('id')]
 
-        # TODO: implement this properly
-        if request.GET.get('clear_notifications'):
-            for notification in request.user.notifications.unread().filter(target_object_id=current_submit.id):
-                notification.mark_as_read()
-            return redirect(request.path_info)
-
         try:
             job = django_rq.jobs.get_job_class().fetch(current_submit.jobid, connection=django_rq.queues.get_connection())
             status = job.get_status()
