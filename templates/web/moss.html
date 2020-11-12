@@ -10,7 +10,7 @@
 {% else %}
   <form method="post" class="float-right">
      {% csrf_token %}
-    <button class="btn btn-sm btn-primary"><i class="fa fa-sync"></i></button>
+    <button class="btn btn-sm btn-primary"><span class="iconify" data-icon="fa-solid:sync"></span></button>
   </form>
 
   <form class="form-inline">
@@ -57,7 +57,7 @@
       <td>{{ match.second_percent }}%</td>
       <td>{{ match.lines }}</td>
       <td>
-        <a href="{{ match.link }}"><i class="fa fa-search"></i></a>
+        <a href="{{ match.link }}"><span class="iconify" data-icon="ant-design:search-outlined"></span></a>
       </td>
     </tr>
     {% endfor %}

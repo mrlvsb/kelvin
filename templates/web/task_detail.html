@@ -14,7 +14,7 @@ TODO: Make it nicer with Bootstrap
 <h2>
     {{ task.name }}
     {% if is_teacher %}
-    <a href="/#{% url 'edit_task' task.id %}" class="text-muted" title="Edit task"><i class="fas fa-pen" style="font-size: 20px"></i></a>
+    <a href="/#/task/edit/{{task.id}}" class="text-muted" title="Edit task"><span class="iconify" data-icon="fa-solid:pen"></span></a>
     {% endif %}
 </h2>
 {% if assigned %}
@@ -28,9 +28,9 @@ TODO: Make it nicer with Bootstrap
     <h6>
     Submit 
     {% if prev_submit %}
-        <a href="{% url 'task_detail' submit.student.username submit.assignment.id prev_submit %}#src" title="Previous submit"><i class="fas fa-chevron-left"></i></a>
+        <a href="{% url 'task_detail' submit.student.username submit.assignment.id prev_submit %}#src" title="Previous submit"><span class="iconify" data-icon="fa-solid:chevron-left"></span></a>
     {% else %}
-        <i class="fas fa-chevron-left"></i>
+      <span class="iconify" data-icon="fa-solid:chevron-left"></span>
     {% endif %}
 
     {{ submit.submit_num }} / 
@@ -41,9 +41,9 @@ TODO: Make it nicer with Bootstrap
     {% endif %}
 
     {% if next_submit %}
-        <a href="{% url 'task_detail' submit.student.username submit.assignment.id next_submit %}#src" title="Next submit"><i class="fas fa-chevron-right"></i></a>
+        <a href="{% url 'task_detail' submit.student.username submit.assignment.id next_submit %}#src" title="Next submit"><span class="iconify" data-icon="fa-solid:chevron-right"></span></a>
     {% else %}
-        <i class="fas fa-chevron-right"></i>
+      <span class="iconify" data-icon="fa-solid:chevron-right"></span>
     {% endif %}
     -
     {{ submit.student.get_full_name }} ({{ submit.student.username }}),
@@ -60,7 +60,7 @@ TODO: Make it nicer with Bootstrap
 
     {% if is_teacher %}
     <a href="{% url 'submits' submit.student.username %}">Student submits</a>
-    <a href="{% url 'reevaluate' submit.id %}" title="Reevaluate"><i class="fas fa-sync"></i></a>
+    <a href="{% url 'reevaluate' submit.id %}" title="Reevaluate"><span class="iconify" data-icon="fa-solid:sync"></span></a>
     {% endif %}
 {% endif %}
 {% if upload != False %}
@@ -189,8 +189,8 @@ TODO: Make it nicer with Bootstrap
             {% if submit %}
             <div class="tab-pane" id="tab_src">
                 <div class="float-right">
-                  <a href="#diff" data-toggle="collapse" title="Diff vs previous version(s)"><i class="fas fa-history"></i></a>
-                  <a href="{% url 'submit_download' submit.assignment.id submit.student.username submit.submit_num %}" title="Download"><i class="fas fa-download"></i></a>
+                  <a href="#diff" data-toggle="collapse" title="Diff vs previous version(s)"><span class="iconify" data-icon="fa-solid:history"></span></a>
+                  <a href="{% url 'submit_download' submit.assignment.id submit.student.username submit.submit_num %}" title="Download"><span class="iconify" data-icon="fa-solid:download"></span></a>
                 </div>
 
                 <div id="diff" class="collapse">
