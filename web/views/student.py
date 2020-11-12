@@ -357,7 +357,7 @@ def submit_comments(request, assignment_id, login, submit_num):
             target=submit,
             public=False,
         )
-        return JsonResponse({**dump_comment(comment), **{'unread': True}})
+        return JsonResponse({**dump_comment(comment), 'unread': True})
     elif request.method == 'PATCH':
         data = json.loads(request.body)
         comment = get_object_or_404(Comment, id=data['id'])
