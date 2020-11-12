@@ -50,7 +50,7 @@ def process_markdown(task_code, markdown):
             k, v = map(str.strip, line.split(':', 1))
             meta[k] = v
 
-    p = subprocess.Popen(["pandoc"], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+    p = subprocess.Popen(["pandoc", "--no-highlight"], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
     out = p.communicate(input=markdown.encode('utf-8'))
     out = out[0].decode('utf-8')
 

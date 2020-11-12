@@ -19,6 +19,7 @@ hljs.registerLanguage('xml', xml);
 hljs.registerLanguage('bash', bash); 
 hljs.registerLanguage('shell-session', shell);
 hljs.registerLanguage('makefile', makefile); 
+hljs.initHighlightingOnLoad();
 
 import App from './App.svelte'
 import TaskDetail from './TaskDetail.svelte'
