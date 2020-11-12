@@ -182,6 +182,18 @@ function createFs() {
         };
         return fs;
       });
+
+      if (path in get(openedFiles)) {
+          let response = await fetch(get(fs)['endpoint_url'] + path.slice(1));
+          let content = await response.text();
+          openedFiles.update(files => {
+            files[path] = {
+              path,
+              content
+            };
+            return files;
+          });
+        }
     },
 
     open: async (path) => {
