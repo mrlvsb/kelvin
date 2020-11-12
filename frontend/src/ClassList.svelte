@@ -3,6 +3,7 @@
   import {fetch} from './api.js'
   import ClassDetail from './ClassDetail.svelte'
   import {querystring, link} from 'svelte-spa-router'
+  import SyncLoader from './SyncLoader.svelte'
 
 
   let classes = null;
@@ -36,7 +37,9 @@
 </script>
 
 {#if !classes}
-  Loading...
+  <div class="d-flex justify-content-center">
+    <SyncLoader />
+  </div>
 {:else}
   {#each [...new Set(classes.map(c => c.subject_abbr))] as subject}
     <a class="mr-2" class:font-weight-bold={selectedSubject == subject} href="/?subject={subject}" use:link>{subject}</a>
