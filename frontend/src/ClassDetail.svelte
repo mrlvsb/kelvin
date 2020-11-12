@@ -109,6 +109,26 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
     transform:rotate(360deg);
   }
 }
+
+.more-content {
+  display: none;
+  text-align: left;
+}
+
+.more-hover {
+  position: relative;
+}
+
+.more-hover:hover .more-content {
+  position: absolute;
+  display: block;
+  background: white;
+  padding: 3px;
+  border: 1px solid #dee2e6;
+  font-weight: normal;
+  z-index: 10;
+}
+
 </style>
 
 <div class="card mb-2" style="position: initial">
