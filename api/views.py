@@ -26,7 +26,6 @@ from shutil import copytree, ignore_patterns
 from fnmatch import fnmatch
 from django.utils.dateparse import parse_datetime
 
-from web.views.teacher import teacher_list 
 from common.utils import ldap_search_user
 
 logger = logging.getLogger(__name__)
