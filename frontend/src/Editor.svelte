@@ -4,6 +4,7 @@
   import 'codemirror/lib/codemirror.css';
   import 'codemirror/mode/clike/clike.js';
   import 'codemirror/mode/yaml/yaml.js';
+  import 'codemirror/mode/python/python.js';
   import 'codemirror/mode/markdown/markdown.js';
   import 'codemirror/addon/display/fullscreen.js';
   import 'codemirror/addon/display/fullscreen.css';
@@ -24,6 +25,7 @@
       'md': 'markdown',
       'yml': 'yaml',
       'yaml': 'yaml',
+      'py': 'python',
     };
     return map[ext];
   }
