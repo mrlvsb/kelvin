@@ -21,3 +21,9 @@ h3 {
   margin: 0 10px;
   align-self: center;
 }
+
+@media (min-width: 1500px) {
+  .container {
+      max-width: 1400px;
+  }
+}
