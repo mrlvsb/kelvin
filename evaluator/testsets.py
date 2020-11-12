@@ -4,7 +4,6 @@ import shlex
 import glob
 import re
 import sys
-import importlib.util
 import traceback
 from collections import defaultdict
 
@@ -12,19 +11,11 @@ import yaml
 
 from . import filters, pipelines
 from .utils import parse_human_size
+from .script import Script
 from web.task_utils import load_readme
 from kelvin.settings import BASE_DIR
 from django.template import Context, Template
 
-
-def load_module(path):
-    module_name = "xyz"
-
-    spec = importlib.util.spec_from_file_location(module_name, path)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = module
-    spec.loader.exec_module(module)
-    return module
 
 
 class File:
@@ -158,16 +149,16 @@ class TestSet:
             self.add_warning(e)
             self.files_cache = []
         self.gcc_flags = []
+        self.pipeline = []
 
         self.script = None
-        path = os.path.join(self.task_path, 'script.py')
-        if os.path.exists(path):
+        if os.path.exists(os.path.join(self.task_path, 'script.py')):
             try:
-                self.script = load_module(path)
+                self.script = Script(self.task_path, self.meta, self.add_warning)
             except Exception as e:
-                self.add_warning(f"script.py: {e}\n{traceback.format_exc()}")
+                self.output_fn(f'script.py: {e}\n{traceback.format_exc()}')
 
-        self.pipeline = []
+
         self.load_tests()
 
     def __iter__(self):
@@ -216,7 +207,7 @@ class TestSet:
                     class_name = "".join([p.title() for p in re.split('_|-', item['type'])])
                     pipecls = getattr(pipelines, f"{class_name}Pipe", None)
                     if not pipecls and self.script:
-                        pipecls = getattr(self.script, f"{class_name}Pipe", None)
+                        pipecls = getattr(self.script.module, f"{class_name}Pipe", None)
 
                     args = {k: v for k, v in item.items() if k not in ['type', 'title', 'fail_on_error']}
                     if pipecls:
@@ -309,27 +300,16 @@ class TestSet:
             pass
 
         if self.script:
-            try:
-                generate_tests = getattr(self.script, 'gen_tests', None)
-                if generate_tests:
-                    generate_tests(self)
-            except Exception as e:
-                self.add_warning(f"script.py: {e}\n{traceback.format_exc()}")
+            self.script.call("gen_tests", self)
 
     def load_readme(self):
         try:
             task_relpath = os.path.relpath(self.task_path, os.path.join(BASE_DIR, "tasks"))
             readme = load_readme(task_relpath)
             if self.script:
-                fn = getattr(self.script, 'readme_vars', None)
-                if fn:
-                    try:
-                        t = Template(readme.content)
-                        c = Context(fn(self))
-                        readme.content = t.render(c)
-                    except Exception as e:
-                        self.add_warning(f"script.py: {e}\n{traceback.format_exc()}")
-
+                t = Template(readme.content)
+                c = Context(self.script.call('readme_vars', self))
+                readme.content = t.render(c)
             return readme
         except FileNotFoundError:
             pass
