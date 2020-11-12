@@ -53,6 +53,19 @@ function getInode(path, root) {
 function createFs() {
   const { subscribe, set, update } = writable({'root': {}});
 
+  function closeFile(path) {
+      openedFiles.update(openedFiles => {
+        if(openedFiles[path]) {
+          delete openedFiles[path];
+
+          currentOpenedFile.update(current => {
+            return Object.keys(openedFiles).length ? Object.keys(openedFiles)[0] : null;
+          });
+        }
+        return openedFiles;
+      });
+  }
+
   return {
     subscribe,
     setRoot: (files, endpoint_url) => {
@@ -154,20 +167,12 @@ function createFs() {
         delete inode['files'][basename(path)];
         return fs;
       });
-
-      openedFiles.update(openedFiles => {
-        if(openedFiles[path]) {
-          delete openedFiles[path];
-
-          currentOpenedFile.update(current => {
-            return Object.keys(openedFiles).length ? Object.keys(openedFiles)[0] : null;
-          });
-        }
-        return openedFiles;
-      });
-
+      closeFile(path);
     },
 
+    close: (path) => {
+      closeFile(path);
+    },
     upload: async (path, file) => {
       path = absolutePath(path);
       await fetch(get(fs)['endpoint_url'] + path.slice(1), {
