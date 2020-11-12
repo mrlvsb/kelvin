@@ -123,7 +123,9 @@ pipeline:
         <label for="manager-file-upload">
           <span class="iconify" data-icon="ic:sharp-file-upload"></span>
         <label>
-        <input id="manager-file-upload" type="file" style="display: none" multiple on:change={addToUploadQueue}>
+        <input id="manager-file-upload" type="file" style="display: none" multiple
+               onclick="this.value=null;"
+               on:change={addToUploadQueue}>
       </span>
       <span on:click={openConfigYaml}>
         <span class="iconify" data-icon="vscode-icons:file-type-light-config"></span>
