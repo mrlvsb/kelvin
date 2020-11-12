@@ -6,6 +6,7 @@
   import 'codemirror/mode/yaml/yaml.js';
   import 'codemirror/mode/python/python.js';
   import 'codemirror/mode/markdown/markdown.js';
+  import 'codemirror/mode/htmlmixed/htmlmixed.js';
   import 'codemirror/addon/display/fullscreen.js';
   import 'codemirror/addon/display/fullscreen.css';
 
@@ -26,6 +27,8 @@
       'yml': 'yaml',
       'yaml': 'yaml',
       'py': 'python',
+      'htm': 'htmlmixed',
+      'html': 'htmlmixed',
     };
     return map[ext];
   }
