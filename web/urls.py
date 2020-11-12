@@ -1,4 +1,4 @@
-from django.urls import path, re_path
+from django.urls import path
 
 from .views import teacher as teacher_view
 from .views import student as student_view
@@ -31,14 +31,6 @@ urlpatterns = [
     path('notification/mark_as_read/<int:notification_id>', notification_view.mark_as_read),
 
     # teacher
-    path('all', lambda req: teacher_view.teacher_list(req, teacher_id=None)),
-    path('subject/<str:subject__abbr>', teacher_view.teacher_list, name='teacher_index'),
-    path('subject/<str:subject__abbr>/all', lambda req, **kwargs: teacher_view.teacher_list(req, teacher_id=None, **kwargs)),
-    re_path('^semester/(?P<semester__year>[0-9]{4})/(?P<semester__winter>W|S)$', teacher_view.teacher_list),
-    re_path('^semester/(?P<semester__year>[0-9]{4})/(?P<semester__winter>W|S)/all$', lambda req, **kwargs: teacher_view.teacher_list(req, teacher_id=None, **kwargs)),
-    re_path('^semester/(?P<semester__year>[0-9]{4})/(?P<semester__winter>W|S)/(?P<subject__abbr>[A-Z0-9]+)$', teacher_view.teacher_list),
-    re_path('^semester/(?P<semester__year>[0-9]{4})/(?P<semester__winter>W|S)/(?P<subject__abbr>[A-Z0-9]+)/all$', lambda req, **kwargs: teacher_view.teacher_list(req, teacher_id=None, **kwargs)),
-
     path('teacher/task/<int:task_id>', teacher_view.teacher_task, name='teacher_task'),
     path('teacher/task/<int:task_id>/moss', teacher_view.teacher_task_moss_check, name='teacher_task_moss_check'),
     path('submits', teacher_view.submits, name='submits'),
@@ -63,5 +55,4 @@ urlpatterns = [
     path('upr.py', student_view.uprpy, name='upr.py'),
 
     path('project/<str:project_type>', student_view.project, name='project'),
-    path('old', teacher_view.teacher_list),
 ]

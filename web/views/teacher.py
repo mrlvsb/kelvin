@@ -111,59 +111,6 @@ def teacher_task_moss_check(request, task_id):
             "task": task,
         })
 
-@user_passes_test(is_teacher)
-def all_classes(request):
-    return teacher_list(request)
-
-@user_passes_test(is_teacher)
-def teacher_list(request, **class_conditions):
-    if not class_conditions:
-        class_conditions = {}
-
-    if 'teacher_id' not in class_conditions:
-        class_conditions['teacher_id'] = request.user.id
-    elif class_conditions['teacher_id'] is None:
-        del class_conditions['teacher_id']
-
-    current_semester = True
-    if 'semester__winter' in class_conditions:
-        class_conditions['semester__winter'] = class_conditions['semester__winter'] == 'W'
-        current_semester = False
-
-    if current_semester:
-        classess = Class.objects.current_semester().filter(**class_conditions)
-    else:
-        classess = Class.objects.filter(**class_conditions)
-
-    result = []
-    for clazz in classess:
-        assignments = []
-        students = {s.username: {'student': s, 'points': []} for s in clazz.students.all()}
-
-        for assignment in clazz.assignedtask_set.all().order_by('id'):
-            assignments.append(assignment)
-
-            for score in assignedtask_results(assignment):
-                score['assignment'] = assignment
-
-                if 'assigned_points' in score and score['assigned_points'] is not None and int(assignment.max_points or 0) > 0:
-                    ratio = max(0, min(1, score['assigned_points'] / assignment.max_points))
-                    green = int(ratio * 200)
-                    red = int((1 - ratio) * 255)
-                    score['color'] = f'#{red:02X}{green:02X}00'
-
-                students[score['student'].username]['points'].append(score)
-
-        result.append({
-            'class': clazz,
-            'assignments': assignments,
-            'students': sorted([(s['student'], s['points']) for _, s in students.items()], key=lambda s: s[0].username),
-        })
-
-    return render(request, 'web/teacher.html', {
-        'classes': result,
-        'subjects': Subject.objects.filter(class__teacher=request.user.id, **current_semester_conds('class__')).distinct(),
-    })
 
 @user_passes_test(is_teacher)
 def submits(request, student_username=None):
