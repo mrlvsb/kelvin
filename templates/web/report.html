@@ -46,6 +46,7 @@ $ {{ test.command }}{% if test.message %}
               <div class="diff"
                 data-expected-url="{% url 'raw_result_content' submit.id test.name 'expected' path %}"
                 data-actual-url="{% url 'raw_result_content' submit.id test.name 'actual' path %}"
+                data-path="{{path}}"
                 >
               {{ v.diff.read }}
               </div>
@@ -146,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
             rawTemplates: {
               "generic-file-path": `
                 <span class="d2h-file-name-wrapper">
-                  <span class="d2h-file-name">stdout</span>
+                  <span class="d2h-file-name">${el.getAttribute('data-path')}</span>
                   <span style='margin-left: auto'>
                     <a href="${el.getAttribute('data-actual-url')}">your output</a>   &#8594;
                     <a href="${el.getAttribute('data-expected-url')}">expected output</a>
