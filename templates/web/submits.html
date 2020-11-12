@@ -13,7 +13,6 @@
         <th>Submit ID</th>
         <th>Task Name</th>
         <th>Student</th>
-        <th>Result</th>
         <th>Time from Submit</th>
         <th>Reevaluate</th>
     </thead>
@@ -22,7 +21,6 @@
         <td><a href="{% url 'task_detail' submit.student.username submit.assignment.id submit.submit_num %}">{{ submit.id }}</a></td>
         <td><a href="{% url 'teacher_task' submit.assignment.task.id %}">{{ submit.assignment.task.name }}</a></td>
         <td><a href="{% url 'submits' submit.student.username %}">{{ submit.student.username }} - {{ submit.student.get_full_name }}</a></td>
-        <td>{{ submit.points }} / {{ submit.max_points }}</td>
         <td title="{{ submit.created_at }}">{{ submit.created_at | timesince }}</td>
         <td><a href="{% url 'reevaluate' submit.id %}">reevaluate</a></td>
     </tr>
