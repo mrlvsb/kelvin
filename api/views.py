@@ -23,6 +23,7 @@ import json
 import datetime
 import logging
 from shutil import copytree, ignore_patterns
+from fnmatch import fnmatch
 from django.utils.dateparse import parse_datetime
 
 from web.views.teacher import teacher_list 
@@ -256,12 +257,15 @@ def task_detail(request, task_id=None):
         'task_link': reverse('teacher_task', kwargs={'task_id': task.id}),
     }
 
-    ignore_list = ['.git', '.taskid', '.']
+    ignore_list = ['.git', '.taskid', '.', '__pycache__', '*.pyc']
     for root, subdirs, files in os.walk(task.dir()):
         rel = os.path.relpath(root, task.dir())
         node = result['files']
+
+        is_allowed = lambda path: not any([fnmatch(path, pattern) for pattern in ignore_list])
+
         for path in rel.split('/'):
-            if path not in ignore_list:
+            if is_allowed(path):
                 if path not in node:
                     node[path] = {
                         'type': 'dir',
@@ -269,7 +273,7 @@ def task_detail(request, task_id=None):
                     }
                 node = node[path]['files']
         for f in files:
-            if f not in ignore_list:
+            if is_allowed(f):
                 node[f] = {
                     'type': 'file',
                 }
