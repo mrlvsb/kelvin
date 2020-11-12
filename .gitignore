@@ -112,3 +112,6 @@ web/static/frontend.css
 web/static/frontend.css.map
 web/static/frontend.js
 web/static/frontend.js.map
+
+survey/surveys/*.yaml
+exams/
