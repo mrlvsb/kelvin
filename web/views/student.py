@@ -153,6 +153,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
 
     if current_submit:
         data = {**data, **get(current_submit)}
+        data['comment_count'] = current_submit.comment_set.count()
 
         submit_nums = sorted(submits.values_list('submit_num', flat=True))
         current_idx = submit_nums.index(current_submit.submit_num)
