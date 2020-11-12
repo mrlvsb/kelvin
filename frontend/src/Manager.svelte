@@ -159,8 +159,11 @@ pipeline:
   <div class="w-100" style="overflow: hidden">
     <ul class="nav nav-tabs">
       {#each Object.entries($openedFiles) as [path, file]}
-      <li class="nav-item" on:click={() => fs.open(path)} style="cursor: pointer">
-        <span class="nav-link" class:active={path === $currentOpenedFile}>{path.split('/').slice(-1)[0]}</span>
+      <li class="nav-item" style="cursor: pointer">
+        <span class="nav-link" class:active={path === $currentOpenedFile}>
+          <span on:click={() => fs.open(path)}>{path.split('/').slice(-1)[0]}</span>
+          <span on:click={() => fs.close(path)}><span class="iconify" data-icon="fa:times"></span></span>
+        </span>
       </li>
       {/each}
     </ul>
