@@ -70,12 +70,6 @@
   }
 
   let showFullTaskNames = false;
-  function getAssignmentShortName(assignment, index, showFullTaskNames) {
-      if (showFullTaskNames) {
-          return assignment.short_name;
-      }
-      return "#" + (index + 1).toString();
-  }
 </script>
 
 <style>
@@ -194,7 +188,11 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
               <th>Student</th>
               {#each clazz.assignments as assignment, index}
               <th class="more-hover">
-                <a href="/task/{ $user.username }/{ assignment.assignment_id }">{ getAssignmentShortName(assignment, index, showFullTaskNames) }{#if assignment.max_points > 0}&nbsp;({ assignment.max_points }b){/if}</a>
+                <a href="/task/{ $user.username }/{ assignment.assignment_id }" 
+                   class:text-muted={assignment.assigned > new Date()}
+                   class:text-success={assignment.deadline > new Date()}>
+                  { showFullTaskNames ? assignment.short_name : `#${index+1}` }{#if assignment.max_points > 0}&nbsp;({ assignment.max_points }b){/if}
+                </a>
                 <div class="more-content">
                   {assignment.name}
                   <a href="/task/edit/{assignment.task_id}" use:link title="Edit"><span class="iconify" data-icon="clarity:edit-solid"></span></a>
