@@ -139,7 +139,15 @@ if(el) {
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.diff').forEach((el) => {
-      let diffHtml = Diff2Html.html(el.innerHTML.trim(), {
+      const entities = {
+        "nbsp":" ",
+        "amp" : "&",
+        "quot": "\"",
+        "lt"  : "<",
+        "gt"  : ">"
+      };
+
+      const diffHtml = Diff2Html.html(el.innerHTML.replace(/&([^;]+);/gm, (m, entity) => entities[entity] || m).trim(), {
             drawFileList: true,
             matching: 'lines',
             outputFormat: 'side-by-side',
