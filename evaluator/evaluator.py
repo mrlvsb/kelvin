@@ -173,7 +173,13 @@ class Evaluation:
                 result.copy_html_result(name, output)
             if diff:
                 result.copy_diff(name, diff)
-            result.add_result(success, f"file {name} doesn't match", output)
+
+            msg = f"file <strong>{name}</strong> doesn't match"
+            if name == 'stdout':
+                msg = "Standard output (<strong>stdout</strong>) doesn't match"
+            elif name == 'stderr':
+                msg = "Standard error (<strong>stderr</strong>) doesn't match"
+            result.add_result(success, msg, output)
 
         # extract statistics
         with open('/tmp/meta') as f:
@@ -191,7 +197,7 @@ class Evaluation:
             result.add_error("Segmentation fault")
 
         if test.exit_code is not None:
-            result.add_result(test.exit_code == result['exit_code'], f"main function returned exit code {result['exit_code']} instead of {test.exit_code}")
+            result.add_result(test.exit_code == result['exit_code'], f"<strong>main</strong> or <strong>exit</strong> function terminated the program with exit status <strong>{result['exit_code']}</strong> instead of <strong>{test.exit_code}</strong>")
 
         # save issued commandline
         result['command'] = ' '.join(cmd)
