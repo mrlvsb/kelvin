@@ -92,7 +92,7 @@ class TestResult:
             try:
                 if isinstance(actual, File):
                     actual = actual.path
-                if os.stat(actual).st_size > 0 or force_save:
+                if os.stat(actual).st_size > 0 or expected:
                     shutil.copyfile(actual, os.path.join(self.result_dir, f"{self['name']}.{ext}"))
             except FileNotFoundError:
                 pass
