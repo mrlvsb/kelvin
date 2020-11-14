@@ -22,6 +22,7 @@
         <div class="card-header {% if test.success%}bg-success{%else%}bg-danger{%endif%}">
             <h5>
                 {% if test.title %}{{ test.title }}{% else %} {{ test.name }} {% endif %}
+                {% if test.title != test.name %} <span>({{ test.name }})</span>{% endif %}
                 <div class="float-right">
                     {{ test.time }}s, {{ test.maxrss|filesizeformat }}
                 </div>
