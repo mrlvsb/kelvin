@@ -104,7 +104,7 @@ class Evaluation:
         except FileExistsError:
             pass
         result = TestResult(result_dir, {'name': test.name})
-        result.title = title if title else test.title
+        result['title'] = title if title else test.title
 
         # copy input files to the sandbox
         for path, f in test.files.items():
