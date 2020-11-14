@@ -146,6 +146,7 @@ class Evaluation:
             if 'expected' not in opts:
                 continue
 
+            msg = None
             if 'actual' not in opts:
                 opts['error'] = 'file not found'
                 msg = f"file <strong>{name}</strong> not found"
@@ -154,8 +155,7 @@ class Evaluation:
                 elif name == 'stderr':
                     msg = "Standard error (<strong>stderr</strong>) is empty. Did you mean to use this?<pre><code class='c'>fprintf(stderr, \"message\\n\");</code></pre>"
 
-                result.add_result(False, msg)
-                continue
+                opts['actual'] = testsets.TestFile(testsets.File(io.StringIO()))
 
             comparator = text_compare
             comparator_args = {'filters': filters}
@@ -174,11 +174,12 @@ class Evaluation:
             if diff:
                 result.copy_diff(name, diff)
 
-            msg = f"file <strong>{name}</strong> doesn't match"
-            if name == 'stdout':
-                msg = "Standard output (<strong>stdout</strong>) doesn't match"
-            elif name == 'stderr':
-                msg = "Standard error (<strong>stderr</strong>) doesn't match"
+            if not msg:
+                msg = f"file <strong>{name}</strong> doesn't match"
+                if name == 'stdout':
+                    msg = "Standard output (<strong>stdout</strong>) doesn't match"
+                elif name == 'stderr':
+                    msg = "Standard error (<strong>stderr</strong>) doesn't match"
             result.add_result(success, msg, output)
 
         # extract statistics
