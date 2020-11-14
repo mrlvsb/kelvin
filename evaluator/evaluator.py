@@ -148,7 +148,13 @@ class Evaluation:
 
             if 'actual' not in opts:
                 opts['error'] = 'file not found'
-                result.add_result(False, f"file {name} not found")
+                msg = f"file <strong>{name}</strong> not found"
+                if name == 'stdout':
+                    msg = "Standard output (<strong>stdout</strong>) is empty"
+                elif name == 'stderr':
+                    msg = "Standard error (<strong>stderr</strong>) is empty. Did you mean to use this?<pre><code class='c'>fprintf(stderr, \"message\\n\");</code></pre>"
+
+                result.add_result(False, msg)
                 continue
 
             comparator = text_compare
@@ -185,7 +191,7 @@ class Evaluation:
             result.add_error("Segmentation fault")
 
         if test.exit_code is not None:
-            result.add_result(test.exit_code == result['exit_code'], f"invalid exit code {result['exit_code']}")
+            result.add_result(test.exit_code == result['exit_code'], f"main function returned exit code {result['exit_code']} instead of {test.exit_code}")
 
         # save issued commandline
         result['command'] = ' '.join(cmd)

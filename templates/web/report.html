@@ -32,7 +32,7 @@
 {% if test.errors %}
 <ul class="text-danger">
   {% for error in test.errors %}
-  <li>{{ error }}</li>
+  <li>{{ error|safe }}</li>
   {% endfor %}
 </ul>
 <pre style="color: #e83e8c">
