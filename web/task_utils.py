@@ -8,6 +8,7 @@ import lxml
 
 from django.urls import reverse
 from django.core.cache import caches
+from jinja2 import Environment, FileSystemLoader
 
 from kelvin.settings import BASE_DIR
 
@@ -22,7 +23,7 @@ class Readme:
     def __str__(self):
         return self.content
 
-def load_readme(task_code):
+def load_readme(task_code, vars=None):
     try:
         task_dir = os.path.join(BASE_DIR, "tasks", task_code)
         readmes = [f for f in os.listdir(task_dir) if f.lower() == "readme.md"]
@@ -30,7 +31,11 @@ def load_readme(task_code):
             return
 
         with open(os.path.join(task_dir, readmes[0])) as f:
-            return process_markdown(task_code, f.read())
+            if not vars:
+                vars = {}
+            
+            template = Environment(loader=FileSystemLoader(task_dir)).from_string(f.read())
+            return process_markdown(task_code, template.render(**vars))
     except FileNotFoundError:
         pass
 

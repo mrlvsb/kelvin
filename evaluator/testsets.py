@@ -14,9 +14,6 @@ from .utils import parse_human_size
 from .script import Script
 from web.task_utils import load_readme
 from kelvin.settings import BASE_DIR
-from django.template import Context, Template
-
-
 
 class File:
     def __init__(self, path):
@@ -305,11 +302,9 @@ class TestSet:
     def load_readme(self):
         try:
             task_relpath = os.path.relpath(self.task_path, os.path.join(BASE_DIR, "tasks"))
-            readme = load_readme(task_relpath)
+            vars = {}
             if self.script:
-                t = Template(readme.content)
-                c = Context(self.script.call('readme_vars', self))
-                readme.content = t.render(c)
-            return readme
+                vars = self.script.call('readme_vars', self)
+            return load_readme(task_relpath, vars)
         except Exception as e:
             self.add_warning(f'script.py: {e}\n{traceback.format_exc()}')
