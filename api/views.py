@@ -265,7 +265,7 @@ def task_detail(request, task_id=None):
         is_allowed = lambda path: not any([fnmatch(path, pattern) for pattern in ignore_list])
 
         for path in rel.split('/'):
-            if is_allowed(path):
+            if is_allowed(rel):
                 if path not in node:
                     node[path] = {
                         'type': 'dir',
