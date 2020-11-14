@@ -23,7 +23,6 @@ import json
 import datetime
 import logging
 from shutil import copytree, ignore_patterns
-from fnmatch import fnmatch
 from django.utils.dateparse import parse_datetime
 
 from web.views.teacher import teacher_list 
@@ -257,23 +256,38 @@ def task_detail(request, task_id=None):
         'task_link': reverse('teacher_task', kwargs={'task_id': task.id}),
     }
 
-    ignore_list = ['.git', '.taskid', '.', '__pycache__', '*.pyc']
+    ignore_list = [
+        r'\.git',
+        r'^\.taskid$',
+        r'^\.$',
+        r'__pycache__',
+        r'\.pyc$'
+    ]
     for root, subdirs, files in os.walk(task.dir()):
-        rel = os.path.relpath(root, task.dir())
+        rel = os.path.normpath(os.path.relpath(root, task.dir()))
+
+        def is_allowed(path):
+            path = os.path.normpath(path)
+            for pattern in ignore_list:
+                if re.search(pattern, path):
+                    return False
+            return True
+
+        if not is_allowed(root):
+            continue
+
         node = result['files']
-
-        is_allowed = lambda path: not any([fnmatch(path, pattern) for pattern in ignore_list])
-
-        for path in rel.split('/'):
-            if is_allowed(rel):
+        if rel != '.':
+            for path in rel.split('/'):
                 if path not in node:
                     node[path] = {
                         'type': 'dir',
                         'files': {},
                     }
                 node = node[path]['files']
+
         for f in files:
-            if is_allowed(f):
+            if is_allowed(os.path.join(rel, f)):
                 node[f] = {
                     'type': 'file',
                 }
