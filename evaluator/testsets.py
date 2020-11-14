@@ -156,7 +156,7 @@ class TestSet:
             try:
                 self.script = Script(self.task_path, self.meta, self.add_warning)
             except Exception as e:
-                self.output_fn(f'script.py: {e}\n{traceback.format_exc()}')
+                self.add_warning(f'script.py: {e}\n{traceback.format_exc()}')
 
 
         self.load_tests()
@@ -311,5 +311,5 @@ class TestSet:
                 c = Context(self.script.call('readme_vars', self))
                 readme.content = t.render(c)
             return readme
-        except FileNotFoundError:
-            pass
+        except Exception as e:
+            self.add_warning(f'script.py: {e}\n{traceback.format_exc()}')
