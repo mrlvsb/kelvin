@@ -179,7 +179,10 @@ class Evaluation:
                 if name == 'stdout':
                     msg = "Standard output (<strong>stdout</strong>) doesn't match"
                 elif name == 'stderr':
-                    msg = "Standard error (<strong>stderr</strong>) doesn't match"
+                    if opts['actual'].size() <= 0:
+                        msg = "Standard error (<strong>stderr</strong>) is empty. Did you mean to use this?<pre><code class='c'>fprintf(stderr, \"message\\n\");</code></pre>"
+                    else:
+                        msg = "Standard error (<strong>stderr</strong>) doesn't match"
             result.add_result(success, msg, output)
 
         # extract statistics
