@@ -16,6 +16,10 @@
   let syncing = false;
   let taskLink = null;
 
+  function isClassVisible(cls) {
+    return cls.teacher === $user.username || cls.assignment_id || showAllClasses;
+  }
+
   let showAllClasses = false;
   let shownClasses = [];
   $: {
@@ -147,6 +151,17 @@
     });
   }
 
+  function assignSameToAll(templateClass) {
+    task.classes = task.classes.map(cl => {
+      if(isClassVisible(cl)) {
+        cl.max_points = templateClass.max_points;
+        cl.assigned = templateClass.assigned;
+        cl.deadline = templateClass.deadline;
+      }
+      return cl;
+    });
+  }
+
   async function duplicateTask() {
       let res = await fetch(`/api/tasks/${task.id}/duplicate`, {
         method: 'POST',
@@ -221,6 +236,9 @@ td:not(:nth-of-type(3)) {
               </div>
             </td>
             <td>
+              <button class="btn btn-sm p-0" on:click|preventDefault={() => assignSameToAll(clazz)} title="Set same assigned date, deadline and points to all visible classes">
+                <span class="iconify" data-icon="mdi:content-duplicate"></span>
+              </button>
               <button class="btn p-0" on:click|preventDefault={() => {clazz.assigned = null; clazz.deadline = null; clazz.max_points = null}}>&times;</button>
             </td>
           {/each}
