@@ -278,24 +278,6 @@ class Sandbox:
             raise "failed to execute:" + cmd
         return ret
 
-    def compile(self, flags = None, sources=None):
-        if not sources:
-            sources = [os.path.relpath(p, self.path + '/box') for p in glob.glob(self.system_path('*.c'))]
-
-        if not flags:
-            flags = []
-        flags = ['-g', '-lm', '-Wall', '-pedantic'] + flags
-        
-        command = '/usr/bin/gcc {sources} -o main {flags}'.format(
-            sources=' '.join(map(shlex.quote, sources)),
-            flags=' '.join(map(shlex.quote, flags))
-        ).strip()
-
-        result = self.run(command)
-        result['stderr'] = result['stderr'][:1024*10]
-        result['command'] = command
-        return result
-
 # TODO: python3.8
 def copytree(src, dst, symlinks=False, ignore=None):
     for item in os.listdir(src):
