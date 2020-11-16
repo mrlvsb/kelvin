@@ -4,6 +4,7 @@
   import {user} from './global.js'
   import CopyToClipboard from './CopyToClipboard.svelte'
   import TimeAgo from './TimeAgo.svelte'
+  import {localStorageStore} from './utils.js'
 
   import { createEventDispatcher } from 'svelte';
   const dispatch = createEventDispatcher();
@@ -69,7 +70,7 @@
           .reduce((acc, val) => acc + val, 0);
   }
 
-  let showFullTaskNames = false;
+  let showFullTaskNames = localStorageStore('classDetail/showFullTaskNames', false);
 </script>
 
 <style>
@@ -140,9 +141,9 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
           <span class="iconify" data-icon="la:file-csv-solid"></span>
         </a>
         <button class="p-0 btn btn-link"
-                on:click={() => showFullTaskNames = !showFullTaskNames}
+                on:click={() => $showFullTaskNames = !$showFullTaskNames}
                 title="Show full task names">
-          {#if showFullTaskNames }
+          {#if $showFullTaskNames }
             <span><span class="iconify" data-icon="la:eye"></span></span>
           {:else}
             <span><span class="iconify" data-icon="la:eye-slash"></span></span>
@@ -191,7 +192,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
                 <a href="/task/{ $user.username }/{ assignment.assignment_id }" 
                    class:text-muted={assignment.assigned > new Date()}
                    class:text-success={assignment.deadline > new Date()}>
-                  { showFullTaskNames ? assignment.short_name : `#${index+1}` }{#if assignment.max_points > 0}&nbsp;({ assignment.max_points }b){/if}
+                  { $showFullTaskNames ? assignment.short_name : `#${index+1}` }{#if assignment.max_points > 0}&nbsp;({ assignment.max_points }b){/if}
                 </a>
                 <div class="more-content">
                   {assignment.name}
