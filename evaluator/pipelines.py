@@ -144,7 +144,7 @@ class AutoGraderPipe:
 
         s = Submit.objects.get(id=evaluation.tests.meta['submit_id'])
         is_after_deadline = s.assignment.deadline and s.assignment.deadline < s.created_at
-        points = success * s.assignment.max_points * (self.after_deadline_multiplier if is_after_deadline else 1) / total
+        points = round(success * s.assignment.max_points * (self.after_deadline_multiplier if is_after_deadline else 1) / total, 2)
 
         if self.propose:
             return {
