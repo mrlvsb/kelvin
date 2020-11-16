@@ -25,9 +25,11 @@
     }
 
     sources = sources.map(source => {
-      source.comments = Object.fromEntries(Object.entries(source.comments).map(([lineNum, comments]) => {
-        return [lineNum, update(comments)];
-      }));
+      if(source.comments) {
+        source.comments = Object.fromEntries(Object.entries(source.comments).map(([lineNum, comments]) => {
+          return [lineNum, update(comments)];
+        }));
+      }
       return source;
     });
 
