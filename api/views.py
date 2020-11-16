@@ -126,7 +126,7 @@ def subject_list(request, subject_abbr):
     for clazz in Class.objects.filter(subject__abbr=subject_abbr, **current_semester_conds()):
         classes.append({
             'id': clazz.id,
-            'teacher_username': clazz.teacher.username if clazz.teacher else None,
+            'teacher': clazz.teacher.username if clazz.teacher else None,
             'timeslot': clazz.timeslot,
             'code': clazz.code,
             'week_offset': clazz.week_offset,
@@ -294,7 +294,6 @@ def task_detail(request, task_id=None):
 
     classes = Class.objects.filter(
             subject__abbr=task.subject.abbr,
-            teacher__username=request.user.username,
             **current_semester_conds(),
     )
     for clazz in classes:
@@ -302,6 +301,7 @@ def task_detail(request, task_id=None):
             'id': clazz.id,
             'timeslot': clazz.timeslot,
             'week_offset': clazz.week_offset,
+            'teacher': clazz.teacher.username,
         }
 
         assigned = AssignedTask.objects.filter(task_id=task.id, clazz_id=clazz.id).first()

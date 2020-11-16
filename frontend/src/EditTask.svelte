@@ -16,6 +16,22 @@
   let syncing = false;
   let taskLink = null;
 
+  let showAllClasses = false;
+  let shownClasses = [];
+  $: {
+    if(task) {
+      shownClasses = task.classes
+      .filter(cls => cls.teacher === $user.username || cls.assignment_id || showAllClasses)
+      .sort((a, b) => {
+        function key(cls) {
+          return cls.teacher === $user.username || cls.assignment_id !== undefined;
+        }
+
+        return key(b) - key(a);
+      });
+    }
+  }
+
   $: {
     if(task) {
       const clazz = task.classes.find(clazz => clazz.assignment_id >= 1);
@@ -35,7 +51,7 @@
           const json = await res.json();
 
           task = {
-              'classes': json['classes'].filter(c => c.teacher_username == $user.username),
+              'classes': json['classes'],
               'path': [params.subject, $semester['abbr'], $user.username].join('/'),
           };
           fs.createFile('readme.md', '# Task Title');
@@ -143,7 +159,7 @@
 </script>
 
 <style>
-td:not(:nth-of-type(2)) {
+td:not(:nth-of-type(3)) {
   vertical-align: middle;
   width: 1%;
   white-space: nowrap;
@@ -185,11 +201,12 @@ td:not(:nth-of-type(2)) {
 		</div>
 
 		<div class="form-group">
-      <table class="table table-hover table-striped"> 
+      <table class="table table-hover table-striped mb-0"> 
         <tbody>
-          {#each task.classes as clazz} 
+          {#each shownClasses as clazz} 
           <tr class:table-success={clazz.assigned}>
             <td>{ clazz.timeslot }</td>
+            <td>{ clazz.teacher }</td>
             <td>
               <TimeRange timeOffsetInWeek={clazz.week_offset} bind:from={clazz.assigned} bind:to={clazz.deadline} semesterBeginDate={$semester.begin} />
             </td>
@@ -208,7 +225,12 @@ td:not(:nth-of-type(2)) {
             </td>
           {/each}
         </tbody>
-			</table>
+      </table>
+      {#if task && (task.classes.length > shownClasses.length || showAllClasses)}
+        <button on:click|preventDefault={() => showAllClasses = !showAllClasses} class="btn p-0">
+          <span class="iconify" data-icon="la:eye"></span> Show all classes
+        </button>
+      {/if}
 		</div>
 
 		<div class="form-group">
