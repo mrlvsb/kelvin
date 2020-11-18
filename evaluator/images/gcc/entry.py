@@ -38,12 +38,12 @@ with open("result.html", "w") as out:
                 if f.split('.')[-1] in ['c', 'cpp']:
                     sources.append(os.path.join(root, f))
 
-        compile_cmd = ["gcc", *sources, "-o", output, *shlex.split(flags)]
-        returncode = cmd_run(compile_cmd, out, show_cmd=compile_cmd + ['-fdiagnostics-colors=always'])
-
         if not sources:
             out.write("<span style='color: red'>Missing source files! please upload .c or .cpp files!</span>")
             exit(1)
+
+        compile_cmd = ["gcc", *sources, "-o", output, *shlex.split(flags)]
+        returncode = cmd_run(compile_cmd + ['-fdiagnostics-color=always'], out, show_cmd=compile_cmd)
 
 """
 p = subprocess.Popen([*compile_cmd, '-fdiagnostics-format=json'], stderr=subprocess.PIPE)
