@@ -11,30 +11,40 @@ from collections import defaultdict
 def shlex_join(split_command):
     return ' '.join(shlex.quote(arg) for arg in split_command)
 
-output = os.getenv('PIPE_OUTPUT', 'main')
-flags = os.getenv('PIPE_FLAGS', '')
+def cmd_run(cmd, out, show_cmd=None):
+    if not show_cmd:
+        show_cmd = cmd
 
-sources = []
-for root, dirs, files in os.walk('.'):
-    for f in files:
-        if f.split('.')[-1] in ['c', 'cpp']:
-            sources.append(os.path.join(root, f))
-
-compile_cmd = ["gcc", *sources, "-o", output, *shlex.split(flags)]
-
-with open("result.html", "w") as out:
-    if not sources:
-        out.write("<span style='color: red'>Missing source files! please upload .c or .cpp files!</span>")
-        exit(1)
-
-    out.write(f"<code style='color: #444; font-weight: bold'>$ {shlex_join(compile_cmd)}</code>")
+    out.write(f"<code style='color: #444; font-weight: bold'>$ {shlex_join(show_cmd)}</code>")
 
     with open('/tmp/out', 'w+', errors='ignore') as gcc_out:
-        p = subprocess.Popen([*compile_cmd, '-fdiagnostics-color=always'], stdout=gcc_out, stderr=gcc_out)
+        p = subprocess.Popen(cmd, stdout=gcc_out, stderr=gcc_out)
         p.wait()
 
         gcc_out.seek(0)
         out.write(f"<kelvin-terminal-output>{html.escape(gcc_out.read())}</kelvin-terminal-output>")
+        return p.returncode
+
+output = os.getenv('PIPE_OUTPUT', 'main')
+flags = os.getenv('PIPE_FLAGS', '')
+
+with open("result.html", "w") as out:
+    if os.path.exists('Makefile'):
+        returncode = cmd_run(['make'], out)
+    else:
+        sources = []
+        for root, dirs, files in os.walk('.'):
+            for f in files:
+                if f.split('.')[-1] in ['c', 'cpp']:
+                    sources.append(os.path.join(root, f))
+
+        compile_cmd = ["gcc", *sources, "-o", output, *shlex.split(flags)]
+        returncode = cmd_run(compile_cmd, out, show_cmd=compile_cmd + ['-fdiagnostics-colors=always'])
+
+        if not sources:
+            out.write("<span style='color: red'>Missing source files! please upload .c or .cpp files!</span>")
+            exit(1)
+
 """
 p = subprocess.Popen([*compile_cmd, '-fdiagnostics-format=json'], stderr=subprocess.PIPE)
 stdout, stderr = p.communicate()
@@ -52,4 +62,4 @@ for err in json.loads(stderr.decode('utf-8')):
 with open('piperesult.json', 'w') as out:
     json.dump({"comments": comments}, out, indent=4, sort_keys=True)
 """
-exit(p.returncode)
+exit(returncode)
