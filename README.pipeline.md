@@ -7,14 +7,15 @@ Actions are defined in `config.yml` file in the task directory.
 <a href="https://github.com/mrlvsb/kelvin/blob/master/evaluator/pipelines.py">Builtin actions</a> are implemented directly in Kelvin source code, but it is also possible to run the action in <a href="https://github.com/mrlvsb/kelvin/tree/master/evaluator/images">docker container</a> with concrete compilers, so they don't need to be installed on the server.
 
 ## gcc
-Action for compiling all source codes in a submitted solution.
+Action for compiling all source codes in a submitted solution with or without a makefile.
 The errors and warnings are shown in the Result tab.
 
 
 ```yaml
 pipeline:
   - type: gcc
-    flags: -Wall -pedantic -Werror -g -fsanitize=address -lm -static-libasan
+    flags: -Wall -Wextra -g -fsanitize=address
+    ldflags: -lm
 ```
 
 ## Tests

@@ -11,14 +11,17 @@ from collections import defaultdict
 def shlex_join(split_command):
     return ' '.join(shlex.quote(arg) for arg in split_command)
 
-def cmd_run(cmd, out, show_cmd=None):
+def cmd_run(cmd, out, show_cmd=None, env=None):
     if not show_cmd:
         show_cmd = cmd
+
+    if env:
+        env = {**os.environ, **env}
 
     out.write(f"<code style='color: #444; font-weight: bold'>$ {shlex_join(show_cmd)}</code>")
 
     with open('/tmp/out', 'w+', errors='ignore') as gcc_out:
-        p = subprocess.Popen(cmd, stdout=gcc_out, stderr=gcc_out)
+        p = subprocess.Popen(cmd, stdout=gcc_out, stderr=gcc_out, env=env)
         p.wait()
 
         gcc_out.seek(0)
@@ -27,10 +30,16 @@ def cmd_run(cmd, out, show_cmd=None):
 
 output = os.getenv('PIPE_OUTPUT', 'main')
 flags = os.getenv('PIPE_FLAGS', '')
+ldflags = os.getenv('PIPE_LDFLAGS', '')
 
 with open("result.html", "w") as out:
     if os.path.exists('Makefile'):
-        returncode = cmd_run(['make'], out)
+        returncode = cmd_run(['make'], out, env={
+            'CC': 'gcc',
+            'CXX': 'g++',
+            'CFLAGS': flags,
+            'LDFLAGS': ldflags,
+        })
     else:
         sources = []
         for root, dirs, files in os.walk('.'):
@@ -42,7 +51,7 @@ with open("result.html", "w") as out:
             out.write("<span style='color: red'>Missing source files! please upload .c or .cpp files!</span>")
             exit(1)
 
-        compile_cmd = ["gcc", *sources, "-o", output, *shlex.split(flags)]
+        compile_cmd = ["gcc", *sources, "-o", output, *shlex.split(flags), *shlex.split(flags)]
         returncode = cmd_run(compile_cmd + ['-fdiagnostics-color=always'], out, show_cmd=compile_cmd)
 
 """
