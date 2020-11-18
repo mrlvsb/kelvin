@@ -5,6 +5,43 @@ import subprocess
 import html
 import base64
 from io import StringIO
+import glob
+import mimetypes
+mime = mimetypes.MimeTypes()
+
+SUPPORTED_IMAGES = [
+    'image/png',
+    'image/jpeg',
+    'image/gif',
+    'image/webp',
+]
+
+def display(patterns, out, delete=False):
+    for pattern in patterns:
+        for filename in glob.glob(pattern):
+            out.write(f"<strong>{html.escape(filename)}</strong><br>")
+            try:
+                mimetype = mime.guess_type(filename)[0]
+                if mimetype.startswith('image/'):
+                    toshow = filename
+                    if mimetype not in SUPPORTED_IMAGES:
+                        toshow = "/tmp/image.webp"
+                        subprocess.check_call(["convert", filename, toshow])
+                    
+                    with open(toshow, 'rb') as f:
+                        out.write(f"<img src='data:image/webp;base64,{base64.b64encode(f.read()).decode('utf-8')}' />")
+
+                    if delete:
+                        try:
+                            os.unlink(filename)
+                        except Exception as e:
+                            out.write(f"Could not delete: {e}")
+                else:
+                    out.write(f"<p class='text-danger'>Unsupported file {filename}</p>")
+            except Exception as e:
+                out.write(f"<p class='text-danger'>Failed to show file {filename}: {e}</p>")
+            
+            out.write("<br>")
 
 with open("result.html", "w") as f:
     for job in json.loads(os.getenv('PIPE_COMMANDS')):
@@ -12,8 +49,11 @@ with open("result.html", "w") as f:
             job = {
                 'cmd': job
             }
-        if 'cmd' not in job:
-            f.write("<span style='color:red'>Missing cmd key: {html.escape(job)}")
+        if 'display' in job:
+            display(job['display'], f, delete=job.get('delete', False))
+            continue
+        elif 'cmd' not in job:
+            f.write(f"<span style='color:red'>Missing cmd key: {html.escape(job)}")
             continue
 
         if job['cmd'].startswith('#'):

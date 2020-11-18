@@ -215,6 +215,8 @@ pipeline:
       - cmd: timeout 5 ./main || true
         cmd_show: ./main
         asciinema: true
+
+      - display: ['*.ppm', '*.pgm', '*.jpg']
 ```
 
 
