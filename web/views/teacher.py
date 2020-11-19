@@ -62,7 +62,8 @@ def teacher_task_moss_check(request, task_id):
             status = job.get_status()
             if status == 'queued':
                 status += f' {job.get_position() + 1}'
-        except (rq.exceptions.NoSuchJobError, AttributeError):
+        except (rq.exceptions.NoSuchJobError, AttributeError) as e:
+            logging.exception(e)
             status = 'unknown'
         return render(request, "web/moss.html", {
             "status": status,
@@ -70,7 +71,7 @@ def teacher_task_moss_check(request, task_id):
         })
 
     if request.method == 'POST' or cache.get(key) is None:
-        job = django_rq.enqueue(check_task, task_id)
+        job = django_rq.enqueue(check_task, task_id, job_timeout=60*15)
         cache.set(key_job, job.id, timeout=60*60*8)
         return redirect(request.path_info)
 
