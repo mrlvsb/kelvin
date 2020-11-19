@@ -1,7 +1,11 @@
 {% extends 'web/layout.html' %}
 
 {% block content %}
-<h1>MOSS for {{ task.name }}</h1>
+<h1>MOSS for {{ task.name }}
+{% if moss_url %}
+&nbsp;(<a href="{{ moss_url }}" target="_blank">MOSS URL</a>)
+{% endif %}
+</h1>
 {% if status %}
   <div style="text-align: center; font-size: 30px">
     {{ status }}
