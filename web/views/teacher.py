@@ -80,10 +80,10 @@ def teacher_task_moss_check(request, task_id):
     }
 
     matches = []
-    for match in cache.get(key):
+    cache_entry = cache.get(key)
+    for match in cache_entry["matches"]:
         if min(match['first_percent'], match['second_percent']) > threshold['percent']:
             matches.append(match)
-
 
     max_percent = 0
     for d in matches:
@@ -108,6 +108,7 @@ def teacher_task_moss_check(request, task_id):
             "matches": matches,
             "graph": graph,
             "threshold": threshold,
+            "moss_url": cache_entry.get("url"),
             "task": task,
         })
 
