@@ -67,25 +67,6 @@ class DockerPipe:
 
         return result
 
-class CommandPipe:
-    def __init__(self, commands):
-        self.commands = commands
-
-    def run(self, evaluation):
-        output = ""
-        failed = False
-        for command in self.commands:
-            result = evaluation.sandbox.run(command, stderr_to_stdout=True)
-            output += f"<code>$ {command}</code><br><pre>{result['stdout']}</pre>" 
-            if result['exit_code'] != 0:
-                failed = True
-                break
-
-        return {
-            "html": output,
-            "failed": failed,
-        }
-
 class RequiredFilesPipe:
     def __init__(self, files):
         self.files = files

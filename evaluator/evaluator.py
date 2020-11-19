@@ -226,43 +226,6 @@ class Sandbox:
     def system_path(self, path=''):
         return os.path.join(os.path.join(self.path, 'box'), path)
 
-    def run(self, cmd, env=None, stderr_to_stdout=False):
-        if not env:
-            env = {}
-        if 'PATH' not in env:
-            env['PATH'] = '/usr/bin/:/bin'
-
-        argv = [
-            'isolate',
-            '-s',
-            '--run',
-            '--processes=100',
-            *env_build(env)
-        ]
-
-        if stderr_to_stdout:
-            argv.append('--stderr-to-stdout')
-
-        argv.append('--')
-        argv += shlex.split(cmd)
-
-        logger.info(f"executing in isolation: {shlex.join(argv)}")
-
-        p = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
-
-        res = {
-            'exit_code': p.returncode,
-            'stdout': stdout.decode('utf-8', errors='ignore'),
-            'stderr': stderr.decode('utf-8', errors='ignore'),
-        }
-        logger.info(f"exit_code: {p.returncode}")
-
-        p.stdout.close()
-        p.stderr.close()
-
-        return res
-
     def open(self, path, mode='r'):
         return open(self.system_path(path), mode)
 
@@ -271,12 +234,6 @@ class Sandbox:
 
     def copy(self, local, box):
         copyfile(local, self.system_path(box))
-
-    def run_check(self, cmd):
-        ret = self.run(cmd)
-        if ret['exit_code'] != 0:
-            raise "failed to execute:" + cmd
-        return ret
 
 # TODO: python3.8
 def copytree(src, dst, symlinks=False, ignore=None):
