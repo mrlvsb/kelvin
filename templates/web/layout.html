@@ -60,18 +60,21 @@
         </div>
 
         <script>
-            $(document).ready(function() {
-                let hash = document.location.hash.replace('#', '').split('-')[0];
+            function focusTab() {
+              let hash = document.location.hash.replace('#', '').split('-')[0];
 
-                $(".nav-tabs a[href='#tab_" + hash + "']").tab('show');
+              $(".nav-tabs a[href='#tab_" + hash + "']").tab('show');
 
-                $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
-                    let parts = e.target.href.split('#')
-                    if(parts.length > 1) {
-                        document.location.hash = parts[1].replace('tab_', '')
-                    }
-                });
-            })
+              $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+                  let parts = e.target.href.split('#')
+                  if(parts.length > 1) {
+                      document.location.hash = parts[1].replace('tab_', '')
+                  }
+              });
+            }
+
+            $(document).ready(focusTab);
+            window.addEventListener("hashchange", focusTab);
         </script>
     </body>
 </html>

@@ -87,8 +87,18 @@ def process_markdown(task_code, markdown):
 
     for tag, attr in rules:
         for el in root.iter(tag):
-            if attr in el.attrib and not el.attrib[attr].startswith('http'):
-                el.attrib[attr] = reverse('task_asset', args=[task_code, el.attrib[attr]])
+            dst = el.attrib.get(attr, None)
+            if dst.startswith('http'):
+                continue
+
+            parts = dst.split('#', 1)
+            if parts[0]:
+                el.attrib[attr] = reverse('task_asset', args=[task_code, parts[0]])
+            else:
+                el.attrib[attr] = ''
+
+            if len(parts) == 2:
+                el.attrib[attr] += f'#{parts[1]}'
 
     tag = root.cssselect('.announce')
     if tag:
