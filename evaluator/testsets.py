@@ -170,6 +170,7 @@ class TestSet:
         return files
 
     def create_test(self, name):
+        name = str(name)
         if name not in self.tests_dict:
             self.tests_dict[name] = Test(name)
 
@@ -244,7 +245,7 @@ class TestSet:
         allowed_keys = ['name', 'title', 'exit_code', 'args', 'files']
 
         for test_conf in conf:
-            t = self.create_test(str(test_conf.get('name', f'test {len(self.tests_dict)}')))
+            t = self.create_test(test_conf.get('name', f'test {len(self.tests_dict)}'))
             t.title = test_conf.get('title', t.name)
             t.exit_code = test_conf.get('exit_code', 0)
             t.args = [str(s) for s in test_conf.get('args', [])]
