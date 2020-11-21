@@ -88,7 +88,7 @@ def process_markdown(task_code, markdown):
     for tag, attr in rules:
         for el in root.iter(tag):
             dst = el.attrib.get(attr, None)
-            if dst.startswith('http'):
+            if not dst or dst.startswith('http'):
                 continue
 
             parts = dst.split('#', 1)
