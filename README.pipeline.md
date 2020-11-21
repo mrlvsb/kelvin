@@ -187,15 +187,6 @@ pipeline:
         - '-clang-analyzer-security*'
 ```
 
-
-## gcclinter
-Newer gcc introduces the new JSON output format for errors, warnings and hints that are added as comments to individual lines of submit's source code.
-
-```yaml
-pipeline:
-  - type: gcclinter
-```
-
 ## run
 Custom programs can be executed in a docker container.
 This can be used for simply executing the students program and showing the result to the Results tab.
