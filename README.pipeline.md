@@ -14,6 +14,7 @@ The errors and warnings are shown in the Result tab.
 ```yaml
 pipeline:
   - type: gcc
+    output: main
     flags: -Wall -Wextra -g -fsanitize=address
     ldflags: -lm
 ```
