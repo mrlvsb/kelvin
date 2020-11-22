@@ -121,10 +121,22 @@ class Evaluation:
         flags = " ".join([shlex.quote(f"--{k}={v}") for k, v in self.tests.limits.items()])
         stdout_name = rand_str(10)
         stderr_name = rand_str(10)
-        isolate_cmd = shlex.split(f"isolate -M /tmp/meta --cg {flags} -o {stdout_name} -r {stderr_name} -s --run {' '.join(env_build(env))} --") + cmd
-        logger.debug("executing in isolation: %s", " ".join((isolate_cmd))) # TODO: shlex.join only in python3.8
-        p = subprocess.Popen(isolate_cmd, **args)
-        p.communicate()
+        with tempfile.NamedTemporaryFile('r') as meta_file:
+            isolate_cmd = shlex.split(f"isolate --box-id {self.sandbox.box_id} -M {meta_file.name} --cg {flags} -o {stdout_name} -r {stderr_name} -s --run {' '.join(env_build(env))} --") + cmd
+            logger.debug("executing in isolation: %s", " ".join((isolate_cmd))) # TODO: shlex.join only in python3.8
+            p = subprocess.Popen(isolate_cmd, **args)
+            p.communicate()
+
+            # extract statistics
+            for line in meta_file:
+                key, val = line.split(':', 1)
+                key = key.strip().replace('-', '')
+                val = val.strip()
+
+                if key == 'exitcode':
+                    result['exit_code'] = int(val)
+                else:
+                    result[key] = val
 
         if test.stdin:
             args['stdin'].close()
@@ -185,18 +197,6 @@ class Evaluation:
                         msg = "Standard error (<strong>stderr</strong>) doesn't match"
             result.add_result(success, msg, output)
 
-        # extract statistics
-        with open('/tmp/meta') as f:
-            for line in f:
-                key, val = line.split(':', 1)
-                key = key.strip().replace('-', '')
-                val = val.strip()
-
-                if key == 'exitcode':
-                    result['exit_code'] = int(val)
-                else:
-                    result[key] = val
-
         if result['exitsig'] == "11":
             result.add_error("Segmentation fault")
 
@@ -220,8 +220,16 @@ class Evaluation:
 
 class Sandbox:
     def __init__(self):
-        subprocess.check_call(["isolate", "--cleanup"])
-        self.path = subprocess.check_output(["isolate", "--init", "--cg"]).decode('utf-8').strip()
+        worker_id = os.environ.get('RQ_WORKER_ID', 0)
+        try:
+            self.box_id = int(worker_id)
+        except:
+            logging.warning(f"Unknown RQ_WORKER_ID {worker_id}, fallbacks to 0")
+            self.box_id = 0
+        self.box_id = str(self.box_id)
+
+        subprocess.check_call(["isolate", "--cleanup", "--box-id", self.box_id])
+        self.path = subprocess.check_output(["isolate", "--init", "--cg", "--box-id", self.box_id]).decode('utf-8').strip()
 
     def system_path(self, path=''):
         return os.path.join(os.path.join(self.path, 'box'), path)
