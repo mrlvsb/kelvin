@@ -51,7 +51,7 @@ with open("result.html", "w") as out:
             out.write("<span style='color: red'>Missing source files! please upload .c or .cpp files!</span>")
             exit(1)
 
-        compile_cmd = ["gcc", *sources, "-o", output, *shlex.split(flags), *shlex.split(flags)]
+        compile_cmd = ["gcc", *sources, "-o", output, *shlex.split(flags), *shlex.split(ldflags)]
         returncode = cmd_run(compile_cmd + ['-fdiagnostics-color=always'], out, show_cmd=compile_cmd)
 
 """
