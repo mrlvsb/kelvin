@@ -224,12 +224,11 @@ class TestSet:
                 except Exception as e:
                     self.add_warning(f'pipe {item["type"]}: {e}\n{traceback.format_exc()}')
 
-
     def parse_conf_limits(self, conf):
         handlers = {
             'fsize': lambda txt: parse_human_size(txt) // 1024,
-            'cg-mem': parse_human_size,
-            'stack': parse_human_size,
+            'cg-mem': lambda txt: parse_human_size(txt) // 1024,
+            'stack': lambda txt: parse_human_size(txt) // 1024
         }
 
         for k, v in conf.items():
@@ -256,7 +255,6 @@ class TestSet:
             for k, v in test_conf.items():
                 if k not in allowed_keys:
                     self.add_warning(f"task '{t.name}': unknown key '{k}'")
-
 
     def parse_conf_filters(self, conf):
         if not isinstance(conf, list):
