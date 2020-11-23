@@ -2,6 +2,7 @@ import os
 import json
 import shutil
 import re
+import io
 
 from .testsets import File, TestFile
 from .utils import copyfile
@@ -92,8 +93,13 @@ class TestResult:
             try:
                 if isinstance(actual, File):
                     actual = actual.path
-                if os.stat(actual).st_size > 0 or expected:
-                    shutil.copyfile(actual, os.path.join(self.result_dir, f"{self['name']}.{ext}"))
+ 
+                dest = os.path.join(self.result_dir, f"{self['name']}.{ext}")
+                if isinstance(actual, io.StringIO):
+                    with open(dest, "w") as f:
+                        f.write(actual.getvalue())
+                elif os.stat(actual).st_size > 0 or expected:
+                    shutil.copyfile(actual, dest)
             except FileNotFoundError:
                 pass
 

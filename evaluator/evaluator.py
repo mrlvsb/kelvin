@@ -112,8 +112,16 @@ class Evaluation:
                 copyfile(f.path, self.sandbox.system_path(path))
 
         args = {}
+        comm_args = {}
+        have_file_stdin = False
         if test.stdin:
-            args['stdin'] = test.stdin.open()
+            stdin = test.stdin.open()
+            if isinstance(stdin, io.StringIO):
+                comm_args['input'] = stdin.getvalue().encode('utf-8')
+                args['stdin'] = subprocess.PIPE
+            else:
+                args['stdin'] = stdin
+                have_file_stdin = True
             result.copy_result_file('stdin', actual=test.stdin.file.path)
 
         # run process in the sandbox
@@ -125,7 +133,7 @@ class Evaluation:
             isolate_cmd = shlex.split(f"isolate --box-id {self.sandbox.box_id} -M {meta_file.name} --cg {flags} -o {stdout_name} -r {stderr_name} -s --run {' '.join(env_build(env))} --") + cmd
             logger.debug("executing in isolation: %s", " ".join((isolate_cmd))) # TODO: shlex.join only in python3.8
             p = subprocess.Popen(isolate_cmd, **args)
-            p.communicate()
+            p.communicate(**comm_args)
 
             # extract statistics
             for line in meta_file:
@@ -138,7 +146,7 @@ class Evaluation:
                 else:
                     result[key] = val
 
-        if test.stdin:
+        if have_file_stdin:
             args['stdin'].close()
         
         # copy all result and expected files
@@ -205,7 +213,7 @@ class Evaluation:
 
         # save issued commandline
         result['command'] = ' '.join(cmd)
-        if test.stdin:
+        if have_file_stdin:
             result['command'] += f' < {shlex.quote(os.path.basename(test.stdin.path))}'
 
         # run custom evaluation script
