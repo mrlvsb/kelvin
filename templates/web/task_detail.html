@@ -285,10 +285,10 @@ var SUBMIT_KEY = "KELVIN_LAST_SUBMIT_DATE";
 var SUBMIT_COOLDOWN_MS = 60 * 1000;
 (function() {
   var btn = document.getElementById('upload-choose');
-  var btnText = btn.nextElementSibling;
   if(!btn) {
     return;
   }
+  var btnText = btn.nextElementSibling;
 
   function remainingTime() {
     if(typeof(Storage) === "undefined") return 0;
