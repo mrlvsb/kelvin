@@ -476,7 +476,7 @@ def file_response(file, filename, mimetype):
 def raw_test_content(request, task_name, test_name, file):
     task = get_object_or_404(Task, code=task_name)
 
-    tests = create_taskset(task, request.user)
+    tests = create_taskset(task, request.user.username)
 
     for test in tests:
         if test.name == test_name:
