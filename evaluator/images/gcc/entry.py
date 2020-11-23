@@ -33,7 +33,7 @@ flags = os.getenv('PIPE_FLAGS', '')
 ldflags = os.getenv('PIPE_LDFLAGS', '')
 
 with open("result.html", "w") as out:
-    if os.path.exists('Makefile'):
+    if 'makefile' in [f.lower() for f in os.listdir('.')]:
         returncode = cmd_run(['make'], out, env={
             'CC': 'gcc',
             'CXX': 'g++',
