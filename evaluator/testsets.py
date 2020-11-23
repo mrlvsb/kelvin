@@ -151,7 +151,7 @@ class TestSet:
         self.script = None
         if os.path.exists(os.path.join(self.task_path, 'script.py')):
             try:
-                self.script = Script(self.task_path, self.meta, self.add_warning)
+                self.script = Script(os.path.join(BASE_DIR, self.task_path), self.meta, self.add_warning)
             except Exception as e:
                 self.add_warning(f'script.py: {e}\n{traceback.format_exc()}')
 
