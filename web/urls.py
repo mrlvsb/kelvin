@@ -21,6 +21,7 @@ urlpatterns = [
     path('submit/<int:submit_id>/source/<path:path>', student_view.submit_source, name='submit_source'),
     path('task/<int:assignment_id>/<str:login>/<int:submit_num>/download', student_view.submit_download, name='submit_download'),
     path('task/<int:assignment_id>/<str:login>/<int:submit_num>/comments', student_view.submit_comments, name='submit_comments'),
+    path('submit/<int:submit_id>/pipeline', student_view.pipeline_status),
 
     # notifications
     path('notification/all', notification_view.all_notifications),

@@ -17,7 +17,7 @@ import logging
 from django.core.files.uploadedfile import UploadedFile
 from django.utils import timezone as datetime
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse, HttpResponseForbidden
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone as tz
@@ -118,6 +118,37 @@ def store_uploaded_file(submit: Submit, path: str, file):
     if mime in SUBMIT_DROPPED_MIMES:
         os.unlink(path)
 
+
+def get_submit_job_status(jobid):
+    try:
+        job = django_rq.jobs.get_job_class().fetch(jobid, connection=django_rq.queues.get_connection())
+        status = job.get_status()
+        if status == 'queued':
+            return False, f'in queue: {job.get_position() + 1}'
+        elif status == 'started':
+            if 'actions' in job.meta and job.meta['actions'] > 0:
+                percent = job.meta['current_action'] * 100 // job.meta['actions']
+                return False, f'evaluating {percent}%'
+        elif status == 'finished':
+            return True, 'finished'
+        return status
+    except (rq.exceptions.NoSuchJobError, AttributeError):
+        return False, ''
+    return True, ''
+
+@login_required()
+def pipeline_status(request, submit_id):
+    submit = get_object_or_404(Submit, id=submit_id)
+
+    if not is_teacher(request.user) and request.user != submit.user:
+        return HttpResponseForbidden()
+
+    finished, status = get_submit_job_status(submit.jobid)
+    return JsonResponse({
+        'status': status,
+        'finished': finished,
+    })
+
 @login_required()
 def task_detail(request, assignment_id, submit_num=None, student_username=None):
     submits = Submit.objects.filter(
@@ -176,21 +207,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         data['total_submits'] = submits.count()
         data['late_submit'] = assignment.deadline and submits.order_by('id').reverse()[0].created_at > assignment.deadline
         data['diff_versions'] = [(s.submit_num, s.created_at) for s in submits.order_by('id')]
-
-        try:
-            job = django_rq.jobs.get_job_class().fetch(current_submit.jobid, connection=django_rq.queues.get_connection())
-            status = job.get_status()
-            if status == 'queued':
-                status += f' {job.get_position() + 1}'
-            elif status == 'started':
-                if 'actions' in job.meta and job.meta['actions'] > 0:
-                    percent = job.meta['current_action'] * 100 // job.meta['actions']
-                    status = f'evaluating {percent}%'
-
-            if status != 'finished':
-                data['job_status'] = status
-        except (rq.exceptions.NoSuchJobError, AttributeError):
-            pass
+        data['job_status'] = not get_submit_job_status(current_submit.jobid)[0]
 
     if request.method == 'POST':
         form = UploadSolutionForm(request.POST, request.FILES)

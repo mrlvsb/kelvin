@@ -97,9 +97,8 @@ TODO: Make it nicer with Bootstrap
             </li>
             {% if results.pipelines or job_status %}
             <li class="nav-item">
-                <a class="nav-link{%if job_status %} text-danger{% endif %}" data-toggle="tab" href="#tab_result">
+                <a class="nav-link" data-toggle="tab" href="#tab_result">
                     Result #{{ submit.submit_num }} 
-                    {{ job_status }}
                 </a>
               <!--
                 <a class="nav-link text-{% if submit.points and submit.points == submit.max_points %}success{%else%}danger{%endif%}" data-toggle="tab" href="#tab_result">
@@ -219,6 +218,9 @@ TODO: Make it nicer with Bootstrap
             </div>
 
             <div class="tab-pane" id="tab_result">
+                {% if job_status %}
+                  <kelvin-pipeline-status submitid={{submit.id}}></kelvin-pipeline-status>
+                {% endif %}
                 {% include "web/report.html" %}
             </div>
             {% endif %}
