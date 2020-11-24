@@ -6,8 +6,9 @@ import html
 import base64
 from io import StringIO
 import glob
-import mimetypes
-mime = mimetypes.MimeTypes()
+import magic
+
+mimes = mime = magic.Magic(mime=True)
 
 SUPPORTED_IMAGES = [
     'image/png',
@@ -21,7 +22,7 @@ def display(patterns, out, delete=False):
         for filename in glob.glob(pattern):
             out.write(f"<strong>{html.escape(filename)}</strong><br>")
             try:
-                mimetype = mime.guess_type(filename)[0]
+                mimetype = mimes.from_file(filename)
                 if mimetype.startswith('image/'):
                     toshow = filename
                     if mimetype not in SUPPORTED_IMAGES:
