@@ -8,15 +8,13 @@ import zipfile
 import shutil
 
 import django_rq
-import mimetypes
 import rq
 import subprocess
 import magic
 import logging
+
 from django.core.files.uploadedfile import UploadedFile
-
 from django.utils import timezone as datetime
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse
 from django.core.exceptions import PermissionDenied
@@ -38,6 +36,8 @@ from common.utils import is_teacher
 
 from notifications.signals import notify
 from notifications.models import Notification
+
+mimedetector = magic.Magic(mime=True)
 
 
 @login_required()
@@ -246,7 +246,7 @@ def submit_source(request, submit_id, path):
         if s.virt == path:
             with open(s.phys, 'rb') as f:
                 res = HttpResponse(f)
-                mime = mimetypes.MimeTypes().guess_type(s.phys)[0]
+                mime = mimedetector.from_file(s.phys)
                 if mime:
                     res['Content-type'] = mime
                 res['Accept-Ranges'] = 'bytes'
@@ -389,7 +389,7 @@ def submit_comments(request, assignment_id, login, submit_num):
 
     result = {}
     for source in submit.all_sources():
-        mime = magic.Magic(mime=True).from_file(source.phys)
+        mime = mimedetector.from_file(source.phys)
         if mime and mime.startswith('image/'):
             result[source.virt] = {
                 'type': 'img',
@@ -562,7 +562,7 @@ def task_asset(request, task_name, path):
     try:
         with open(system_path, 'rb') as f:
             resp = HttpResponse(f)
-            mime = mimetypes.MimeTypes().guess_type(system_path)
+            mime = mimedetector.from_file(system_path)
             if mime:
                 resp['Content-Type'] = f"{mime[0]};charset=utf-8"
             return resp
@@ -606,7 +606,7 @@ def raw_result_content(request, submit_id, test_name, result_type, file):
                             file_content = test.files[file][result_type].open('rb')
                             file_name = f"{result_type}-{file}"
                             extension = os.path.splitext(file)[1]
-                            file_mime = mimetypes.MimeTypes().guess_type(file)[0]
+                            file_mime = mimedetector.from_file(file)
 
                             if extension in DIRECT_SHOW_EXTENSIONS and file_mime:
                                 return HttpResponse(file_content, content_type=file_mime)
