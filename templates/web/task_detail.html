@@ -132,7 +132,7 @@ TODO: Make it nicer with Bootstrap
                             {% csrf_token %}
                             <input type="file" name="{{ upload_form.solution.html_name }}" multiple hidden id="upload-choose"
                                    onclick="this.value=null;"
-                                   onchange="check_submit(form)">
+                                   onchange="this.form.submit()">
                             <span class="btn btn-sm btn-primary" onclick="$('#upload-choose').click()">Upload</span>
                         </form>
                         <kelvin-upload-solution></kelvin-upload-solution>
@@ -282,57 +282,6 @@ TODO: Make it nicer with Bootstrap
 
 })();
 
-var SUBMIT_KEY = "KELVIN_LAST_SUBMIT_DATE";
-var SUBMIT_COOLDOWN_MS = 60 * 1000;
-(function() {
-  var btn = document.getElementById('upload-choose');
-  if(!btn) {
-    return;
-  }
-  var btnText = btn.nextElementSibling;
-
-  function remainingTime() {
-    if(typeof(Storage) === "undefined") return 0;
-    try {
-      var last_upload = window.localStorage.getItem(SUBMIT_KEY);
-      if (last_upload === null) return 0;
-
-      last_upload = new Date(last_upload);
-      var target = new Date();
-      target.setUTCMilliseconds(target.getUTCMilliseconds() - SUBMIT_COOLDOWN_MS);
-      return last_upload - target;
-    } catch(e) {
-      console.log(e);
-      return 0;
-    }
-  }
-
-  update();
-
-  function update() {
-    var seconds = remainingTime();
-    if(seconds <= 0) {
-      btn.removeAttribute('disabled');
-      btnText.classList.remove('disabled');
-      btnText.innerText = "Upload";
-      return;
-    }
-
-    btn.setAttribute('disabled', 'disabled');
-    btnText.classList.add('disabled');
-    btnText.innerText = "next upload in " + Math.ceil(seconds / 1000) + " seconds";
-    setTimeout(update, 1000);
-  }
-})();
-
-function check_submit(form) {
-  try {
-    window.localStorage.setItem(SUBMIT_KEY, new Date());
-  } catch(e) {
-      // pass
-  }
-  form.submit();
-}
 </script>
 
 {% endblock %}

@@ -1,17 +1,20 @@
 <script>
 import {csrfToken} from './api.js'
 import uppie from 'uppie'
+import {localStorageStore} from './utils.js'
+
+export let cooldown_ms = 10 * 1000;
 
 let dropping = false;
 let dragLeaveTimer = null;
 let progress = null;
 let error = false;
+let lastSubmitDate = localStorageStore('KELVIN_LAST_SUBMIT_DATE', 0);
+let remainingMS = -1;
+let queued = null;
 
-uppie()(window, {name: 'solution'}, async (event, formData, files) => {
+function upload(formData) {
 	progress = 0;
-
-	formData.append('paths', files.join('\n'));
-
 	const xhr = new XMLHttpRequest();
 	xhr.upload.addEventListener("progress", e => {
 		if (e.lengthComputable) {
@@ -20,6 +23,7 @@ uppie()(window, {name: 'solution'}, async (event, formData, files) => {
 	}, false);
 	xhr.addEventListener('loadend', () => {
 		if(xhr.status == 200 && xhr.responseURL) {
+			$lastSubmitDate = new Date();
 			document.location.href = xhr.responseURL + '#result';
 		} else {
 			error = true;
@@ -28,6 +32,15 @@ uppie()(window, {name: 'solution'}, async (event, formData, files) => {
 	xhr.open('POST', document.location.href);
 	xhr.setRequestHeader('X-CSRFToken', csrfToken())
 	xhr.send(formData);
+}
+
+uppie()(window, {name: 'solution'}, async (event, formData, files) => {
+	formData.append('paths', files.join('\n'));
+	if(remainingMS <= 0) {
+		upload(formData);
+	} else {
+		queued = formData;
+	}
 });	
 
 function dragstop() {
@@ -59,15 +72,49 @@ function dragstart(e) {
 }
 
 function dismiss() {
-	if(!error) {
+	if(!error && !queued) {
 		return;
 	}
 
 	error = false;
 	dropping = false;
 	progress = null;
+	queued = null;
 }
 
+const btn = document.getElementById('upload-choose');
+btn.onchange = function() {
+	$lastSubmitDate = new Date();
+	this.form.submit();
+};
+const btnText = btn.nextElementSibling;
+
+function update() {
+	try {
+		const target = new Date();
+		target.setUTCMilliseconds(target.getUTCMilliseconds() - cooldown_ms);
+		remainingMS = new Date($lastSubmitDate) - target;
+	} catch(e) {}
+
+	if(remainingMS <= 0) {
+		btn.removeAttribute('disabled');
+		btnText.classList.remove('disabled');
+		btnText.innerText = "Upload";
+
+		if(queued) {
+			const formData = queued;
+			console.log(queued)
+			upload(formData);
+		}
+		return;
+	}
+
+	btn.setAttribute('disabled', 'disabled');
+	btnText.classList.add('disabled');
+	btnText.innerText = "next upload in " + Math.ceil(remainingMS / 1000) + " seconds";
+	setTimeout(update, 1000);
+}
+update();
 </script>
 
 <svelte:window
@@ -97,9 +144,13 @@ function dismiss() {
 		cursor: wait;
 	}
 
-	.dropzone.dropping, .dropzone.uploading {
+	.dropzone.dropping, .dropzone.uploading, .dropzone.queued {
 		visibility: visible;
 		background: #007bff50;
+	}
+
+	.dropzone.queued {
+		font-size: 3rem;
 	}
 
 	.dropzone.error {
@@ -108,12 +159,19 @@ function dismiss() {
 	}
 </style>
 
-<div class="dropzone" class:dropping={dropping} class:uploading={progress != null} class:error={error} on:click={dismiss}>
+<div class="dropzone"
+	class:dropping={dropping}
+	class:uploading={progress != null}
+	class:queued={queued}
+	class:error={error}
+	on:click={dismiss}>
 	{#if error}
 		<span class="text-danger">
 			Upload failed.<br>
 			Try again or use the upload button.
 		</span>
+	{:else if queued}
+		uploading in {Math.ceil(remainingMS/1000)} seconds...
 	{:else if progress != null}
 		{progress}%
 	{:else} 
