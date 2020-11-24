@@ -26,6 +26,7 @@ import TaskDetail from './TaskDetail.svelte'
 import Notifications from './Notifications.svelte'
 import AnsiUp from 'ansi_up'
 import UploadSolution from './UploadSolution.svelte'
+import PipelineStatus from './PipelineStatus.svelte'
 
 customElements.define('kelvin-terminal-output', class extends HTMLElement {
     connectedCallback() {
@@ -63,3 +64,4 @@ createElement('app', App);
 createElement('submit-sources', TaskDetail);
 createElement('notifications', Notifications);
 createElement('upload-solution', UploadSolution);
+createElement('pipeline-status', PipelineStatus);
