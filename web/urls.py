@@ -4,6 +4,7 @@ from .views import teacher as teacher_view
 from .views import student as student_view
 from .views import notification as notification_view
 from .views import common as common_view
+from .views import statistics as statistics_view
 
 urlpatterns = [
     path('', common_view.index, name='index'),
@@ -33,6 +34,9 @@ urlpatterns = [
     path('teacher/task/<int:task_id>/moss', teacher_view.teacher_task_moss_check, name='teacher_task_moss_check'),
     path('submits', teacher_view.submits, name='submits'),
     path('submits/<str:student_username>', teacher_view.submits, name='submits'),
+
+    path('statistics/task/<int:task_id>', statistics_view.for_task, name='task_stats'),
+    path('statistics/assignment/<int:assignment_id>', statistics_view.for_assignment, name='assignment'),
 
     path('assignment/download/<int:assignment_id>', teacher_view.download_assignment_submits, name='download_assignment_submits'),
     path('assignment/download/<int:assignment_id>/csv', teacher_view.download_csv_per_task, name='download_csv_per_task'),
