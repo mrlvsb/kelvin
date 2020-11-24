@@ -3,7 +3,7 @@ import {csrfToken} from './api.js'
 import uppie from 'uppie'
 import {localStorageStore} from './utils.js'
 
-export let cooldown_ms = 10 * 1000;
+export let cooldown = 0;
 
 let dropping = false;
 let dragLeaveTimer = null;
@@ -92,7 +92,7 @@ const btnText = btn.nextElementSibling;
 function update() {
 	try {
 		const target = new Date();
-		target.setUTCMilliseconds(target.getUTCMilliseconds() - cooldown_ms);
+		target.setUTCMilliseconds(target.getUTCMilliseconds() - cooldown * 1000);
 		remainingMS = new Date($lastSubmitDate) - target;
 	} catch(e) {}
 
