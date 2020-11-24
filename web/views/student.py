@@ -94,6 +94,10 @@ def get(submit):
     return data
 
 
+SUBMIT_DROPPED_MIMES = [
+    'application/x-object',
+    'application/x-pie-executable',
+]
 def store_uploaded_file(submit: Submit, name: str, file):
     path = submit.source_path(name)
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -106,6 +110,9 @@ def store_uploaded_file(submit: Submit, name: str, file):
     else:
         raise Exception(f"Invalid file type {type(file)}")
 
+    mime = mimedetector.from_file(path)
+    if mime in SUBMIT_DROPPED_MIMES:
+        os.unlink(path)
 
 @login_required()
 def task_detail(request, assignment_id, submit_num=None, student_username=None):
