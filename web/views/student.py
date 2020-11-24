@@ -18,7 +18,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.utils import timezone as datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone as tz
 from django.urls import reverse
@@ -99,15 +99,18 @@ SUBMIT_DROPPED_MIMES = [
     'application/x-object',
     'application/x-pie-executable',
 ]
-def store_uploaded_file(submit: Submit, name: str, file):
-    path = submit.source_path(name)
+def store_uploaded_file(submit: Submit, path: str, file):
+    if path[0] == '/' or '..' in path:
+        raise SuspiciousOperation()
+
+    path = submit.source_path(path)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     if isinstance(file, UploadedFile):
         with open(path, "wb") as storage_file:
             for chunk in file.chunks():
                 storage_file.write(chunk)
     elif isinstance(file, zipfile.ZipFile):
-        file.extract(name, path=submit.dir())
+        file.extract(path, path=submit.dir())
     else:
         raise Exception(f"Invalid file type {type(file)}")
 
@@ -199,16 +202,22 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
                                                  student__id=request.user.id).count() + 1
             s.save()
 
-            for uploaded_file in request.FILES.getlist('solution'):
-                name = uploaded_file.name
-                extension = os.path.splitext(name)[1]
-                if extension == ".zip":
+            solutions = request.FILES.getlist('solution')
+            tmp = request.POST.get('paths', None)
+            paths = []
+            if tmp:
+                paths = tmp.split('\n')
+            else:
+                paths = [f.name for f in solutions]
+            for path, uploaded_file in zip(paths, solutions):
+                extension = os.path.splitext(path)[1]
+                if extension.lower() == ".zip":
                     with zipfile.ZipFile(uploaded_file, "r") as archive:
                         for file in archive.filelist:
                             if not file.is_dir():
                                 store_uploaded_file(s, file.filename, archive)
                 else:
-                    store_uploaded_file(s, uploaded_file.name, uploaded_file)
+                    store_uploaded_file(s, path, uploaded_file)
 
             s.jobid = django_rq.enqueue(evaluate_job, s).id
             s.save()

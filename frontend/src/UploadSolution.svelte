@@ -9,6 +9,9 @@ let error = false;
 
 uppie()(window, {name: 'solution'}, async (event, formData, files) => {
 	progress = 0;
+
+	formData.append('paths', files.join('\n'));
+
 	const xhr = new XMLHttpRequest();
 	xhr.upload.addEventListener("progress", e => {
 		if (e.lengthComputable) {
@@ -20,7 +23,7 @@ uppie()(window, {name: 'solution'}, async (event, formData, files) => {
 			document.location.href = xhr.responseURL + '#result';
 		} else {
 			error = true;
-		}		
+		}
 	});
 	xhr.open('POST', document.location.href);
 	xhr.setRequestHeader('X-CSRFToken', csrfToken())
