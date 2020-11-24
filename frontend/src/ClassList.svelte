@@ -36,6 +36,7 @@
   }
 </script>
 
+<div class="container-fluid">
 {#if !classes}
   <div class="d-flex justify-content-center">
     <SyncLoader />
@@ -49,3 +50,4 @@
     <ClassDetail clazz={clazz} on:update={async () => classes = await refetch()} />
   {/each}
 {/if}
+</div>

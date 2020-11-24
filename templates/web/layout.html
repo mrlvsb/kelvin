@@ -59,6 +59,8 @@
             {% block content %}{% endblock %}
         </div>
 
+        {% block fullcontent %}{% endblock %}
+
         <script>
             function focusTab() {
               let hash = document.location.hash.replace('#', '').split('-')[0];

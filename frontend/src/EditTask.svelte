@@ -184,78 +184,80 @@ td:not(:nth-of-type(3)) {
 <svelte:window on:keydown={keydown} />
 
 {#if task != null}
-<div style="position: relative">
-	{#if syncing}
-    <div style="position: absolute; top: 50%; left: 50%; z-index: 1">
-      <SyncLoader />
-    </div>
-	{/if}
-	<div>
-		{#if task['errors'] && task['errors'].length}
-		<div class="alert alert-danger">
-			<ul class="m-0">
-				{#each task['errors'] as error}
-					<li>{error}</li>
-				{/each}
-			</ul>
-		</div>
-		{/if}
-
-		<div class="input-group mb-1">
-			<AutoComplete bind:value={task.path} onChange={loadTask} on:click={() => syncPathWithTitle = false} />
-      {#if taskLink}
-      <div class="input-group-append">
-        <button class="btn btn-outline-info" title="Duplicate this task" on:click={duplicateTask}>
-          <span class="iconify" data-icon="ant-design:copy-outlined"></span>
-        </button>
+<div class="container">
+  <div style="position: relative">
+    {#if syncing}
+      <div style="position: absolute; top: 50%; left: 50%; z-index: 1">
+        <SyncLoader />
       </div>
-      <div class="input-group-append">
-        <a class="btn btn-outline-info" href={taskLink} target=_blank><span class="iconify" data-icon="bx:bx-link-external"></span></a>
-      </div>
-      {/if}
-		</div>
-
-		<div class="form-group">
-      <table class="table table-hover table-striped mb-0"> 
-        <tbody>
-          {#each shownClasses as clazz} 
-          <tr class:table-success={clazz.assigned}>
-            <td>{ clazz.timeslot }</td>
-            <td>{ clazz.teacher }</td>
-            <td>
-              <TimeRange timeOffsetInWeek={clazz.week_offset} bind:from={clazz.assigned} bind:to={clazz.deadline} semesterBeginDate={$semester.begin} />
-            </td>
-            <td style="width: 1%">
-              <div class="input-group" style="flex-wrap: nowrap">
-                <input class="form-control form-control-sm" type="number" min=0 step=1 disabled={!clazz.assigned} bind:value={clazz.max_points} placeholder="Max points" style="max-width: 110px; width: 110px" />
-                <div class="input-group-append">
-                  <button class="btn btn-sm btn-secondary" disabled={!clazz.assigned} on:click|preventDefault={() => assignPointsToAll(clazz.max_points)} title="Set points to all assigned classes">
-                    <span class="iconify" data-icon="mdi:content-duplicate"></span>
-                  </button>
-                </div>
-              </div>
-            </td>
-            <td>
-              <button class="btn btn-sm p-0" on:click|preventDefault={() => assignSameToAll(clazz)} title="Set same assigned date, deadline and points to all visible classes">
-                <span class="iconify" data-icon="mdi:content-duplicate"></span>
-              </button>
-              <button class="btn p-0" on:click|preventDefault={() => {clazz.assigned = null; clazz.deadline = null; clazz.max_points = null}}>&times;</button>
-            </td>
+    {/if}
+    <div>
+      {#if task['errors'] && task['errors'].length}
+      <div class="alert alert-danger">
+        <ul class="m-0">
+          {#each task['errors'] as error}
+            <li>{error}</li>
           {/each}
-        </tbody>
-      </table>
-      {#if task && (task.classes.length > shownClasses.length || showAllClasses)}
-        <button on:click|preventDefault={() => showAllClasses = !showAllClasses} class="btn p-0">
-          <span class="iconify" data-icon="la:eye"></span> Show all classes
-        </button>
+        </ul>
+      </div>
       {/if}
-		</div>
 
-		<div class="form-group">
-			<Manager />
-		</div>
+      <div class="input-group mb-1">
+        <AutoComplete bind:value={task.path} onChange={loadTask} on:click={() => syncPathWithTitle = false} />
+        {#if taskLink}
+        <div class="input-group-append">
+          <button class="btn btn-outline-info" title="Duplicate this task" on:click={duplicateTask}>
+            <span class="iconify" data-icon="ant-design:copy-outlined"></span>
+          </button>
+        </div>
+        <div class="input-group-append">
+          <a class="btn btn-outline-info" href={taskLink} target=_blank><span class="iconify" data-icon="bx:bx-link-external"></span></a>
+        </div>
+        {/if}
+      </div>
 
-		<button class="btn btn-primary" on:click|preventDefault={save}>Save</button>
-	</div>
+      <div class="form-group">
+        <table class="table table-hover table-striped mb-0"> 
+          <tbody>
+            {#each shownClasses as clazz} 
+            <tr class:table-success={clazz.assigned}>
+              <td>{ clazz.timeslot }</td>
+              <td>{ clazz.teacher }</td>
+              <td>
+                <TimeRange timeOffsetInWeek={clazz.week_offset} bind:from={clazz.assigned} bind:to={clazz.deadline} semesterBeginDate={$semester.begin} />
+              </td>
+              <td style="width: 1%">
+                <div class="input-group" style="flex-wrap: nowrap">
+                  <input class="form-control form-control-sm" type="number" min=0 step=1 disabled={!clazz.assigned} bind:value={clazz.max_points} placeholder="Max points" style="max-width: 110px; width: 110px" />
+                  <div class="input-group-append">
+                    <button class="btn btn-sm btn-secondary" disabled={!clazz.assigned} on:click|preventDefault={() => assignPointsToAll(clazz.max_points)} title="Set points to all assigned classes">
+                      <span class="iconify" data-icon="mdi:content-duplicate"></span>
+                    </button>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <button class="btn btn-sm p-0" on:click|preventDefault={() => assignSameToAll(clazz)} title="Set same assigned date, deadline and points to all visible classes">
+                  <span class="iconify" data-icon="mdi:content-duplicate"></span>
+                </button>
+                <button class="btn p-0" on:click|preventDefault={() => {clazz.assigned = null; clazz.deadline = null; clazz.max_points = null}}>&times;</button>
+              </td>
+            {/each}
+          </tbody>
+        </table>
+        {#if task && (task.classes.length > shownClasses.length || showAllClasses)}
+          <button on:click|preventDefault={() => showAllClasses = !showAllClasses} class="btn p-0">
+            <span class="iconify" data-icon="la:eye"></span> Show all classes
+          </button>
+        {/if}
+      </div>
+
+      <div class="form-group">
+        <Manager />
+      </div>
+
+      <button class="btn btn-primary" on:click|preventDefault={save}>Save</button>
+    </div>
+  </div>
 </div>
 {/if}
