@@ -1,0 +1,16 @@
+{% extends 'web/layout.html' %}
+
+{% block content %}
+<h1>{{ task.name }}</h1>
+
+<table border="1" style="margin: 10px 0;">
+<tr><th># of submits</th><th># of students</th></tr>
+<tr><td>{{ submits|length }}</td><td>{{ students|length }}</td></tr>
+</table>
+
+<div>
+  <h2>Submits over time</h2>
+  {{ submit_plot|safe }}
+</div>
+
+{% endblock %}
