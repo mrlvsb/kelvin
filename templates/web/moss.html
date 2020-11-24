@@ -52,12 +52,14 @@
   <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
   <script>svgPanZoom('#graph svg')</script>
 
-  <table class="table table-sm">
+  <table class="table table-sm table-hover table-striped">
     {% for match in matches %}
     <tr>
       <td>{{ match.first_login }}</td>
+      <td>{{ match.first_fullname }}</td>
       <td>{{ match.first_percent }}%</td>
       <td>{{ match.second_login }}</td>
+      <td>{{ match.second_fullname }}</td>
       <td>{{ match.second_percent }}%</td>
       <td>{{ match.lines }}</td>
       <td>
