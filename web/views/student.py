@@ -6,6 +6,7 @@ import tempfile
 import io
 import zipfile
 import shutil
+import hashlib
 
 import django_rq
 import rq
@@ -251,9 +252,20 @@ def submit_source(request, submit_id, path):
 
     for s in submit.all_sources():
         if s.virt == path:
-            with open(s.phys, 'rb') as f:
+            path = s.phys
+            mime = mimedetector.from_file(s.phys)
+            if request.GET.get('convert', False):
+                key = hashlib.sha1(f"{submit_id}{path}".encode('utf-8')).hexdigest()
+                path = os.path.join(BASE_DIR, "cache", "media", key[0], key[1], key)
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                if not os.path.exists(path):
+                    if mime.startswith("image/"):
+                        subprocess.check_call(["convert", s.phys, f"WEBP:{path}"])
+                    else:
+                        raise Exception(f"Unsuppored mime {mime} for convert")
+
+            with open(path, 'rb') as f:
                 res = HttpResponse(f)
-                mime = mimedetector.from_file(s.phys)
                 if mime:
                     res['Content-type'] = mime
                 res['Accept-Ranges'] = 'bytes'
@@ -398,10 +410,17 @@ def submit_comments(request, assignment_id, login, submit_num):
     for source in submit.all_sources():
         mime = mimedetector.from_file(source.phys)
         if mime and mime.startswith('image/'):
+            SUPPORTED_IMAGES = [
+                'image/png',
+                'image/jpeg',
+                'image/gif',
+                'image/webp',
+            ]
+
             result[source.virt] = {
                 'type': 'img',
                 'path': source.virt,
-                'src': reverse('submit_source', args=[submit.id, source.virt]),
+                'src': reverse('submit_source', args=[submit.id, source.virt]) + '?convert=1' if mime not in SUPPORTED_IMAGES else '',
             }
         elif mime and mime.startswith("video/"):
             name = ('.'.join(source.virt.split('.')[:-1]))
