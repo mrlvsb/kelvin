@@ -83,7 +83,7 @@ def teacher_task_moss_check(request, task_id):
     matches = []
     cache_entry = cache.get(key)
     for match in cache_entry["matches"]:
-        if min(match['first_percent'], match['second_percent']) > threshold['percent']:
+        if min(match['first_percent'], match['second_percent']) >= threshold['percent'] and int(match['lines']) >= threshold['lines']:
             match['first_fullname'] = User.objects.get(username=match['first_login']).get_full_name()
             match['second_fullname'] = User.objects.get(username=match['second_login']).get_full_name()
             matches.append(match)
