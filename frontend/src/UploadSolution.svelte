@@ -35,11 +35,13 @@ function upload(formData) {
 }
 
 uppie()(window, {name: 'solution'}, async (event, formData, files) => {
-	formData.append('paths', files.join('\n'));
-	if(remainingMS <= 0) {
-		upload(formData);
-	} else {
-		queued = formData;
+	if(files.length) {
+		formData.append('paths', files.join('\n'));
+		if(remainingMS <= 0) {
+			upload(formData);
+		} else {
+			queued = formData;
+		}
 	}
 });	
 
