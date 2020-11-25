@@ -107,6 +107,8 @@ def create_point_chart_html(student_points):
 
     plot = figure(plot_width=1200, plot_height=400)
 
+    plot.yaxis.axis_label = "# students"
+
     hist, edges = np.histogram(points, density=True, bins=50)
     plot.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
               fill_color="navy", line_color="white", alpha=0.5)
