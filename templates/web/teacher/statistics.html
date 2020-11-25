@@ -4,8 +4,8 @@
 <h1>{{ task.name }}</h1>
 
 <table border="1" style="margin: 10px 0;">
-<tr><th># of submits</th><th># of students</th></tr>
-<tr><td>{{ submits|length }}</td><td>{{ students|length }}</td></tr>
+<tr><th># of submits</th><th># students graded</th><th>Avg. points</th></tr>
+<tr><td>{{ submits|length }}</td><td>{{ graded }}</td><td>{{ average_points }}</td></tr>
 </table>
 
 <div>

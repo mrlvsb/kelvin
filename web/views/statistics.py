@@ -35,6 +35,16 @@ def get_students(submits: List[Submit]) -> Set[User]:
     return students
 
 
+def get_student_points(submits: List[Submit]):
+    student_points = {}
+
+    for submit in submits:
+        points = submit.assigned_points
+        if points is not None:
+            student_points[submit.student] = points
+    return student_points
+
+
 def draw_deadline_line(plot, deadline):
     line_args = dict(line_dash="dashed", line_color="red", line_width=2)
     vline = Span(location=deadline, dimension='height',
@@ -93,11 +103,16 @@ def create_submit_chart_html(submits: List[Submit], assignment: AssignedTask = N
 
 def render_statistics(request, task, submits, assignment=None):
     students = get_students(submits)
+    student_points = get_student_points(submits)
+    average_points = sum(student_points.values()) / len(student_points.values())
+
+    graded_str = f"{len(student_points)}/{len(students)} ({(len(student_points) / len(students)) * 100:.2f} %)"
 
     return render(request, 'web/teacher/statistics.html', {
         'task': task,
         'submits': submits,
-        'students': students,
+        'graded': graded_str,
+        'average_points': average_points,
         'submit_plot': create_submit_chart_html(submits, assignment=assignment)
     })
 
