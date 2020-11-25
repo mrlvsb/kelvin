@@ -104,10 +104,10 @@ def store_uploaded_file(submit: Submit, path: str, file):
     if path[0] == '/' or '..' in path:
         raise SuspiciousOperation()
 
-    path = submit.source_path(path)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    target_path = submit.source_path(path)
+    os.makedirs(os.path.dirname(target_path), exist_ok=True)
     if isinstance(file, UploadedFile):
-        with open(path, "wb") as storage_file:
+        with open(target_path, "wb") as storage_file:
             for chunk in file.chunks():
                 storage_file.write(chunk)
     elif isinstance(file, zipfile.ZipFile):
@@ -115,9 +115,9 @@ def store_uploaded_file(submit: Submit, path: str, file):
     else:
         raise Exception(f"Invalid file type {type(file)}")
 
-    mime = mimedetector.from_file(path)
+    mime = mimedetector.from_file(target_path)
     if mime in SUBMIT_DROPPED_MIMES:
-        os.unlink(path)
+        os.unlink(target_path)
 
 
 def get_submit_job_status(jobid):
