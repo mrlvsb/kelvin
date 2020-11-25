@@ -116,9 +116,12 @@ def create_point_chart_html(student_points):
 def render_statistics(request, task, submits, assignment=None):
     students = get_students(submits)
     student_points = get_student_points(submits)
-    average_points = sum(student_points.values()) / len(student_points.values())
+    points = list(student_points.values())
+    average_points = np.average(points) if points else 0
 
-    graded_str = f"{len(student_points)}/{len(students)} ({(len(student_points) / len(students)) * 100:.2f} %)"
+    graded_str = "no submits"
+    if len(students) > 0:
+        graded_str = f"{len(student_points)}/{len(students)} ({(len(student_points) / len(students)) * 100:.2f} %)"
 
     return render(request, 'web/teacher/statistics.html', {
         'task': task,

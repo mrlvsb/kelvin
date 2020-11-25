@@ -197,7 +197,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
                 <div class="more-content">
                   {assignment.name}
                   <a href="/task/edit/{assignment.task_id}" use:link title="Edit"><span class="iconify" data-icon="clarity:edit-solid"></span></a>
-                  <div>
+                  <div style="display: flex; align-items: center;">
                     <a href="{assignment.moss_link}" title="Send to MOSS"><span class="iconify" data-icon="bx:bx-check-double"></span></a>
                     <a href="{assignment.sources_link}" title="Download all source codes"><span class="iconify" data-icon="fe:download" data-inline="false"></span></a>
                     <a href="{assignment.csv_link}" title="Download CSV with results"><span class="iconify" data-icon="la:file-csv-solid"></span></a>
@@ -205,6 +205,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
                     <button class="btn btn-link p-0" class:spin={reevaluateLoading} title='Reevaluate latest submits' on:click={() => reevaluateAssignment(assignment)}>
                       <span class="iconify" data-icon="bx:bx-refresh"></span>
                     </button>
+                    <a href="/statistics/assignment/{assignment.assignment_id}" title="Show assignment stats"><span class="iconify" data-icon="bx-bx-bar-chart-alt-2"></span></a>
                   </div>
                   <dl>
                     <dt>Assigned</dt>
