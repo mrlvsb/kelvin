@@ -111,8 +111,10 @@
 
     await walk(summaryComments);
     for(const source of sources) {
-      for(const comments of Object.values(source.comments)) {
-        await walk(comments);
+      if(source.comments) {
+        for(const comments of Object.values(source.comments)) {
+          await walk(comments);
+        }
       }
     }
   }
