@@ -2,7 +2,7 @@ from typing import List, Set
 
 import pandas as pd
 from bokeh.embed import file_html
-from bokeh.models import Legend, Span
+from bokeh.models import ColumnDataSource, HoverTool, Legend, Span
 from bokeh.plotting import figure
 from bokeh.resources import CDN
 from django.contrib.auth.decorators import user_passes_test
@@ -35,28 +35,58 @@ def get_students(submits: List[Submit]) -> Set[User]:
     return students
 
 
+def draw_deadline_line(plot, deadline):
+    line_args = dict(line_dash="dashed", line_color="red", line_width=2)
+    vline = Span(location=deadline, dimension='height',
+                 **line_args)
+    plot.renderers.extend([vline])
+
+    deadline_line = plot.line([], [], **line_args)
+    legend = Legend(items=[
+        ("deadline", [deadline_line]),
+    ])
+
+    plot.add_layout(legend, "right")
+
+
 def create_submit_chart_html(submits: List[Submit], assignment: AssignedTask = None) -> str:
+    def format_points(submit: Submit):
+        if not assignment or not assignment.max_points:
+            return "not graded"
+        points = submit.points or submit.assigned_points
+        if points is None:
+            return "no points assigned"
+        return f"{points}/{assignment.max_points}"
+
     frame = pd.DataFrame({
-        "date": [submit.created_at for submit in submits]
+        "date": [submit.created_at for submit in submits],
+        "student": [submit.student.username for submit in submits],
+        "submit_num": [submit.submit_num for submit in submits],
+        "points": [format_points(submit) for submit in submits],
     })
     frame["count"] = 1
+    frame["cumsum"] = frame["count"].cumsum()
+
+    source = ColumnDataSource(data=frame)
 
     plot = figure(plot_width=1200, plot_height=400, x_axis_type="datetime")
-    plot.line(frame["date"], frame["count"].cumsum())
+    plot.line("date", "cumsum", source=source)
+    points = plot.circle("date", "cumsum", source=source, size=8)
     plot.yaxis.axis_label = "# submits"
 
-    if assignment:
-        line_args = dict(line_dash="dashed", line_color="red", line_width=2)
-        vline = Span(location=submits[len(submits) // 2].created_at, dimension='height',
-                     **line_args)
-        plot.renderers.extend([vline])
+    hover = HoverTool(
+        tooltips=[
+            ("submit", "@student #@submit_num"),
+            ("points", "@points"),
+            ("date", "@date{%d. %m. %Y %H:%M:%S}")
+        ],
+        formatters={'@date': 'datetime'},
+        renderers=[points]
+    )
+    plot.add_tools(hover)
 
-        deadline = plot.line([], [], **line_args)
-        legend = Legend(items=[
-            ("deadline", [deadline]),
-        ])
-
-        plot.add_layout(legend, "right")
+    if assignment and assignment.deadline:
+        draw_deadline_line(plot, assignment.deadline)
 
     return file_html(plot, CDN, "Submits over time")
 
