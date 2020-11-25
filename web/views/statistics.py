@@ -1,6 +1,7 @@
 from typing import List, Set
 
 import pandas as pd
+import numpy as np
 from bokeh.embed import file_html
 from bokeh.models import ColumnDataSource, HoverTool, Legend, Span
 from bokeh.plotting import figure
@@ -101,6 +102,17 @@ def create_submit_chart_html(submits: List[Submit], assignment: AssignedTask = N
     return file_html(plot, CDN, "Submits over time")
 
 
+def create_point_chart_html(student_points):
+    points = sorted(student_points.values())
+
+    plot = figure(plot_width=1200, plot_height=400)
+
+    hist, edges = np.histogram(points, density=True, bins=50)
+    plot.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
+              fill_color="navy", line_color="white", alpha=0.5)
+    return file_html(plot, CDN, "Point distribution")
+
+
 def render_statistics(request, task, submits, assignment=None):
     students = get_students(submits)
     student_points = get_student_points(submits)
@@ -113,7 +125,8 @@ def render_statistics(request, task, submits, assignment=None):
         'submits': submits,
         'graded': graded_str,
         'average_points': average_points,
-        'submit_plot': create_submit_chart_html(submits, assignment=assignment)
+        'submit_plot': create_submit_chart_html(submits, assignment=assignment),
+        'point_plot': create_point_chart_html(student_points)
     })
 
 

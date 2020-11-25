@@ -17,3 +17,4 @@ django-redis-cache==2.1.1
 Jinja2==2.11.2
 bokeh==2.2.3
 pandas==1.1.4
+numpy==1.19.4
