@@ -133,7 +133,9 @@ def get_submit_job_status(jobid):
         elif status == 'finished':
             return True, 'finished'
         return status
-    except (rq.exceptions.NoSuchJobError, AttributeError):
+    except rq.exceptions.NoSuchJobError:
+        return True, ''
+    except AttributeError:
         return False, ''
     return True, ''
 
@@ -141,7 +143,7 @@ def get_submit_job_status(jobid):
 def pipeline_status(request, submit_id):
     submit = get_object_or_404(Submit, id=submit_id)
 
-    if not is_teacher(request.user) and request.user != submit.user:
+    if not is_teacher(request.user) and request.user != submit.student:
         return HttpResponseForbidden()
 
     finished, status = get_submit_job_status(submit.jobid)
@@ -224,7 +226,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
             tmp = request.POST.get('paths', None)
             paths = []
             if tmp:
-                paths = tmp.split('\n')
+                paths = [f.rstrip('\r') for f in tmp.split('\n')]
             else:
                 paths = [f.name for f in solutions]
             for path, uploaded_file in zip(paths, solutions):
@@ -287,7 +289,7 @@ def submit_source(request, submit_id, path):
                 os.makedirs(os.path.dirname(path), exist_ok=True)
                 if not os.path.exists(path):
                     if mime.startswith("image/"):
-                        subprocess.check_call(["convert", s.phys, f"WEBP:{path}"])
+                        subprocess.check_call(["/usr/bin/convert", s.phys, f"WEBP:{path}"])
                     else:
                         raise Exception(f"Unsuppored mime {mime} for convert")
 
