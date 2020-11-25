@@ -206,20 +206,19 @@ td:not(:nth-of-type(3)) {
         <AutoComplete bind:value={task.path} onChange={loadTask} on:click={() => syncPathWithTitle = false} />
         {#if taskLink}
         <div class="input-group-append">
+          <a class="btn btn-outline-info" title="Show task stats" href="/statistics/task/{task.id}" target=_blank><span class="iconify" data-icon="bx:bx-bar-chart-alt-2"></span></a>
           <button class="btn btn-outline-info" title="Duplicate this task" on:click={duplicateTask}>
             <span class="iconify" data-icon="ant-design:copy-outlined"></span>
           </button>
-        </div>
-        <div class="input-group-append">
           <a class="btn btn-outline-info" href={taskLink} target=_blank><span class="iconify" data-icon="bx:bx-link-external"></span></a>
         </div>
         {/if}
       </div>
 
       <div class="form-group">
-        <table class="table table-hover table-striped mb-0"> 
+        <table class="table table-hover table-striped mb-0">
           <tbody>
-            {#each shownClasses as clazz} 
+            {#each shownClasses as clazz}
             <tr class:table-success={clazz.assigned}>
               <td>{ clazz.timeslot }</td>
               <td>{ clazz.teacher }</td>
