@@ -98,6 +98,7 @@ def get(submit):
 SUBMIT_DROPPED_MIMES = [
     'application/x-object',
     'application/x-pie-executable',
+    'application/x-sharedlib'
 ]
 def store_uploaded_file(submit: Submit, path: str, file):
     if path[0] == '/' or '..' in path:
