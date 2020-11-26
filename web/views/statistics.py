@@ -4,8 +4,10 @@ import pandas as pd
 import numpy as np
 from bokeh.embed import file_html
 from bokeh.models import ColumnDataSource, HoverTool, Legend, Span
+from bokeh.palettes import Category20_20 as CategoricalPalette
 from bokeh.plotting import figure
 from bokeh.resources import CDN
+from bokeh.transform import factor_cmap
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render
@@ -82,7 +84,10 @@ def create_submit_chart_html(submits: List[Submit], assignment: AssignedTask = N
 
     plot = figure(plot_width=1200, plot_height=400, x_axis_type="datetime")
     plot.line("date", "cumsum", source=source)
-    points = plot.circle("date", "cumsum", source=source, size=8)
+
+    students = sorted(set(frame["student"]))
+    mapper = factor_cmap(field_name="student", palette=CategoricalPalette, factors=students)
+    points = plot.circle("date", "cumsum", color=mapper, source=source, size=8)
     plot.yaxis.axis_label = "# submits"
 
     hover = HoverTool(
