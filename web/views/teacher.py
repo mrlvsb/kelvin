@@ -7,6 +7,7 @@ import re
 import json
 import subprocess
 import datetime
+import shutil
 import rq
 from shutil import copyfile
 from collections import OrderedDict
@@ -249,6 +250,10 @@ def all_tasks(request, **kwargs):
 @user_passes_test(is_teacher)
 def reevaluate(request, submit_id):
     submit = Submit.objects.get(pk=submit_id)
+    try:
+        shutil.rmtree(submit.pipeline_path())
+    except FileNotFoundError:
+        pass
     submit.points = submit.max_points = None
     submit.jobid = django_rq.enqueue(evaluate_job, submit).id
     submit.save()

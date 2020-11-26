@@ -81,9 +81,7 @@ def student_index(request):
 def get(submit):
     results = []
     try:
-        path = re.sub(r'^submits/', 'submit_results/', str(submit.dir()))
-        path = path.rstrip('.c')
-        results = EvaluationResult(path)
+        results = EvaluationResult(submit.pipeline_path())
     except json.JSONDecodeError as e:
         # TODO: show error
         pass

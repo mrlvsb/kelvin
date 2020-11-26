@@ -1,4 +1,5 @@
 import os
+import re
 
 from django.utils import timezone
 
@@ -190,6 +191,9 @@ class Submit(models.Model):
 
     def source_path(self, name):
         return os.path.join(self.dir(), name)
+
+    def pipeline_path(self):
+        return re.sub(r'^submits/', 'submit_results/', str(self.dir()))
 
     def all_sources(self):
         sources = []
