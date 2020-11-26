@@ -64,8 +64,12 @@
         <script>
             function focusTab() {
               let hash = document.location.hash.replace('#', '').split('-')[0];
+              let el = $(".nav-tabs a[href='#tab_" + hash + "']")
+              if(!el.length && hash == 'result') {
+                el = $(".nav-tabs a[href='#tab_src']")
+              }
 
-              $(".nav-tabs a[href='#tab_" + hash + "']").tab('show');
+              el.tab('show');
 
               $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
                   let parts = e.target.href.split('#')
