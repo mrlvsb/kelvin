@@ -3,9 +3,9 @@
 {% block content %}
 <h1>{{ task.name }}</h1>
 
-<table border="1" style="margin: 10px 0;">
+<table class="statistics-table" border="1">
 <tr><th># submits</th><th># students graded</th><th>Avg. points</th></tr>
-<tr><td>{{ submits|length }}</td><td>{{ graded }}</td><td>{{ average_points }}</td></tr>
+<tr><td>{{ submits|length }}</td><td>{{ graded }}</td><td>{{ average_points|floatformat:-2 }}</td></tr>
 </table>
 
 <div>
