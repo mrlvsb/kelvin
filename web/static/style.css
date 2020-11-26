@@ -24,7 +24,7 @@ h3 {
 .statistics-table {
   margin: 10px 0;
 }
-.statistics-table th, td {
+.statistics-table th, .statistics-table td {
   padding: 5px;
   text-align: center;
 }
