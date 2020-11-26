@@ -292,6 +292,7 @@ def submit_source(request, submit_id, path):
                         subprocess.check_call(["/usr/bin/convert", s.phys, f"WEBP:{path}"])
                     else:
                         raise Exception(f"Unsuppored mime {mime} for convert")
+                mime = mimedetector.from_file(path)
 
             with open(path, 'rb') as f:
                 res = HttpResponse(f)
