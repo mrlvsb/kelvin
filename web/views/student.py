@@ -130,7 +130,7 @@ def get_submit_job_status(jobid):
                 return False, f'evaluating {percent}%'
         elif status == 'finished':
             return True, 'finished'
-        return True, status
+        return False, status
     except rq.exceptions.NoSuchJobError:
         return True, ''
     except AttributeError:
