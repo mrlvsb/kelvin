@@ -95,17 +95,11 @@ TODO: Make it nicer with Bootstrap
                   {% endif %}
                 </a>
             </li>
-            {% if results.pipelines or job_status %}
+            {% if has_pipeline %}
             <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#tab_result">
                     Result #{{ submit.submit_num }} 
                 </a>
-              <!--
-                <a class="nav-link text-{% if submit.points and submit.points == submit.max_points %}success{%else%}danger{%endif%}" data-toggle="tab" href="#tab_result">
-                    Result #{{ submit.submit_num }} 
-                    {%if submit.max_points is not None %}({{ submit.points }} / {{ submit.max_points }}){%else%}{{ job_status }}{%endif%}
-                </a>
-              -->
             </li>
             {% endif %}
 

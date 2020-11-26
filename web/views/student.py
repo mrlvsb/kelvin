@@ -132,7 +132,7 @@ def get_submit_job_status(jobid):
                 return False, f'evaluating {percent}%'
         elif status == 'finished':
             return True, 'finished'
-        return status
+        return True, status
     except rq.exceptions.NoSuchJobError:
         return True, ''
     except AttributeError:
@@ -185,6 +185,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         'inputs': testset,
         'max_inline_content_bytes': MAX_INLINE_CONTENT_BYTES,
         'upload': not is_teacher(request.user) or request.user.username == student_username,
+        'has_pipeline': bool(testset.pipeline),
     }
 
     current_submit = None
