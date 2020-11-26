@@ -449,7 +449,7 @@ def submit_comments(request, assignment_id, login, submit_num):
             result[source.virt] = {
                 'type': 'img',
                 'path': source.virt,
-                'src': reverse('submit_source', args=[submit.id, source.virt]) + '?convert=1' if mime not in SUPPORTED_IMAGES else '',
+                'src': reverse('submit_source', args=[submit.id, source.virt]) + ('?convert=1' if mime not in SUPPORTED_IMAGES else ''),
             }
         elif mime and mime.startswith("video/"):
             name = ('.'.join(source.virt.split('.')[:-1]))
