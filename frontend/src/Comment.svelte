@@ -35,8 +35,12 @@
     const dispatch = createEventDispatcher();
 
     const sanitizeOpts = {
-      USE_PROFILES: {html: true},
-      FORBID_TAGS: ['style', 'iframe', 'frame', 'img', 'video', 'audio', 'script']
+      ALLOWED_TAGS: [
+        'img', 'p', 'b', 'strong', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a', 'i', 'ul', 'ol', 'li', 'pre', 'code', 'a', 'br', 'span'
+      ],
+      ALLOWED_ATTR: [
+        'href', 'src', 'class',
+      ]
     };
 
     let editing = false;
