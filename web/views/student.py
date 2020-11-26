@@ -445,6 +445,7 @@ def submit_comments(request, assignment_id, login, submit_num):
                 'image/jpeg',
                 'image/gif',
                 'image/webp',
+                'image/svg+xml',
             ]
 
             result[source.virt] = {

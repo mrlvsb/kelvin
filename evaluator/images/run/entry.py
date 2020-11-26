@@ -15,6 +15,7 @@ SUPPORTED_IMAGES = [
     'image/jpeg',
     'image/gif',
     'image/webp',
+    'image/svg+xml',
 ]
 
 def display(patterns, out, delete=False):
