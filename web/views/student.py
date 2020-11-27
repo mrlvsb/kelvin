@@ -659,10 +659,10 @@ def raw_result_content(request, submit_id, test_name, result_type, file):
                             return HttpResponse(test.files[file][result_type].read(),
                                                 content_type='text/html')
                         else:
-                            file_content = test.files[file][result_type].open('rb')
+                            file_content = test.files[file][result_type].open('rb').read()
                             file_name = f"{result_type}-{file}"
                             extension = os.path.splitext(file)[1]
-                            file_mime = mimedetector.from_file(file)
+                            file_mime = mimedetector.from_buffer(file_content)
 
                             if extension in DIRECT_SHOW_EXTENSIONS and file_mime:
                                 return HttpResponse(file_content, content_type=file_mime)
