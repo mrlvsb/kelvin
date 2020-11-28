@@ -34,7 +34,7 @@ def all_notifications(request):
     unread = request.user.notifications.filter(unread=True).count()
     unread_found = 0
 
-    for notification in request.user.notifications.all()[0:num_to_fetch]:
+    def to_json(notification):
         struct = model_to_dict(notification)
 
         for obj_type in ['actor', 'target', 'action_object']:
@@ -49,16 +49,30 @@ def all_notifications(request):
 
         if notification.data:
             struct = {**struct, **notification.data}
+        
+        return struct
+        
 
-        all_list.append(struct)
+    for notification in request.user.notifications.all()[0:num_to_fetch]:
+        all_list.append(to_json(notification))      
 
-        if not struct['unread']:
+        if not notification.unread:
             if unread_found == unread:
                 read_count += 1
                 if read_count >= 5:
                     break
         else:
             unread_found += 1
+
+    if unread_found < unread:
+        args = {}
+        if all_list:
+            args['id__lt'] = all_list[-1]['id']
+
+        for notification in request.user.notifications.filter(unread=True, **args):
+            all_list.append(to_json(notification))
+
+
     data = {
         'unread_count': unread,
         'notifications': all_list
