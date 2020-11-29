@@ -225,7 +225,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
             tmp = request.POST.get('paths', None)
             paths = []
             if tmp:
-                paths = [f.rstrip('\r') for f in tmp.split('\n')]
+                paths = [f.rstrip('\r') for f in tmp.split('\n') if f.rstrip('\r')]
             else:
                 paths = [f.name for f in solutions]
             for path, uploaded_file in zip(paths, solutions):
