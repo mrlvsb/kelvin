@@ -29,7 +29,6 @@ from common.evaluate import evaluate_job
 from web.task_utils import load_readme
 from api.models import UserToken
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
-from ..forms import UploadSolutionForm
 from evaluator.testsets import TestSet
 from common.evaluate import get_meta
 from evaluator.results import EvaluationResult
@@ -212,50 +211,45 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         data['job_status'] = not get_submit_job_status(current_submit.jobid)[0]
 
     if request.method == 'POST':
-        form = UploadSolutionForm(request.POST, request.FILES)
-        if form.is_valid():
-            s = Submit()
-            s.student = request.user
-            s.assignment = assignment
-            s.submit_num = Submit.objects.filter(assignment__id=s.assignment.id,
-                                                 student__id=request.user.id).count() + 1
-            s.save()
+        s = Submit()
+        s.student = request.user
+        s.assignment = assignment
+        s.submit_num = Submit.objects.filter(assignment__id=s.assignment.id,
+                                             student__id=request.user.id).count() + 1
+        s.save()
 
-            solutions = request.FILES.getlist('solution')
-            tmp = request.POST.get('paths', None)
-            paths = []
-            if tmp:
-                paths = [f.rstrip('\r') for f in tmp.split('\n') if f.rstrip('\r')]
+        solutions = request.FILES.getlist('solution')
+        tmp = request.POST.get('paths', None)
+        paths = []
+        if tmp:
+            paths = [f.rstrip('\r') for f in tmp.split('\n') if f.rstrip('\r')]
+        else:
+            paths = [f.name for f in solutions]
+        for path, uploaded_file in zip(paths, solutions):
+            extension = os.path.splitext(path)[1]
+            if extension.lower() == ".zip":
+                with zipfile.ZipFile(uploaded_file, "r") as archive:
+                    for file in archive.filelist:
+                        if not file.is_dir():
+                            store_uploaded_file(s, file.filename, archive)
             else:
-                paths = [f.name for f in solutions]
-            for path, uploaded_file in zip(paths, solutions):
-                extension = os.path.splitext(path)[1]
-                if extension.lower() == ".zip":
-                    with zipfile.ZipFile(uploaded_file, "r") as archive:
-                        for file in archive.filelist:
-                            if not file.is_dir():
-                                store_uploaded_file(s, file.filename, archive)
-                else:
-                    store_uploaded_file(s, path, uploaded_file)
+                store_uploaded_file(s, path, uploaded_file)
 
-            s.jobid = django_rq.enqueue(evaluate_job, s).id
-            s.save()
+        s.jobid = django_rq.enqueue(evaluate_job, s).id
+        s.save()
 
-            # delete previous notifications
-            Notification.objects.filter(
-                action_object_object_id__in=submits,
-                action_object_content_type=ContentType.objects.get_for_model(Submit),
-                verb='submitted',
-            ).delete()
+        # delete previous notifications
+        Notification.objects.filter(
+            action_object_object_id__in=submits,
+            action_object_content_type=ContentType.objects.get_for_model(Submit),
+            verb='submitted',
+        ).delete()
 
-            if not is_teacher(request.user):
-                notify.send(sender=request.user, recipient=[assignment.clazz.teacher],
-                            verb='submitted', action_object=s)
+        if not is_teacher(request.user):
+            notify.send(sender=request.user, recipient=[assignment.clazz.teacher],
+                        verb='submitted', action_object=s)
 
-            return redirect(reverse('task_detail', args=[s.student.username, s.assignment.id, s.submit_num]) + '#result')
-    else:
-        form = UploadSolutionForm()
-    data['upload_form'] = form
+        return redirect(reverse('task_detail', args=[s.student.username, s.assignment.id, s.submit_num]) + '#result')
     return render(request, 'web/task_detail.html', data)
 
 def comment_recipients(submit, current_author):
