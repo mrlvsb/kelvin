@@ -127,6 +127,13 @@ TODO: Make it nicer with Bootstrap
                                    onclick="this.value=null;"
                                    onchange="this.form.submit()">
                             <span class="btn btn-sm btn-primary" onclick="$('#upload-choose').click()">Upload</span>
+                            <span class="morehover" style="position: relative">
+                              <span class="iconify" data-icon="bx:bx-help-circle"></span>  
+                              <div class="morehover-content" style="position: absolute; right: 0px; top: 15px; background: white; padding: 4px; display: none">
+                                <strong>Drag all your files and folders from file manager to this window.</strong><br>
+                                <video src="{% static 'upload.webm' %}" width="800px" autoplay muted loop />
+                              </div>
+                            </span>
                         </form>
                         <kelvin-upload-solution cooldown="0"></kelvin-upload-solution>
                     </li>

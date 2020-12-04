@@ -28,3 +28,7 @@ h3 {
   padding: 5px;
   text-align: center;
 }
+
+.morehover:hover .morehover-content {
+  display: block !important;
+}
