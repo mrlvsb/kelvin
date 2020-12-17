@@ -146,12 +146,16 @@
     <h2>
       {source.path}{#if source.type == 'source'}<CopyToClipboard content={() => source.content} title='Copy the source code to the clipboard'><span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px"></span></CopyToClipboard>{/if}
     </h2>
-    {#if source.type == 'source'}
-      <SubmitSource
+    {#if source.type == 'source' }
+      {#if source.content_url }
+        Content too large, show <a href="{ source.content_url }">raw content</a>.
+      {:else}
+        <SubmitSource
         code={source.content}
         comments={source.comments}
         on:setNotification={setNotification}
         on:saveComment={evt => saveComment({...evt.detail, source: source.path})} />
+      {/if}
     {:else if source.type === 'img'}
       <img src={source.src} />
     {:else if source.type === 'video'}

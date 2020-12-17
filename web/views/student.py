@@ -457,12 +457,14 @@ def submit_comments(request, assignment_id, login, submit_num):
             result[name]['sources'].append(reverse('submit_source', args=[submit.id, source.virt]))
         else:
             content = ''
+            content_url = None
             error = None
             try:
-                if os.path.getsize(source.phys) > 500 * 1024:
-                    error = 'File too large'
-                with open(source.phys) as f:
-                    content = f.read()
+                if os.path.getsize(source.phys) <= MAX_INLINE_CONTENT_BYTES:
+                    with open(source.phys) as f:
+                        content = f.read()
+                else:
+                    content_url = reverse("submit_source", kwargs=dict(submit_id=submit.id, path=source.virt))
             except UnicodeDecodeError:
                 error = "source code contains binary data"
             except FileNotFoundError:
@@ -472,6 +474,7 @@ def submit_comments(request, assignment_id, login, submit_num):
                 'type': 'source',
                 'path': source.virt,
                 'content': content,
+                'content_url': content_url,
                 'error': error,
                 'comments': {},
             }
