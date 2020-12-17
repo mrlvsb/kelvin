@@ -8,8 +8,15 @@
   import { notifications } from './notifications.js'
 
   export let url;
-  let sources = null;
+  let files = null;
   let summaryComments = [];
+
+  class SourceFile {
+      constructor(source) {
+          this.source = source;
+          this.opened = false;
+      }
+  }
 
   function updateCommentProps(id, newProps) {
     function update(items) {
@@ -24,13 +31,13 @@
       }).filter(c => c !== null);
     }
 
-    sources = sources.map(source => {
-      if(source.comments) {
-        source.comments = Object.fromEntries(Object.entries(source.comments).map(([lineNum, comments]) => {
+    files = files.map(file => {
+      if(file.source.comments) {
+        file.source.comments = Object.fromEntries(Object.entries(file.source.comments).map(([lineNum, comments]) => {
           return [lineNum, update(comments)];
         }));
       }
-      return source;
+      return file.source;
     });
 
     summaryComments = update(summaryComments);
@@ -52,15 +59,14 @@
         json
       ];
     } else {
-      sources = await Promise.all(sources.map(async source => {
-        if(source.path === comment.source) {
-          let comments = await Promise.all((source.comments[comment.line - 1] || []).map(markCommentAsRead));
-          source.comments[comment.line - 1] = [...comments, json];
+      files = await Promise.all(files.map(async file => {
+        if(file.source.path === comment.source) {
+          let comments = await Promise.all((file.source.comments[comment.line - 1] || []).map(markCommentAsRead));
+          file.source.comments[comment.line - 1] = [...comments, json];
         }
-        return source;
+        return file.source;
       }));
     }
-
   }
 
   async function updateComment(id, text) {
@@ -110,7 +116,7 @@
     }
 
     await walk(summaryComments);
-    for(const source of sources) {
+    for(const source of files) {
       if(source.comments) {
         for(const comments of Object.values(source.comments)) {
           await walk(comments);
@@ -122,8 +128,12 @@
   async function load() {
     const res = await fetch(url);
     const json = await res.json();
-    sources = json['sources'];
+    files = json['sources'].map((source) => new SourceFile(source));
     summaryComments = json['summary_comments'];
+
+    if (files.length === 1) {
+        files[0].opened = true;
+    }
   }
   load();
 </script>
@@ -133,37 +143,45 @@
   img {
     max-width: 100%;
   }
+  .file-header {
+      cursor: pointer;
+  }
+  .file-header:hover {
+      text-decoration: underline;
+  }
 </style>
 
-{#if sources === null}
+{#if files === null}
   <div class="d-flex justify-content-center">
     <SyncLoader />
   </div>
 {:else}
   <SummaryComments {summaryComments} on:saveComment={evt => saveComment(evt.detail)} on:setNotification={setNotification} />
 
-  {#each sources as source}
-    <h2>
-      {source.path}{#if source.type == 'source'}<CopyToClipboard content={() => source.content} title='Copy the source code to the clipboard'><span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px"></span></CopyToClipboard>{/if}
+  {#each files as file}
+    <h2 class="file-header" title="Toggle file visibility" on:click={() => file.opened = !file.opened}>
+      {file.source.path}{#if file.source.type == 'source'}<CopyToClipboard content={() => file.source.content} title='Copy the source code to the clipboard'><span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px"></span></CopyToClipboard>{/if}
     </h2>
-    {#if source.type == 'source' }
-      {#if source.content_url }
-        Content too large, show <a href="{ source.content_url }">raw content</a>.
-      {:else}
-        <SubmitSource
-        code={source.content}
-        comments={source.comments}
-        on:setNotification={setNotification}
-        on:saveComment={evt => saveComment({...evt.detail, source: source.path})} />
-      {/if}
-    {:else if source.type === 'img'}
-      <img src={source.src} />
-    {:else if source.type === 'video'}
-      <video controls>
-        {#each source.sources as src}
-          <source {src} />
-        {/each}
-      </video>
-    {:else}The preview cannot be shown.{/if}
+    {#if file.opened }
+      {#if file.source.type == 'source' }
+        {#if file.source.content_url }
+          Content too large, show <a href="{ file.source.content_url }">raw content</a>.
+        {:else}
+          <SubmitSource
+          code={file.source.content}
+          comments={file.source.comments}
+          on:setNotification={setNotification}
+          on:saveComment={evt => saveComment({...evt.detail, source: file.source.path})} />
+        {/if}
+      {:else if file.source.type === 'img'}
+        <img src={file.source.src} />
+      {:else if file.source.type === 'video'}
+        <video controls>
+          {#each file.source.sources as src}
+            <source {src} />
+          {/each}
+        </video>
+      {:else}The preview cannot be shown.{/if}
+    {/if}
   {/each}
 {/if}
