@@ -14,7 +14,7 @@
   class SourceFile {
       constructor(source) {
           this.source = source;
-          this.opened = false;
+          this.opened = true;
       }
   }
 
@@ -130,10 +130,14 @@
     const json = await res.json();
     files = json['sources'].map((source) => new SourceFile(source));
     summaryComments = json['summary_comments'];
+  }
 
-    if (files.length === 1) {
-        files[0].opened = true;
-    }
+  $: allOpen = files && files.reduce((sum, file) => sum + file.opened, 0) === files.length;
+  async function toggleOpen() {
+    files = files.map(file => {
+        file.opened = !allOpen
+        return file;
+    });
   }
   load();
 </script>
@@ -157,6 +161,18 @@
   </div>
 {:else}
   <SummaryComments {summaryComments} on:saveComment={evt => saveComment(evt.detail)} on:setNotification={setNotification} />
+
+  {#if files.length > 1}
+  <div>
+    <button class="btn p-0 ml-auto d-block" on:click={toggleOpen}>
+      {#if allOpen}
+        <span><span class="iconify" data-icon="ant-design:folder-open-filled"></span></span>
+      {:else}
+        <span><span class="iconify" data-icon="ant-design:folder-filled"></span></span>
+      {/if}
+    </button>
+  </div>
+  {/if}
 
   {#each files as file}
     <h2 class="file-header" title="Toggle file visibility" on:click={() => file.opened = !file.opened}>
