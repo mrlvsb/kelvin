@@ -37,7 +37,7 @@
           return [lineNum, update(comments)];
         }));
       }
-      return file.source;
+      return file;
     });
 
     summaryComments = update(summaryComments);
@@ -64,7 +64,7 @@
           let comments = await Promise.all((file.source.comments[comment.line - 1] || []).map(markCommentAsRead));
           file.source.comments[comment.line - 1] = [...comments, json];
         }
-        return file.source;
+        return file;
       }));
     }
   }
