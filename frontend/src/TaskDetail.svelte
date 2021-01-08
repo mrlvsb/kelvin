@@ -117,8 +117,8 @@
 
     await walk(summaryComments);
     for(const source of files) {
-      if(source.comments) {
-        for(const comments of Object.values(source.comments)) {
+      if(source.source.comments) {
+        for(const comments of Object.values(source.source.comments)) {
           await walk(comments);
         }
       }
