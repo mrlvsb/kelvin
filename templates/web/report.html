@@ -1,6 +1,7 @@
 {% if submit %}
 
 {% for result in results %}
+  <div>
   {% if result.html or result.tests %}
   <h5{% if result.failed %} class="text-danger"{% endif %}>
       {{ result.title }}
@@ -14,7 +15,7 @@
 
 
     {% if result.tests %}
-    <input type="checkbox" id="checkbox-only-errors" checked> <label for="checkbox-only-errors">show only failed tests</label>
+    <input type="checkbox" class="checkbox-only-errors" id="checkbox-only-errors-{{forloop.counter0}}" checked> <label for="checkbox-only-errors-{{forloop.counter0}}">show only failed tests</label>
     {% endif %}
 
     {% for test in result.tests %}
@@ -103,20 +104,22 @@ $ {{ test.command }}{% if test.message %}
     </div>
     {% endfor %}
   {% endif %}
+</div>
 {% endfor %}
 
 {% endif %}
 
 <script>
-var el = document.getElementById('checkbox-only-errors');
-if(el) {
+document.querySelectorAll('.checkbox-only-errors').forEach(el => {
+  const container = el.closest('div');
   el.addEventListener('change', function() {
     if(this.checked) {
-        document.querySelectorAll('.test-result-success').forEach(elem => elem.setAttribute('hidden', true))
+      container.querySelectorAll('.test-result-success').forEach(elem => elem.setAttribute('hidden', true))
     } else {
-        document.querySelectorAll('.test-result').forEach(elem => elem.removeAttribute('hidden'))
+      container.querySelectorAll('.test-result').forEach(elem => elem.removeAttribute('hidden'))
     }
-  });
+  })
+});
 
   document.querySelectorAll('.card-test label').forEach(function(el) {
     el.addEventListener('click', function(ev) {
@@ -131,7 +134,6 @@ if(el) {
         });
     });
   });
-}
 </script>
 
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" />
