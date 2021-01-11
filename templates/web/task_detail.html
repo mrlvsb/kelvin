@@ -157,7 +157,7 @@ TODO: Make it nicer with Bootstrap
                 {% endif %}
             </div>
             <div class="tab-pane fade" id="tab_tests">
-                <a href="{% url 'tar_test_data' task.code %}" class="float-right">Download all tests</a>
+                <a href="{% url 'tar_test_data' task.code %}{% if submit %}?student={{submit.student}}{%endif%}" class="float-right">Download all tests</a>
 
                 {% for input in inputs %}
                 <h2>{{ input.title }}{% if input.title != input.name %} <span class="text-muted">({{ input.name }})</span>{% endif %}</h2>
@@ -173,7 +173,7 @@ TODO: Make it nicer with Bootstrap
                     <div class="card-header">
                         <h5>
                           {{ path }}
-                          (<a href="{% url 'raw_test_content' task.code input.name path %}">Raw content</a>)
+                          (<a href="{% url 'raw_test_content' task.code input.name path %}{% if submit %}?student={{submit.student}}{%endif%}">Raw content</a>)
                         </h5>
                     </div>
                     <div class="card-body">

@@ -529,7 +529,11 @@ def file_response(file, filename, mimetype):
 def raw_test_content(request, task_name, test_name, file):
     task = get_object_or_404(Task, code=task_name)
 
-    tests = create_taskset(task, request.user.username)
+    username = request.user.username
+    if is_teacher(request.user) and 'student' in request.GET:
+        username = request.GET['student']
+
+    tests = create_taskset(task, username)
 
     for test in tests:
         if test.name == test_name:
@@ -553,7 +557,11 @@ def tar_test_data(request, task_name):
     task = get_object_or_404(Task, code=task_name)
     check_is_task_accessible(request, task)
 
-    tests = create_taskset(task, request.user.username)
+    username = request.user.username
+    if is_teacher(request.user) and 'student' in request.GET:
+        username = request.GET['student']
+
+    tests = create_taskset(task, username)
 
     with io.BytesIO() as f:
         with tarfile.open(fileobj=f, mode="w:gz") as tar:
