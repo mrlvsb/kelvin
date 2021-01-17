@@ -147,10 +147,10 @@
   img {
     max-width: 100%;
   }
-  .file-header {
+  .file-header span {
       cursor: pointer;
   }
-  .file-header:hover {
+  .file-header span:hover {
       text-decoration: underline;
   }
 </style>
@@ -175,8 +175,10 @@
   {/if}
 
   {#each files as file}
-    <h2 class="file-header" title="Toggle file visibility" on:click={() => file.opened = !file.opened}>
-      {file.source.path}{#if file.source.type == 'source'}<CopyToClipboard content={() => file.source.content} title='Copy the source code to the clipboard'><span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px"></span></CopyToClipboard>{/if}
+    <h2 class="file-header" title="Toggle file visibility">
+      <span on:click={() => file.opened = !file.opened}>
+      {file.source.path}
+      </span>{#if file.source.type == 'source'}<CopyToClipboard content={() => file.source.content} title='Copy the source code to the clipboard'><span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px"></span></CopyToClipboard>{/if}
     </h2>
     {#if file.opened }
       {#if file.source.type == 'source' }
