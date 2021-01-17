@@ -178,10 +178,12 @@
     <h2 class="file-header" title="Toggle file visibility">
       <span on:click={() => file.opened = !file.opened}>
       {file.source.path}
-      </span>{#if file.source.type == 'source'}<CopyToClipboard content={() => file.source.content} title='Copy the source code to the clipboard'><span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px"></span></CopyToClipboard>{/if}
+      </span>{#if file.source.type == 'source' && file.source.content}<CopyToClipboard content={() => file.source.content} title='Copy the source code to the clipboard'><span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px"></span></CopyToClipboard>{/if}
     </h2>
     {#if file.opened }
-      {#if file.source.type == 'source' }
+      {#if file.source.error}
+        <span class="text-muted">{file.source.error}</span>
+      {:else if file.source.type == 'source' }
         {#if file.source.content_url }
           Content too large, show <a href="{ file.source.content_url }">raw content</a>.
         {:else}
