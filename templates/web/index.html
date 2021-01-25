@@ -5,17 +5,18 @@
 
 {% for node in classess %}
 <div class="card mb-2">
-    <div class="card-header"><h5>{{ node.class }}</h5></div>
+    <div class="card-header"><h5 class="mb-0">{{ node.class }}</h5></div>
     <div class="card-body"> 
         {{ node.class.summary | markdown:'' | safe }}
-        <table class="table table-bordered table-sm table-hover">
+        {% if node.tasks %}
+        <table class="table table-sm table-hover table-striped">
             <thead>
                 <tr>
                     <th>Task</th>
                     <th>Assigned</th>
                     <th>Deadline</th>
-                    <th>Earned points</th>
-                    <th>Max points</th>
+                    <th class="text-right">Earned points</th>
+                    <th class="text-right">Max points</th>
                 </tr>
             </thead>
             {% for task in node.tasks  %}
@@ -34,26 +35,29 @@
                 {% endcomment %}
                 <td>
                     {{ task.assigned|date:"d.m.Y, H:i" }}
-                    {% if task.assigned_show_remaining %} , Time remaining: {{ task.assigned|timeuntil }} {% endif %}
+                    {% if task.assigned_show_remaining %} (<span class="text-muted">{{ task.assigned|timeuntil }} left)</span>{% endif %}
                 </td>
                 <td>
                     {% if task.deadline %}
-                    {{ task.deadline|date:"d.m.Y, H:i" }}, Time remaining: {{ task.deadline|timeuntil }}
+                    {{ task.deadline|date:"d.m.Y, H:i" }} <span class="text-muted">({{ task.deadline|timeuntil }} left)</span>
                     {% endif %}
                 </td>
-                <td>
+                <td class="text-right">
                     {% if task.assigned_points is not None %}
-                      {{ task.assigned_points }}
+                      {{ task.assigned_points|floatformat:2 }}
                     {% endif %}
                 </td>
-                <td>
+                <td class="text-right">
                     {% if task.assignment.max_points is not None %}
-                      {{ task.assignment.max_points }}
+                      {{ task.assignment.max_points|floatformat:2 }}
                     {% endif %}
                 </td>
             </tr>
             {% endfor %}
         </table>
+        {% else %}
+        <p class="alert alert-info mb-0">No task assigned.</p>
+        {% endif %}
     </div>
 </div>
 {% endfor %}
