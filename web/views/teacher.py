@@ -123,7 +123,7 @@ def submits(request, student_username=None):
     student_full_name = None
     if student_username:
         filters['student__username'] = student_username
-        student_full_name = User.objects.get(username=student_username).get_full_name()
+        student_full_name = get_object_or_404(User, username=student_username).get_full_name()
 
     submits = Submit.objects.filter(**filters).order_by('-id')[:100]
     return render(request, "web/submits.html", {
