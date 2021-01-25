@@ -466,7 +466,7 @@ def submit_comments(request, assignment_id, login, submit_num):
                 else:
                     content_url = reverse("submit_source", kwargs=dict(submit_id=submit.id, path=source.virt))
             except UnicodeDecodeError:
-                error = "source code contains binary data"
+                error = "The file contains binary data or is not encoded in UTF-8"
             except FileNotFoundError:
                 error = "source code not found"
 
