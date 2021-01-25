@@ -62,6 +62,18 @@
     }
     reevaluateLoading = false;
   }
+
+  function pasteLogins(event) {
+    const paste = (event.clipboardData || window.clipboardData).getData('text').toUpperCase();
+
+    const logins = Array.from(paste.matchAll(/\b([A-Z]{3}[0-9]{2,4})\b/g)).map(m => m[1]);
+    if(logins.length) {
+      event.preventDefault();
+      logins.sort();
+      event.target.value = [...new Set(logins)].join("\n");
+    }
+  }
+
   function studentPoints(clazz, student) {
       return clazz.assignments
           .map(i => i.students[student.username])
@@ -159,13 +171,10 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
   {#if showStudentsList || showAddStudents}
     <div class="card-body">
       {#if showAddStudents}
-        <form class="col-sm-3 p-0 mb-2" on:submit|preventDefault={(e) => addStudent(e.target.closest('form'), clazz.id)}>
-          <div class="input-group input-group-sm">
-            <textarea class="form-control" placeholder="Add student logins to this class"></textarea>
-            <div class="input-group-append">
-              <button class="btn btn-primary">+</button>
-            </div>
-          </div>
+        <form class="p-0 mb-2" on:submit|preventDefault={(e) => addStudent(e.target.closest('form'), clazz.id)}>
+          <textarea on:paste={pasteLogins} class="form-control mb-1" rows=20 placeholder="Add student logins to this class
+May contain surrounding text or HTML"></textarea>
+          <button class="btn btn-primary">Add</button>
         </form>
         {#if addStudentError}
           <span class="text-danger">{addStudentError}</span>
