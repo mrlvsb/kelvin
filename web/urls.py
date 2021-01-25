@@ -55,6 +55,4 @@ urlpatterns = [
     # cli support
     path('install_<str:token>.sh', student_view.script, name='install.sh'),
     path('upr.py', student_view.uprpy, name='upr.py'),
-
-    path('project/<str:project_type>', student_view.project, name='project'),
 ]
