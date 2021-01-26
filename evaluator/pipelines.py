@@ -27,6 +27,7 @@ class DockerPipe:
         env = [f"-ePIPE_{k.upper()}={fmt_value(v)}" for k, v in self.kwargs.items()]
         args = [
             'docker', 'run', '--rm',
+            '--network', 'none',
             '-w', '/work',
             '-v', evaluation.sandbox.system_path() + ':/work',
             *env,
