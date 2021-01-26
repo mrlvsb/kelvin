@@ -94,7 +94,7 @@ class Class(models.Model):
 
     code = models.CharField(max_length=20, help_text='Code from Edison like C/01, P/01 or custom identification like Komb')
     teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
-    students = models.ManyToManyField(settings.AUTH_USER_MODEL, 'students', blank=True)
+    students = models.ManyToManyField(settings.AUTH_USER_MODEL, 'students', blank=True, help_text="Students can be imported in bulk from the index page")
     tasks = models.ManyToManyField(Task, through='AssignedTask')
     semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
