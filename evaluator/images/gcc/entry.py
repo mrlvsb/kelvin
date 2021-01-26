@@ -33,13 +33,17 @@ flags = os.getenv('PIPE_FLAGS', '')
 ldflags = os.getenv('PIPE_LDFLAGS', '')
 
 with open("result.html", "w") as out:
+    env = {
+        'CC': 'gcc',
+        'CXX': 'g++',
+        'CFLAGS': flags,
+        'LDFLAGS': ldflags,
+    }
+    if 'cmakelists.txt' in [f.lower() for f in os.listdir('.')]:
+        cmd_run(['cmake', '.'], out, env=env)
+
     if 'makefile' in [f.lower() for f in os.listdir('.')]:
-        returncode = cmd_run(['make'], out, env={
-            'CC': 'gcc',
-            'CXX': 'g++',
-            'CFLAGS': flags,
-            'LDFLAGS': ldflags,
-        })
+        returncode = cmd_run(['make'], out, env=env)
     else:
         sources = []
         for root, dirs, files in os.walk('.'):
