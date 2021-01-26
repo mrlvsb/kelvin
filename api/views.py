@@ -298,6 +298,7 @@ def task_detail(request, task_id=None):
     for clazz in classes:
         item = {
             'id': clazz.id,
+            'code': clazz.code,
             'timeslot': clazz.timeslot,
             'week_offset': clazz.week_offset,
             'teacher': clazz.teacher.username,

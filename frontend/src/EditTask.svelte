@@ -220,7 +220,10 @@ td:not(:nth-of-type(3)) {
           <tbody>
             {#each shownClasses as clazz}
             <tr class:table-success={clazz.assigned}>
-              <td>{ clazz.timeslot }</td>
+              <td>
+                { clazz.timeslot }
+                <span class="text-muted">({ clazz.code })</span>
+              </td>
               <td>{ clazz.teacher }</td>
               <td>
                 <TimeRange timeOffsetInWeek={clazz.week_offset} bind:from={clazz.assigned} bind:to={clazz.deadline} semesterBeginDate={$semester.begin} />
