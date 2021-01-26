@@ -82,13 +82,23 @@ class Task(models.Model):
             return ""
 
 class Class(models.Model):
-    code = models.CharField(max_length=20)
+
+    class Day(models.TextChoices):
+       MONDAY = 'PO', "Monday"
+       TUESDAY = 'UT', "Tuesday"
+       WEDNESDAY = 'ST', "Wednesday"
+       THURSDAY = 'CT', "Thursday"
+       FRIDAY = 'PA', "Friday"
+       SATURDAY = 'SO', "Saturday"
+       MSUNDAY = 'NE', "Sunday"
+
+    code = models.CharField(max_length=20, help_text='Code from Edison like C/01, P/01 or custom identification like Komb')
     teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
-    students = models.ManyToManyField(settings.AUTH_USER_MODEL, 'students')
+    students = models.ManyToManyField(settings.AUTH_USER_MODEL, 'students', blank=True)
     tasks = models.ManyToManyField(Task, through='AssignedTask')
     semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    day = models.CharField(max_length=5)
+    day = models.CharField(max_length=5, choices=Day.choices)
     time = models.TimeField()
 
     objects = ClassManager()
