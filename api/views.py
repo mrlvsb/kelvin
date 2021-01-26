@@ -3,7 +3,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
 from django.urls import reverse
-from common.models import Submit, Class, Task, AssignedTask, Subject, assignedtask_results, current_semester_conds, current_semester, submit_assignment_path
+from common.models import Submit, Class, Task, AssignedTask, Semester, Subject, assignedtask_results, current_semester_conds, current_semester, submit_assignment_path
 from .models import UserToken
 from django.db import transaction
 import django_rq
@@ -42,24 +42,38 @@ def tasks_list(request):
     return JsonResponse({'tasks': result})
 
 @user_passes_test(is_teacher)
-def class_detail_list(request, **class_conditions):
-    if not class_conditions:
-        class_conditions = {}
+def all_classess(request):
+    semesters = {}
 
-    if 'teacher_id' not in class_conditions:
-        class_conditions['teacher_id'] = request.user.id
-    elif class_conditions['teacher_id'] is None:
-        del class_conditions['teacher_id']
+    for cl in Class.objects.all():
+        sem = str(cl.semester)
+        if sem not in semesters:
+            semesters[sem] = {}
 
-    current_semester = True
-    if 'semester__winter' in class_conditions:
-        class_conditions['semester__winter'] = class_conditions['semester__winter'] == 'W'
-        current_semester = False
+        if cl.subject.abbr not in semesters[sem]:
+            semesters[sem][cl.subject.abbr] = []
+        
+        if cl.teacher and cl.teacher.username not in semesters[sem][cl.subject.abbr]:
+            semesters[sem][cl.subject.abbr].append(cl.teacher.username)
+    
+    return JsonResponse({'semesters': semesters})
 
-    if current_semester:
-        classess = Class.objects.current_semester().filter(**class_conditions)
-    else:
-        classess = Class.objects.filter(**class_conditions)
+@user_passes_test(is_teacher)
+def class_detail_list(request):
+    class_conditions = {}
+
+    if 'teacher' in request.GET:
+        class_conditions['teacher__username'] = request.GET['teacher']
+    if 'semester' in request.GET:
+        year = request.GET['semester'][:4]
+        is_winter = request.GET['semester'][-1] == 'W'
+
+        class_conditions['semester__year'] = year
+        class_conditions['semester__winter'] = is_winter
+    if 'subject' in request.GET:
+        class_conditions['subject__abbr'] = request.GET['subject']
+
+    classess = Class.objects.filter(**class_conditions)
 
     result = []
     for clazz in classess:

@@ -4,19 +4,34 @@
   import ClassDetail from './ClassDetail.svelte'
   import {querystring, link} from 'svelte-spa-router'
   import SyncLoader from './SyncLoader.svelte'
-
+  import ClassFilter from './ClassFilter.svelte'
+  import {semester, user} from './global.js'
 
   let classes = null;
-  let selectedSubject = null;
+
+  let filter = {
+        semester: $semester.abbr,
+        subject: null,
+        teacher: $user.username,
+  };
 
   onMount(async () => {
-    classes = await refetch();
+    await refetch();
   });
 
+  let prevParams;
   async function refetch() {
-    let req = await fetch('/api/classes');
-    let res = await req.json();
-    return res['classes'].map(c => {
+    const params = new URLSearchParams(Object.fromEntries(Object.entries(filter).filter(([_, v]) => v))).toString();
+    if(prevParams === params) {
+        return;
+    }
+    prevParams = params;
+
+    classes = null;
+
+    const req = await fetch('/api/classes?' + params);
+    const res = await req.json();
+    classes = res['classes'].map(c => {
       c.assignments = c.assignments.map(assignment => {
         assignment.assigned = new Date(assignment.assigned);
         if(assignment.deadline) {
@@ -29,33 +44,33 @@
   }
 
   $: {
-    const q = Object.fromEntries(new URLSearchParams($querystring));
-    if(q['subject']) {
-      selectedSubject = q['subject'];
-    }
+      if($querystring.length) {
+        filter = Object.fromEntries(new URLSearchParams($querystring));
+      }
+      refetch();
   }
 </script>
 
 <div class="container-fluid">
-{#if !classes}
-  <div class="d-flex justify-content-center">
-    <SyncLoader />
+  <div class="d-flex mb-1">
+        <ClassFilter semester={filter.semester} subject={filter.subject} teacher={filter.teacher} />
+
+        <a class="btn btn-sm" href="/admin/common/class/add/" title="Add class">
+          <span class="iconify" data-icon="ant-design:plus-outlined"></span>
+        </a>
   </div>
-{:else}
-  <div class="d-flex">
-    <div>
-      {#each [...new Set(classes.map(c => c.subject_abbr))] as subject}
-        <a class="mr-2" class:font-weight-bold={selectedSubject == subject} href="/?subject={subject}" use:link>{subject}</a>
+
+  {#if !classes}
+    <div class="d-flex justify-content-center">
+      <SyncLoader />
+    </div>
+  {:else}
+    {#if classes.length}
+      {#each classes as clazz}
+        <ClassDetail clazz={clazz} on:update={async () => classes = await refetch()} />
       {/each}
-    </div>
-
-    <div class="ml-auto">
-      <a href="/admin/common/class/add/">Add class</a>
-    </div>
-  </div>
-
-  {#each classes.filter(c => c.subject_abbr == selectedSubject || selectedSubject == null) as clazz}
-    <ClassDetail clazz={clazz} on:update={async () => classes = await refetch()} />
-  {/each}
-{/if}
+    {:else}
+      <p class="alert alert-info">No class found, try different filter.</p>
+    {/if}
+  {/if}
 </div>
