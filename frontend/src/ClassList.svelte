@@ -27,8 +27,6 @@
     }
     prevParams = params;
 
-    classes = null;
-
     const req = await fetch('/api/classes?' + params);
     const res = await req.json();
     classes = res['classes'].map(c => {
@@ -66,8 +64,8 @@
     </div>
   {:else}
     {#if classes.length}
-      {#each classes as clazz}
-        <ClassDetail clazz={clazz} on:update={async () => classes = await refetch()} />
+      {#each classes as clazz (clazz.id)}
+        <ClassDetail clazz={clazz} on:update={async () => {prevParams = null; await refetch();}} />
       {/each}
     {:else}
       <p class="alert alert-info">No class found, try different filter.</p>

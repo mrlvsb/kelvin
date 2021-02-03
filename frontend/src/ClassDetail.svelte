@@ -5,6 +5,7 @@
   import CopyToClipboard from './CopyToClipboard.svelte'
   import TimeAgo from './TimeAgo.svelte'
   import {localStorageStore} from './utils.js'
+  import AddStudentsToClass from './AddStudentsToClass.svelte'
 
   import { createEventDispatcher } from 'svelte';
   const dispatch = createEventDispatcher();
@@ -12,43 +13,7 @@
   export let clazz;
   export let showStudentsList = clazz['students'].length < 50; 
 
-  let addStudentError = [];
   let showAddStudents = false;
-  async function addStudent(form, class_id) {
-    addStudentError = [];
-    const textarea = form.querySelector('textarea');
-    const logins = textarea
-        .value
-        .split('\n')
-        .map(login => login.replace(/^\s+|\s+$/g, ''))
-        .filter(login => login.length);
-
-    if(!logins.length) {
-      return;
-    }
-
-    try {
-      let req = await fetch(`/api/classes/${class_id}/add_students`, {
-        method: 'POST',
-        body: JSON.stringify({'username': logins})
-      });
-      let res = await req.json();
-      if(res) {
-        if(res['not_found'].length) {
-          addStudentError = 'Not found users left in textarea.';
-          textarea.value = res['not_found'].join('\n');
-          dispatch('update');
-        } else if(res['success'] === true) {
-          textarea.value = '';
-          dispatch('update');
-        } else {
-          addStudentError = res['error'] || 'Unknown error';
-        } 
-      }
-    } catch(err) {
-      addStudentError = 'Error: ' + err;
-    }
-  }
 
   let reevaluateLoading = false;
   async function reevaluateAssignment(assignment) {
@@ -61,17 +26,6 @@
       await fetch('/reevaluate/' + submit_id);
     }
     reevaluateLoading = false;
-  }
-
-  function pasteLogins(event) {
-    const paste = (event.clipboardData || window.clipboardData).getData('text').toUpperCase();
-
-    const logins = Array.from(paste.matchAll(/\b([A-Z]{3}[0-9]{2,4})\b/g)).map(m => m[1]);
-    if(logins.length) {
-      event.preventDefault();
-      logins.sort();
-      event.target.value = [...new Set(logins)].join("\n");
-    }
   }
 
   function studentPoints(clazz, student) {
@@ -171,14 +125,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
   {#if showStudentsList || showAddStudents}
     <div class="card-body">
       {#if showAddStudents}
-        <form class="p-0 mb-2" on:submit|preventDefault={(e) => addStudent(e.target.closest('form'), clazz.id)}>
-          <textarea on:paste={pasteLogins} class="form-control mb-1" rows=20 placeholder="Add student logins to this class
-May contain surrounding text or HTML"></textarea>
-          <button class="btn btn-primary">Add</button>
-        </form>
-        {#if addStudentError}
-          <span class="text-danger">{addStudentError}</span>
-        {/if}
+        <AddStudentsToClass class_id={clazz.id} on:update />
       {/if}
 
       {#if showStudentsList}
