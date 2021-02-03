@@ -8,6 +8,7 @@
   import {semester, user} from './global.js'
 
   let classes = null;
+  let loading = true;
 
   let filter = {
         semester: $semester.abbr,
@@ -26,6 +27,7 @@
         return;
     }
     prevParams = params;
+    loading = true;
 
     const req = await fetch('/api/classes?' + params);
     const res = await req.json();
@@ -39,6 +41,7 @@
       });
       return c;
     });
+    loading = false;
   }
 
   $: {
@@ -49,6 +52,29 @@
   }
 </script>
 
+<style>
+  .loading-animation {
+    visibility: hidden;
+    position: absolute;
+    width: 100%;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .loading {
+    position: relative;
+  }
+
+  .loading .loading-animation {
+    visibility: visible;
+  }
+
+  .loading .classes-inner {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+</style>
+
 <div class="container-fluid">
   <div class="d-flex mb-1">
         <ClassFilter semester={filter.semester} subject={filter.subject} teacher={filter.teacher} />
@@ -58,17 +84,19 @@
         </a>
   </div>
 
-  {#if !classes}
-    <div class="d-flex justify-content-center">
+  <div class="classes" class:loading>
+    <div class="d-flex justify-content-center loading-animation">
       <SyncLoader />
     </div>
-  {:else}
-    {#if classes.length}
-      {#each classes as clazz (clazz.id)}
-        <ClassDetail clazz={clazz} on:update={async () => {prevParams = null; await refetch();}} />
-      {/each}
-    {:else}
-      <p class="alert alert-info">No class found, try different filter.</p>
-    {/if}
-  {/if}
+
+    <div class="classes-inner">
+      {#if classes && classes.length}
+        {#each classes as clazz (clazz.id)}
+          <ClassDetail clazz={clazz} on:update={async () => {prevParams = null; await refetch();}} />
+        {/each}
+      {:else if classes !== null}
+        <p class="alert alert-info">No class found, try different filter.</p>
+      {/if}
+    </div>
+  </div>
 </div>
