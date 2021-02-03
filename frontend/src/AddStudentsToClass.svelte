@@ -8,6 +8,7 @@
 
   let addStudentError = [];
   let textarea = '';
+  let processing = false;
 
   function pasteLogins(event) {
     const paste = (event.clipboardData || window.clipboardData)
@@ -20,7 +21,7 @@
     if (logins.length) {
       event.preventDefault();
       logins.sort();
-      event.target.value = [...new Set(logins)].join("\n");
+      textarea = [...new Set(logins)].join("\n");
     }
   }
 
@@ -34,6 +35,8 @@
     if (!logins.length) {
       return;
     }
+
+    processing = true;
 
     try {
       let req = await fetch(`/api/classes/${class_id}/add_students`, {
@@ -56,13 +59,14 @@
     } catch (err) {
       addStudentError = "Error: " + err;
     }
+
+    processing = false;
   }
 </script>
 
-<form
-  class="p-0 mb-2"
-  on:submit|preventDefault={addStudents}>
+<form class="p-0 mb-2">
   <textarea
+    disabled={processing}
     on:paste={pasteLogins}
     bind:value={textarea}
     class="form-control mb-1"
@@ -70,7 +74,13 @@
     placeholder="Add student logins to this class
 May contain surrounding text or HTML"
   />
-  <button class="btn btn-primary"> Add </button>
+  <button class="btn btn-primary" on:click|preventDefault={addStudents} disabled={processing}>
+    {#if !processing}
+    Add
+    {:else}
+      <div class="spinner-border spinner-border-sm"></div>
+    {/if}
+  </button>
 </form>
 {#if addStudentError}
   <span class="text-danger">{addStudentError}</span>
