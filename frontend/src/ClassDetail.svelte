@@ -141,14 +141,14 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
 <div class="card mb-2" style="position: initial">
   <div class="card-header p-0">
       <div class="float-right p-2" style="display: flex; align-items: center;">
+        <a href="/task/add/{clazz.subject_abbr}" use:link title="Assign new task">
+          <span class="iconify" data-icon="bx:bx-calendar-plus"></span>
+        </a>
         <button class="p-0 btn btn-link"
                 on:click={() => showAddStudents = !showAddStudents}
                 title="Add user to class">
           <span class="iconify" data-icon="ant-design:user-add-outlined"></span>
         </button>
-        <a href="/task/add/{clazz.subject_abbr}" use:link title="Assign new task">
-          <span class="iconify" data-icon="bx:bx-calendar-plus"></span>
-        </a>
         <a href="{clazz.csv_link}" title="Download CSV with results for all task">
           <span class="iconify" data-icon="la:file-csv-solid"></span>
         </a>
