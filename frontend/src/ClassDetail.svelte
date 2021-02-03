@@ -13,7 +13,7 @@
   export let clazz;
   export let showStudentsList = clazz['students'].length < 50; 
 
-  let showAddStudents = false;
+  let showAddStudents = clazz.students.length == 0;
 
   let reevaluateLoading = false;
   async function reevaluateAssignment(assignment) {
@@ -209,6 +209,11 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
           {/each}
           </tbody>
         </table>
+        {#if clazz.students.length == 0}
+          <p class="text-center">
+            No student added yet.
+          </p>
+        {/if}
       {/if}
     </div>
     {/if}
