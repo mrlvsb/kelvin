@@ -1,26 +1,8 @@
 <script>
     import CommentForm from './CommentForm.svelte'
     import { createEventDispatcher } from 'svelte';
-    import marked from 'marked'
-    import hljs from 'highlight.js/lib/core'
-    import DOMPurify from 'dompurify';
     import { user } from './global';
-
-    marked.setOptions({
-      highlight: function(code, lang) {
-        if(lang) {
-          try {
-            return hljs.highlight(lang, code).value;
-          } catch (err) {
-            if(typeof(Sentry) !== 'undefined') {
-              Sentry.captureException(err);
-            }
-          }
-        }
-        return hljs.highlightAuto(code).value;
-      },
-      breaks: true,
-    });
+    import { safeMarkdown } from './markdown.js'
 
     export let author;
     export let author_id = null;
@@ -33,15 +15,6 @@
     export let notification_id = null;
 
     const dispatch = createEventDispatcher();
-
-    const sanitizeOpts = {
-      ALLOWED_TAGS: [
-        'img', 'p', 'b', 'strong', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a', 'i', 'ul', 'ol', 'li', 'pre', 'code', 'a', 'br', 'span'
-      ],
-      ALLOWED_ATTR: [
-        'href', 'src', 'class',
-      ]
-    };
 
     let editing = false;
     let sending = false;
@@ -79,7 +52,7 @@
           <span class="iconify" data-icon="cil-check"></span>
         </button>
       {/if}
-      {@html DOMPurify.sanitize(marked(text), sanitizeOpts)}
+      {@html safeMarkdown(text)}
     {/if}
   {:else}
     <CommentForm comment={text} on:save={updateComment} disabled={sending} />

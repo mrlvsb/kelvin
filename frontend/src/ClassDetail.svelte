@@ -6,6 +6,7 @@
   import TimeAgo from './TimeAgo.svelte'
   import {localStorageStore} from './utils.js'
   import AddStudentsToClass from './AddStudentsToClass.svelte'
+  import {safeMarkdown} from './markdown.js'
 
   import { createEventDispatcher } from 'svelte';
   const dispatch = createEventDispatcher();
@@ -129,7 +130,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
       {/if}
 
       {#if showStudentsList}
-        {@html clazz.summary}
+        {@html safeMarkdown(clazz.summary)}
         <table class="table table-sm table-hover">
           <thead>
             <tr>

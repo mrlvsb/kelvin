@@ -27,12 +27,22 @@ import Notifications from './Notifications.svelte'
 import AnsiUp from 'ansi_up'
 import UploadSolution from './UploadSolution.svelte'
 import PipelineStatus from './PipelineStatus.svelte'
+import {safeMarkdown} from './markdown.js'
 
 customElements.define('kelvin-terminal-output', class extends HTMLElement {
     connectedCallback() {
         setTimeout(() => {
             const res = (new (AnsiUp.default)()).ansi_to_html(this.innerText);
             this.innerHTML = '<pre>' + res + '</pre>';
+        }, 0);
+    }
+});
+
+customElements.define('kelvin-markdown', class extends HTMLElement {
+    connectedCallback() {
+        setTimeout(() => {
+            this.innerHTML = safeMarkdown(this.innerHTML);
+            this.removeAttribute('hidden')
         }, 0);
     }
 });
