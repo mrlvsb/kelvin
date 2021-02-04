@@ -23,8 +23,9 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone as tz
 from django.urls import reverse
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import F
 
-from common.models import Submit, Class, AssignedTask, Task, Comment, assignedtask_results
+from common.models import Submit, Class, AssignedTask, Task, Comment, assignedtask_results, current_semester
 from common.evaluate import evaluate_job
 from web.task_utils import load_readme
 from api.models import UserToken
@@ -44,7 +45,19 @@ mimedetector = magic.Magic(mime=True)
 def student_index(request):
     result = []
 
-    classess = Class.objects.current_semester().filter(students__pk=request.user.id)
+    if 'semester' in request.GET:
+        try:
+            semester = request.GET['semester']
+            if len(semester) != 5:
+                return HttpResponseBadRequest()
+
+            year, winter = int(semester[:4]), semester[4] == 'W'
+            classess = Class.objects.filter(semester__year=year, semester__winter=winter, students__pk=request.user.id)
+        except (ValueError, IndexError):
+            return HttpResponseBadRequest()
+    else:
+        semester = str(current_semester())
+        classess = Class.objects.current_semester().filter(students__pk=request.user.id)
 
     for clazz in classess:
         tasks = []
@@ -71,9 +84,17 @@ def student_index(request):
             'tasks': tasks,
         })
 
+    semesters = []
+    for year, winter in Class.objects.filter(students__pk=request.user.id).values_list('semester__year', 'semester__winter').distinct().order_by('semester__begin', 'semester__winter'):
+        semesters.append({
+            'label': f'{year} {"winter" if winter else "summer"}',
+            'value': f'{year}{"W" if winter else "S"}',
+        })
+
     return render(request, 'web/index.html', {
         'classess': result,
-#        'token': UserToken.objects.get(user__id=request.user.id).token,
+        'semesters': semesters,
+        'selected_semester': semester,
     })
 
 

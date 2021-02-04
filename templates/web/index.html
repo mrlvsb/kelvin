@@ -1,7 +1,27 @@
 {% extends 'web/layout.html' %}
-{% load markdown %}
 
 {% block content %}
+
+<div class="container">
+    <div class="row">
+        <form class="mb-1 col-sm-3 offset-sm-9 p-0">
+            <select name="semester" class="form-control" onchange="this.value != '' && this.form.submit()">
+                <option value=''>Semester</option>
+                {% for s in semesters %}
+                    <option value="{{ s.value }}"{% if selected_semester == s.value %} selected{% endif %}>
+                        {{ s.label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+</div>
+
+{% if not classess %}
+<p class="alert alert-info">
+    No class available in this semester.
+</p>
+{% endif %}
 
 {% for node in classess %}
 <div class="card mb-2">
