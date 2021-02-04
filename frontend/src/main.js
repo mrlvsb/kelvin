@@ -43,6 +43,7 @@ customElements.define('kelvin-markdown', class extends HTMLElement {
         setTimeout(() => {
             this.innerHTML = safeMarkdown(this.innerHTML);
             this.removeAttribute('hidden')
+            this.classList.add('md');
         }, 0);
     }
 });
