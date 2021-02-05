@@ -59,7 +59,7 @@ class Command(BaseCommand):
 
                 class_in_db[c] = Class()
                 class_in_db[c].code = c
-                class_in_db[c].day = s[6]
+                class_in_db[c].day = s[6].upper()
                 class_in_db[c].hour = s[7]
                 class_in_db[c].year = datetime.datetime.now().year
                 class_in_db[c].winter = datetime.datetime.now().month >= 9
