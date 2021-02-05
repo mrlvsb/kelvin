@@ -67,7 +67,7 @@ class Command(BaseCommand):
                 class_in_db[c].subject = subject
                 class_in_db[c].semester = semester
 
-                first_name, last_name = label.replace(',', '').replace('Ph.D.', '').strip().split(' ')[-2:]
+                first_name, last_name = label.replace(',', '').replace('Ph.D.', '').replace('Bc', '').replace('DiS', '').strip().split(' ')[-2:]
                 if first_name and last_name:
                     teacher = User.objects.filter(first_name=first_name, last_name=last_name)
                     if not teacher:
