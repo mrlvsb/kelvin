@@ -38,6 +38,7 @@
   }
 
   let showFullTaskNames = localStorageStore('classDetail/showFullTaskNames', false);
+  let showSummary = false;
 </script>
 
 <style>
@@ -130,7 +131,14 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
       {/if}
 
       {#if showStudentsList}
-        <Markdown content={clazz.summary} />
+        {#if clazz.summary }
+          <button class="p-0 btn btn-link"
+                    on:click={() => showSummary = !showSummary}>{showSummary ? "Skrýt" : "Zobrazit"} informace o cvičení</button>
+          {#if showSummary }
+            <Markdown content={clazz.summary} />
+          {:else}
+          {/if}
+        {/if}
         <table class="table table-sm table-hover">
           <thead>
             <tr>
