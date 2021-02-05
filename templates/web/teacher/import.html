@@ -1,0 +1,60 @@
+{% extends 'web/layout.html' %}
+
+{% block content %}
+<h1>Bulk import</h1>
+
+{% if error %}
+<div class="alert alert-danger">
+    {{error}}
+</div>
+{% endif %}
+
+{% if users %}
+<h2>Imported {{count}} students</h2>
+<table class="table-border table table-sm table-hover table-striped">
+    <thead>
+        <tr>
+            <th>Login</th>
+            <th>First name</th>
+            <th>Last name</th>
+            <th>Created</th>
+            <th>Classes</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{user.login}}</td>
+            <td>{{user.firstname}}</td>
+            <td>{{user.lastname}}</td>
+            <td>{% if user.created %}✓{% endif %}</td>
+            <td>
+                {% for cl in user.classes %}
+                    {{cl}}<br>
+                {% endfor %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="form-check mb-1">
+        <input class="form-check-input" type="checkbox" name="create_lectures" id="flexCheckDefault">
+        <label class="form-check-label" for="flexCheckDefault">
+          Create also lecture (P/01)
+        </label>
+    </div>
+
+    <input type="file" name="file" class="mb-1 d-block">
+    <div class="text-muted mb-1">
+      Save EDISON's <strong>Rozvrhové skupiny</strong> page as HTML and upload it.
+    </div>
+
+    <input type="submit" class="btn btn-primary" value="Import">
+</form>
+
+{% endblock %}

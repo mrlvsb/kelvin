@@ -32,6 +32,7 @@ from evaluator.testsets import TestSet
 from common.evaluate import get_meta, evaluate_job
 from common.utils import is_teacher
 from common.moss import check_task
+from common.bulk_import import BulkImport, ImportException
 from web.task_utils import load_readme, process_markdown 
 
 @user_passes_test(is_teacher)
@@ -258,3 +259,23 @@ def reevaluate(request, submit_id):
     submit.jobid = django_rq.enqueue(evaluate_job, submit).id
     submit.save()
     return redirect(request.META.get('HTTP_REFERER', reverse('submits')) + "#result")
+
+@user_passes_test(is_teacher)
+def bulk_import(request):
+    res = {}
+    if request.method == 'POST':
+        create_lectures = request.POST.get('create_lectures', False) == 'on'
+
+        if 'file' in request.FILES:
+            try:
+                res['users'] = list(BulkImport().run(
+                    request.FILES['file'].read().decode('utf-8'),
+                    no_lectures=not create_lectures
+                ))
+                res['count'] = len(res['users'])
+            except (ImportError, UnicodeDecodeError) as e:
+                res['error'] = e
+        else:
+            res['error'] = 'No file uploaded'
+
+    return render(request, 'web/teacher/import.html', res)
