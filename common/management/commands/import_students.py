@@ -1,15 +1,16 @@
 import datetime
+import re
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
 from common.models import Class, Semester, Subject
 from lxml.html import parse
 
+class ImportException(Exception):
+    pass
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('file', help='saved html from edison')
-        parser.add_argument('subject', help='subject abbreviation')
-        parser.add_argument('semester', help='semester in format YYYY/{W,S}')
         parser.add_argument('--no-lectures', action='store_true', help='do not add students to lectures')
         parser.add_argument('--no-exercises', action='store_true', help='do not add students to exercises')
         parser.add_argument('--class-code', help='add all students to classes with this code', action='append', default=[])
@@ -28,14 +29,35 @@ class Command(BaseCommand):
 
         return True
 
+    def parse_subject(self, doc):
+        h2 = doc.xpath('//h2[@class="nomargin"]')
+        if not h2:
+            raise ImportException("Missing h2 element")
+        subject = re.search(r'\(([^)]+)', h2[0].text)
+        if not subject:
+            raise ImportException("Subject missing in h2 element")
+        return subject.group(1).strip()
+
+    def parse_semester(self, doc):
+        elems = doc.xpath('//h2[@class="nomargin"]/span[@class="outputText"]')
+        if len(elems) != 2:
+            raise ImportException("two elements .outputText with semester not found in h2")
+        
+        year = elems[0].text.split('/')[0]
+
+        h = elems[1].text.strip().lower()
+        if h == 'letní':
+            return year, False
+        elif h == 'zimní':
+            return year, True
+        raise ImportException("failed to parse semester")
+
     def handle(self, *args, **opts):
-        subject = Subject.objects.get(abbr=opts['subject'])
-
-        year = opts['semester'][:-1]
-        is_winter = opts['semester'][-1] == 'W'
-        semester = Semester.objects.get(year=year, winter=is_winter)
-
         doc = parse(opts['file']).getroot()
+        subject = Subject.objects.get(abbr=self.parse_subject(doc))
+
+        year, is_winter = self.parse_semester(doc)
+        semester = Semester.objects.get(year=year, winter=is_winter)
 
         classes = list(map(str.strip, doc.xpath('//tr[@class="rowClass1"]/th/div/span[1]/text()')))
         labels = list(doc.xpath('//tr[@class="rowClass1"]/th/div/@title'))
