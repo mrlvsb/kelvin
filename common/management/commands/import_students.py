@@ -70,8 +70,10 @@ class Command(BaseCommand):
                 first_name, last_name = label.replace(',', '').replace('Ph.D.', '').strip().split(' ')[-2:]
                 if first_name and last_name:
                     teacher = User.objects.filter(first_name=first_name, last_name=last_name)
-                    if teacher:
-                        class_in_db[c].teacher = teacher[0]
+                    if not teacher:
+                        print(f"Teacher '{first_name}' '{last_name}' not found")
+                        exit(1)
+                    class_in_db[c].teacher = teacher[0]
 
                 class_in_db[c].save()
 
