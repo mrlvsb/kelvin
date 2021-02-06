@@ -342,7 +342,7 @@ def duplicate_task(request, task_id):
     template = get_object_or_404(Task, pk=task_id)
 
     new_path = template.dir()
-    for user in User.objects.filter(groups__name='teacher'):
+    for user in User.objects.filter(groups__name='teachers'):
         new_path = new_path.replace(user.username, request.user.username)
 
     i = 1
