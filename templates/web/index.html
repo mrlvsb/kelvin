@@ -5,7 +5,7 @@
 <div class="container">
     <div class="row">
         <form class="mb-1 col-sm-3 offset-sm-9 p-0">
-            <select name="semester" class="form-control" onchange="this.value != '' && this.form.submit()">
+            <select name="semester" class="custom-select custom-select-sm" onchange="this.value != '' && this.form.submit()">
                 <option value=''>Semester</option>
                 {% for s in semesters %}
                     <option value="{{ s.value }}"{% if selected_semester == s.value %} selected{% endif %}>
