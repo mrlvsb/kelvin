@@ -163,6 +163,7 @@ def info(request):
         'username': request.user.username,
         'name': request.user.get_full_name(),
         'teacher': is_teacher(request.user),
+        'is_superuser': request.user.is_superuser,
     }
 
     semester = current_semester();

@@ -31,7 +31,7 @@
       }
     }
 
-    $: {
+    $: if(semesters) {
       let subjs = [];
       const sem = semesters[$currentSemester.abbr];
       if(sem) {
@@ -73,16 +73,16 @@
   {/each}
 </div>
 
-<div style="width: 40%" class="ml-auto">
+<div class="ml-auto">
   <div class="input-group">
-    <select class="custom-select custom-select-sm col-sm-4" bind:value={semester}>
+    <select class="custom-select custom-select-sm" bind:value={semester}>
         <option value="">Semester</option>
         {#each Object.keys(semesters)as semester (semester)}
             <option>{semester}</option>
         {/each}
     </select>
 
-    <select class="custom-select custom-select-sm col-sm-4" bind:value={subject} on:change={fillTeacher} disabled={!semester}>
+    <select class="custom-select custom-select-sm" bind:value={subject} on:change={fillTeacher} disabled={!semester}>
         <option value="">Subject</option>
         {#if semesters && semesters[semester]}
             {#each Object.keys(semesters[semester]) as subj (subj)}
@@ -91,11 +91,13 @@
         {/if}
     </select>
 
-    <select class="custom-select custom-select-sm col-sm-4" bind:value={teacher}>
-        <option value="">Teacher</option>
-          {#each teachers as teacher (teacher)}
-              <option>{teacher}</option>
-          {/each}
-    </select>
+    {#if $user.is_superuser}
+      <select class="custom-select custom-select-sm" bind:value={teacher}>
+          <option value="">Teacher</option>
+            {#each teachers as teacher (teacher)}
+                <option>{teacher}</option>
+            {/each}
+      </select>
+    {/if}
   </div>
 </div>
