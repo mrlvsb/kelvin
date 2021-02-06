@@ -35,7 +35,7 @@
                 <li class="nav-item"><a class="nav-link" href="{% url 'submits' %}">Submits</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'tasks' %}">Tasks</a></li>
                 {% endif %}
-                {% if is_teacher and user.is_superuser %}
+                {% if is_teacher and user.is_staff %}
                 {% comment %}
                 https://stackoverflow.com/questions/694477/getting-django-admin-url-for-an-objects
                 {% endcomment %}
