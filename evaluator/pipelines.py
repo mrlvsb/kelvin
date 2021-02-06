@@ -25,6 +25,10 @@ class DockerPipe:
 
 
         env = [f"-ePIPE_{k.upper()}={fmt_value(v)}" for k, v in self.kwargs.items()]
+        template_path = os.path.abspath(os.path.join(evaluation.task_path, "template"))
+        if os.path.isdir(template_path):
+            env.append(f"-v{template_path}:/template:ro")
+
         args = [
             'docker', 'run', '--rm',
             '--network', 'none',
