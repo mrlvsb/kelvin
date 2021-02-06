@@ -80,7 +80,9 @@ $: if(instanceTo) {
         {#each {length: 14} as _, i}
           <span class="dropdown-item" on:click={() => from = weekDate(i)}>
             Week {i + 1}
-            {#if weekStart(i) <= new Date() && new Date() <= weekStart(i + 1) }↩{/if}
+            {#if weekStart(i) <= new Date() && new Date() <= weekStart(i + 1) }
+              <span><span class="iconify" data-icon="akar-icons:arrow-back"></span></span>
+            {/if}
           </span>
         {/each}
       </Dropdown>
