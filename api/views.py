@@ -44,8 +44,12 @@ def tasks_list(request):
 @user_passes_test(is_teacher)
 def all_classess(request):
     semesters = {}
+    conds = {}
 
-    for cl in Class.objects.all():
+    if not request.user.is_superuser:
+        conds['teacher_id'] = request.user.id
+
+    for cl in Class.objects.filter(**conds):
         sem = str(cl.semester)
         if sem not in semesters:
             semesters[sem] = {}
@@ -72,6 +76,9 @@ def class_detail_list(request):
         class_conditions['semester__winter'] = is_winter
     if 'subject' in request.GET:
         class_conditions['subject__abbr'] = request.GET['subject']
+
+    if not request.user.is_superuser:
+        class_conditions['teacher_id'] = request.user.id
 
     classess = Class.objects.filter(**class_conditions)
 
