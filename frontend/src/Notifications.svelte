@@ -30,7 +30,7 @@ async function openNotification(notification) {
     </span>
 
     {#if show}
-    <div style="position: absolute; width: 300px; right: 0px; z-index: 2; background: whitesmoke;">
+    <div style="position: absolute; width: 300px; right: 0px; z-index: 10; background: whitesmoke;">
 				<ul class="list-group">
 					<li class="list-group-item" style="background-color: rgba(0,0,0,.03)">
             Notifications {#if $notifications.unread_count > 0}({$notifications.unread_count}){/if}
