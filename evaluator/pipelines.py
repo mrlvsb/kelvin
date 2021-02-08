@@ -1,13 +1,10 @@
 import json
-import yaml
 import os
-import shlex
-import html
-from collections import defaultdict
 import subprocess
-import tempfile
 from common.models import Submit
-from common.utils import points_to_color 
+from common.utils import points_to_color
+from kelvin.settings import BASE_DIR
+
 
 class DockerPipe:
     def __init__(self, image, **kwargs):
@@ -23,17 +20,20 @@ class DockerPipe:
                 return json.dumps(v)
             return v
 
-
         env = [f"-ePIPE_{k.upper()}={fmt_value(v)}" for k, v in self.kwargs.items()]
-        template_path = os.path.abspath(os.path.join(evaluation.task_path, "template"))
+
+        template_path = os.path.join(BASE_DIR, evaluation.task_path, "template")
+        additional_args = []
         if os.path.isdir(template_path):
-            env.append(f"-v{template_path}:/template:ro")
+            additional_args.append("-v")
+            additional_args.append(f"{template_path}:/template:ro")
 
         args = [
             'docker', 'run', '--rm',
             '--network', 'none',
             '-w', '/work',
             '-v', evaluation.sandbox.system_path() + ':/work',
+            *additional_args,
             *env,
             self.image
         ]
