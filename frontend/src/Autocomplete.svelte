@@ -59,6 +59,11 @@
     items = res['tasks'];
   });
 
+  // https://stackoverflow.com/a/6969486/1107768
+  function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+  }
+
   function keyup(e) {
     if(e.keyCode == 13 && highlight_row >= 0) {
       focused = false;
@@ -94,7 +99,7 @@
   {#if filtered.length && focused}
   <ul>
     {#each filtered as item, i}
-      <li on:click={() => {value = item.path; selectedId = item.id;}} class:highlight={highlight_row == i}>{@html item.path.replace(new RegExp('(' + value + ')', 'gi'), '<strong>$1</strong>') }</li>
+      <li on:click={() => {value = item.path; selectedId = item.id;}} class:highlight={highlight_row == i}>{@html item.path.replace(new RegExp('(' + escapeRegExp(value) + ')', 'gi'), '<strong>$1</strong>') }</li>
     {/each}
   </ul>
   {/if}
