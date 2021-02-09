@@ -77,7 +77,7 @@
     }
   }
 
-  $: filtered = filtered = items.filter(i => i['path'].includes(value) && i['path'] != value);
+  $: filtered = filtered = items.filter(i => i['path'].toLowerCase().includes(value.toLowerCase()) && i['path'].toLowerCase() != value.toLowerCase());
 
   $: if(selectedId) {
     onChange(selectedId);
