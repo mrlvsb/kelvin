@@ -186,6 +186,9 @@ pipeline:
         - '-llvm-include-order'
         - '-cppcoreguidelines-init-variables'
         - '-clang-analyzer-security*'
+    files:
+      - main.cpp
+      - lib.cpp 
 ```
 
 ## run

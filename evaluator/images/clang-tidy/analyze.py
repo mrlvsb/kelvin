@@ -2,6 +2,8 @@
 import os
 import subprocess
 from collections import defaultdict
+from pathlib import Path
+
 import yaml
 import json
 
@@ -46,11 +48,18 @@ else:
         '-google-readability-todo',
     ]
 
+files = os.environ.get('PIPE_FILES', '')
+if files:
+    files = json.loads(files)
+else:
+    extensions = [".c", ".cpp", ".h", ".hpp"]
+    files = [str(p.resolve()) for p in Path(os.getcwd()).glob("./**/*") if p.suffix in extensions]
+
 cmd = [
-    'clang-tidy',
+    "clang-tidy",
     f"--export-fixes=/tmp/fixes.yaml",
     f"--checks={','.join(checks)}",
-    *[os.path.basename(f) for f in os.listdir() if f.endswith(".c") or f.endswith(".cpp")]
+    *files
 ]
 
 print(cmd)
