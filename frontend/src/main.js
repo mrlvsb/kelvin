@@ -9,6 +9,7 @@ import xml from 'highlight.js/lib/languages/xml'
 import bash from 'highlight.js/lib/languages/bash'
 import shell from 'highlight.js/lib/languages/shell'
 import makefile from 'highlight.js/lib/languages/makefile'
+import x86asm from 'highlight.js/lib/languages/x86asm'
 
 hljs.registerLanguage('c-like', clike);
 hljs.registerLanguage('c', c); 
@@ -19,6 +20,7 @@ hljs.registerLanguage('xml', xml);
 hljs.registerLanguage('bash', bash); 
 hljs.registerLanguage('shell-session', shell);
 hljs.registerLanguage('makefile', makefile); 
+hljs.registerLanguage('assembler', x86asm); 
 hljs.initHighlightingOnLoad();
 
 import App from './App.svelte'
