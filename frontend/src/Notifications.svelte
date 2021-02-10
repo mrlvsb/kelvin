@@ -58,7 +58,7 @@ async function openNotification(notification) {
             </div>
 					</li>
 					<div style="max-height: 300px; overflow-y: auto; font-size: 80% !important;">
-            {#if $notifications.notifications.length > 0}
+            {#if $notifications.notifications.filter(i => !$showOnlyUnread || i.unread).length > 0}
               {#each $notifications.notifications.filter(i => !$showOnlyUnread || i.unread) as item}
               <li class='list-group-item p-1' class:list-group-item-light={!item.unread}>
                 <div style="float: right">
