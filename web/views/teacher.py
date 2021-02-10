@@ -8,6 +8,7 @@ import json
 import subprocess
 import datetime
 import shutil
+import logging
 import rq
 from shutil import copyfile
 from collections import OrderedDict
