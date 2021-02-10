@@ -27,13 +27,15 @@ from django.db.models import F
 
 from common.models import Submit, Class, AssignedTask, Task, Comment, assignedtask_results, current_semester
 from common.evaluate import evaluate_job
+from common.moss import moss_result
 from web.task_utils import load_readme
 from api.models import UserToken
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from evaluator.testsets import TestSet
 from common.evaluate import get_meta
-from evaluator.results import EvaluationResult
+from evaluator.results import EvaluationResult, PipeResult
 from common.utils import is_teacher
+from django.core.cache import caches
 
 from notifications.signals import notify
 from notifications.models import Notification
@@ -218,6 +220,36 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
     if current_submit:
         data = {**data, **get(current_submit)}
         data['comment_count'] = current_submit.comment_set.count()
+
+        moss_res = moss_result(current_submit.assignment.task.id)
+        if moss_res and (is_teacher(request.user) or moss_res.opts.get('show_to_students', False)):
+            svg = moss_res.to_svg(login=current_submit.student.username, anonymize=not is_teacher(request.user))
+            if svg:
+                data['has_pipeline'] = True
+
+                res = PipeResult("plagiarism")
+                res.title = "Plagiarism checker"
+
+                prepend = ""
+                if is_teacher(request.user):
+                    if not moss_res.opts.get('show_to_students', False):
+                        prepend = "<div class='text-muted'>Not shown to students</div>"
+                    prepend += f'<a href="/teacher/task/{current_submit.assignment.task_id}/moss">Change thresholds</a>'
+
+                res.html = f"""
+                    {prepend}
+                    <style>
+                    #plagiarism svg {{
+                        width: 100%;
+                        height: 300px;
+                        border: 1px solid rgba(0,0,0,.125);
+                    }}
+                    </style>
+                    <div id="plagiarism">{svg}</div>
+                    <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+                    <script>$('[href="#tab_result"]').on('shown.bs.tab', () => svgPanZoom('#plagiarism svg'))</script>
+                """
+                data['results'].pipelines = [res] + data['results'].pipelines
 
         submit_nums = sorted(submits.values_list('submit_num', flat=True))
         current_idx = submit_nums.index(current_submit.submit_num)

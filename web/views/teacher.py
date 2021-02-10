@@ -34,7 +34,7 @@ from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from evaluator.testsets import TestSet
 from common.evaluate import get_meta, evaluate_job
 from common.utils import is_teacher
-from common.moss import check_task
+from common.moss import check_task, moss_result, moss_task_set_opts, moss_task_get_opts
 from common.bulk_import import BulkImport, ImportException
 from web.task_utils import load_readme, process_markdown 
 
@@ -80,45 +80,26 @@ def teacher_task_moss_check(request, task_id):
         cache.set(key_job, job.id, timeout=60*60*8)
         return redirect(request.path_info)
 
-    threshold = {
-        "percent": int(request.GET.get("percent", 5)),
-        "lines": int(request.GET.get("lines", 1)),
-    }
+    opts = moss_task_get_opts(task_id)
 
-    matches = []
-    cache_entry = cache.get(key)
-    for match in cache_entry["matches"]:
-        if min(match['first_percent'], match['second_percent']) >= threshold['percent'] and int(match['lines']) >= threshold['lines']:
-            match['first_fullname'] = User.objects.get(username=match['first_login']).get_full_name()
-            match['second_fullname'] = User.objects.get(username=match['second_login']).get_full_name()
-            matches.append(match)
+    if 'percent' in request.GET:
+        opts = {
+            **opts,
+            "percent": int(request.GET.get("percent", 5)),
+            "lines": int(request.GET.get("lines", 1)),
+            "show_to_students": int(request.GET.get("show_to_students", False)),
+        }
+        moss_task_set_opts(task_id, opts)
 
-    max_percent = 0
-    for d in matches:
-        percent = max(int(d['first_percent']), int(d['second_percent']))
-        if percent > max_percent:
-           max_percent = percent
+    res = moss_result(task_id, percent=opts['percent'], lines=opts['lines'])
 
-    with tempfile.NamedTemporaryFile("w") as out:
-        print("graph G{", file=out)
-        for d in matches:
-            M = max(float(d['first_percent']), float(d['second_percent']))
-            c = 255 - M / max_percent * 255
-            color = "#{c:02x}{c:02x}{c:02x}".format(c=int(c))
-            print(f"{d['first_login']} -- {d['second_login']} [shape=box, color=\"{color}\", href=\"{d['link']}\", label=\"{M}%\"];", file=out)
-        print("}", file=out)
-        out.flush()
-
-        graph = subprocess.check_output(["dot", "-T", "svg", out.name]).decode('utf-8')
-        graph = re.sub(r'width="[^"]+" height="[^"]+"', '', graph)
-
-        return render(request, 'web/moss.html', {
-            "matches": matches,
-            "graph": graph,
-            "threshold": threshold,
-            "moss_url": cache_entry.get("url"),
-            "task": task,
-        })
+    return render(request, 'web/moss.html', {
+        "matches": res.matches,
+        "graph": res.to_svg(anonymize=False),
+        "opts": res.opts,
+        "moss_url": res.url,
+        "task": task,
+    })
 
 
 @user_passes_test(is_teacher)

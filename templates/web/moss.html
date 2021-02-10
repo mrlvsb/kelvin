@@ -19,19 +19,23 @@
 
   <form class="form-inline">
     <div class="input-group input-group-sm mr-2">
-    <input type="number" min="0" max="100" class="form-control form-control-sm" name="percent" value={{threshold.percent}} />
+    <input type="number" min="0" max="100" class="form-control form-control-sm" name="percent" value={{opts.percent}} />
       <div class="input-group-append">
         <div class="input-group-text">%</div>
       </div>
     </div>
 
     <div class="input-group input-group-sm mr-2">
-      <input type="number" min="0" max="1000" placeholder="Max lines" class="form-control form-control-sm" name="lines" value={{threshold.lines}} />
+      <input type="number" min="0" max="1000" placeholder="Max lines" class="form-control form-control-sm" name="lines" value={{opts.lines}} />
       <div class="input-group-append">
         <div class="input-group-text">lines</div>
       </div>
     </div>
-    <input type="submit" class="btn btn-sm btn-primary" value="Filter">
+    <div class="form-check mr-2">
+      <input class="form-check-input" type="checkbox" name="show_to_students"{% if opts.show_to_students %} checked{% endif %} id="filter-show-to-students" value="1">
+      <label class="form-check-label" for="filter-show-to-students"> Show to students on the Result tab</label>
+    </div>
+    <input type="submit" class="btn btn-sm btn-primary" value="Set threshold">
   </form>
 
   <div id="graph">

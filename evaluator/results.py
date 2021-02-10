@@ -157,6 +157,7 @@ class PipeResult:
         self.title = None
         self.html = None
         self.tests = []
+        self.comments = {}
 
 class EvaluationResult:
     def __init__(self, result_dir):

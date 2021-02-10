@@ -6,8 +6,12 @@ import shutil
 import re
 import json
 import logging
+import networkx as nx
+import subprocess
+from django.contrib.auth.models import User
 from django.conf import settings
 from django.core.cache import caches
+from networkx.drawing.nx_agraph import write_dot
 
 from common.models import Submit
 
@@ -121,7 +125,102 @@ def check_task(task_id):
                 caches['default'].set(f'moss.{task_id}', {
                     "url": url,
                     "matches": matches
-                }, timeout=60*60*24*10)
+                }, timeout=60*60*24*90)
         logger.info(f"Task {task_id} plagiarism checking finished, URL: {url}")
     finally:
         caches['default'].delete(f'moss.job.{task_id}')
+
+class MossResult:
+    def __init__(self, url, matches, opts):
+        self.url = url
+        self.matches = matches
+        self.opts = opts
+        self.G = nx.Graph()
+
+        for match in matches:
+            percent = max(float(match['first_percent']), float(match['second_percent']))
+            self.G.add_edge(
+                match['first_login'], match['second_login'],
+                percent=percent,
+                label=f'{int(percent)}%',
+                href=match['link']
+            )
+            
+
+    def to_svg(self, anonymize=True, login=None):
+        max_percent = 0
+        for d in self.matches:
+            percent = max(int(d['first_percent']), int(d['second_percent']))
+            if percent > max_percent:
+               max_percent = percent
+
+        with tempfile.NamedTemporaryFile("w") as out:
+            G = self.G.copy()
+
+            def get_component():
+                for component in nx.connected_components(G):
+                    if login in component:
+                        return G.subgraph(component).copy()
+                return None
+
+            if login:
+                G = get_component()
+                if not G:
+                    return None
+
+                G.nodes[login]['style'] = 'filled'
+                G.nodes[login]['fillcolor'] = '#f8d7da'
+        
+            if anonymize:
+                mapping = dict(zip(G, range(len(G))))
+                if login in mapping:
+                    del mapping[login]
+
+                G = nx.relabel_nodes(G, mapping)
+                for _, _, d in G.edges(data=True):
+                    d.pop('href')
+
+            write_dot(G, out)
+            out.flush()
+
+            graph = subprocess.check_output(["dot", "-T", "svg", out.name]).decode('utf-8')
+            return re.sub(r'width="[^"]+" height="[^"]+"', '', graph)
+
+def moss_task_set_opts(task_id, opts):
+    cache = caches['default']
+    cache.set(f"moss.{task_id}.opts", opts)
+
+def moss_task_get_opts(task_id):
+    opts = {
+        'percent': 50,
+        'lines': 10,
+        'show_to_students': False,
+    }
+
+    return {
+        **opts,
+        **caches['default'].get(f"moss.{task_id}.opts", {})
+    }
+
+def moss_result(task_id, percent=None, lines=None):
+    cache = caches['default']
+
+    key = f"moss.{task_id}"
+    cache_entry = cache.get(key)
+    if not cache_entry:
+        return None
+
+    opts = moss_task_get_opts(task_id)
+    if percent:
+        opts['percent'] = percent
+    if lines:
+        opts['lines'] = lines
+
+    matches = []
+    for match in cache_entry["matches"]:
+        if min(match['first_percent'], match['second_percent']) >= opts['percent'] and int(match['lines']) >= opts['lines']:
+            match['first_fullname'] = User.objects.get(username=match['first_login']).get_full_name()
+            match['second_fullname'] = User.objects.get(username=match['second_login']).get_full_name()
+            matches.append(match)
+
+    return MossResult(cache_entry.get("url"), matches, opts)
