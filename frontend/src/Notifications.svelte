@@ -2,8 +2,10 @@
 import {notifications, pushNotifications} from './notifications.js'
 import TimeAgo from './TimeAgo.svelte'
 import {clickOutside} from './utils'
+import {localStorageStore} from './utils.js'
 
 let show = false;
+let showOnlyUnread = localStorageStore('notification/showonlyunread', false);
 
 async function enablePushNotifications() {
   if(!(await pushNotifications.subscribePushNotifications())) {
@@ -42,6 +44,14 @@ async function openNotification(notification) {
               </button>
               {/if}
 
+              <button class="btn p-0" on:click={() => $showOnlyUnread = !$showOnlyUnread}>
+                {#if $showOnlyUnread}
+                  <span title="Show all notifications."><span class="iconify" data-icon="ic:sharp-mark-email-read" data-inline="false"></span></span>
+                {:else}
+                  <span title="Show only unread notifications."><span class="iconify" data-icon="ic:sharp-markunread" data-inline="false"></span></span>
+                {/if}
+              </button>
+
               <button class="btn p-0" class:text-muted={$notifications.unread_count <= 0} on:click|preventDefault={notifications.markAllRead} title="Clear notifications">
                 <span class="iconify" data-icon="mdi:notification-clear-all"></span>
               </button>
@@ -49,7 +59,7 @@ async function openNotification(notification) {
 					</li>
 					<div style="max-height: 300px; overflow-y: auto; font-size: 80% !important;">
             {#if $notifications.notifications.length > 0}
-              {#each $notifications.notifications as item}
+              {#each $notifications.notifications.filter(i => !$showOnlyUnread || i.unread) as item}
               <li class='list-group-item p-1' class:list-group-item-light={!item.unread}>
                 <div style="float: right">
                   <button class:invisible={!item.unread} class="btn p-0" on:click|preventDefault={() => notifications.markRead(item.id)}>&times;</button>
