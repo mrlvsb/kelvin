@@ -645,8 +645,12 @@ def task_asset(request, task_name, path):
         with open(system_path, 'rb') as f:
             resp = HttpResponse(f)
             mime = mimedetector.from_file(system_path)
+            if system_path.endswith('.js'):
+                mime = 'text/javascript'
+            elif system_path.endswith('.wasm'):
+                mime = 'application/wasm'
             if mime:
-                resp['Content-Type'] = f"{mime[0]};charset=utf-8"
+                resp['Content-Type'] = f"{mime};charset=utf-8"
             return resp
     except FileNotFoundError as e:
         archive_ext = '.tar.gz'
