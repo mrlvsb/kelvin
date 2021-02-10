@@ -35,9 +35,10 @@ async function openNotification(notification) {
     <div style="position: absolute; width: 300px; right: 0px; z-index: 10; background: whitesmoke;">
 				<ul class="list-group">
 					<li class="list-group-item" style="background-color: rgba(0,0,0,.03)">
-            Notifications {#if $notifications.unread_count > 0}({$notifications.unread_count}){/if}
+            <div class="d-flex">
+              <div>Notifications {#if $notifications.unread_count > 0}({$notifications.unread_count}){/if}</div>
 
-            <div class="float-right">
+            <div class="ml-auto">
               {#if $pushNotifications.supported && !$pushNotifications.enabled}
               <button class="btn p-0" title="Enable desktop notifications" on:click|preventDefault={enablePushNotifications}>
                 <span class="iconify" data-icon="ic:outline-notifications-active"></span>
@@ -46,9 +47,9 @@ async function openNotification(notification) {
 
               <button class="btn p-0" on:click={() => $showOnlyUnread = !$showOnlyUnread}>
                 {#if $showOnlyUnread}
-                  <span title="Show all notifications."><span class="iconify" data-icon="ic:sharp-mark-email-read" data-inline="false"></span></span>
+                  <span title="Show all notifications."><span class="iconify" data-icon="ic:sharp-mark-email-read"></span></span>
                 {:else}
-                  <span title="Show only unread notifications."><span class="iconify" data-icon="ic:sharp-markunread" data-inline="false"></span></span>
+                  <span title="Show only unread notifications."><span class="iconify" data-icon="ic:sharp-markunread"></span></span>
                 {/if}
               </button>
 
