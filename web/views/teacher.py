@@ -22,9 +22,11 @@ from django.utils import timezone as tz
 from django.conf import settings
 from django.db.models import Max, Min, Count
 from django.core.cache import caches
+from django.contrib.contenttypes.models import ContentType
 
 import django_rq
 from notifications.signals import notify
+from notifications.models import Notification
 from unidecode import unidecode
 
 from common.models import Submit, Class, Task, AssignedTask, Subject, assignedtask_results, current_semester_conds, current_semester
@@ -201,6 +203,13 @@ def submit_assign_points(request, submit_id):
 
     submit.assigned_points = points
     submit.save()
+
+    Notification.objects.filter(
+        action_object_object_id=submit.id,
+        action_object_content_type=ContentType.objects.get_for_model(Submit),
+        verb='submitted',
+    ).update(unread=False)
+
     return redirect(request.META.get('HTTP_REFERER', '/'))
 
 
