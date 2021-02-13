@@ -22,6 +22,8 @@ import re
 import json
 import datetime
 import logging
+import shutil
+from pathlib import Path
 from shutil import copytree, ignore_patterns
 from django.utils.dateparse import parse_datetime
 
@@ -209,24 +211,40 @@ def add_student_to_class(request, class_id):
     })
 
 @user_passes_test(is_teacher)
-def task_detail(request, task_id=None):
+def task_detail(request, task_id=None):   
     errors = []
     if request.method == 'POST':
         data = json.loads(request.body.decode('utf-8'))
 
-        if '..' in data['path']:
-            return HttpResponseBadRequest()
+        if '..' in data['path'] or data['path'][0] == '/':
+            return JsonResponse({
+                'errors': ['Path should not contain .. or start with /'],
+            }, status=400)
+
+        new_path = os.path.join("tasks", data['path'])
 
         if not task_id:
             task = Task()
             task.subject = Subject.objects.get(abbr=data['path'].split('/')[0])
+
+            paths = [str(p.parent) for p in Path(new_path).rglob(".taskid")]
+            if len(paths) != 0:
+                return JsonResponse({
+                    'errors': [f'Cannot create task in the directory "{data["path"]}", because there already exists these tasks:\n{chr(10).join(paths)}'],
+                }, status=400)
         else:
             task = Task.objects.get(id=task_id)
             if task.code != data['path']:
+                paths = [str(p.parent) for p in Path(new_path).rglob(".taskid")]
+                if len(paths) != 0:
+                    return JsonResponse({
+                        'errors': [f'Cannot move task to the directory "{data["path"]}", because there already exists these tasks:\n{chr(10).join(paths)}'],
+                    }, status=400)
+
                 try:
                     os.renames(
                             os.path.join("tasks", task.code),
-                            os.path.join("tasks", data['path'])
+                            new_path
                     )
                 except FileNotFoundError as e:
                     logger.warn(e)
@@ -239,13 +257,17 @@ def task_detail(request, task_id=None):
                         )
                     except FileNotFoundError as e:
                         logger.warn(e)
-
+        
         task.code = data['path']
-
         os.makedirs(task.dir(), exist_ok=True)
         if not task.name:
             task.name = task.code
         task.save()
+
+        taskid_path = os.path.join(task.dir(), '.taskid')
+        if not os.path.exists(taskid_path):
+            with open(taskid_path, "w") as f:
+                f.write(str(task.id))
 
         for cl in data['classes']:
             if cl.get('assigned', None):
@@ -264,8 +286,40 @@ def task_detail(request, task_id=None):
     else:
         task = Task.objects.get(id=task_id)
 
+    if request.method == 'DELETE':
+        if AssignedTask.objects.filter(task_id=task_id).count():
+            return JsonResponse({
+                'errors': ['Cannot delete task - there are assigned classess']
+            })
+
+        tasks_in_path = [str(p.parent) for p in Path(task.dir()).rglob('.taskid')]
+        if len(tasks_in_path) != 1:
+            return JsonResponse({
+                'errors': [f'Cannot delete task - there are multiple taskids:\n{chr(10).join(tasks_in_path)}']
+            })
+
+        try:
+            with open(os.path.join(task.dir(), ".taskid")) as f:
+                task_id_in_file = int(f.read().strip())
+                if task_id != task_id_in_file:
+                    return JsonResponse({
+                        'errors': [f'Cannot delete task - task ID ({task_id}) doesn\'t match value {task_id_in_file} in the file.']
+                    })
+        except:
+            return JsonResponse({
+                'errors': ['Cannot delete task - .taskid could not be read']
+            })
+
+        task.delete()
+        shutil.rmtree(task.dir())
+        return JsonResponse({
+            "success": True,
+        })
+
+
     result = {
         'id': task.id,
+        'subject_abbr': task.subject.abbr, 
         'path': task.code,
         'classes': [],
         'files': {},
@@ -317,6 +371,7 @@ def task_detail(request, task_id=None):
             subject__abbr=task.subject.abbr,
             **current_semester_conds(),
     )
+    assigned_count = 0
     for clazz in classes:
         item = {
             'id': clazz.id,
@@ -328,6 +383,7 @@ def task_detail(request, task_id=None):
 
         assigned = AssignedTask.objects.filter(task_id=task.id, clazz_id=clazz.id).first()
         if assigned:
+            assigned_count += 1
             item['assignment_id'] = assigned.id
             item['assigned'] = assigned.assigned
             item['deadline'] = assigned.deadline
@@ -335,6 +391,7 @@ def task_detail(request, task_id=None):
 
         result['classes'].append(item)
 
+    result['can_delete'] = assigned_count == 0
     return JsonResponse(result)
  
 @user_passes_test(is_teacher)

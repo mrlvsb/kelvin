@@ -13,8 +13,10 @@
 
   let task = null;
   let syncPathWithTitle = params.subject;
-  let syncing = false;
   let taskLink = null;
+
+  let syncing = false;
+  let errors = [];
 
   function isClassVisible(cls) {
     return cls.teacher === $user.username || cls.assignment_id || showAllClasses;
@@ -117,20 +119,23 @@
 
   async function save() {
     syncing = true;
-    let res = await fetch('/api/tasks/' + (task.id ? task.id : ''), {
+    const res = await fetch('/api/tasks/' + (task.id ? task.id : ''), {
       method: 'POST',
       body: JSON.stringify(task),
     })
 
     const json = await res.json();
-    task['classes'] = json['classes'];
-    task['errors'] = json['errors'];
-    fs.setEndpointUrl(json.files_uri);
+    errors = json['errors'];
+    if(errors.length == 0) {
+      task['classes'] = json['classes'];
+      task['can_delete'] = json['can_delete'];
+      fs.setEndpointUrl(json.files_uri);
+    
+      await openedFiles.save();
 
-    await openedFiles.save();
-
-    if(!task.id) {
-      push('/task/edit/' + json.id);
+      if(!task.id) {
+        push('/task/edit/' + json.id);
+      }
     }
     syncing = false;
   }
@@ -171,6 +176,19 @@
       push('/task/edit/' + json.id);
       loadTask(json.id);
   }
+
+  async function deleteTask() {
+    const res = await fetch(`/api/tasks/${task.id}`, {
+      method: 'DELETE',
+    })
+
+    const json = await res.json();
+    if(json['errors']) {
+      errors = json['errors'];
+    } else {
+      push('/task/add/' + task.subject_abbr);
+    }
+  }
 </script>
 
 <style>
@@ -192,11 +210,11 @@ td:not(:nth-of-type(3)) {
       </div>
     {/if}
     <div>
-      {#if task['errors'] && task['errors'].length}
+      {#if errors && errors.length}
       <div class="alert alert-danger">
         <ul class="m-0">
-          {#each task['errors'] as error}
-            <li>{error}</li>
+          {#each errors as error}
+            <li style="white-space: pre-line">{error}</li>
           {/each}
         </ul>
       </div>
@@ -211,6 +229,9 @@ td:not(:nth-of-type(3)) {
             <span class="iconify" data-icon="ant-design:copy-outlined"></span>
           </button>
           <a class="btn btn-outline-info" href={taskLink} target=_blank><span class="iconify" data-icon="bx:bx-link-external"></span></a>
+          <button class="btn btn-outline-danger" on:click={deleteTask} disabled={!task['can_delete']}>
+            <span class="iconify" data-icon="akar-icons:trash-can"></span>
+          </button>
         </div>
         {/if}
       </div>
