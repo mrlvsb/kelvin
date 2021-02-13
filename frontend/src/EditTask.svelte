@@ -8,6 +8,7 @@
   import {fetch} from './api.js'
   import {fs, currentPath, cwd, openedFiles} from './fs.js'
   import SyncLoader from './SyncLoader.svelte';
+  import Confirm from './Confirm.svelte'
 
   export let params = {}
 
@@ -229,9 +230,16 @@ td:not(:nth-of-type(3)) {
             <span class="iconify" data-icon="ant-design:copy-outlined"></span>
           </button>
           <a class="btn btn-outline-info" href={taskLink} target=_blank><span class="iconify" data-icon="bx:bx-link-external"></span></a>
-          <button class="btn btn-outline-danger" on:click={deleteTask} disabled={!task['can_delete']}>
-            <span class="iconify" data-icon="akar-icons:trash-can"></span>
-          </button>
+
+          <Confirm themeColor="0" confirmTitle="Delete" cancelTitle="Cancel" let:confirm>
+            <button class="btn btn-outline-danger" on:click={confirm(deleteTask)} disabled={!task['can_delete']}>
+              <span class="iconify" data-icon="akar-icons:trash-can"></span>
+            </button>
+
+            <span slot="title">Delete task</span>
+            <span slot="description">
+              Do you really want to delete the task with path <strong>{task['path']}</strong>? <strong>Readme.md</strong> and all files will be <strong>DELETED!</strong></span>
+          </Confirm>
         </div>
         {/if}
       </div>
