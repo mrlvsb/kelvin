@@ -85,10 +85,14 @@ $: if(instanceTo) {
   <div class="input-group input-group-sm col-sm-6">
     <div class="input-group-prepend">
       <Dropdown>
-        <span class="dropdown-item" on:click={() => addDeadline(30)}>+30 min</span>
-        <span class="dropdown-item" on:click={() => addDeadline(60)}>+60 min</span>
-        <span class="dropdown-item" on:click={() => addDeadline(180)}>+3 h</span>
-        <span class="dropdown-item" on:click={() => addDeadline(60*24*7)}>week</span>
+        <span class="dropdown-item" on:click={() => addDeadline(30)}>+ 30 min</span>
+        <span class="dropdown-item" on:click={() => addDeadline(1*45)}>+ 1×45 min</span>
+        <span class="dropdown-item" on:click={() => addDeadline(2*45)}>+ 2×45 min</span>
+        <span class="dropdown-item" on:click={() => addDeadline(3*45)}>+ 3×45 min</span>
+        <span class="dropdown-item" on:click={() => addDeadline(1*60)}>+ 1×60 min</span>
+        <span class="dropdown-item" on:click={() => addDeadline(2*60)}>+ 2×60 min</span>
+        <span class="dropdown-item" on:click={() => addDeadline(3*60)}>+ 3×60 min</span>
+        <span class="dropdown-item" on:click={() => addDeadline(60*24*7)}>+ week</span>
       </Dropdown>
     </div>
     <input bind:this={toEl} class="form-control" bind:value={to} placeholder="Deadline">
