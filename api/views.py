@@ -330,7 +330,7 @@ def task_detail(request, task_id=None):
                     return JsonResponse({
                         'errors': [f'Cannot delete task - task ID ({task_id}) doesn\'t match value {task_id_in_file} in the file.']
                     })
-        except:
+        except FileNotFoundError:
             return JsonResponse({
                 'errors': ['Cannot delete task - .taskid could not be read']
             })
