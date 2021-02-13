@@ -17,6 +17,7 @@ from evaluator.testsets import TestSet
 from common.models import current_semester, Subject
 from web.task_utils import load_readme
 from django.contrib.auth.decorators import login_required
+from django.db import IntegrityError
 import os
 import re
 import json
@@ -221,11 +222,30 @@ def task_detail(request, task_id=None):
                 'errors': ['Path should not contain .. or start with /'],
             }, status=400)
 
+        data['path'] = os.path.normpath(data['path'])
         new_path = os.path.join("tasks", data['path'])
 
+        def set_subject(task):
+            subj = data['path'].split('/')[0]
+            try:
+                task.subject = Subject.objects.get(abbr=subj)
+                return None
+            except Subject.DoesNotExist:
+                return JsonResponse({
+                    'errors': [f'Subject "{subj}" does not exist! Please set correct subject abbr in the path.'],
+                }, status=400)
+
         if not task_id:
+            if Task.objects.filter(code=data['path']).count() != 0:
+                return JsonResponse({
+                    'errors': [f'The task with path "{data["path"]}" already exists.'],
+                }, status=400)
+
             task = Task()
-            task.subject = Subject.objects.get(abbr=data['path'].split('/')[0])
+            
+            err = set_subject(task)
+            if err:
+                return err
 
             paths = [str(p.parent) for p in Path(new_path).rglob(".taskid")]
             if len(paths) != 0:
@@ -234,6 +254,11 @@ def task_detail(request, task_id=None):
                 }, status=400)
         else:
             task = Task.objects.get(id=task_id)
+
+            err = set_subject(task)
+            if err:
+                return err
+
             if task.code != data['path']:
                 paths = [str(p.parent) for p in Path(new_path).rglob(".taskid")]
                 if len(paths) != 0:
