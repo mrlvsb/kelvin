@@ -18,6 +18,7 @@
 
   let syncing = false;
   let errors = [];
+  let savedPath = null;
 
   function isClassVisible(cls) {
     return cls.teacher === $user.username || cls.assignment_id || showAllClasses;
@@ -50,19 +51,23 @@
     }
   }
 
+  async function prepareCreatingTask() {
+    const res = await fetch('/api/subject/' + params.subject);
+    const json = await res.json();
+
+    task = {
+        'classes': json['classes'],
+        'path': [params.subject, $semester['abbr'], $user.username].join('/'),
+    };
+    fs.createFile('readme.md', '# Task Title');
+    fs.open('readme.md');
+  }
+
   onMount(async () => {
       if(params.id) {
         loadTask(params.id);
       } else {
-          const res = await fetch('/api/subject/' + params.subject);
-          const json = await res.json();
-
-          task = {
-              'classes': json['classes'],
-              'path': [params.subject, $semester['abbr'], $user.username].join('/'),
-          };
-          fs.createFile('readme.md', '# Task Title');
-          fs.open('readme.md');
+        await prepareCreatingTask();
       }
   });
 
@@ -112,6 +117,7 @@
   async function loadTask(id) {
     const req = await fetch('/api/tasks/' + id);
     task = await req.json();
+    savedPath = task['path'];
     fs.setRoot(task.files, task.files_uri);
     fs.open('readme.md');
     push('/task/edit/' + task.id);
@@ -129,6 +135,7 @@
     errors = json['errors'];
     if(errors.length == 0) {
       task['classes'] = json['classes'];
+      savedPath = json['path'];
       task['can_delete'] = json['can_delete'];
       fs.setEndpointUrl(json.files_uri);
     
@@ -175,7 +182,7 @@
 
       let json = await res.json();
       push('/task/edit/' + json.id);
-      loadTask(json.id);
+      await loadTask(json.id);
   }
 
   async function deleteTask() {
@@ -187,7 +194,10 @@
     if(json['errors']) {
       errors = json['errors'];
     } else {
+      errors = [];
       push('/task/add/' + task.subject_abbr);
+      fs.setRoot([], undefined);
+      await prepareCreatingTask();
     }
   }
 </script>
@@ -238,7 +248,7 @@ td:not(:nth-of-type(3)) {
 
             <span slot="title">Delete task</span>
             <span slot="description">
-              Do you really want to delete the task with path <strong>{task['path']}</strong>? <strong>Readme.md</strong> and all files will be <strong>DELETED!</strong></span>
+              Do you really want to delete the task with path <strong>{savedPath}</strong>? <strong>Readme.md</strong> and all files will be <strong>DELETED!</strong></span>
           </Confirm>
         </div>
         {/if}
