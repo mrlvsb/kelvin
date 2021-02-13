@@ -1,6 +1,5 @@
 <script>
 	import flatpickr from "flatpickr";
-  import rangePlugin from 'flatpickr/dist/plugins/rangePlugin'
 	import Dropdown from './Dropdown.svelte'
   import 'flatpickr/dist/flatpickr.min.css'
   export let from;
@@ -10,7 +9,6 @@
 
   let fromEl, toEl;
   let instanceFrom, instanceTo
-	let dropDownShown;
 
   $: if(fromEl && toEl) {
     const opts = {
@@ -22,12 +20,6 @@
 
 		instanceFrom = flatpickr(fromEl, opts);
 		instanceTo = flatpickr(toEl, opts);
-    instanceTo.config.onOpen.push(() => {
-      if(!from) {
-        from = new Date();
-        setTimeout(() => instanceTo.open(), 0);
-      }
-    });
   }
 
   function weekDate(n) {
