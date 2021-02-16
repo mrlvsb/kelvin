@@ -1,15 +1,14 @@
+import logging
+import os
+import re
+import subprocess
+import tempfile
+
 import django_rq
 import mosspy
-import tempfile
-import os
-import shutil
-import re
-import json
-import logging
 import networkx as nx
-import subprocess
-from django.contrib.auth.models import User
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.cache import caches
 from networkx.drawing.nx_agraph import write_dot
 
@@ -17,6 +16,7 @@ from common.models import Submit
 
 logger = logging.getLogger('moss')
 
+MAX_FILE_SIZE = 128 * 1024
 
 ALLOWED_EXTENSIONS = {
     "c": "c",
@@ -34,8 +34,16 @@ ALLOWED_EXTENSIONS = {
 }
 
 
-def is_ext_allowed(path):
+def is_ext_allowed(path) -> bool:
     return path.split('.')[-1].lower() in ALLOWED_EXTENSIONS.keys()
+
+
+def check_file_size(path: str) -> bool:
+    return os.path.getsize(path) <= MAX_FILE_SIZE
+
+
+def is_source_valid(source) -> bool:
+    return is_ext_allowed(source.virt) and check_file_size(source.phys)
 
 
 def add_file(moss: mosspy.Moss, submit: Submit, file_path: str, name: str, counters):
@@ -47,7 +55,7 @@ def add_file(moss: mosspy.Moss, submit: Submit, file_path: str, name: str, count
 
 
 def add_submit(moss: mosspy.Moss, submit: Submit, counters):
-    sources = [source for source in submit.all_sources() if is_ext_allowed(source.virt)]
+    sources = [source for source in submit.all_sources() if is_source_valid(source)]
     if not sources:
         return
 
@@ -88,7 +96,7 @@ def check_task(task_id):
         tpl_path = os.path.join(submits[0].assignment.task.dir(), "template")
         for root, _, files in os.walk(tpl_path):
             for f in files:
-                if is_ext_allowed(f):
+                if is_ext_allowed(f) and check_file_size(f):
                     logger.info(f"Task {task_id}: adding base file {f}")
                     m.addBaseFile(os.path.join(root, f))
 
@@ -145,7 +153,7 @@ class MossResult:
                 label=f'{int(percent)}%',
                 href=match['link']
             )
-            
+
 
     def to_svg(self, anonymize=True, login=None):
         max_percent = 0
@@ -170,7 +178,7 @@ class MossResult:
 
                 G.nodes[login]['style'] = 'filled'
                 G.nodes[login]['fillcolor'] = '#f8d7da'
-        
+
             if anonymize:
                 mapping = dict(zip(G, range(len(G))))
                 if login in mapping:
