@@ -19,6 +19,8 @@ logger = logging.getLogger('moss')
 MAX_FILE_SIZE = 128 * 1024
 
 ALLOWED_EXTENSIONS = {
+    "asm": "c",
+
     "c": "c",
     "h": "c",
 
@@ -196,7 +198,7 @@ class MossResult:
 
 def moss_task_set_opts(task_id, opts):
     cache = caches['default']
-    cache.set(f"moss.{task_id}.opts", opts)
+    cache.set(f"moss.{task_id}.opts", opts, timeout=60*60*24*90)
 
 def moss_task_get_opts(task_id):
     opts = {
