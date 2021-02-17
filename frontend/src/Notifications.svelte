@@ -60,7 +60,7 @@ async function openNotification(notification) {
 					</li>
 					<div style="max-height: 300px; overflow-y: auto; font-size: 80% !important;">
             {#if $notifications.notifications.filter(i => !$showOnlyUnread || i.unread).length > 0}
-              {#each $notifications.notifications.filter(i => !$showOnlyUnread || i.unread) as item}
+              {#each $notifications.notifications.filter(i => !$showOnlyUnread || i.unread) as item (item.id)}
               <li class='list-group-item p-1' class:list-group-item-light={!item.unread}>
                 <div style="float: right">
                   <button class:invisible={!item.unread} class="btn p-0" on:click|preventDefault={() => notifications.markRead(item.id)}>&times;</button>
@@ -70,7 +70,7 @@ async function openNotification(notification) {
                   { item.verb }
 
                   {#if item.action_object_url}
-                    <a href={item.action_object_url} on:click|preventDefault={() => openNotification(item)}>
+                    <a href={item.action_object_url} on:click|preventDefault={() => openNotification(item)} on:auxclick={() => notifications.markRead(item.id)}>
                       { item.action_object }
                     </a>
                   {:else}
