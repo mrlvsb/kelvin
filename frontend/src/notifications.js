@@ -2,11 +2,11 @@ import { writable, derived } from 'svelte/store'
 import { fetch } from './api.js'
 
 export const notifications = (function () {
-  const { subscribe, set } = writable(null);
+  const { subscribe, set } = writable([]);
 
   async function refresh() {
     const res = await fetch('/notification/all');
-    set(await res.json());
+    set((await res.json())['notifications']);
   }
 
   refresh();
@@ -15,11 +15,11 @@ export const notifications = (function () {
     subscribe,
     markRead: async (id) => {
       const res = await fetch('/notification/mark_as_read/' + id, { method: 'POST' });
-      set(await res.json());
+      set((await res.json())['notifications']);
     },
     markAllRead: async () => {
       const res = await fetch('/notification/mark_as_read', { method: 'POST' });
-      set(await res.json());
+      set((await res.json())['notifications']);
     }
   }
 })();
@@ -119,4 +119,5 @@ export const pushNotifications = (function () {
   }
 })();
 
-export const importantNotificationsCount = derived(notifications, $notifications => $notifications?.notifications.filter(n => n.important && n.unread).length);
+export const notificationsCount = derived(notifications, $notifications => $notifications.filter(n => n.unread).length);
+export const importantNotificationsCount = derived(notifications, $notifications => $notifications.filter(n => n.important && n.unread).length);
