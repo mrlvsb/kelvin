@@ -179,8 +179,13 @@ def submit_assign_points(request, submit_id):
         points = float(request.POST['assigned_points'])
 
     if submit.assigned_points != points:
-        notify.send(sender=request.user, recipient=[submit.student],
-                    verb='assigned points to', action_object=submit)
+        notify.send(
+                sender=request.user,
+                recipient=[submit.student],
+                verb='assigned points to',
+                action_object=submit,
+                important=True,
+        )
 
     submit.assigned_points = points
     submit.save()

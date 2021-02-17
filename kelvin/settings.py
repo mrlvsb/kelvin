@@ -81,6 +81,8 @@ FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
 WSGI_APPLICATION = 'kelvin.wsgi.application'
 ASGI_APPLICATION = 'kelvin.routing.application'
 
+DJANGO_NOTIFICATIONS_CONFIG = { 'USE_JSONFIELD': True}
+
 # Database
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
 

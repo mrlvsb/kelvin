@@ -36,6 +36,9 @@ def all_notifications(request):
 
     def to_json(notification):
         struct = model_to_dict(notification)
+        if struct.get('data'):
+            struct = {**struct, **struct['data']}
+            del struct['data']
 
         for obj_type in ['actor', 'target', 'action_object']:
             obj = getattr(notification, obj_type)
@@ -47,9 +50,6 @@ def all_notifications(request):
                 if hasattr(obj, 'notification_url'):
                     struct[f"{obj_type}_url"] = obj.notification_url()
 
-        if notification.data:
-            struct = {**struct, **notification.data}
-        
         return struct
         
 

@@ -1,5 +1,5 @@
 <script>
-import {notifications, pushNotifications} from './notifications.js'
+import {notifications, pushNotifications, importantNotificationsCount} from './notifications.js'
 import TimeAgo from './TimeAgo.svelte'
 import {clickOutside} from './utils'
 import {localStorageStore} from './utils.js'
@@ -27,7 +27,7 @@ async function openNotification(notification) {
     <span on:click={() => show = !show} style="cursor: pointer">
       <img src="/static/notify_icon.png" style="height: 15px;" />
       {#if $notifications.unread_count > 0}
-        <span class="badge badge-pill badge-danger" style="margin-left: -3px">{$notifications.unread_count}</span>
+        <span class="badge badge-pill {$importantNotificationsCount >= 1 ? 'badge-danger' : 'badge-warning'}" style="margin-left: -3px">{$notifications.unread_count}</span>
       {/if}
     </span>
 
@@ -60,7 +60,7 @@ async function openNotification(notification) {
 					</li>
 					<div style="max-height: 300px; overflow-y: auto; font-size: 80% !important;">
             {#if $notifications.notifications.filter(i => !$showOnlyUnread || i.unread).length > 0}
-              {#each $notifications.notifications.filter(i => !$showOnlyUnread || i.unread) as item (item.id)}
+              {#each $notifications.notifications.filter(i => !$showOnlyUnread || i.unread).slice().sort((a, b) => ((b.important||0) && b.unread) - ((a.important||0) && a.unread) || b.timestamp - a.timestamp) as item (item.id)}
               <li class='list-group-item p-1' class:list-group-item-light={!item.unread}>
                 <div style="float: right">
                   <button class:invisible={!item.unread} class="btn p-0" on:click|preventDefault={() => notifications.markRead(item.id)}>&times;</button>

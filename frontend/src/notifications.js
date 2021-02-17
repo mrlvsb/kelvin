@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store'
+import { writable, derived } from 'svelte/store'
 import { fetch } from './api.js'
 
 export const notifications = (function () {
@@ -118,3 +118,5 @@ export const pushNotifications = (function () {
     subscribePushNotifications,
   }
 })();
+
+export const importantNotificationsCount = derived(notifications, $notifications => $notifications?.notifications.filter(n => n.important && n.unread).length);

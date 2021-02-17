@@ -299,8 +299,13 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         ).delete()
 
         if not is_teacher(request.user):
-            notify.send(sender=request.user, recipient=[assignment.clazz.teacher],
-                        verb='submitted', action_object=s)
+            notify.send(
+                    sender=request.user,
+                    recipient=[assignment.clazz.teacher],
+                    verb='submitted',
+                    action_object=s,
+                    important=any([s.assigned_points is not None for s in submits]),
+            )
 
         return redirect(reverse('task_detail', args=[s.student.username, s.assignment.id, s.submit_num]) + '#result')
     return render(request, 'web/task_detail.html', data)
@@ -451,6 +456,7 @@ def submit_comments(request, assignment_id, login, submit_num):
             action_object=comment,
             target=submit,
             public=False,
+            important=True,
         )
         return JsonResponse({**dump_comment(comment), 'unread': True})
     elif request.method == 'PATCH':
@@ -479,6 +485,7 @@ def submit_comments(request, assignment_id, login, submit_num):
                     action_object=comment,
                     target=submit,
                     public=False,
+                    important=True,
                 )
             return JsonResponse(dump_comment(comment))
 
