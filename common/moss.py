@@ -98,7 +98,7 @@ def check_task(task_id):
         tpl_path = os.path.join(submits[0].assignment.task.dir(), "template")
         for root, _, files in os.walk(tpl_path):
             for f in files:
-                if is_ext_allowed(f) and check_file_size(f):
+                if is_ext_allowed(f) and check_file_size(os.path.join(root, f)):
                     logger.info(f"Task {task_id}: adding base file {f}")
                     m.addBaseFile(os.path.join(root, f))
 
