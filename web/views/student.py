@@ -121,7 +121,8 @@ SUBMIT_DROPPED_MIMES = [
     'application/x-sharedlib'
 ]
 def store_uploaded_file(submit: Submit, path: str, file):
-    if path[0] == '/' or '..' in path:
+    path = os.path.normpath(path)
+    if path[0] == '/' or '..' in path.split('/'):
         raise SuspiciousOperation()
 
     target_path = submit.source_path(path)
