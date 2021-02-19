@@ -38,6 +38,8 @@
       editor = CodeMirror.fromTextArea(editorEl, {
         mode: toMode(filename),
         autofocus,
+        spellcheck: true,
+        inputStyle: "contenteditable",
         readOnly: disabled,
         extraKeys: {
           "F11": function(cm) {
