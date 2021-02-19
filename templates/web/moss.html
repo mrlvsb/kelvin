@@ -38,6 +38,7 @@
     <input type="submit" class="btn btn-sm btn-primary" value="Set threshold">
   </form>
 
+  {% if matches %}
   <div id="graph">
     {{ graph | safe }}
   </div>
@@ -72,6 +73,12 @@
     </tr>
     {% endfor %}
   </table>
+  {% else %}
+  <p class="alert alert-info mt-2">
+    No matches found - try to set different thresholds.
+  </p>
+
+  {% endif %}
 {% endif %}
 
 {% endblock %}
