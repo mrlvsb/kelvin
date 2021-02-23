@@ -8,11 +8,13 @@
       {% if result.failed %} 
         - FAILED
       {% endif %}
+      {% if result.tests %}
+        {{result.success}} / {{result.total}}
+      {% endif %}
     </h5>
     {% if result.html %}
     {{ result.html | safe }}
     {% endif %}
-
 
     {% if result.tests %}
     <input type="checkbox" class="checkbox-only-errors" id="checkbox-only-errors-{{forloop.counter0}}" checked> <label for="checkbox-only-errors-{{forloop.counter0}}">show only failed tests</label>

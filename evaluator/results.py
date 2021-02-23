@@ -158,6 +158,12 @@ class PipeResult:
         self.html = None
         self.tests = []
         self.comments = {}
+    
+    def success(self):
+        return len([t for t in self.tests if t.success])
+
+    def total(self):
+        return len(self.tests)
 
 class EvaluationResult:
     def __init__(self, result_dir):
