@@ -473,6 +473,7 @@ def submit_comments(request, assignment_id, login, submit_num):
         ).delete()
 
         if not data['text']:
+            comment.delete()
             return HttpResponse('{}')
         else:
             if comment.text != data['text']:
