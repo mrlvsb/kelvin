@@ -101,15 +101,19 @@ export const pushNotifications = (function () {
   let reg = null;
   if ('serviceWorker' in navigator && 'PushManager' in window && getPublicKey()) {
     (async() => {
-      reg = await navigator.serviceWorker.register('/static/service-worker.js');
-      if (!(reg.showNotification)) {
-        return;
+      try {
+        reg = await navigator.serviceWorker.register('/static/service-worker.js');
+        if (!(reg.showNotification)) {
+          return;
+        }
+        update(s => {
+          s.supported = true;
+          return s;
+        });
+        subscribePushNotifications();
+      } catch(err) {
+        console.log(err);
       }
-      update(s => {
-        s.supported = true;
-        return s;
-      });
-      subscribePushNotifications();
     })();
   }
 
