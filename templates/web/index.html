@@ -28,7 +28,7 @@
     <div class="card-header"><h5 class="mb-0">{{ node.class }}</h5></div>
     <div class="card-body"> 
         {% if node.class.summary %}
-        <kelvin-markdown hidden>{{ node.class.summary | safe }}</kelvin-markdown>
+        <kelvin-markdown hidden>{{ node.class.summary }}</kelvin-markdown>
         {% endif %}
         {% if node.tasks %}
         <table class="table table-sm table-hover table-striped">
