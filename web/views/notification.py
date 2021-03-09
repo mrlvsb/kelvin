@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import SuspiciousOperation
 from django.views.decorators.csrf import csrf_exempt
+from common.models import Comment
 
 
 @login_required
@@ -44,6 +45,9 @@ def all_notifications(request):
                     struct[obj_type] = str(obj)
                 if hasattr(obj, 'notification_url'):
                     struct[f"{obj_type}_url"] = obj.notification_url()
+
+        if isinstance(notification.action_object, Comment):
+            struct['description'] = notification.action_object.text
 
         return struct
 
