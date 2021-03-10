@@ -5,11 +5,22 @@ from common.models import Submit
 from common.utils import points_to_color
 from kelvin.settings import BASE_DIR
 
+from .utils import parse_human_size
 
 class DockerPipe:
-    def __init__(self, image, **kwargs):
+    def __init__(self, image, limits=None, **kwargs):
         self.image = image
         self.kwargs = kwargs
+
+        if not limits:
+            limits = {}
+        limits = {
+            'fsize': '16M',
+            'memory': '128M',
+            **limits
+        }
+
+        self.limits = {k: parse_human_size(v) for k, v in limits.items()}
 
     def run(self, evaluation):
         result_dir = os.path.join(evaluation.result_path, self.id)
@@ -33,6 +44,9 @@ class DockerPipe:
             '--network', 'none',
             '-w', '/work',
             '-v', evaluation.sandbox.system_path() + ':/work',
+            '--ulimit', f'fsize={self.limits["fsize"]}:{self.limits["fsize"]}',
+            '--ulimit', f'cpu=5:5',
+            '-m', str(self.limits['memory']),
             *additional_args,
             *env,
             self.image
