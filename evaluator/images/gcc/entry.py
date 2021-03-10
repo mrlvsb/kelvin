@@ -32,13 +32,17 @@ output = os.getenv('PIPE_OUTPUT', 'main')
 flags = os.getenv('PIPE_FLAGS', '')
 ldflags = os.getenv('PIPE_LDFLAGS', '')
 
+
 with open("result.html", "w") as out:
     env = {
         'CC': 'gcc',
         'CXX': 'g++',
         'CFLAGS': flags,
         'LDFLAGS': ldflags,
+        'CLICOLOR_FORCE': '1',
+        'PATH': f'/wrapper:{os.getenv("PATH")}',
     }
+
     if 'cmakelists.txt' in [f.lower() for f in os.listdir('.')]:
         cmd_run(['cmake', '.'], out, env=env)
 
@@ -56,7 +60,7 @@ with open("result.html", "w") as out:
             exit(1)
 
         compile_cmd = ["gcc", *sources, "-o", output, *shlex.split(flags), *shlex.split(ldflags)]
-        returncode = cmd_run(compile_cmd + ['-fdiagnostics-color=always'], out, show_cmd=compile_cmd)
+        returncode = cmd_run(compile_cmd, out, show_cmd=compile_cmd)
 
 """
 p = subprocess.Popen([*compile_cmd, '-fdiagnostics-format=json'], stderr=subprocess.PIPE)

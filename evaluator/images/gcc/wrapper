@@ -1,0 +1,2 @@
+#!/bin/sh
+/usr/bin/$(basename $0) -fdiagnostics-color=always "$@"
