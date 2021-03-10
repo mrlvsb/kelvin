@@ -18,6 +18,8 @@ SUPPORTED_IMAGES = [
     'image/svg+xml',
 ]
 
+DEFAULT_TIMEOUT=5
+
 def display(patterns, out, delete=False):
     for pattern in patterns:
         for filename in glob.glob(pattern):
@@ -65,7 +67,7 @@ with open("result.html", "w") as f:
         if not job.get('hide', False):
             f.write(f"<code style='color: #444; font-weight: bold'>$ {html.escape(job.get('cmd_show', job['cmd']))}</code><br>")
         if job.get('asciinema', False):
-            cmd = ['asciinema', 'rec', '-c', job['cmd'], '/tmp/out.cast']
+            cmd = ['asciinema', 'rec', '-c', "timeout {job.get('timeout', DEFAULT_TIMEOUT)} {job['cmd']}", '/tmp/out.cast']
             p = subprocess.Popen(cmd, env={**os.environ, 'TERM': 'xterm', 'HOME': '/tmp'})
             p.wait()
 
@@ -73,12 +75,21 @@ with open("result.html", "w") as f:
                 f.write(f"<asciinema-player preload src='data:application/json;base64,{base64.b64encode(record.read()).decode('utf-8')}'></asciinema-player>")
         else:
             with open('/tmp/out', 'w+', errors='ignore') as out:
-                p = subprocess.Popen(job['cmd'], shell=True, stdout=out, stderr=out)
-                p.wait()
+                timedout = False
+                try:
+                    p = subprocess.Popen(job['cmd'], shell=True, bufsize=1, stdout=out, stderr=out)
+                    p.wait(timeout=job.get('timeout', DEFAULT_TIMEOUT))
+                except subprocess.TimeoutExpired:
+                    p.kill()
+                    timedout = True
 
                 if not job.get('hide', False):
                     out.seek(0)
                     f.write(f"<pre>{html.escape(out.read())}</pre>")
+
+                if timedout:
+                    f.write(f'<span class="text-danger">Process timed out after {job.get("timeout", DEFAULT_TIMEOUT)} seconds</span>')
+                    exit(1)
 
         if p.returncode:
             f.write(f'<span class="text-danger">Exited with return code {p.returncode}</span>')
