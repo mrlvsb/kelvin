@@ -85,7 +85,7 @@ with open("result.html", "w") as f:
 
                 if not job.get('hide', False):
                     out.seek(0)
-                    f.write(f"<pre>{html.escape(out.read())}</pre>")
+                    f.write(f"<kelvin-terminal-output>{html.escape(out.read())}</kelvin-terminal-output>")
 
                 if timedout:
                     f.write(f'<span class="text-danger">Process timed out after {job.get("timeout", DEFAULT_TIMEOUT)} seconds</span>')
