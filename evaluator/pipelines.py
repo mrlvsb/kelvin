@@ -45,7 +45,6 @@ class DockerPipe:
             '-w', '/work',
             '-v', evaluation.sandbox.system_path() + ':/work',
             '--ulimit', f'fsize={self.limits["fsize"]}:{self.limits["fsize"]}',
-            '--ulimit', f'cpu=5:5',
             '-m', str(self.limits['memory']),
             *additional_args,
             *env,
