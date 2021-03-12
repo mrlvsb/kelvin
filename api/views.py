@@ -135,7 +135,7 @@ def class_detail_list(request):
             'subject_abbr': clazz.subject.abbr,
             'csv_link': reverse('download_csv_per_class', kwargs={'class_id': clazz.id}),
             'assignments': assignments,
-            'summary': clazz.summary(),
+            'summary': clazz.summary(request.user.username, show_output=True),
             'students': list(clazz.students.all().order_by('username').values('username', 'first_name', 'last_name')),
         })
 

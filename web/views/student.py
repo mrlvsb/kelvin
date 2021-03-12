@@ -83,6 +83,7 @@ def student_index(request):
 
         result.append({
             'class': clazz,
+            'summary': clazz.summary(request.user.username),
             'tasks': tasks,
         })
 

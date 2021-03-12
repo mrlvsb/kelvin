@@ -15,17 +15,18 @@ def change_cwd(new_cwd):
         os.chdir(current)
 
 class Script:
-    def __init__(self, task_path, meta, output_fn):
+    def __init__(self, task_path, meta, output_fn, filename='script.py'):
         self.task_path = task_path
         self.meta = meta
         self.output_fn = output_fn
+        self.filename = filename
         self.module = None
         self.load_module()
 
     def load_module(self):
         module_name = "xyz"
 
-        spec = importlib.util.spec_from_file_location(module_name, os.path.join(self.task_path, 'script.py'))
+        spec = importlib.util.spec_from_file_location(module_name, os.path.join(self.task_path, self.filename))
         self.module = importlib.util.module_from_spec(spec)
         self.module.login = self.meta.get('login', None)
         self.module.meta = self.meta

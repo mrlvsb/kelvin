@@ -1,5 +1,6 @@
 import os
 import re
+import logging
 
 from django.utils import timezone
 
@@ -8,7 +9,9 @@ from django.conf import settings
 from django.urls import reverse
 from django.contrib.auth.models import User
 
+from kelvin.settings import BASE_DIR
 from .utils import is_teacher
+from jinja2 import Environment, FileSystemLoader
 
 def current_semester_conds(prefix=''):
     return {
@@ -125,7 +128,7 @@ class Class(models.Model):
         except ValueError as e:
             return 0
 
-    def summary(self):
+    def summary(self, login, show_output=False):
         path = os.path.join(
             "tasks",
             self.subject.abbr,
@@ -137,7 +140,33 @@ class Class(models.Model):
         while path:
             try:
                 with open(os.path.join(path, "summary.md")) as f:
-                    return f.read()
+                    from evaluator.script import Script
+
+                    output = []
+                    def p(s):
+                        output.append(s)
+
+                    meta = {
+                            'login': login
+                    }
+                    variables = None
+                    if os.path.exists(os.path.join(BASE_DIR, path, "summary.py")):
+                      s = Script(os.path.join(BASE_DIR, path), meta, p, 'summary.py')
+                      variables = s.call('readme_vars')
+
+                    if not variables:
+                      variables = {}
+                    variables = {**variables, **meta}
+                    env = Environment(loader=FileSystemLoader(path)).from_string(f.read())
+                    md = env.render(**variables)
+
+                    err = ''
+                    if output and show_output:
+                        for o in output:
+                            logging.error(o)
+                        err = '\n<pre class="text-danger">' + ('<br>'.join(output)) + '</pre>'
+
+                    return md + err
             except FileNotFoundError:
                 pass
             path = path[:-1]

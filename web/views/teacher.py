@@ -10,6 +10,7 @@ import datetime
 import shutil
 import logging
 import rq
+import logging
 from shutil import copyfile
 from collections import OrderedDict
 
