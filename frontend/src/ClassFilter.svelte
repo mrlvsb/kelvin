@@ -33,7 +33,7 @@
 
     $: if(semesters) {
       let subjs = [];
-      const sem = semesters[$currentSemester.abbr];
+      const sem = semesters[semester];
       if(sem) {
         for(const subj in sem) {
           if(sem[subj].indexOf($user.username) >= 0) {
