@@ -187,27 +187,23 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
 
     assignment = get_object_or_404(AssignedTask, id=assignment_id)
     testset = create_taskset(assignment.task, student_username if student_username else request.user.username)
+    is_announce = False
     if (assignment.assigned > datetime.now() or not assignment.clazz.students.filter(username=request.user.username)) and not is_teacher(request.user):
-        if assignment.task.announce:
-            return render(request, 'web/task_detail.html', {
-                'task': assignment.task,
-                'assigned': assignment.assigned,
-                'deadline': assignment.deadline,
-                'text':  testset.load_readme().announce,
-                'upload': False,
-            })
-        raise Http404()
+        is_announce = True
+        if not assignment.task.announce:
+            raise Http404()
 
     data = {
         # TODO: task and deadline can be combined into assignment ad deal with it in template
         'task': assignment.task,
+        'assigned': assignment.assigned if is_announce else None,
         'deadline': assignment.deadline,
         'submits': submits,
-        'text':  testset.load_readme(),
-        'inputs': testset,
+        'text':  testset.load_readme().announce if is_announce else testset.load_readme(),
+        'inputs': None if is_announce else testset,
         'max_inline_content_bytes': MAX_INLINE_CONTENT_BYTES,
+        'has_pipeline': not is_announce and bool(testset.pipeline),
         'upload': not is_teacher(request.user) or request.user.username == student_username,
-        'has_pipeline': bool(testset.pipeline),
     }
 
     current_submit = None
@@ -290,7 +286,8 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
             else:
                 store_uploaded_file(s, path, uploaded_file)
 
-        s.jobid = django_rq.enqueue(evaluate_job, s).id
+        if not is_announce:
+            s.jobid = django_rq.enqueue(evaluate_job, s).id
         s.save()
 
         # delete previous notifications

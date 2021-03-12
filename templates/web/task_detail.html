@@ -218,12 +218,14 @@ TODO: Make it nicer with Bootstrap
               <div class="comments"><kelvin-submit-sources url="{% url 'submit_comments' submit.assignment.id submit.student submit.submit_num %}"></kelvin-submit-sources></div>
             </div>
 
+            {% if has_pipeline %}
             <div class="tab-pane" id="tab_result">
                 {% if job_status %}
                   <kelvin-pipeline-status submitid={{submit.id}}></kelvin-pipeline-status>
                 {% endif %}
                 {% include "web/report.html" %}
             </div>
+            {% endif %}
             {% endif %}
         </div>
     </div>
