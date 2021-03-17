@@ -245,7 +245,18 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
                     </style>
                     <div id="plagiarism">{svg}</div>
                     <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
-                    <script>$('[href="#tab_result"]').on('shown.bs.tab', () => svgPanZoom('#plagiarism svg'))</script>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', () => {{
+                            const observer = new MutationObserver((changes) => {{
+                                if(changes[0].target.classList.contains('active')) {{
+                                    svgPanZoom('#plagiarism svg')
+                                }}
+                            }});
+                            observer.observe(document.querySelector('#plagiarism svg').closest('.tab-pane'), {{
+                                attributeFilter: ['class']
+                            }});
+                        }});
+                    </script>
                 """
                 data['results'].pipelines = [res] + data['results'].pipelines
 
