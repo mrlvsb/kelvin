@@ -27,6 +27,8 @@ import 'diff2html/bundles/css/diff2html.min.css'
 import * as Diff2Html from 'diff2html'
 window.Diff2Html = Diff2Html;
 
+import Iconify from '@iconify/iconify';
+
 import App from './App.svelte'
 import TaskDetail from './TaskDetail.svelte'
 import Notifications from './Notifications.svelte'
