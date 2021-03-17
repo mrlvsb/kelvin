@@ -1,6 +1,6 @@
 <script>
     import {fetch} from './api.js'
-    import {user, semester as currentSemester} from './global.js'
+    import {user} from './global.js'
     import {link, push} from 'svelte-spa-router'
 
     let semesters = {};
@@ -69,7 +69,7 @@
 
 <div>
   {#each mySubjects as s}
-    <a class="mr-2" class:font-weight-bold={subject == s} href="/?semester={$currentSemester.abbr}&subject={s}&teacher={$user.username}" use:link>{s}</a>
+    <a class="mr-2" class:font-weight-bold={subject == s} href="/?semester={semester}&subject={s}&teacher={$user.username}" use:link>{s}</a>
   {/each}
 </div>
 
