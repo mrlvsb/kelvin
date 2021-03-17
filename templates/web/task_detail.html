@@ -79,16 +79,16 @@ TODO: Make it nicer with Bootstrap
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs navbar-expand-lg">
             <li class="nav-item">
-                <a class="nav-link active" data-toggle="tab" href="#tab_assignment">Assignment</a>
+                <a class="nav-link active" data-toggle="tab" href="#assignment">Assignment</a>
             </li>
             {% if inputs.tests_dict %}
             <li class="nav-item">
-                <a class="nav-link" data-toggle="tab" href="#tab_tests">Tests</a>
+                <a class="nav-link" data-toggle="tab" href="#tests">Tests</a>
             </li>
             {% endif %}
             {% if submit %}
             <li class="nav-item">
-                <a class="nav-link" data-toggle="tab" href="#tab_src">
+                <a class="nav-link" data-toggle="tab" href="#src">
                   Source code
                   {% if comment_count and comment_count > 0 %}
                     <span class="badge badge-dark">{{ comment_count }}</span>
@@ -97,7 +97,7 @@ TODO: Make it nicer with Bootstrap
             </li>
             {% if has_pipeline %}
             <li class="nav-item">
-                <a class="nav-link" data-toggle="tab" href="#tab_result">
+                <a class="nav-link" data-toggle="tab" href="#result">
                     Result #{{ submit.submit_num }} 
                 </a>
             </li>
@@ -126,7 +126,7 @@ TODO: Make it nicer with Bootstrap
                             <input type="file" name="solution" multiple hidden id="upload-choose"
                                    onclick="this.value=null;"
                                    onchange="this.form.submit()">
-                            <span class="btn btn-sm btn-primary" onclick="$('#upload-choose').click()">Upload</span>
+                            <span class="btn btn-sm btn-primary" onclick="document.getElementById('upload-choose').click()">Upload</span>
                             <span class="morehover" style="position: relative">
                               <span class="iconify" data-icon="bx:bx-help-circle"></span>  
                               <div class="morehover-content" style="position: absolute; right: 0px; top: 15px; background: white; padding: 4px; display: none">
@@ -156,7 +156,7 @@ TODO: Make it nicer with Bootstrap
                 </ul>
                 {% endif %}
             </div>
-            <div class="tab-pane fade" id="tab_tests">
+            <div class="tab-pane" id="tab_tests">
                 <a href="{% url 'tar_test_data' task.code %}{% if submit %}?student={{submit.student}}{%endif%}" class="float-right">Download all tests</a>
 
                 {% for input in inputs %}
@@ -191,11 +191,6 @@ TODO: Make it nicer with Bootstrap
 
             {% if submit %}
             <div class="tab-pane" id="tab_src">
-                <div class="float-right">
-                  <a href="#diff" data-toggle="collapse" title="Diff vs previous version(s)"><span class="iconify" data-icon="fa-solid:history"></span></a>
-                  <a href="{% url 'submit_download' submit.assignment.id submit.student.username submit.submit_num %}" title="Download"><span class="iconify" data-icon="fa-solid:download"></span></a>
-                </div>
-
                 <div id="diff" class="collapse">
                 {% for ver, submitted in diff_versions %}
                   <div>
@@ -230,63 +225,5 @@ TODO: Make it nicer with Bootstrap
         </div>
     </div>
 </div>   
-
-
-{% comment %}
-<div class="card mb-3 mt-2">
-    <div class="card-header">
-        <h5>Submit</h5>
-    </div>
-    <div class="card-body">
-        <code>
-            $ upr submit {{ task.code }} my_file.c
-        </code>
-
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ upload_form.solution }}
-            <input type="submit" class="btn btn-primary" value="Upload">
-        </form>
-    </div>
-</div>
-{% endcomment %}
-
-<script>
-(function() {
-  let container = document.getElementById('diff');
-  if(!container) {
-    return;
-  }
-  var prev_a, prev_b;
-
-  function load_diff() {
-      let a = container.querySelector('input[name=a]:checked').value;
-      let b = container.querySelector('input[name=b]:checked').value;
-
-      if (a == prev_a && b == prev_b) {
-          return;
-      }
-      prev_a = a;
-      prev_b = b;
-
-      fetch(`/task/{{ submit.student.username }}/{{ submit.assignment.id }}/${a}-${b}.diff`)
-          .then((result) => result.text())
-          .then((diff) => {
-              let diffHtml = Diff2Html.html(diff, {
-                  drawFileList: true,
-                  matching: 'lines',
-                  outputFormat: 'side-by-side',
-                  drawFileList: false
-              });
-              document.getElementById('diff-content').innerHTML = diffHtml;
-          });
-  }
-
-  document.getElementById("diff").addEventListener("click", load_diff);
-  document.querySelector('a[href="#diff"]').addEventListener('click', load_diff);
-
-})();
-
-</script>
 
 {% endblock %}

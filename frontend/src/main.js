@@ -1,3 +1,5 @@
+import 'bootstrap/dist/css/bootstrap.min.css'
+
 import 'highlight.js/styles/github.css'
 import hljs from 'highlight.js/lib/core'
 import clike from 'highlight.js/lib/languages/c-like'
@@ -37,22 +39,29 @@ import UploadSolution from './UploadSolution.svelte'
 import PipelineStatus from './PipelineStatus.svelte'
 import {safeMarkdown} from './markdown.js'
 
-customElements.define('kelvin-terminal-output', class extends HTMLElement {
-    connectedCallback() {
-        setTimeout(() => {
-            const res = (new (AnsiUp.default)()).ansi_to_html(this.innerText);
-            this.innerHTML = '<pre>' + res + '</pre>';
-        }, 0);
-    }
+class ReplaceHtmlElement extends HTMLElement {
+	constructor() {
+		super();
+		this.attachShadow({mode: 'open'});
+		this.shadowRoot.innerHTML = '<slot></slot>';
+		this.shadowRoot.querySelector('slot').addEventListener('slotchange', () => {
+			this.onConnect();
+		}, {once: true});
+	}
+};
+
+customElements.define('kelvin-terminal-output', class extends ReplaceHtmlElement {
+	onConnect() {
+		const res = (new (AnsiUp.default)()).ansi_to_html(this.innerText);
+		this.innerHTML = '<pre>' + res + '</pre>';
+	}
 });
 
-customElements.define('kelvin-markdown', class extends HTMLElement {
-    connectedCallback() {
-        setTimeout(() => {
-            this.innerHTML = safeMarkdown(this.innerText);
-            this.removeAttribute('hidden')
-            this.classList.add('md');
-        }, 0);
+customElements.define('kelvin-markdown', class extends ReplaceHtmlElement {
+    onConnect() {
+		this.innerHTML = safeMarkdown(this.innerText);
+		this.removeAttribute('hidden')
+		this.classList.add('md');
     }
 });
 
@@ -84,3 +93,22 @@ createElement('submit-sources', TaskDetail);
 createElement('notifications', Notifications);
 createElement('upload-solution', UploadSolution);
 createElement('pipeline-status', PipelineStatus);
+
+
+function focusTab() {
+	const hash = document.location.hash.replace('#', '').split('-')[0];
+	const link = document.querySelector(`[data-toggle="tab"][href="#${hash}"]`);
+	if(!link) {
+		return;
+	}
+
+	link.closest('ul').querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+	link.classList.add('active');
+
+	document.querySelectorAll('.tab-content .tab-pane').forEach(el => el.classList.remove('active'));
+
+	document.querySelector('#tab_' + hash).classList.add('active');
+}
+
+window.addEventListener("hashchange", focusTab);
+window.addEventListener("DOMContentLoaded", focusTab);

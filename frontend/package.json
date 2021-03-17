@@ -12,6 +12,8 @@
     "@rollup/plugin-node-resolve": "^8.0.0",
     "ansi_up": "^5.0.0",
     "autoprefixer": "^10.0.1",
+    "bootstrap": "^4.6.0",
+    "codemirror": "^5.58.1",
     "diff2html": "^3.4.0",
     "dompurify": "^2.2.2",
     "flatpickr": "^4.6.6",
@@ -24,11 +26,10 @@
     "rollup-plugin-terser": "^7.0.0",
     "svelte": "^3.0.0",
     "svelte-spa-router": "^3.0.3",
+    "timeago.js": "^4.0.2",
     "uppie": "git+https://github.com/trnila/uppie.git"
   },
   "dependencies": {
-    "codemirror": "^5.58.1",
-    "sirv-cli": "^1.0.0",
-    "timeago-simple": "^1.2.4"
+    "sirv-cli": "^1.0.0"
   }
 }

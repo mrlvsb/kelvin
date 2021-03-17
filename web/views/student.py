@@ -409,6 +409,13 @@ def submit_comments(request, assignment_id, login, submit_num):
     if not is_teacher(request.user) and request.user.username != submit.student.username:
         raise PermissionDenied()
 
+    submits = []
+    for s in Submit.objects.filter(assignment_id=assignment_id, student__username=login):
+        submits.append({
+            'num': s.submit_num,
+            'submitted': s.created_at,
+        })
+
     def get_comment_type(comment):
         if comment.author == comment.submit.student:
             return 'student'
@@ -578,6 +585,9 @@ def submit_comments(request, assignment_id, login, submit_num):
     return JsonResponse({
         'sources': sorted(result.values(), key=lambda f: (priorities[f['type']], f['path'])),
         'summary_comments': summary_comments,
+        'submits': submits,
+        'current_submit': submit.submit_num,
+        'deadline': submit.assignment.deadline,
     })
 
 def file_response(file, filename, mimetype):

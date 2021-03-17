@@ -2,14 +2,19 @@
   import SubmitSource from "./SubmitSource.svelte";
   import SyncLoader from "./SyncLoader.svelte";
   import CopyToClipboard from './CopyToClipboard.svelte'
-  import {fetch} from './api.js'
   import SummaryComments from './SummaryComments.svelte'
-  import { user } from "./global";
+  import SubmitsDiff from './SubmitsDiff.svelte'
+  import {fetch} from './api.js'
+  import { user } from "./global"
   import { notifications } from './notifications.js'
 
   export let url;
   let files = null;
   let summaryComments = [];
+  let submits = null;
+  let current_submit = null;
+  let deadline = null;
+  let showDiff = false;
 
   class SourceFile {
       constructor(source) {
@@ -128,6 +133,9 @@
   async function load() {
     const res = await fetch(url);
     const json = await res.json();
+    current_submit = json['current_submit'];
+    deadline = json['deadline'];
+    submits = json['submits'];
     files = json['sources'].map((source) => new SourceFile(source));
     summaryComments = json['summary_comments'];
   }
@@ -160,19 +168,26 @@
     <SyncLoader />
   </div>
 {:else}
-  <SummaryComments {summaryComments} on:saveComment={evt => saveComment(evt.detail)} on:setNotification={setNotification} />
+  <div class="float-right">
+    {#if files.length > 1}
+      <button class="btn btn-link p-0" on:click={toggleOpen} title="Expand or collapse all files">
+        {#if allOpen}
+          <span><span class="iconify" data-icon="ant-design:folder-open-filled"></span></span>
+        {:else}
+          <span><span class="iconify" data-icon="ant-design:folder-filled"></span></span>
+        {/if}
+      </button>
+    {/if}
 
-  {#if files.length > 1}
-  <div>
-    <button class="btn p-0 ml-auto d-block" on:click={toggleOpen}>
-      {#if allOpen}
-        <span><span class="iconify" data-icon="ant-design:folder-open-filled"></span></span>
-      {:else}
-        <span><span class="iconify" data-icon="ant-design:folder-filled"></span></span>
-      {/if}
-    </button>
+    <button class="btn p-0 btn-link" title="Diff vs previous version(s)" on:click={() => showDiff = !showDiff}><span class="iconify" data-icon="fa-solid:history"></span></button>
+    <a href="download" download><span class="iconify" data-icon="fa-solid:download"></span></a>
   </div>
+
+  {#if showDiff}
+    <SubmitsDiff {submits} {current_submit} {deadline} />
   {/if}
+
+  <SummaryComments {summaryComments} on:saveComment={evt => saveComment(evt.detail)} on:setNotification={setNotification} />
 
   {#each files as file}
     <h2 class="file-header" title="Toggle file visibility">
