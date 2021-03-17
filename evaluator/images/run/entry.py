@@ -67,7 +67,7 @@ with open("result.html", "w") as f:
         if not job.get('hide', False):
             f.write(f"<code style='color: #444; font-weight: bold'>$ {html.escape(job.get('cmd_show', job['cmd']))}</code><br>")
         if job.get('asciinema', False):
-            cmd = ['asciinema', 'rec', '-c', "timeout {job.get('timeout', DEFAULT_TIMEOUT)} {job['cmd']}", '/tmp/out.cast']
+            cmd = ['asciinema', 'rec', '-c', f"timeout {job.get('timeout', DEFAULT_TIMEOUT)} {job['cmd']}", '/tmp/out.cast']
             p = subprocess.Popen(cmd, env={**os.environ, 'TERM': 'xterm', 'HOME': '/tmp'})
             p.wait()
 
