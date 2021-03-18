@@ -27,7 +27,7 @@
     "svelte": "^3.0.0",
     "svelte-spa-router": "^3.0.3",
     "timeago.js": "^4.0.2",
-    "uppie": "git+https://github.com/trnila/uppie.git"
+    "uppie": "1.1.4"
   },
   "dependencies": {
     "sirv-cli": "^1.0.0"
