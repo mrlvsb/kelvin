@@ -26,4 +26,10 @@
   {% endif %}
 </div>
 {% endfor %}
+
+<script>
+  document.querySelectorAll('button[data-toggle]').forEach(el => {
+    el.addEventListener('click', () => document.querySelector(el.dataset.target).classList.toggle('collapse'));
+  });
+</script>
 {% endblock %}
