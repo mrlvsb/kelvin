@@ -23,6 +23,8 @@ hljs.registerLanguage('bash', bash);
 hljs.registerLanguage('shell-session', shell);
 hljs.registerLanguage('makefile', makefile); 
 hljs.registerLanguage('assembler', x86asm); 
+hljs.registerLanguage('asm', x86asm); 
+hljs.registerLanguage('x86asm', x86asm); 
 hljs.initHighlightingOnLoad();
 
 import 'diff2html/bundles/css/diff2html.min.css'
