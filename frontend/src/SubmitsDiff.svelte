@@ -36,7 +36,7 @@
         <li>
             <input type="radio" bind:group={a} value="{submit.num}">
             <input type="radio" bind:group={b} value="{submit.num}" disabled={submit.num <= a}>
-            <a href="{submit.num}#src">
+            <a href="../{submit.num}#src">
                 <strong>#{submit.num}</strong>
             </a>
             {#if submit.submitted > deadline}
