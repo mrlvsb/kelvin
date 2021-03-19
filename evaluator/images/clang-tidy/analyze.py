@@ -57,6 +57,7 @@ else:
 
 cmd = [
     "clang-tidy",
+    '-extra-arg=-std=c++17',
     f"--export-fixes=/tmp/fixes.yaml",
     f"--checks={','.join(checks)}",
     *files
