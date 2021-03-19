@@ -44,7 +44,7 @@
     if(task) {
       const clazz = task.classes.find(clazz => clazz.assignment_id >= 1);
       if(clazz) {
-        taskLink = `/task/${$user.username}/${clazz.assignment_id}`
+        taskLink = `/task/${clazz.assignment_id}/${$user.username}/`
       } else {
         taskLink = task.task_link
       }
