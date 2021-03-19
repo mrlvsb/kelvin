@@ -3,6 +3,11 @@
 
 {% load static %}
 
+{% block title %}
+  {{task.name}}
+  {% if submit %} - {{submit.student.username}} {% endif %}
+{% endblock %}
+
 {% block content %}
 
 {% comment %}
