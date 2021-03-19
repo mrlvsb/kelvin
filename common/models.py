@@ -252,7 +252,7 @@ class Submit(models.Model):
 
     def notification_url(self):
         return reverse('task_detail', kwargs={
-            'student_username': self.student.username,
+            'login': self.student.username,
             'assignment_id': self.assignment.id,
             'submit_num': self.submit_num
         }) + '#src'
@@ -273,7 +273,7 @@ class Comment(models.Model):
 
     def notification_url(self):
         return reverse('task_detail', kwargs={
-            'student_username': self.submit.student.username,
+            'login': self.submit.student.username,
             'assignment_id': self.submit.assignment.id,
             'submit_num': self.submit.submit_num
         }) + '#src'

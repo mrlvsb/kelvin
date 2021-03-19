@@ -9,7 +9,7 @@
         <button data-toggle="collapse" data-target="#submit-{{submit.student}}" class="btn btn-link">
           {{ submit.student}} - {{ submit.student.get_full_name }}
         </button>
-        <a href="{% url 'task_detail' submit.student.username assignment.id submit.id %}#result" class="text-muted"><span class="iconify" data-icon="fa-solid:external-link-alt"></span></a>
+        <a href="{% url 'task_detail' login=submit.student.username assignment_id=assignment.id submit.id %}#result" class="text-muted"><span class="iconify" data-icon="fa-solid:external-link-alt"></span></a>
       {% include 'web/teacher/form_assign_points.html' %}
     </div>
     <div id="submit-{{submit.student}}" class="collapse">

@@ -9,19 +9,17 @@ from .views import statistics as statistics_view
 urlpatterns = [
     path('', common_view.index, name='index'),
 
-    path('task/<str:student_username>/<int:assignment_id>', student_view.task_detail, name='task_detail'),
-    path('task/<str:student_username>/<int:assignment_id>/<int:submit_num>', student_view.task_detail, name='task_detail'),
-    path('task/<str:student_username>/<int:assignment_id>/<int:submit_a>-<int:submit_b>.diff', student_view.submit_diff, name='submits_diff'),
+    path('task/<int:assignment_id>/<str:login>/', student_view.task_detail, name='task_detail'),
+    path('task/<int:assignment_id>/<str:login>/<int:submit_num>/', student_view.task_detail, name='task_detail'),
+    path('task/<int:assignment_id>/<str:login>/<int:submit_a>-<int:submit_b>.diff', student_view.submit_diff, name='submits_diff'),
+    path('task/<int:assignment_id>/<str:login>/<int:submit_num>/download', student_view.submit_download, name='submit_download'),
+    path('task/<int:assignment_id>/<str:login>/<int:submit_num>/comments', student_view.submit_comments, name='submit_comments'),
 
-    path('task/<int:assignment_id>', student_view.task_detail, name='task_detail'),
-    path('task/<int:assignment_id>/<int:submit_num>', student_view.task_detail, name='task_detail'),
     path('task/<path:task_name>/asset/<path:path>', student_view.task_asset, name='task_asset'),
     path('task/<path:task_name>/tests/<str:test_name>/<str:file>', student_view.raw_test_content, name='raw_test_content'),
     path('task/<path:task_name>.tar.gz', student_view.tar_test_data, name='tar_test_data'),
     path('result/<int:submit_id>/<str:test_name>/<str:result_type>/<str:file>', student_view.raw_result_content, name='raw_result_content'),
     path('submit/<int:submit_id>/source/<path:path>', student_view.submit_source, name='submit_source'),
-    path('task/<int:assignment_id>/<str:login>/<int:submit_num>/download', student_view.submit_download, name='submit_download'),
-    path('task/<int:assignment_id>/<str:login>/<int:submit_num>/comments', student_view.submit_comments, name='submit_comments'),
     path('submit/<int:submit_id>/pipeline', student_view.pipeline_status),
 
     # notifications

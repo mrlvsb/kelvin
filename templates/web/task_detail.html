@@ -28,7 +28,7 @@ TODO: Make it nicer with Bootstrap
     <h6>
     Submit 
     {% if prev_submit %}
-        <a href="{% url 'task_detail' submit.student.username submit.assignment.id prev_submit %}#src" title="Previous submit"><span class="iconify" data-icon="fa-solid:chevron-left"></span></a>
+        <a href="{% url 'task_detail' login=submit.student.username assignment_id=submit.assignment.id submit_num=prev_submit %}#src" title="Previous submit"><span class="iconify" data-icon="fa-solid:chevron-left"></span></a>
     {% else %}
       <span class="iconify" data-icon="fa-solid:chevron-left"></span>
     {% endif %}
@@ -41,7 +41,7 @@ TODO: Make it nicer with Bootstrap
     {% endif %}
 
     {% if next_submit %}
-        <a href="{% url 'task_detail' submit.student.username submit.assignment.id next_submit %}#src" title="Next submit"><span class="iconify" data-icon="fa-solid:chevron-right"></span></a>
+        <a href="{% url 'task_detail' login=submit.student.username assignment_id=submit.assignment.id submit_num=next_submit %}#src" title="Next submit"><span class="iconify" data-icon="fa-solid:chevron-right"></span></a>
     {% else %}
       <span class="iconify" data-icon="fa-solid:chevron-right"></span>
     {% endif %}

@@ -91,7 +91,7 @@ def class_detail_list(request):
         for assignment in clazz.assignedtask_set.all().order_by('id'):
             assignment_data = {
                 'task_id': assignment.task_id,
-                'task_link': reverse('teacher_task', kwargs={'task_id': assignment.task_id}),
+                'task_link': reverse('task_detail', kwargs={'login': request.user.username, 'assignment_id': assignment.id}),
                 'assignment_id': assignment.id,
                 'name': assignment.task.name,
                 'short_name': assignment.task.code_name(),
@@ -114,13 +114,13 @@ def class_detail_list(request):
 
                 if 'accepted_submit_num' in score:
                     score['link'] = reverse('task_detail', kwargs={
-                        'student_username': score['student'],
+                        'login': score['student'],
                         'assignment_id': assignment.id,
                         'submit_num': score['accepted_submit_num'],
                     }) + '#src'
                 else:
                     score['link'] = reverse('task_detail', kwargs={
-                        'student_username': score['student'],
+                        'login': score['student'],
                         'assignment_id': assignment.id,
                     }) + '#src'
                 assignment_data['students'][score['student']] = score

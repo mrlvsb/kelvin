@@ -175,18 +175,20 @@ def pipeline_status(request, submit_id):
     })
 
 @login_required()
-def task_detail(request, assignment_id, submit_num=None, student_username=None):
+def task_detail(request, assignment_id, submit_num=None, login=None):
     submits = Submit.objects.filter(
         assignment__pk=assignment_id,
     ).order_by('-id')
 
     if is_teacher(request.user):
-        submits = submits.filter(student__username=student_username)
+        submits = submits.filter(student__username=login)
     else:
         submits = submits.filter(student__pk=request.user.id)
+        if login != request.user.username:
+            raise PermissionDenied()
 
     assignment = get_object_or_404(AssignedTask, id=assignment_id)
-    testset = create_taskset(assignment.task, student_username if student_username else request.user.username)
+    testset = create_taskset(assignment.task, login if login else request.user.username)
     is_announce = False
     if (assignment.assigned > datetime.now() or not assignment.clazz.students.filter(username=request.user.username)) and not is_teacher(request.user):
         is_announce = True
@@ -203,7 +205,7 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
         'inputs': None if is_announce else testset,
         'max_inline_content_bytes': MAX_INLINE_CONTENT_BYTES,
         'has_pipeline': not is_announce and bool(testset.pipeline),
-        'upload': not is_teacher(request.user) or request.user.username == student_username,
+        'upload': not is_teacher(request.user) or request.user.username == login,
     }
 
     current_submit = None
@@ -214,6 +216,11 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
             raise Http404()
     elif submits:
         current_submit = submits[0]
+        return redirect(reverse('task_detail', kwargs={
+            'assignment_id': current_submit.assignment_id,
+            'submit_num': current_submit.submit_num,
+            'login': current_submit.student.username,
+        }))
 
     if current_submit:
         data = {**data, **get(current_submit)}
@@ -317,7 +324,11 @@ def task_detail(request, assignment_id, submit_num=None, student_username=None):
                     important=any([s.assigned_points is not None for s in submits]),
             )
 
-        return redirect(reverse('task_detail', args=[s.student.username, s.assignment.id, s.submit_num]) + '#result')
+        return redirect(reverse('task_detail', kwargs={
+            'login': s.student.username,
+            'assignment_id': s.assignment.id,
+            'submit_num': s.submit_num
+        }) + '#result')
     return render(request, 'web/task_detail.html', data)
 
 def comment_recipients(submit, current_author):
@@ -364,10 +375,10 @@ def submit_source(request, submit_id, path):
     raise Http404()
 
 @login_required
-def submit_diff(request, student_username, assignment_id, submit_a, submit_b):
+def submit_diff(request, login, assignment_id, submit_a, submit_b):
     submit = get_object_or_404(Submit,
             assignment_id=assignment_id,
-            student__username=student_username,
+            student__username=login,
             submit_num=submit_a
     )
 

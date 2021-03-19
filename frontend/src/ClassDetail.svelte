@@ -154,7 +154,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
               <th>Student</th>
               {#each clazz.assignments as assignment, index}
               <th class="more-hover">
-                <a href="/task/{ $user.username }/{ assignment.assignment_id }" 
+                <a href="{assignment.task_link}" 
                    class:text-muted={assignment.assigned > new Date()}
                    class:text-success={assignment.deadline > new Date()}>
                   { $showFullTaskNames ? assignment.short_name : `#${index+1}` }{#if assignment.max_points > 0}&nbsp;({ assignment.max_points }b){/if}
