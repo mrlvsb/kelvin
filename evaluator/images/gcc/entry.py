@@ -68,7 +68,7 @@ with open("result.html", "w") as out:
             out.write("<span style='color: red'>No executable has been built.</span>")
             exit(1)
         elif len(executables) > 1:
-            out.write("<span style='color: red'>Multiple executable has been built.</span>")
+            out.write("<span style='color: red'>Multiple executables have been built.</span>")
             exit(1)
 
         out.write(f"<code style='color: #444; font-weight: bold'>$ mv {executables[0]} {output}</code>")
