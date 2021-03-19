@@ -145,6 +145,8 @@ AUTHENTICATION_BACKENDS = [
     'web.vsbldapbackend.MyLDAPBackend'
 ]
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024
+
 LOGIN_REDIRECT_URL = '/'
 
 CAS_ENABLE = False

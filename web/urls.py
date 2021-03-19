@@ -14,6 +14,7 @@ urlpatterns = [
     path('task/<int:assignment_id>/<str:login>/<int:submit_a>-<int:submit_b>.diff', student_view.submit_diff, name='submits_diff'),
     path('task/<int:assignment_id>/<str:login>/<int:submit_num>/download', student_view.submit_download, name='submit_download'),
     path('task/<int:assignment_id>/<str:login>/<int:submit_num>/comments', student_view.submit_comments, name='submit_comments'),
+    path('task/<int:assignment_id>/<str:login>/<int:submit_num>/result', student_view.upload_results),
 
     path('task/<path:task_name>/asset/<path:path>', student_view.task_asset, name='task_asset'),
     path('task/<path:task_name>/tests/<str:test_name>/<str:file>', student_view.raw_test_content, name='raw_test_content'),
@@ -29,6 +30,7 @@ urlpatterns = [
 
     # teacher
     path('teacher/task/<int:task_id>', teacher_view.teacher_task, name='teacher_task'),
+    path('teacher/task/<int:task_id>.tar', student_view.teacher_task_tar, name='teacher_task_tar'),
     path('teacher/task/<int:task_id>/moss', teacher_view.teacher_task_moss_check, name='teacher_task_moss_check'),
     path('submits', teacher_view.submits, name='submits'),
     path('submits/<str:student_username>', teacher_view.submits, name='submits'),

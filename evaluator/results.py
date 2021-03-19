@@ -78,7 +78,7 @@ class TestResult:
 
     def copy_diff(self, name, content):
         with open(os.path.join(self.result_dir, f"{self['name']}.diff.{name}"), 'w') as f:
-            f.write(content)
+            f.write(content)       
 
     def copy_result_file(self, name, expected=None, actual=None, force_save=False):
         ext = self.aliases.get(name, name)

@@ -33,7 +33,7 @@ from unidecode import unidecode
 from common.models import Submit, Class, Task, AssignedTask, Subject, assignedtask_results, current_semester_conds, current_semester
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from evaluator.testsets import TestSet
-from common.evaluate import get_meta, evaluate_job
+from common.evaluate import get_meta, evaluate_submit
 from common.utils import is_teacher
 from common.moss import check_task, moss_result, moss_task_set_opts, moss_task_get_opts
 from common.bulk_import import BulkImport, ImportException
@@ -253,7 +253,7 @@ def reevaluate(request, submit_id):
     except FileNotFoundError:
         pass
     submit.points = submit.max_points = None
-    submit.jobid = django_rq.enqueue(evaluate_job, submit).id
+    submit.jobid = evaluate_submit(request, submit).id
     submit.save()
     return redirect(request.META.get('HTTP_REFERER', reverse('submits')) + "#result")
 

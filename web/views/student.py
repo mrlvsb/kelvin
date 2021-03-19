@@ -14,19 +14,22 @@ import subprocess
 import magic
 import logging
 
+from django.conf import settings
+from django.core import signing
 from django.core.files.uploadedfile import UploadedFile
 from django.utils import timezone as datetime
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse, HttpResponseForbidden
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse, HttpResponseForbidden, FileResponse
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone as tz
 from django.urls import reverse
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import F
+from django.views.decorators.csrf import csrf_exempt
 
 from common.models import Submit, Class, AssignedTask, Task, Comment, assignedtask_results, current_semester
-from common.evaluate import evaluate_job
+from common.evaluate import evaluate_submit
 from common.moss import moss_result
 from web.task_utils import load_readme
 from api.models import UserToken
@@ -314,7 +317,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
                 store_uploaded_file(s, path, uploaded_file)
 
         if not is_announce:
-            s.jobid = django_rq.enqueue(evaluate_job, s).id
+            s.jobid = evaluate_submit(request, s).id
         s.save()
 
         # delete previous notifications
@@ -793,7 +796,6 @@ def raw_result_content(request, submit_id, test_name, result_type, file):
     raise Http404()
 
 
-@login_required
 def submit_download(request, assignment_id, login, submit_num):
     submit = get_object_or_404(Submit,
             assignment_id=assignment_id,
@@ -801,7 +803,13 @@ def submit_download(request, assignment_id, login, submit_num):
             submit_num=submit_num
     )
 
-    if not is_teacher(request.user) and request.user.username != submit.student.username:
+    if 'token' in request.GET:
+        token = signing.loads(request.GET['token'], max_age=3600)
+        if token.get('submit_id') != submit.id:
+            raise PermissionDenied()
+    elif not request.user.is_authenticated:
+        return redirect(f'{settings.LOGIN_URL}?next={request.path}')
+    elif not is_teacher(request.user) and request.user.username != submit.student.username:
         raise PermissionDenied()
 
     with io.BytesIO() as f:
@@ -818,3 +826,42 @@ def submit_download(request, assignment_id, login, submit_num):
 @login_required
 def ui(request):
     return render(request, 'web/ui.html')
+
+
+@csrf_exempt
+def upload_results(request, assignment_id, submit_num, login):
+    submit = get_object_or_404(Submit, assignment_id=assignment_id, submit_num=submit_num, student__username=login)
+
+    token = signing.loads(request.GET.get('token'), max_age=3600)
+    if token.get('submit_id') != submit.id:
+        raise PermissionDenied()
+
+    result_path = os.path.join(
+        'submit_results',
+        *submit.path_parts(),
+    )
+
+    with tarfile.open(fileobj=io.BytesIO(request.body)) as tar:
+        tar.extractall(result_path)
+
+    return JsonResponse({"success": True})
+
+
+def teacher_task_tar(request, task_id):
+    task = get_object_or_404(Task, id=task_id)
+
+    if 'token' in request.GET:
+        token = signing.loads(request.GET['token'], max_age=3600)
+        if token.get('task_id') != task_id:
+            raise PermissionDenied()
+    elif not is_teacher(request.user):
+        raise PermissionDenied()
+
+    f = tempfile.TemporaryFile()
+    with tarfile.open(fileobj=f, mode='w') as tar:
+        tar.add(task.dir(), '')
+    f.seek(0, io.SEEK_SET)
+
+    res = FileResponse(f)
+    res['Content-Type'] = 'application/x-tar'
+    return res
