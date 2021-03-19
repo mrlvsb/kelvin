@@ -11,7 +11,7 @@
     let diffHtmlOutput = '';
 
     $: if(a != b) {
-        fetch(`${a}-${b}.diff`)
+        fetch(`../${a}-${b}.diff`)
           .then((result) => result.text())
           .then((diff) => {
               diffHtmlOutput = Diff2Html.html(diff, {
