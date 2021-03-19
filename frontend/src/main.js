@@ -49,7 +49,11 @@ class ReplaceHtmlElement extends HTMLElement {
 		this.shadowRoot.innerHTML = '<slot></slot>';
 		this.shadowRoot.querySelector('slot').addEventListener('slotchange', () => {
 			this.onConnect();
+			this.style.display = 'block';
 		}, {once: true});
+	}
+	connectedCallback() {
+		this.style.display = 'none';
 	}
 };
 
