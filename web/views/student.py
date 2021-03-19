@@ -793,18 +793,6 @@ def submit_download(request, assignment_id, login, submit_num):
         f.seek(0)
         return file_response(f, f"{login}_{submit_num}.tar.gz", "application/tar")
 
-
-def script(request, token):
-    data = {
-        "token": token,
-    }
-    return render(request, "web/install.sh", data, "text/x-shellscript")
-
-
-def uprpy(request):
-    with open(os.path.join(BASE_DIR, "scripts/submit.py")) as f:
-        return HttpResponse(f.read(), 'text/x-python')
-
 @login_required
 def ui(request):
     return render(request, 'web/ui.html')

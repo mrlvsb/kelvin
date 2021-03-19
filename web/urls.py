@@ -50,8 +50,4 @@ urlpatterns = [
 
     path('import', teacher_view.bulk_import),
     path('api_token', common_view.api_token),
-
-    # cli support
-    path('install_<str:token>.sh', student_view.script, name='install.sh'),
-    path('upr.py', student_view.uprpy, name='upr.py'),
 ]
