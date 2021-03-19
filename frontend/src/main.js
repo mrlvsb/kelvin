@@ -41,6 +41,7 @@ import AnsiUp from 'ansi_up'
 import UploadSolution from './UploadSolution.svelte'
 import PipelineStatus from './PipelineStatus.svelte'
 import {safeMarkdown} from './markdown.js'
+import CtrlP from './CtrlP.svelte'
 
 class ReplaceHtmlElement extends HTMLElement {
 	constructor() {
@@ -100,6 +101,7 @@ createElement('submit-sources', TaskDetail);
 createElement('notifications', Notifications);
 createElement('upload-solution', UploadSolution);
 createElement('pipeline-status', PipelineStatus);
+createElement('ctrlp', CtrlP);
 
 
 function focusTab() {

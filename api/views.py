@@ -79,6 +79,9 @@ def class_detail_list(request):
     if 'subject' in request.GET:
         class_conditions['subject__abbr'] = request.GET['subject']
 
+    if 'class' in request.GET:
+        class_conditions['code'] = request.GET['class']
+
     if not request.user.is_superuser:
         class_conditions['teacher_id'] = request.user.id
 
@@ -449,3 +452,64 @@ def reevaluate_task(request, task_id):
         submit.save()
 
     return JsonResponse({})
+
+@user_passes_test(is_teacher)
+def search(request):
+    results = []
+
+    results.append({
+        'text': 'All classes',
+        'url': '/',
+        'owned': True,
+    })
+
+    semester = current_semester()
+
+    def serialize(o, **kwargs):
+        if isinstance(o, Class):
+            return [{
+                'text': f'Class {o}',
+                'url': f'/#/?semester={semester}&teacher={o.teacher.username}&subject={o.subject.abbr}&class={o.code}',
+                **kwargs
+            }]
+        elif isinstance(o, Task):
+            detail = {
+                'text': f'Task {o.name} ({o.code})',
+                'url': f'/teacher/task/{o.id}',
+                **kwargs
+            }
+
+            edit = {
+                'text': f'Edit task {o.name} ({o.code})',
+                'url': f'/#/task/edit/{o.id}',
+                **kwargs
+            }
+
+            return [detail, edit]
+        elif isinstance(o, User):
+            return [{
+                'text': f'Student {o.first_name} {o.last_name} {o.username}',
+                'url': f'/submits/{o.username}',
+                **kwargs
+            }]
+        raise Exception(f"Unknown object: {type(o)}")
+
+    conds = {}
+    if not request.user.is_superuser:
+        conds['teacher_id'] = request.user.id
+
+    tasks = set()
+    for cl in Class.objects.filter(semester_id=semester.id, **conds):
+        owned = cl.teacher.id == request.user.id
+        results += serialize(cl, owned=owned)
+        for student in cl.students.all():
+            results += serialize(student, owned=owned)
+
+        for assignment in AssignedTask.objects.filter(clazz_id=cl.id):
+            if assignment.task_id not in tasks:
+                tasks.add(assignment.task_id)
+                results += serialize(assignment.task, owned=owned)
+
+    return JsonResponse({
+        'results': results,
+    })

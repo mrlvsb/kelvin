@@ -11,6 +11,7 @@
     export let semester;
     export let subject;
     export let teacher;
+    export let clazz;
 
     async function load() {
       const res = await fetch('/api/classes/all');
@@ -55,9 +56,10 @@
         }
 
         const params = new URLSearchParams(Object.fromEntries(Object.entries({
-            semester,
-            subject,
-            teacher,
+            'semester': semester,
+            'subject': subject,
+            'teacher': teacher,
+            'class': clazz,
         }).filter(([_, v]) => v)));
         push('/?' + params);
     }

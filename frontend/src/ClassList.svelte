@@ -14,6 +14,7 @@
         semester: $semester.abbr,
         subject: null,
         teacher: $user.username,
+        class: null,
   };
 
   onMount(async () => {
@@ -77,7 +78,7 @@
 
 <div class="container-fluid">
   <div class="d-flex mb-1">
-        <ClassFilter semester={filter.semester} subject={filter.subject} teacher={filter.teacher} />
+        <ClassFilter semester={filter.semester} subject={filter.subject} teacher={filter.teacher} clazz={filter.class} />
 
         <a class="btn btn-sm" href="/admin/common/class/add/" title="Add class">
           <span class="iconify" data-icon="ant-design:plus-outlined"></span>
