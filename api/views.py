@@ -7,8 +7,7 @@ from common.models import Submit, Class, Task, AssignedTask, Semester, Subject, 
 from .models import UserToken
 from django.db import transaction
 import django_rq
-from evaluator.evaluator import evaluate
-from common.evaluate import evaluate_job
+from common.evaluate import evaluate_submit
 from django.http import JsonResponse
 from django.contrib.auth.decorators import user_passes_test
 from common.utils import is_teacher, points_to_color
@@ -446,7 +445,7 @@ def duplicate_task(request, task_id):
 @user_passes_test(is_teacher)
 def reevaluate_task(request, task_id):
     for submit in Submit.objects.filter(assignment__task_id=task_id):
-        submit.jobid = django_rq.enqueue(evaluate_job, submit).id
+        submit.jobid = evaluate_submit(request, submit).id
         submit.save()
 
     return JsonResponse({})

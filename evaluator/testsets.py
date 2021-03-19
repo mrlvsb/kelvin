@@ -1,19 +1,15 @@
 import io
 import os
 import shlex
-import glob
 import re
-import sys
 import traceback
-from collections import defaultdict
 
 import yaml
 
-from . import filters, pipelines
-from .utils import parse_human_size
 from .script import Script
 from web.task_utils import load_readme
 from kelvin.settings import BASE_DIR
+
 
 class File:
     def __init__(self, path):
@@ -35,6 +31,7 @@ class File:
         with self.open(mode) as f:
             return f.read()
 
+
 class Test:
     def __init__(self, name):
         self.name = name
@@ -42,8 +39,6 @@ class Test:
         self.exit_code = 0
         self.files = {}
         self.check = None
-        self.filters = []
-        self.limits = {}
         self._title = None
         self.script = None
 
@@ -123,22 +118,13 @@ class TestFile:
     def path(self):
         return self.file.path
 
+
 class TestSet:
     def __init__(self, task_path, meta=None):
         self.task_path = task_path
-        self.filters = []
-        self.limits = {
-            'wall-time': 0.5,
-            'time': 0,
-            'processes': 10,
-            'stack': 0,
-            'cg-mem': 5 * 1024 * 1024,
-            'fsize': 1024, # in kbytes
-        }
         self.meta = meta if meta else {}
         self.tests_dict = {}
         self.File = File
-        self.comparators = {}
         self.warnings = []
         try:
             self.files_cache = os.listdir(self.task_path)
@@ -150,10 +136,9 @@ class TestSet:
         self.script = None
         if os.path.exists(os.path.join(self.task_path, 'script.py')):
             try:
-                self.script = Script(os.path.join(BASE_DIR, self.task_path), self.meta, self.add_warning)
+                self.script = Script(self.task_path, self.meta, self.add_warning)
             except Exception as e:
                 self.add_warning(f'script.py: {e}\n{traceback.format_exc()}')
-
 
         self.load_tests()
 
@@ -197,6 +182,7 @@ class TestSet:
         if not isinstance(conf, list):
             self.add_warning('pipeline is not a list')
         else:
+            from . import pipelines
             counter = 1
             for item in conf:
                 try:
@@ -223,22 +209,6 @@ class TestSet:
                 except Exception as e:
                     self.add_warning(f'pipe {item["type"]}: {e}\n{traceback.format_exc()}')
 
-    def parse_conf_limits(self, conf):
-        handlers = {
-            'fsize': lambda txt: parse_human_size(txt) // 1024,
-            'cg-mem': lambda txt: parse_human_size(txt) // 1024,
-            'stack': lambda txt: parse_human_size(txt) // 1024
-        }
-
-        for k, v in conf.items():
-            if k not in self.limits.keys():
-                self.add_warning(f'unknown limit {k}')
-            else:
-                try:
-                    self.limits[k] = handlers.get(k, lambda txt: txt)(v)
-                except ValueError as e:
-                    self.add_warning(f'bad limit {k} value "{v}": {e}')
-
     def parse_conf_tests(self, conf):
         allowed_keys = ['name', 'title', 'exit_code', 'args', 'files']
 
@@ -254,27 +224,6 @@ class TestSet:
             for k, v in test_conf.items():
                 if k not in allowed_keys:
                     self.add_warning(f"task '{t.name}': unknown key '{k}'")
-
-    def parse_conf_filters(self, conf):
-        if not isinstance(conf, list):
-            self.add_warning("Filters must be a list!")
-            return
-
-        for filter_name in conf:
-            name = filter_name.lower()
-            if name not in filters.all_filters:
-                self.add_warning(f"Unknown filter: {name}, known filters are: {', '.join(filters.all_filters.keys())}")
-            else:
-                self.filters.append(filters.all_filters[name]())
-
-    def parse_conf_comparators(self, conf):
-        if not isinstance(conf, dict):
-            self.add_warning("comparators must be a dict!")
-            return
-
-        # TODO: move creation of comparators here and check it
-        for k, v in conf.items():
-            self.comparators[k] = v
 
     def load_tests(self):
         self.discover_tests()
