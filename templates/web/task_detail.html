@@ -55,7 +55,7 @@
         {{ submit.created_at|date:'d.m.Y H:i' }}
     {% endif %}
     </h6>
-    <div>
+
 
     {% if is_teacher %}
     <a href="{% url 'submits' submit.student.username %}">Student submits</a>
