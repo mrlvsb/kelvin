@@ -166,7 +166,7 @@ def pipeline_status(request, submit_id):
     submit = get_object_or_404(Submit, id=submit_id)
 
     if not is_teacher(request.user) and request.user != submit.student:
-        return HttpResponseForbidden()
+        raise PermissionDenied()
 
     finished, status = get_submit_job_status(submit.jobid)
     return JsonResponse({
