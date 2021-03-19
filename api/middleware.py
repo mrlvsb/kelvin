@@ -13,4 +13,5 @@ class TokenAuthenticationMiddleware(MiddlewareMixin):
                 if not user:
                     return HttpResponse('<h1>Unauthorized</h1>', status=401)
                 request.user = request._cached_user = user
+                setattr(request, '_dont_enforce_csrf_checks', True)
 
