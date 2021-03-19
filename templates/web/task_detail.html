@@ -189,27 +189,8 @@
             </div>
 
             {% if submit %}
-            <div class="tab-pane" id="tab_src">
-                <div id="diff" class="collapse">
-                {% for ver, submitted in diff_versions %}
-                  <div>
-                    <input type="radio" name="a"{% if ver == total_submits|add:"-1" %} checked{% endif %} value="{{ ver }}">
-                    <input type="radio" name="b"{% if ver == total_submits %} checked{% endif %} value="{{ ver }}"> #{{ ver }}
-
-                    {% if submitted > submit.assignment.deadline %}
-                    <span class="text-danger font-weight-bold">
-                        {{ submitted|timeuntil:submit.assignment.deadline }} after deadline
-                    </span>
-                    {% else %}
-                        {{ submitted|date:'d.m.Y H:i' }}
-                    {% endif %}
-
-                  </div>
-                {% endfor %}
-                <div id="diff-content"></div>
-                </div>
-
-              <div class="comments"><kelvin-submit-sources url="{% url 'submit_comments' submit.assignment.id submit.student submit.submit_num %}"></kelvin-submit-sources></div>
+            <div class="tab-pane overflow-auto" id="tab_src">
+              <kelvin-submit-sources url="{% url 'submit_comments' submit.assignment.id submit.student submit.submit_num %}"></kelvin-submit-sources>
             </div>
 
             {% if has_pipeline %}
