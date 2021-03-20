@@ -1,5 +1,0 @@
-tests:
-  - args:
-      - first
-      - second
-      - third with a space

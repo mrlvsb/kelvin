@@ -1,4 +1,0 @@
-tests:
-  - script: |
-      def check(submit):
-        print("ahoj")

@@ -1,2 +1,0 @@
-hello file!
-foo bar
