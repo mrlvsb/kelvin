@@ -44,6 +44,10 @@
             {:else}
                 {new Date(submit.submitted).toLocaleString('cs')}
             {/if}
+
+            {#if submit.points != null}
+                <span class="text-muted">({submit.points} points)</span>
+            {/if}
         </li>
     {/each}
     <div>
