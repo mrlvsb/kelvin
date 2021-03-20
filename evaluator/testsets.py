@@ -145,7 +145,6 @@ class TestSet:
         except FileNotFoundError as e:
             self.add_warning(e)
             self.files_cache = []
-        self.gcc_flags = []
         self.pipeline = []
 
         self.script = None
