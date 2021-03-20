@@ -1,12 +1,6 @@
 import io
-import numpy as np
-from PIL import Image
-import base64
 import tempfile
 import subprocess
-
-from evaluator import image_evaluator
-
 
 def apply_filters(line, filters):
     for f in filters:
@@ -114,16 +108,3 @@ def binary_compare(f1, f2):
     except UnicodeDecodeError as e:
         return False, str(e)
 
-
-def to_base64(array):
-    with io.BytesIO() as f:
-        img = Image.fromarray(array)
-        img.save(f, 'PNG')
-        return 'data:image/png;base64,' + base64.b64encode(f.getvalue()).decode('utf-8')
-
-def image_compare(f1, f2):
-    diff_img, expected_img = image_evaluator.compare(f1, f2)
-    color_diff_img = image_evaluator.colorize_diff(expected_img, diff_img)
-    actual = np.array(Image.open(f2))
-
-    return (True, f"expected:<br><img src='{to_base64(expected_img)}'><br>actual:<br> <img src='{to_base64(actual)}'><br>diff:<br> <img src='{to_base64(color_diff_img)}'>")

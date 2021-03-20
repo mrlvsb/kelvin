@@ -16,7 +16,7 @@ from . import filters
 from . import pipelines
 from . import testsets
 from .results import EvaluationResult, TestResult
-from .comparators import text_compare, binary_compare, image_compare
+from .comparators import text_compare, binary_compare
 from .utils import copyfile
 from kelvin.settings import BASE_DIR
 
@@ -182,7 +182,6 @@ class Evaluation:
             if name in self.tests.comparators:
                 all_comparators = {
                     'binary': binary_compare,
-                    'image': image_compare,
                 }
 
                 comparator = all_comparators[self.tests.comparators[name]['type']]
