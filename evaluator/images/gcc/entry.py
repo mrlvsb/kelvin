@@ -38,6 +38,7 @@ with open("result.html", "w") as out:
         'CC': 'gcc',
         'CXX': 'g++',
         'CFLAGS': flags,
+        'CXXFLAGS': flags,
         'LDFLAGS': ldflags,
         'CLICOLOR_FORCE': '1',
         'PATH': f'/wrapper:{os.getenv("PATH")}',
@@ -59,7 +60,8 @@ with open("result.html", "w") as out:
             out.write("<span style='color: red'>Missing source files! please upload .c or .cpp files!</span>")
             exit(1)
 
-        compile_cmd = ["gcc", *sources, "-o", output, *shlex.split(flags), *shlex.split(ldflags)]
+        use_cpp = any(f.endswith('.cpp') for f in sources)
+        compile_cmd = ["g++" if use_cpp else "gcc", *sources, "-o", output, *shlex.split(flags), *shlex.split(ldflags)]
         returncode = cmd_run(compile_cmd, out, show_cmd=compile_cmd, env=env)
 
     if output and not os.path.exists(output):
