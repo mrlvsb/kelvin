@@ -1,2 +1,2 @@
 #!/bin/sh
-/usr/bin/$(basename $0) -fdiagnostics-color=always "$@"
+/usr/bin/$(basename $0) -fdiagnostics-color=always "$@" ${PIPE_FLAGS} ${LD_FLAGS}
