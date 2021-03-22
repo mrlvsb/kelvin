@@ -65,12 +65,12 @@ with open("result.html", "w") as out:
         returncode = cmd_run(compile_cmd, out, show_cmd=compile_cmd, env=env)
 
     if output and not os.path.exists(output):
-        executables = [f for f in os.listdir() if os.access(f, os.X_OK)]
+        executables = [f for f in os.listdir() if os.access(f, os.X_OK) and not os.path.isdir(f)]
         if len(executables) == 0:
             out.write("<span style='color: red'>No executable has been built.</span>")
             exit(1)
         elif len(executables) > 1:
-            out.write("<span style='color: red'>Multiple executables have been built.</span>")
+            out.write(f"<span style='color: red'>Multiple executables have been built: {','.join(executables)}</span>")
             exit(1)
 
         out.write(f"<code style='color: #444; font-weight: bold'>$ mv {executables[0]} {output}</code>")
