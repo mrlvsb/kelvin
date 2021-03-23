@@ -15,6 +15,7 @@
   let current_submit = null;
   let deadline = null;
   let showDiff = false;
+  let showComments = true;
 
   class SourceFile {
       constructor(source) {
@@ -179,8 +180,9 @@
       </button>
     {/if}
 
+    <button class="btn p-0 btn-link" title="Toggle comments" on:click={() => showComments = !showComments}><span class="iconify" data-icon="fa-solid:comment"></span></button>
     <button class="btn p-0 btn-link" title="Diff vs previous version(s)" on:click={() => showDiff = !showDiff}><span class="iconify" data-icon="fa-solid:history"></span></button>
-    <a href="download" download><span class="iconify" data-icon="fa-solid:download"></span></a>
+    <a href="download" download title="Download"><span class="iconify" data-icon="fa-solid:download"></span></a>
   </div>
 
   {#if showDiff}
@@ -204,7 +206,7 @@
         {:else}
           <SubmitSource
           code={file.source.content}
-          comments={file.source.comments}
+          comments={showComments ? file.source.comments : []}
           on:setNotification={setNotification}
           on:saveComment={evt => saveComment({...evt.detail, source: file.source.path})} />
         {/if}
