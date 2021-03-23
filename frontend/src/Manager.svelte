@@ -38,6 +38,9 @@ ul input {
   import {clickOutside} from './utils.js';
   import {fs, currentPath, cwd, openedFiles, currentOpenedFile} from './fs.js'
   import Editor from './Editor.svelte'
+  import {fetch} from './api.js'
+
+  export let taskid;
 
   let renamingPath = null;
   let ctxMenu = null;
@@ -105,6 +108,10 @@ pipeline:
       await fs.open(fileName);
     }
   }
+
+  async function reevaluate() {
+    await fetch(`/api/reevaluate_task/${taskid}`, {method: 'POST'});
+  }
 </script>
 
 <div>
@@ -171,9 +178,14 @@ pipeline:
     {#if $currentOpenedFile}
       <div class="editor-container">
         {#if $currentOpenedFile === '/config.yml'}
-        <a href="https://github.com/mrlvsb/kelvin/blob/master/README.pipeline.md" target="_blank" style="position: absolute; z-index: 3; right: 5px;">
-          <span class="iconify" data-icon="entypo:help"></span>
-        </a>
+        <div style="position: absolute; z-index: 3; right: 5px;">
+          <button class="btn btn-link p-0" title="Reevaluate all submits" on:click={reevaluate}>
+            <span class="iconify" data-icon="bx:bx-refresh"></span> 
+          </button>
+          <a href="https://github.com/mrlvsb/kelvin/blob/master/README.pipeline.md" target="_blank">
+            <span class="iconify" data-icon="entypo:help"></span>
+          </a>
+        </div>
         {/if}
         <Editor filename={$currentOpenedFile} bind:value={$openedFiles[$currentOpenedFile].content} />
       </div>

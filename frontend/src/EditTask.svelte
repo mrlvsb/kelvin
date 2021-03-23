@@ -294,7 +294,7 @@ td:not(:nth-of-type(3)) {
       </div>
 
       <div class="form-group">
-        <Manager />
+        <Manager taskid={task.id} />
       </div>
 
       <button class="btn btn-primary" on:click|preventDefault={save}>Save</button>

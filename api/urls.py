@@ -12,4 +12,5 @@ urlpatterns = [
     path('classes/all', views.all_classess),
     path('classes/<int:class_id>/add_students', views.add_student_to_class),
     path('subject/<subject_abbr>', views.subject_list),
+    path('reevaluate_task/<int:task_id>', views.reevaluate_task),
 ]

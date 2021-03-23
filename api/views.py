@@ -442,3 +442,11 @@ def duplicate_task(request, task_id):
     return JsonResponse({
         'id': copied_task.id,
     })
+
+@user_passes_test(is_teacher)
+def reevaluate_task(request, task_id):
+    for submit in Submit.objects.filter(assignment__task_id=task_id):
+        submit.jobid = django_rq.enqueue(evaluate_job, submit).id
+        submit.save()
+
+    return JsonResponse({})
