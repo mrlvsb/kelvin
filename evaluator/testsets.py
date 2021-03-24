@@ -215,7 +215,7 @@ class TestSet:
 
                     pipe.type = pipe_type
                     pipe.title = item.get('title', item['type'])
-                    pipe.fail_on_error = item.get('fail_on_error', False)
+                    pipe.fail_on_error = item.get('fail_on_error', True)
 
                     pipe.id = f"{counter:03}_{item['type']}"
                     counter += 1

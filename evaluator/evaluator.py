@@ -86,7 +86,7 @@ class Evaluation:
                 res['title'] = pipe.title
                 self.result.pipelines.append(res)
 
-                if 'failed' in res and res['failed']:
+                if pipe.fail_on_error and 'failed' in res and res['failed']:
                     break
 
             job.meta['current_action'] += 1
