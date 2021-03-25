@@ -2,7 +2,7 @@ django==3.1.6
 python-ldap==3.2.0
 django-rq==2.3.2
 six==1.13.0
-pyyaml==5.2
+pyyaml==5.4
 mosspy==1.0.8
 https://github.com/mingchen/django-cas-ng/archive/master.zip #django-cas-ng==4.0.0
 imageio==2.6.1
