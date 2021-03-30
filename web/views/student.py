@@ -30,7 +30,7 @@ from common.evaluate import evaluate_job
 from common.moss import moss_result
 from web.task_utils import load_readme
 from api.models import UserToken
-from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
+from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES, MAX_INLINE_LINES
 from evaluator.testsets import TestSet
 from common.evaluate import get_meta
 from evaluator.results import EvaluationResult, PipeResult
@@ -549,8 +549,16 @@ def submit_comments(request, assignment_id, login, submit_num):
             content = ''
             content_url = None
             error = None
+
+            def count_lines(path):
+                lines = 0
+                with open(path) as f:
+                    for line in f:
+                        lines += 1
+                return lines
+
             try:
-                if os.path.getsize(source.phys) <= MAX_INLINE_CONTENT_BYTES:
+                if os.path.getsize(source.phys) <= MAX_INLINE_CONTENT_BYTES and count_lines(source.phys) < MAX_INLINE_LINES:
                     with open(source.phys) as f:
                         content = f.read()
                 else:
