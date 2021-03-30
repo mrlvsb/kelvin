@@ -34,7 +34,7 @@
           .map(i => i.students[student.username])
           .filter(result => result && result.submits != 0 && !isNaN(parseFloat(result.assigned_points)))
           .map(result => parseFloat(result.assigned_points))
-          .reduce((acc, val) => acc + val, 0);
+          .reduce((acc, val) => acc + val, 0).toFixed(2);
   }
 
   let showFullTaskNames = localStorageStore('classDetail/showFullTaskNames', false);
