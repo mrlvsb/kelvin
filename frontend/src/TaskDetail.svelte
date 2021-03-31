@@ -1,3 +1,5 @@
+<svelte:window on:keydown={keydown} />
+
 <script>
   import SubmitSource from "./SubmitSource.svelte";
   import SyncLoader from "./SyncLoader.svelte";
@@ -128,6 +130,18 @@
           await walk(comments);
         }
       }
+    }
+  }
+
+  function keydown(e) {
+    if(e.target.getAttribute('contenteditable') || e.target.tagName === 'TEXTAREA' || e.target.tagName == 'INPUT') {
+      return;
+    }
+
+    if(e.key === "ArrowLeft" && current_submit > 1) {
+      document.location.href = `../${current_submit-1}${document.location.hash}`;
+    } else if(e.key === "ArrowRight" && submits && current_submit < submits.length) {
+      document.location.href = `../${current_submit+1}${document.location.hash}`;
     }
   }
 
