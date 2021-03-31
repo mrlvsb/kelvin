@@ -42,6 +42,15 @@ from notifications.models import Notification
 
 mimedetector = magic.Magic(mime=True)
 
+def is_file_small(path):
+    def count_lines(path):
+        lines = 0
+        with open(path) as f:
+            for line in f:
+                lines += 1
+        return lines
+    return os.path.getsize(path) <= MAX_INLINE_CONTENT_BYTES and count_lines(path) < MAX_INLINE_LINES
+
 
 @login_required()
 def student_index(request):
@@ -392,10 +401,21 @@ def submit_diff(request, login, assignment_id, submit_a, submit_b):
     files_a = os.listdir(dir_a)
     files_b = os.listdir(dir_b)
 
+    excludes = []
+    for root, subdirs, files in [*os.walk(dir_a), *os.walk(dir_b)]:
+        for f in files:
+            path = os.path.join(root, f)
+            mime = mimedetector.from_file(path)
+            if mime and not mime.startswith('image/') and not is_file_small(path):
+                excludes.append('--exclude')
+
+                p = os.path.relpath(path, base_dir).split('/')[1:]
+                excludes.append(os.path.join(*p))
+
     def get_patch(p1, p2):
         # python3.7 does not support errors on TemporaryFile
         with tempfile.NamedTemporaryFile('r') as diff:
-            subprocess.Popen(["diff", "-ruiwN"] + [p1, p2], cwd=base_dir, stdout=diff).wait()
+            subprocess.Popen(["diff", "-ruiwN", *excludes] + [p1, p2], cwd=base_dir, stdout=diff).wait()
             with open(diff.name, errors='ignore') as out:
                 return out.read()
 
@@ -550,15 +570,8 @@ def submit_comments(request, assignment_id, login, submit_num):
             content_url = None
             error = None
 
-            def count_lines(path):
-                lines = 0
-                with open(path) as f:
-                    for line in f:
-                        lines += 1
-                return lines
-
             try:
-                if os.path.getsize(source.phys) <= MAX_INLINE_CONTENT_BYTES and count_lines(source.phys) < MAX_INLINE_LINES:
+                if is_file_small(source.phys):
                     with open(source.phys) as f:
                         content = f.read()
                 else:
