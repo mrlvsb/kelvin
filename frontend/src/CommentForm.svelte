@@ -13,7 +13,9 @@
     const dispatch = createEventDispatcher();
 
   function submit() {
-    dispatch('save', comment);
+    if(!disabled) {
+      dispatch('save', comment);
+    }
   }
 </script>
 
