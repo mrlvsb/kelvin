@@ -47,8 +47,8 @@ class Subject(models.Model):
         return self.name
 
 class Task(models.Model):
-    name = models.CharField(max_length=60)
-    code = models.CharField(max_length=60, verbose_name='Directory', unique=True)
+    name = models.CharField(max_length=255)
+    code = models.CharField(max_length=255, verbose_name='Directory', unique=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     announce = models.BooleanField(default=False)
 
@@ -212,7 +212,7 @@ class Submit(models.Model):
     max_points = models.IntegerField(null=True)
     assigned_points = models.FloatField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    jobid = models.CharField(max_length=20, null=True)
+    jobid = models.CharField(max_length=64, null=True)
 
     def path_parts(self):
         return [
