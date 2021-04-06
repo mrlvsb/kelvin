@@ -155,6 +155,11 @@
     summaryComments = json['summary_comments'];
   }
 
+  function countComments(comments) {
+      comments = comments || {};
+      return Object.values(comments).reduce((sum, line) => sum + line.length, 0);
+  }
+
   $: allOpen = files && files.reduce((sum, file) => sum + file.opened, 0) === files.length;
   async function toggleOpen() {
     files = files.map(file => {
@@ -209,6 +214,9 @@
     <h2 class="file-header" title="Toggle file visibility">
       <span on:click={() => file.opened = !file.opened}>
       {file.source.path}
+      {#if file.source.comments && Object.keys(file.source.comments).length}
+        <span class="badge badge-dark" style="font-size: 60%;">{countComments(file.source.comments)}</span>
+      {/if}
       </span>{#if file.source.type == 'source' && file.source.content}<CopyToClipboard content={() => file.source.content} title='Copy the source code to the clipboard'><span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px"></span></CopyToClipboard>{/if}
     </h2>
     {#if file.opened }
