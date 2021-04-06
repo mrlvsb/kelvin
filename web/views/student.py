@@ -319,7 +319,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
 
         # delete previous notifications
         Notification.objects.filter(
-            action_object_object_id__in=submits,
+            action_object_object_id__in=[str(s.id) for s in submits],
             action_object_content_type=ContentType.objects.get_for_model(Submit),
             verb='submitted',
         ).delete()
