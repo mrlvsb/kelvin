@@ -452,7 +452,7 @@ def submit_comments(request, assignment_id, login, submit_num):
         raise PermissionDenied()
 
     submits = []
-    for s in Submit.objects.filter(assignment_id=assignment_id, student__username=login):
+    for s in Submit.objects.filter(assignment_id=assignment_id, student__username=login).order_by('submit_num'):
         submits.append({
             'num': s.submit_num,
             'submitted': s.created_at,
