@@ -7,6 +7,12 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import SuspiciousOperation
 from django.views.decorators.csrf import csrf_exempt
 from common.models import Comment
+from django.core.cache import caches
+
+CACHE_KEY = 'notification:{}'
+
+cache = caches['default']
+
 
 
 @login_required
@@ -22,6 +28,7 @@ def mark_as_read(request, notification_id=None):
 
         for notification in notifications:
             notification.mark_as_read()
+            cache.delete(CACHE_KEY.format(notification.id))
     else:
         raise SuspiciousOperation()
     return all_notifications(request)
@@ -30,7 +37,12 @@ def mark_as_read(request, notification_id=None):
 def all_notifications(request):
     all_list = []
 
+
     def to_json(notification):
+        key = CACHE_KEY.format(notification.id)
+        result = cache.get(key)
+        if result:
+            return result
         struct = model_to_dict(notification)
         if struct.get('data'):
             struct = {**struct, **struct['data']}
@@ -49,6 +61,7 @@ def all_notifications(request):
         if isinstance(notification.action_object, Comment):
             struct['description'] = notification.action_object.text
 
+        cache.set(key, struct, timeout=60*60*24)
         return struct
 
     for notification in request.user.notifications.filter(unread=True):
