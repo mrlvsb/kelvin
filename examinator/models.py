@@ -54,8 +54,8 @@ class Exam:
             return self.student_objs_cache
 
         students = []
-        for stud in self.students:
-            students.append((stud, User.objects.filter(username=stud).first()))
+        for stud in User.objects.filter(username__in=self.students):
+            students.append((stud.username, stud))
 
         self.student_objs_cache = students
         return students

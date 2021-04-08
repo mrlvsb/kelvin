@@ -86,7 +86,7 @@ def student_index(request):
             }
 
             for student in assignedtask_results(assignment, student__id=request.user.id):
-                if student['student'].username == request.user.username:
+                if student['student'] == request.user.username:
                     data = {**data, **student}
             tasks.append(data)
 

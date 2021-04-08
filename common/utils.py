@@ -1,9 +1,11 @@
 from datetime import timedelta
 import re
 import ldap
+from functools import lru_cache
 
 LDAP_CONNECTION = None
 
+@lru_cache()
 def is_teacher(user):
     return user.groups.filter(name='teachers').exists()
 

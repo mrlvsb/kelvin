@@ -111,7 +111,7 @@ def submits(request, student_username=None):
         filters['student__username'] = student_username
         student_full_name = get_object_or_404(User, username=student_username).get_full_name()
 
-    submits = Submit.objects.filter(**filters).order_by('-id')[:100]
+    submits = Submit.objects.filter(**filters).order_by('-id').select_related('student', 'assignment', 'assignment__task')[:100]
     return render(request, "web/submits.html", {
         'submits': submits,
         'student_username': student_username,
@@ -161,7 +161,7 @@ def show_assignment_submits(request, assignment_id):
                 continue
             submit = Submit.objects.get(
                 assignment_id=assignment.id,
-                student_id=result['student'].id,
+                student__username=result['student'],
                 submit_num=result['accepted_submit_num'],
             )
         results.append((submit, result))
@@ -208,7 +208,7 @@ def build_score_csv(assignments, filename):
         header.append(assignment.task.name)
 
         for record in assignedtask_results(assignment):
-            login = record['student'].username
+            login = record['student']
             if login not in result:
                 result[login] = {'LOGIN': login}
 

@@ -52,7 +52,7 @@ def all_classess(request):
     if not request.user.is_superuser:
         conds['teacher_id'] = request.user.id
 
-    for cl in Class.objects.filter(**conds):
+    for cl in Class.objects.filter(**conds).select_related('teacher', 'subject', 'semester'):
         sem = str(cl.semester)
         if sem not in semesters:
             semesters[sem] = {}
@@ -86,9 +86,10 @@ def class_detail_list(request):
     classess = Class.objects.filter(**class_conditions)
 
     result = []
-    for clazz in classess:
+    for clazz in classess.select_related('semester', 'subject', 'teacher'):
         assignments = []
-        for assignment in clazz.assignedtask_set.all().order_by('id'):
+        students = list(clazz.students.all().order_by('username').values('username', 'first_name', 'last_name'))
+        for assignment in clazz.assignedtask_set.all().order_by('id').select_related('task'):
             assignment_data = {
                 'task_id': assignment.task_id,
                 'task_link': reverse('task_detail', kwargs={'login': request.user.username, 'assignment_id': assignment.id}),
@@ -103,13 +104,12 @@ def class_detail_list(request):
                 'assigned': assignment.assigned,
                 'deadline': assignment.deadline,
                 'max_points': assignment.max_points,
-                'students': {s.username: {'username': s.username} for s in clazz.students.all()}
+                'students': {s['username']: {'username': s['username']} for s in students}
             }
 
-            for score in assignedtask_results(assignment):
+            for score in assignedtask_results(assignment, students=[s['username'] for s in students]):
                 if 'assigned_points' in score and score['assigned_points'] is not None and int(assignment.max_points or 0) > 0:
                     score['color'] = points_to_color(score['assigned_points'], assignment.max_points)
-                score['student'] = score['student'].username
 
 
                 if 'accepted_submit_num' in score:
@@ -136,7 +136,7 @@ def class_detail_list(request):
             'csv_link': reverse('download_csv_per_class', kwargs={'class_id': clazz.id}),
             'assignments': assignments,
             'summary': clazz.summary(request.user.username, show_output=True),
-            'students': list(clazz.students.all().order_by('username').values('username', 'first_name', 'last_name')),
+            'students': students,
         })
 
     return JsonResponse({'classes': result})

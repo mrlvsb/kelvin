@@ -280,10 +280,14 @@ class Comment(models.Model):
 
 User.add_to_class('notification_str', lambda self: self.get_full_name())
 
-def assignedtask_results(assignment, **kwargs):
+def assignedtask_results(assignment, students=None, **kwargs):
     results = {}
-    for student in assignment.clazz.students.all().order_by('username'):
-        results[student.username] = {
+
+    if not students:
+        students = assignment.clazz.students.all().values_list('username', flat=True)
+
+    for student in students:
+        results[student] = {
             'student': student,
             'submits': 0,
             'submits_with_assigned_pts': 0,
@@ -315,4 +319,4 @@ def assignedtask_results(assignment, **kwargs):
             student_submit_stats['accepted_submit_num'] = submit.submit_num
             student_submit_stats['accepted_submit_id'] = submit.id
 
-    return sorted(results.values(), key=lambda s: s['student'].username)
+    return sorted(results.values(), key=lambda s: s['student'])
