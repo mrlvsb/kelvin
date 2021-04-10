@@ -166,6 +166,9 @@ CACHES = {
 RQ_QUEUES = {
     'default': {
         'USE_REDIS_CACHE': 'default',
+    },
+    'cuda': {
+        'USE_REDIS_CACHE': 'default',
     }
 }
 

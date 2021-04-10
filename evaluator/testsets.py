@@ -126,6 +126,7 @@ class TestSet:
         self.tests_dict = {}
         self.File = File
         self.warnings = []
+        self.queue = 'default'
         try:
             self.files_cache = os.listdir(self.task_path)
         except FileNotFoundError as e:
@@ -224,6 +225,9 @@ class TestSet:
             for k, v in test_conf.items():
                 if k not in allowed_keys:
                     self.add_warning(f"task '{t.name}': unknown key '{k}'")
+
+    def parse_conf_queue(self, conf):
+        self.queue = conf
 
     def load_tests(self):
         self.discover_tests()
