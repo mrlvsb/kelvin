@@ -1,4 +1,4 @@
-import 'global.css'
+import './global.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 
 import 'highlight.js/styles/github.css'

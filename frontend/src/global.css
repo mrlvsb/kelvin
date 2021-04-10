@@ -31,4 +31,5 @@ h3 {
 
 .morehover:hover .morehover-content {
   display: block !important;
+  z-index: 100;
 }
