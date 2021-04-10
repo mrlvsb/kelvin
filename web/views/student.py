@@ -544,6 +544,9 @@ def submit_comments(request, assignment_id, login, submit_num):
 
     result = {}
     for source in submit.all_sources():
+        if '.git/' in source.virt:
+            continue
+
         mime = mimedetector.from_file(source.phys)
         if mime and mime.startswith('image/'):
             SUPPORTED_IMAGES = [
