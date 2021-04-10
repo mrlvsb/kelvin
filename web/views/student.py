@@ -216,7 +216,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         'text':  testset.load_readme().announce if is_announce else testset.load_readme(),
         'inputs': None if is_announce else testset,
         'max_inline_content_bytes': MAX_INLINE_CONTENT_BYTES,
-        'has_pipeline': not is_announce and bool(testset.pipeline),
+        'has_pipeline': bool(testset.pipeline),
         'upload': not is_teacher(request.user) or request.user.username == login,
     }
 

@@ -10,6 +10,8 @@ import requests
 import tempfile
 import tarfile
 import logging
+from django.utils import timezone
+from common.utils import is_teacher
 
 from evaluator.testsets import TestSet
 
@@ -30,6 +32,7 @@ def evaluate_submit(request, submit, meta=None):
 
     meta = {
         **get_meta(submit.student.username),
+        'before_announce': not is_teacher(submit.student) and submit.assignment.assigned > timezone.now(),
         **(meta if meta else {})
     }
 

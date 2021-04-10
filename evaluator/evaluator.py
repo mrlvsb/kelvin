@@ -15,6 +15,7 @@ class Evaluation:
         self.submit_path = submit_path
         self.result_path = result_path
         self.result = None
+        self.meta = meta
         self.tests = testsets.TestSet(task_path, meta)
         os.makedirs(result_path)
 
@@ -26,6 +27,10 @@ class Evaluation:
 
         self.result = EvaluationResult(self.result_path)
         for pipe in self.tests.pipeline:
+            if not pipe.enabled or (self.meta['before_announce'] and not pipe.enabled == 'announce'):
+                logger.info(f"skipping {pipe.id}")
+                continue
+
             logger.info(f"executing {pipe.id}")
             res = pipe.run(self)
             if res:
