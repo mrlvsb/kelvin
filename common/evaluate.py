@@ -1,6 +1,7 @@
 import django_rq
 from django.urls import reverse
 from django.core import signing
+from kelvin.settings import BASE_DIR
 
 from evaluator.evaluator import Evaluation
 import os
@@ -9,6 +10,8 @@ import requests
 import tempfile
 import tarfile
 import logging
+
+from evaluator.testsets import TestSet
 
 
 def evaluate_submit(request, submit, meta=None):
@@ -24,15 +27,21 @@ def evaluate_submit(request, submit, meta=None):
         'submit_id': submit.id,
         'task_id': submit.assignment.task_id,
     })
-    return django_rq.enqueue(
+
+    meta = {
+        **get_meta(submit.student.username),
+        **(meta if meta else {})
+    }
+
+    task_dir = os.path.join(BASE_DIR, "tasks", submit.assignment.task.code)
+    task = TestSet(task_dir, meta)
+
+    return django_rq.get_queue(task.queue).enqueue(
         evaluate_job,
         submit_url,
         task_url,
         token,
-        {
-            **get_meta(submit.student.username),
-            **(meta if meta else {})
-        }
+        meta
     )
 
 
