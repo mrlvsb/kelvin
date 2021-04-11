@@ -316,8 +316,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
             else:
                 store_uploaded_file(s, path, uploaded_file)
 
-        if not is_announce:
-            s.jobid = evaluate_submit(request, s).id
+        s.jobid = evaluate_submit(request, s).id
         s.save()
 
         # delete previous notifications
