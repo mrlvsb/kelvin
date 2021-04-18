@@ -117,6 +117,7 @@ def check_task(task_id):
             m.options['l'] = detected_lang
 
         url = m.send()
+        logger.info(f"Moss returned: {url}")
         with tempfile.NamedTemporaryFile() as out:
             m.saveWebPage(url, out.name)
 
