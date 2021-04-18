@@ -3,15 +3,23 @@
 {% block content %}
 <h1>MOSS for {{ task.name }}
 {% if moss_url %}
-&nbsp;(<a href="{{ moss_url }}" target="_blank">MOSS URL</a>)
+(<a href="{{ moss_url }}" target="_blank">MOSS URL</a>)
 {% endif %}
 </h1>
+{% if timestamp %}
+  <div>Finished {{ timestamp|date:"d. m. Y H:i:s" }}</div>
+{% endif %}
 {% if status %}
   <div style="text-align: center; font-size: 30px">
-    {{ status }}
+    <pre>
+      {{ status }}
+    </pre>
   </div>
-  <meta http-equiv="refresh" content="15" />
+  {% if refresh %}
+    <meta http-equiv="refresh" content="15" />
+  {% endif %}
 {% else %}
+  {% if moss_url %}
   <form method="post" class="float-right">
      {% csrf_token %}
     <button class="btn btn-sm btn-primary"><span class="iconify" data-icon="fa-solid:sync"></span></button>
@@ -79,6 +87,11 @@
   </p>
 
   {% endif %}
+  {% else %}
+    <form method="post">
+     {% csrf_token %}
+      <button class="btn btn-sm btn-primary">Send to MOSS</button>
+    </form>
+  {% endif %}
 {% endif %}
-
 {% endblock %}
