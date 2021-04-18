@@ -35,9 +35,11 @@ from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from evaluator.testsets import TestSet
 from common.evaluate import get_meta, evaluate_submit
 from common.utils import is_teacher
-from common.moss import check_task, moss_result, moss_task_set_opts, moss_task_get_opts
-from common.bulk_import import BulkImport, ImportException
-from web.task_utils import load_readme, process_markdown 
+from common.moss import check_task, moss_delete_job_from_cache, moss_delete_result_from_cache, \
+    moss_job_cache_key, moss_result, \
+    moss_task_set_opts, \
+    moss_task_get_opts
+from common.bulk_import import BulkImport
 
 @user_passes_test(is_teacher)
 def teacher_task(request, task_id):
@@ -56,27 +58,36 @@ def teacher_task(request, task_id):
 @user_passes_test(is_teacher)
 def teacher_task_moss_check(request, task_id):
     cache = caches['default']
-    key = f'moss.{task_id}'
-    key_job = f'moss.job.{task_id}'
+    key_job = moss_job_cache_key(task_id)
 
     task = get_object_or_404(Task, pk=task_id)
 
     job_id = cache.get(key_job)
     if job_id:
+        refresh = False
         try:
             job = django_rq.jobs.get_job_class().fetch(job_id, connection=django_rq.queues.get_connection())
             status = job.get_status()
-            if status == 'queued':
-                status += f' {job.get_position() + 1}'
+            if status == "started":
+                refresh = True
+            elif status == "queued":
+                refresh = True
+                status += f" {job.get_position() + 1}"
+            elif status == "failed" and job.exc_info:
+                status += f"\n{job.exc_info}"
+                moss_delete_job_from_cache(task_id)
         except (rq.exceptions.NoSuchJobError, AttributeError) as e:
+            moss_delete_job_from_cache(task_id)
             logging.exception(e)
             status = 'unknown'
         return render(request, "web/moss.html", {
             "status": status,
             "task": task,
+            "refresh": refresh
         })
 
-    if request.method == 'POST' or cache.get(key) is None:
+    if request.method == 'POST':
+        moss_delete_result_from_cache(task_id)
         job = django_rq.enqueue(check_task, task_id, job_timeout=60*15)
         cache.set(key_job, job.id, timeout=60*60*8)
         return redirect(request.path_info)
@@ -93,14 +104,19 @@ def teacher_task_moss_check(request, task_id):
         moss_task_set_opts(task_id, opts)
 
     res = moss_result(task_id, percent=opts['percent'], lines=opts['lines'])
-
-    return render(request, 'web/moss.html', {
-        "matches": res.matches,
-        "graph": res.to_svg(anonymize=False),
-        "opts": res.opts,
-        "moss_url": res.url,
-        "task": task,
-    })
+    if not res:
+        return render(request, 'web/moss.html', {
+            "task": task,
+        })
+    else:
+        return render(request, 'web/moss.html', {
+            "matches": res.matches,
+            "graph": res.to_svg(anonymize=False),
+            "opts": res.opts,
+            "timestamp": res.timestamp,
+            "moss_url": res.url,
+            "task": task,
+        })
 
 
 @user_passes_test(is_teacher)

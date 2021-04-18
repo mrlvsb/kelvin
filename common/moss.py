@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 import re
@@ -85,68 +86,70 @@ def check_task(task_id):
     logger.info(f"Task {task_id} plagiarism checking started")
     counters = {lang: 0 for lang in ALLOWED_EXTENSIONS.values()}
 
-    try:
-        submits = Submit.objects.filter(assignment__task__id=task_id).order_by('-submit_num')
-        m = mosspy.Moss(settings.MOSS_USERID)
-        # do not ignore matches that occur frequently
-        m.setIgnoreLimit(10000)
+    submits = Submit.objects.filter(assignment__task__id=task_id).order_by('-submit_num')
+    m = mosspy.Moss(settings.MOSS_USERID)
+    # do not ignore matches that occur frequently
+    m.setIgnoreLimit(10000)
 
-        # group submissions by directory
-        m.setDirectoryMode(1)
+    # group submissions by directory
+    m.setDirectoryMode(1)
 
-        # template files
-        tpl_path = os.path.join(submits[0].assignment.task.dir(), "template")
-        for root, _, files in os.walk(tpl_path):
-            for f in files:
-                full_path = os.path.join(root, f)
-                if is_ext_allowed(f) and check_file_size(full_path):
-                    logger.info(f"Task {task_id}: adding base file {f}")
-                    m.addBaseFile(full_path)
+    # template files
+    tpl_path = os.path.join(submits[0].assignment.task.dir(), "template")
+    for root, _, files in os.walk(tpl_path):
+        for f in files:
+            full_path = os.path.join(root, f)
+            if is_ext_allowed(f) and check_file_size(full_path):
+                logger.info(f"Task {task_id}: adding base file {f}")
+                m.addBaseFile(full_path)
 
-        processed = set()
-        for submit in submits:
-            if submit.student_id not in processed:
-                try:
-                    add_submit(m, submit, counters)
-                    processed.add(submit.student_id)
-                except IOError:
-                    logger.error(f"Cannot add submit {submit.id} to MOSS")
+    processed = set()
+    for submit in submits:
+        if submit.student_id not in processed:
+            try:
+                add_submit(m, submit, counters)
+                processed.add(submit.student_id)
+            except IOError:
+                logger.error(f"Cannot add submit {submit.id} to MOSS")
 
-        detected_lang = max(counters, key=counters.get)
-        if counters[detected_lang] > 0:
-            m.options['l'] = detected_lang
+    detected_lang = max(counters, key=counters.get)
+    if counters[detected_lang] > 0:
+        m.options['l'] = detected_lang
 
-        url = m.send()
-        logger.info(f"Moss returned: {url}")
-        with tempfile.NamedTemporaryFile() as out:
-            m.saveWebPage(url, out.name)
+    logging.info(f"Sending these files to Moss: {m.files}")
+    url = m.send()
+    logging.info(f"Moss returned: {url}")
+    with tempfile.NamedTemporaryFile() as out:
+        m.saveWebPage(url, out.name)
 
-            matches = []
-            with open(out.name) as f:
-                regex = r'<TR>' \
-                    '<TD><A HREF="(?P<link>[^"]+)">(?P<first_login>[^/]+)/(?P<first_path>.*?) \((?P<first_percent>\d+)%\)</A>' \
-                    '\s*<TD><A HREF="[^"]+">(?P<second_login>[^/]+)/(?P<second_path>.*?) \((?P<second_percent>\d+)%\)</A>' \
-                    '\s*<TD[^>]+>(?P<lines>\d+)'
+        matches = []
+        with open(out.name) as f:
+            regex = r'<TR>' \
+                '<TD><A HREF="(?P<link>[^"]+)">(?P<first_login>[^/]+)/(?P<first_path>.*?) \((?P<first_percent>\d+)%\)</A>' \
+                '\s*<TD><A HREF="[^"]+">(?P<second_login>[^/]+)/(?P<second_path>.*?) \((?P<second_percent>\d+)%\)</A>' \
+                '\s*<TD[^>]+>(?P<lines>\d+)'
 
-                for m in re.finditer(regex, f.read()):
-                    d = m.groupdict()
-                    d['first_percent'] = int(d['first_percent'])
-                    d['second_percent'] = int(d['second_percent'])
-                    matches.append(d)
+            for m in re.finditer(regex, f.read()):
+                d = m.groupdict()
+                d['first_percent'] = int(d['first_percent'])
+                d['second_percent'] = int(d['second_percent'])
+                matches.append(d)
 
-                caches['default'].set(f'moss.{task_id}', {
-                    "url": url,
-                    "matches": matches
-                }, timeout=60*60*24*90)
-        logger.info(f"Task {task_id} plagiarism checking finished, URL: {url}")
-    finally:
-        caches['default'].delete(f'moss.job.{task_id}')
+            caches['default'].set(moss_result_cache_key(task_id), {
+                "url": url,
+                "matches": matches,
+                "timestamp": datetime.datetime.now()
+            }, timeout=60*60*24*90)
+    logger.info(f"Task {task_id} plagiarism checking finished, URL: {url}")
+    moss_delete_job_from_cache(task_id)
+
 
 class MossResult:
-    def __init__(self, url, matches, opts):
+    def __init__(self, url, matches, opts, timestamp):
         self.url = url
         self.matches = matches
         self.opts = opts
+        self.timestamp = timestamp
         self.G = nx.Graph()
 
         for match in matches:
@@ -157,7 +160,6 @@ class MossResult:
                 label=f'{int(percent)}%',
                 href=match['link']
             )
-
 
     def to_svg(self, anonymize=True, login=None):
         max_percent = 0
@@ -217,7 +219,7 @@ def moss_task_get_opts(task_id):
 def moss_result(task_id, percent=None, lines=None):
     cache = caches['default']
 
-    key = f"moss.{task_id}"
+    key = moss_result_cache_key(task_id)
     cache_entry = cache.get(key)
     if not cache_entry:
         return None
@@ -235,4 +237,20 @@ def moss_result(task_id, percent=None, lines=None):
             match['second_fullname'] = User.objects.get(username=match['second_login']).get_full_name()
             matches.append(match)
 
-    return MossResult(cache_entry.get("url"), matches, opts)
+    return MossResult(cache_entry.get("url"), matches, opts, cache_entry.get("timestamp"))
+
+
+def moss_result_cache_key(task_id: int) -> str:
+    return f"moss.{task_id}"
+
+
+def moss_job_cache_key(task_id: int) -> str:
+    return f"moss.job.{task_id}"
+
+
+def moss_delete_job_from_cache(task_id: int):
+    caches["default"].delete(moss_job_cache_key(task_id))
+
+
+def moss_delete_result_from_cache(task_id: int):
+    caches["default"].delete(moss_result_cache_key(task_id))
