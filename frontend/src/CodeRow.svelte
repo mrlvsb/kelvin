@@ -40,7 +40,7 @@
     word-break: break-word;
     border: 2px solid #000000;
     border-radius: 5px;
-    max-width: 1000px;
+    max-width: 980px;
     margin-bottom: 1px;
   }
   :global(.comment p) {
