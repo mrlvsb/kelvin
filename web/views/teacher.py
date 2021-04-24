@@ -79,7 +79,7 @@ def teacher_task_moss_check(request, task_id):
         except (rq.exceptions.NoSuchJobError, AttributeError) as e:
             moss_delete_job_from_cache(task_id)
             logging.exception(e)
-            status = 'unknown'
+            status = "unknown"
         return render(request, "web/moss.html", {
             "status": status,
             "task": task,
@@ -107,9 +107,13 @@ def teacher_task_moss_check(request, task_id):
     if not res:
         return render(request, 'web/moss.html', {
             "task": task,
+            "has_result": False
         })
     else:
         return render(request, 'web/moss.html', {
+            "has_result": True,
+            "success": res.success,
+            "log": res.log,
             "matches": res.matches,
             "graph": res.to_svg(anonymize=False),
             "opts": res.opts,

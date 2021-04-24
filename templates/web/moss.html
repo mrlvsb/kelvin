@@ -19,79 +19,81 @@
     <meta http-equiv="refresh" content="15" />
   {% endif %}
 {% else %}
-  {% if moss_url %}
   <form method="post" class="float-right">
-     {% csrf_token %}
-    <button class="btn btn-sm btn-primary"><span class="iconify" data-icon="fa-solid:sync"></span></button>
+   {% csrf_token %}
+    <button class="btn btn-sm btn-primary">Send to MOSS</button>
   </form>
 
-  <form class="form-inline">
-    <div class="input-group input-group-sm mr-2">
-    <input type="number" min="0" max="100" class="form-control form-control-sm" name="percent" value={{opts.percent}} />
-      <div class="input-group-append">
-        <div class="input-group-text">%</div>
-      </div>
+  {% if has_result %}
+    {% if success %}
+      <form class="form-inline">
+        <div class="input-group input-group-sm mr-2">
+        <input type="number" min="0" max="100" class="form-control form-control-sm" name="percent" value={{opts.percent}} />
+          <div class="input-group-append">
+            <div class="input-group-text">%</div>
+          </div>
+        </div>
+
+        <div class="input-group input-group-sm mr-2">
+          <input type="number" min="0" max="1000" placeholder="Max lines" class="form-control form-control-sm" name="lines" value={{opts.lines}} />
+          <div class="input-group-append">
+            <div class="input-group-text">lines</div>
+          </div>
+        </div>
+        <div class="form-check mr-2">
+          <input class="form-check-input" type="checkbox" name="show_to_students"{% if opts.show_to_students %} checked{% endif %} id="filter-show-to-students" value="1">
+          <label class="form-check-label" for="filter-show-to-students"> Show to students on the Result tab</label>
+        </div>
+        <input type="submit" class="btn btn-sm btn-primary" value="Set threshold">
+      </form>
+
+      {% if matches %}
+        <div id="graph">
+          {{ graph | safe }}
+        </div>
+
+        <style>
+        #graph svg {
+          width: 100%;
+          height: auto;
+          min-height: 300px;
+        }
+        table td {
+          white-space: nowrap;
+          width: 1%;
+        }
+        </style>
+        <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+        <script>svgPanZoom('#graph svg')</script>
+
+        <table class="table table-sm table-hover table-striped">
+          {% for match in matches %}
+          <tr>
+            <td>{{ match.first_login }}</td>
+            <td>{{ match.first_fullname }}</td>
+            <td>{{ match.first_percent }}%</td>
+            <td>{{ match.second_login }}</td>
+            <td>{{ match.second_fullname }}</td>
+            <td>{{ match.second_percent }}%</td>
+            <td>{{ match.lines }}</td>
+            <td>
+              <a href="{{ match.link }}"><span class="iconify" data-icon="ant-design:search-outlined"></span></a>
+            </td>
+          </tr>
+          {% endfor %}
+        </table>
+        {% else %}
+        <p class="alert alert-info mt-2">
+          No matches found - try to set different thresholds.
+        </p>
+      {% endif %}
+    {% else %}
+        <div>MOSS check has failed</div>
+    {% endif %}
+    <div>
+      <h4>Log</h4>
+      <pre>{{ log }}</pre>
     </div>
-
-    <div class="input-group input-group-sm mr-2">
-      <input type="number" min="0" max="1000" placeholder="Max lines" class="form-control form-control-sm" name="lines" value={{opts.lines}} />
-      <div class="input-group-append">
-        <div class="input-group-text">lines</div>
-      </div>
-    </div>
-    <div class="form-check mr-2">
-      <input class="form-check-input" type="checkbox" name="show_to_students"{% if opts.show_to_students %} checked{% endif %} id="filter-show-to-students" value="1">
-      <label class="form-check-label" for="filter-show-to-students"> Show to students on the Result tab</label>
-    </div>
-    <input type="submit" class="btn btn-sm btn-primary" value="Set threshold">
-  </form>
-
-  {% if matches %}
-  <div id="graph">
-    {{ graph | safe }}
-  </div>
-
-  <style>
-  #graph svg {
-    width: 100%;
-    height: auto;
-    min-height: 300px;
-  }
-  table td {
-    white-space: nowrap;
-    width: 1%;
-  }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
-  <script>svgPanZoom('#graph svg')</script>
-
-  <table class="table table-sm table-hover table-striped">
-    {% for match in matches %}
-    <tr>
-      <td>{{ match.first_login }}</td>
-      <td>{{ match.first_fullname }}</td>
-      <td>{{ match.first_percent }}%</td>
-      <td>{{ match.second_login }}</td>
-      <td>{{ match.second_fullname }}</td>
-      <td>{{ match.second_percent }}%</td>
-      <td>{{ match.lines }}</td>
-      <td>
-        <a href="{{ match.link }}"><span class="iconify" data-icon="ant-design:search-outlined"></span></a>
-      </td>
-    </tr>
-    {% endfor %}
-  </table>
-  {% else %}
-  <p class="alert alert-info mt-2">
-    No matches found - try to set different thresholds.
-  </p>
-
-  {% endif %}
-  {% else %}
-    <form method="post">
-     {% csrf_token %}
-      <button class="btn btn-sm btn-primary">Send to MOSS</button>
-    </form>
   {% endif %}
 {% endif %}
 {% endblock %}
