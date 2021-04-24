@@ -31,6 +31,7 @@ def cmd_run(cmd, out, show_cmd=None, env=None):
 output = os.getenv('PIPE_OUTPUT', 'main')
 flags = os.getenv('PIPE_FLAGS', '')
 ldflags = os.getenv('PIPE_LDFLAGS', '')
+cmakeflags = os.getenv('PIPE_CMAKEFLAGS', "[]")
 
 
 with open("result.html", "w") as out:
@@ -44,10 +45,12 @@ with open("result.html", "w") as out:
         'PATH': f'/wrapper:{os.getenv("PATH")}',
     }
 
-    if 'cmakelists.txt' in [f.lower() for f in os.listdir('.')]:
-        cmd_run(['cmake', '.'], out, env=env)
+    filelist = [f.lower() for f in os.listdir('.')]
+    if 'cmakelists.txt' in filelist:
+        cmakeflags = json.loads(cmakeflags)
+        cmd_run(['cmake', *cmakeflags, '.'], out, env=env)
 
-    if 'makefile' in [f.lower() for f in os.listdir('.')]:
+    if 'makefile' in filelist:
         returncode = cmd_run(['make'], out, env=env)
     else:
         sources = []
