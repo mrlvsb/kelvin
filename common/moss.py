@@ -98,7 +98,7 @@ def check_task(task_id):
     logger.addHandler(log_handler)
     logger.setLevel(logging.INFO)
 
-    logger.info(f"Plagiarism checking started")
+    logger.info(f"Plagiarism checking started, working directory {os.getcwd()}")
     counters = {lang: 0 for lang in ALLOWED_EXTENSIONS.values()}
 
     url = None

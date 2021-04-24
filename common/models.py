@@ -223,10 +223,11 @@ class Submit(models.Model):
         ]
 
     def dir(self):
-        return "/".join([
+        path = "/".join([
             "submits",
             *self.path_parts(),
         ])
+        return os.path.join(BASE_DIR, path)
 
     def source_path(self, name):
         return os.path.join(self.dir(), name)
