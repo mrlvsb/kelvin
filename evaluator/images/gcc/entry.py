@@ -45,12 +45,12 @@ with open("result.html", "w") as out:
         'PATH': f'/wrapper:{os.getenv("PATH")}',
     }
 
-    filelist = [f.lower() for f in os.listdir('.')]
-    if 'cmakelists.txt' in filelist:
+    if 'cmakelists.txt' in [f.lower() for f in os.listdir('.')]:
         cmakeflags = json.loads(cmakeflags)
         cmd_run(['cmake', *cmakeflags, '.'], out, env=env)
 
-    if 'makefile' in filelist:
+    # The file list needs to be queried again
+    if 'makefile' in [f.lower() for f in os.listdir('.')]:
         returncode = cmd_run(['make'], out, env=env)
     else:
         sources = []
