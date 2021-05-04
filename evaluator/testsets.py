@@ -134,6 +134,7 @@ class TestSet:
         self.File = File
         self.warnings = []
         self.queue = 'default'
+        self.timeout = 180
         try:
             self.files_cache = os.listdir(self.task_path)
         except FileNotFoundError as e:
@@ -242,6 +243,9 @@ class TestSet:
 
     def parse_conf_queue(self, conf):
         self.queue = conf
+
+    def parse_conf_timeout(self, conf):
+        self.timeout = conf
 
     def load_tests(self):
         self.discover_tests()

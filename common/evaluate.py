@@ -44,7 +44,8 @@ def evaluate_submit(request, submit, meta=None):
         submit_url,
         task_url,
         token,
-        meta
+        meta,
+        job_timeout=task.timeout
     )
 
 
