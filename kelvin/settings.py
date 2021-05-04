@@ -169,7 +169,10 @@ RQ_QUEUES = {
     },
     'cuda': {
         'USE_REDIS_CACHE': 'default',
-    }
+    },
+    'evaluator': {
+        'USE_REDIS_CACHE': 'default',
+    },
 }
 
 CHANNEL_LAYERS = {

@@ -133,7 +133,7 @@ class TestSet:
         self.tests_dict = {}
         self.File = File
         self.warnings = []
-        self.queue = 'default'
+        self.queue = 'evaluator'
         self.timeout = 180
         try:
             self.files_cache = os.listdir(self.task_path)
