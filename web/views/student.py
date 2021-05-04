@@ -7,6 +7,7 @@ import io
 import zipfile
 import shutil
 import hashlib
+from collections import namedtuple
 
 import django_rq
 import rq
@@ -153,25 +154,28 @@ def store_uploaded_file(submit: Submit, path: str, file):
     if mime in SUBMIT_DROPPED_MIMES:
         os.unlink(target_path)
 
+JobStatus = namedtuple('JobStatus', ['finished', 'status', 'message'], defaults=[False, '', ''])
 
 def get_submit_job_status(jobid):
     try:
         job = django_rq.jobs.get_job_class().fetch(jobid, connection=django_rq.queues.get_connection())
         status = job.get_status()
         if status == 'queued':
-            return False, f'in queue: {job.get_position() + 1}'
+            return JobStatus(finished=False, status=f'in queue: {job.get_position() + 1}')
         elif status == 'started':
             if 'actions' in job.meta and job.meta['actions'] > 0:
                 percent = job.meta['current_action'] * 100 // job.meta['actions']
-                return False, f'evaluating {percent}%'
+                return JobStatus(finished=False, status=f'evaluating {percent}%')
         elif status == 'finished':
-            return True, 'finished'
-        return False, status
+            return JobStatus(finished=True, status=status)
+        elif status == 'failed':
+            return JobStatus(finished=False, status=status, message=job.exc_info)
+        return JobStatus(finished=False, status=status)
     except rq.exceptions.NoSuchJobError:
-        return True, ''
+        return JobStatus(finished=True)
     except AttributeError:
-        return False, ''
-    return True, ''
+        return JobStatus(finished=False)
+    return JobStatus(finished=True)
 
 @login_required()
 def pipeline_status(request, submit_id):
@@ -180,10 +184,11 @@ def pipeline_status(request, submit_id):
     if not is_teacher(request.user) and request.user != submit.student:
         raise PermissionDenied()
 
-    finished, status = get_submit_job_status(submit.jobid)
+    s = get_submit_job_status(submit.jobid)
     return JsonResponse({
-        'status': status,
-        'finished': finished,
+        'status': s.status,
+        'finished': s.finished,
+        'message': s.message if is_teacher(request.user) else '',
     })
 
 @login_required()
@@ -289,7 +294,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         data['total_submits'] = submits.count()
         data['late_submit'] = assignment.deadline and submits.order_by('id').reverse()[0].created_at > assignment.deadline
         data['diff_versions'] = [(s.submit_num, s.created_at) for s in submits.order_by('id')]
-        data['job_status'] = not get_submit_job_status(current_submit.jobid)[0]
+        data['job_status'] = not get_submit_job_status(current_submit.jobid).finished
 
     if request.method == 'POST':
         s = Submit()
