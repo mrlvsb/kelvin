@@ -16,14 +16,14 @@ class File:
         self.path = path
 
     def open(self, mode='r'):
-        if isinstance(self.path, io.StringIO):
+        if isinstance(self.path, io.BytesIO):
             if 'b' in mode:
-                return io.BytesIO(self.path.getvalue().encode('utf-8'))
-            return io.StringIO(self.path.getvalue())
+                return io.BytesIO(self.path.getvalue())
+            return io.StringIO(self.path.getvalue().decode('utf-8'))
         return open(self.path, mode)
 
     def size(self):
-        if isinstance(self.path, io.StringIO):
+        if isinstance(self.path, io.BytesIO):
             return len(self.path.getvalue())
         return os.stat(self.path).st_size
 
@@ -93,7 +93,7 @@ class Test:
         self._title = value
 
     def add_memory_file(self, name, input=False):
-        f = io.StringIO()
+        f = io.BytesIO()
         self.files[name] = TestFile(File(f), input=input)
         return f
 
@@ -110,7 +110,7 @@ class TestFile:
         return self.file.read(mode)
 
     def size(self):
-        if isinstance(self.file.path, io.StringIO):
+        if isinstance(self.file.path, io.BytesIO):
             return len(self.file.path.getvalue())
         return os.stat(self.file.path).st_size
 
