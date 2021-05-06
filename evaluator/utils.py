@@ -19,8 +19,8 @@ def parse_human_size(txt):
 
 
 def copyfile(src, dst):
-    if isinstance(src, io.StringIO):
-        with open(dst, 'w') as f:
+    if isinstance(src, io.BytesIO):
+        with open(dst, 'wb') as f:
             f.write(src.getvalue())
     else:
         shutil.copyfile(src, dst)
