@@ -134,6 +134,15 @@ SUBMIT_DROPPED_MIMES = [
     'application/x-pie-executable',
     'application/x-sharedlib'
 ]
+IGNORED_FILEPATHS = [
+    re.compile(r".*__pycache__/.*"),
+    re.compile(r".*\.pyc$"),
+    re.compile(r".*\.git/.*"),
+    re.compile(r".*\.idea/.*"),
+    re.compile(r".*\.vscode/.*")
+]
+
+
 def store_uploaded_file(submit: Submit, path: str, file):
     path = os.path.normpath(path)
     if path[0] == '/' or '..' in path.split('/'):
@@ -141,6 +150,11 @@ def store_uploaded_file(submit: Submit, path: str, file):
 
     target_path = submit.source_path(path)
     os.makedirs(os.path.dirname(target_path), exist_ok=True)
+
+    for ignored in IGNORED_FILEPATHS:
+        if ignored.match(path):
+            return
+
     if isinstance(file, UploadedFile):
         with open(target_path, "wb") as storage_file:
             for chunk in file.chunks():
@@ -548,9 +562,6 @@ def submit_comments(request, assignment_id, login, submit_num):
 
     result = {}
     for source in submit.all_sources():
-        if '.git/' in source.virt:
-            continue
-
         mime = mimedetector.from_file(source.phys)
         if mime and mime.startswith('image/'):
             SUPPORTED_IMAGES = [
