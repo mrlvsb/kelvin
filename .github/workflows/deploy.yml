@@ -7,4 +7,4 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - run: 'curl -H"Authorization: Bearer {{ secrets.DEPLOY_HOOK }}" {{ secrets.DEPLOY_HOOK }}'
+      - run: 'curl -H"Authorization: Bearer ${{ secrets.DEPLOY_TOKEN }}" ${{ secrets.DEPLOY_URL }}'
