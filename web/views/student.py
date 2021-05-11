@@ -53,7 +53,11 @@ def is_file_small(path):
             for line in f:
                 lines += 1
         return lines
-    return os.path.getsize(path) <= MAX_INLINE_CONTENT_BYTES and count_lines(path) < MAX_INLINE_LINES
+    try:
+        return os.path.getsize(path) <= MAX_INLINE_CONTENT_BYTES and count_lines(path) < MAX_INLINE_LINES
+    except UnicodeDecodeError:
+        # probably a binary file
+        return False
 
 
 @login_required()
