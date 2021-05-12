@@ -17,13 +17,13 @@
     </div>
 </div>
 
-{% if not classess %}
+{% if not classes %}
 <p class="alert alert-info">
     No class available in this semester.
 </p>
 {% endif %}
 
-{% for node in classess %}
+{% for node in classes %}
 <div class="card mb-2">
     <div class="card-header"><h5 class="mb-0">{{ node.class }}</h5></div>
     <div class="card-body"> 
@@ -76,6 +76,11 @@
                 </td>
             </tr>
             {% endfor %}
+            <tr>
+              <td colspan="3">Celkem</td>
+              <td class="text-right">{{ node.earned_points|floatformat:2 }}</td>
+              <td class="text-right">{{ node.max_points|floatformat:2 }}</td>
+            </tr>
         </table>
         {% else %}
         <p class="alert alert-info mb-0">No task assigned.</p>
