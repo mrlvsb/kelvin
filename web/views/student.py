@@ -80,6 +80,8 @@ def student_index(request):
 
     for clazz in classess:
         tasks = []
+        max_points = 0
+        earned_points = 0
         for assignment in AssignedTask.objects.filter(clazz_id=clazz.id).order_by('-id'):
             if not assignment.task.announce and assignment.assigned > datetime.now():
                 continue
@@ -96,12 +98,19 @@ def student_index(request):
             for student in assignedtask_results(assignment, student__id=request.user.id):
                 if student['student'] == request.user.username:
                     data = {**data, **student}
+            if data.get("assigned_points") is not None:
+                earned_points += data.get("assigned_points")
+            if assignment.max_points is not None:
+                max_points += assignment.max_points
+
             tasks.append(data)
 
         result.append({
             'class': clazz,
             'summary': clazz.summary(request.user.username),
             'tasks': tasks,
+            'max_points': max_points,
+            'earned_points': earned_points,
         })
 
     semesters = []
@@ -112,7 +121,7 @@ def student_index(request):
         })
 
     return render(request, 'web/index.html', {
-        'classess': result,
+        'classes': result,
         'semesters': semesters,
         'selected_semester': semester,
     })
