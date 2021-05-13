@@ -43,7 +43,7 @@ def get_student_points(submits: List[Submit]):
 
     for submit in submits:
         points = submit.assigned_points
-        if points is not None:
+        if points is not None and points >= 0:
             student_points[submit.student] = points
     return student_points
 
