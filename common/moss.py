@@ -12,9 +12,11 @@ import networkx as nx
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.cache import caches
+from django.db.models import DurationField, ExpressionWrapper, F
+from django.db.models.functions import Now
 from networkx.drawing.nx_agraph import write_dot
 
-from common.models import Submit
+from common.models import AssignedTask, Class, Submit, Task
 
 MAX_FILE_SIZE = 128 * 1024
 
@@ -88,7 +90,7 @@ def add_submit(logger, moss: mosspy.Moss, submit: Submit, counters):
 
 
 @django_rq.job("default", timeout=60 * 15)
-def check_task(task_id):
+def moss_check_task(task_id):
     log_stream = StringIO()
     log_handler = logging.StreamHandler(log_stream)
     log_handler.setFormatter(
@@ -172,6 +174,51 @@ def check_task(task_id):
     }, timeout=60 * 60 * 24 * 90)
 
 
+def enqueue_moss_check(task_id: int):
+    cache = caches['default']
+    moss_delete_result_from_cache(task_id)
+    job = django_rq.enqueue(moss_check_task, task_id, job_timeout=60 * 15)
+    cache.set(moss_job_cache_key(task_id), job.id, timeout=60 * 60 * 8)
+
+
+def do_periodic_moss_check():
+    classes = Class.objects.current_semester()
+
+    min_time_from_deadline = datetime.timedelta(minutes=30)
+    max_time_from_deadline = datetime.timedelta(days=7)
+
+    assignments = AssignedTask.objects.filter(
+        # active tasks
+        clazz__in=classes,
+        # that have a deadline
+        deadline__isnull=False,
+    ).annotate(
+        # calculate date diff
+        date_diff=ExpressionWrapper(Now() - F("deadline"), output_field=DurationField())
+    ).filter(
+        # filter tasks with dates that are not too old or too new
+        date_diff__gte=min_time_from_deadline,
+        date_diff__lte=max_time_from_deadline
+    )
+    tasks = Task.objects.filter(assignedtask__in=assignments)
+
+    cache = caches["default"]
+    for task in tasks:
+        if (
+            cache.get(moss_result_cache_key(task.id)) is not None or
+            cache.get(moss_job_cache_key(task.id)) is not None
+        ):
+            continue
+        logging.info(f"Scheduling MOSS check for {task.id}")
+        enqueue_moss_check(task.id)
+
+
+# TODO: setup in code instead of UI (Django scheduler management command)
+@django_rq.job("default", timeout=60 * 15)
+def periodic_moss_check():
+    do_periodic_moss_check()
+
+
 class MossResult:
     def __init__(self,
                  success: bool, url: str, matches,
@@ -237,9 +284,10 @@ def moss_task_set_opts(task_id, opts):
     cache = caches['default']
     cache.set(f"moss.{task_id}.opts", opts, timeout=60*60*24*90)
 
+
 def moss_task_get_opts(task_id):
     opts = {
-        'percent': 50,
+        'percent': 30,
         'lines': 10,
         'show_to_students': False,
     }
