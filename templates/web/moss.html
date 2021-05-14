@@ -48,7 +48,11 @@
       </form>
 
       {% if matches %}
-        <div id="graph">
+        {% if newer_submit_count %}
+          There were <span class="badge badge-danger">{{ newer_submit_count }}</span> submit(s) since the check was performed!
+        {% endif %}
+
+        <div id="graph" style="margin-bottom: 20px;">
           {{ graph | safe }}
         </div>
 
@@ -62,25 +66,65 @@
           white-space: nowrap;
           width: 1%;
         }
+        table td, th {
+          text-align: center;
+        }
         </style>
+        <link rel="stylesheet" type="text/css"
+              href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css" />
+
         <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
         <script>svgPanZoom('#graph svg')</script>
+        <script
+            src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+            crossorigin="anonymous"></script>
+        <script src="//cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+        <script>
+          $(document).ready(function () {
+              $(".moss-table").DataTable({
+                  "paging": false,
+                  "order": [], // keep initial order
+                  columnDefs: [{
+                      targets: ["_all" ],
+                      orderSequence: ["desc", "asc"]
+                  }, {
+                      targets: [-1],
+                      orderable: false
+                  }]
+              });
+          });
+        </script>
 
-        <table class="table table-sm table-hover table-striped">
-          {% for match in matches %}
-          <tr>
-            <td>{{ match.first_login }}</td>
-            <td>{{ match.first_fullname }}</td>
-            <td>{{ match.first_percent }}%</td>
-            <td>{{ match.second_login }}</td>
-            <td>{{ match.second_fullname }}</td>
-            <td>{{ match.second_percent }}%</td>
-            <td>{{ match.lines }}</td>
-            <td>
-              <a href="{{ match.link }}"><span class="iconify" data-icon="ant-design:search-outlined"></span></a>
-            </td>
-          </tr>
-          {% endfor %}
+        <table class="table table-sm table-hover table-striped moss-table">
+          <thead>
+            <tr>
+              <th>Login A</th>
+              <th>Name A</th>
+              <th>Percent A</th>
+              <th>Login B</th>
+              <th>Name B</th>
+              <th>Percent B</th>
+              <th>Line count</th>
+              <th>MOSS link</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for match in matches %}
+            <tr>
+              <td>{{ match.first_login }}</td>
+              <td>{{ match.first_fullname }}</td>
+              <td>{{ match.first_percent }}%</td>
+              <td>{{ match.second_login }}</td>
+              <td>{{ match.second_fullname }}</td>
+              <td>{{ match.second_percent }}%</td>
+              <td>{{ match.lines }}</td>
+              <td>
+                <a href="{{ match.link }}"><span class="iconify" data-icon="ant-design:search-outlined"></span></a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
         </table>
         {% else %}
         <p class="alert alert-info mt-2">
