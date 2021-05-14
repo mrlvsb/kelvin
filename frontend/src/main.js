@@ -105,7 +105,7 @@ createElement('ctrlp', CtrlP);
 
 
 function focusTab() {
-	const hash = document.location.hash.replace('#', '').split('-')[0];
+	const hash = document.location.hash.replace('#', '').split('-')[0].split(';')[0];
 	const link = document.querySelector(`[data-toggle="tab"][href="#${hash}"]`);
 	if(!link) {
 		return;
