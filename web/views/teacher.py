@@ -35,7 +35,7 @@ from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from evaluator.testsets import TestSet
 from common.evaluate import get_meta, evaluate_submit
 from common.utils import is_teacher
-from common.moss import check_task, moss_delete_job_from_cache, moss_delete_result_from_cache, \
+from common.moss import enqueue_moss_check, moss_delete_job_from_cache, \
     moss_job_cache_key, moss_result, \
     moss_task_set_opts, \
     moss_task_get_opts
@@ -88,9 +88,7 @@ def teacher_task_moss_check(request, task_id):
         })
 
     if request.method == 'POST':
-        moss_delete_result_from_cache(task_id)
-        job = django_rq.enqueue(check_task, task_id, job_timeout=60*15)
-        cache.set(key_job, job.id, timeout=60*60*8)
+        enqueue_moss_check(task_id)
         return redirect(request.path_info)
 
     opts = moss_task_get_opts(task_id)

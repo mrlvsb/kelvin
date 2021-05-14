@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.forms',
     'django_rq',
+    'scheduler',
     'django_cas_ng',
     'notifications',
     'webpush',
