@@ -14,7 +14,9 @@ from django.contrib.auth.models import User
 from django.core.cache import caches
 from django.db.models import DurationField, ExpressionWrapper, F
 from django.db.models.functions import Now
+from django.shortcuts import resolve_url
 from networkx.drawing.nx_agraph import write_dot
+from notifications.signals import notify
 
 from common.models import AssignedTask, Class, Submit, Task
 
@@ -89,8 +91,45 @@ def add_submit(logger, moss: mosspy.Moss, submit: Submit, counters):
         add_file(logger, moss, filepath, filename, counters)
 
 
+def is_match_suspicious(match, options) -> bool:
+    if min(match["first_percent"], match["second_percent"]) >= options["percent"]:
+        return True
+    if match["lines"] >= options["lines"]:
+        return True
+    return False
+
+
+def moss_notify_teacher(task_id: int, matches):
+    options = moss_task_get_opts(task_id)
+
+    suspicious_students = set()
+    for match in matches:
+        if is_match_suspicious(match, options):
+            suspicious_students.add(match["first_login"])
+            suspicious_students.add(match["second_login"])
+    classes = Class.objects.filter(
+        assignedtask__task_id=task_id,
+        assignedtask__submit__student__username__in=suspicious_students
+    ).distinct()
+    teachers = list(set([c.teacher for c in classes]))
+    if not teachers:
+        return
+
+    task = Task.objects.get(pk=task_id)
+    moss_url = resolve_url("teacher_task_moss_check", task_id=task_id)
+
+    notify.send(
+        sender=teachers[0],
+        recipient=teachers,
+        verb="plagiarism",
+        action_object=task,
+        custom_text=f"MOSS detected plagiarism in <a href='{moss_url}'>{task.name}</a>.",
+        important=True
+    )
+
+
 @django_rq.job("default", timeout=60 * 15)
-def moss_check_task(task_id):
+def moss_check_task(task_id: int, notify_teacher: bool):
     log_stream = StringIO()
     log_handler = logging.StreamHandler(log_stream)
     log_handler.setFormatter(
@@ -141,9 +180,9 @@ def moss_check_task(task_id):
         if counters[detected_lang] > 0:
             m.options["l"] = detected_lang
 
-        logging.info(f"Sending files to Moss: {m.files}")
+        logger.info(f"Sending files to Moss: {m.files}")
         url = m.send()
-        logging.info(f"Moss returned: {url}")
+        logger.info(f"Moss returned: {url}")
         with tempfile.NamedTemporaryFile() as out:
             m.saveWebPage(url, out.name)
 
@@ -173,11 +212,14 @@ def moss_check_task(task_id):
         "log": log_stream.getvalue()
     }, timeout=60 * 60 * 24 * 90)
 
+    if success and notify_teacher:
+        moss_notify_teacher(task_id, matches)
 
-def enqueue_moss_check(task_id: int):
+
+def enqueue_moss_check(task_id: int, notify=False):
     cache = caches['default']
     moss_delete_result_from_cache(task_id)
-    job = django_rq.enqueue(moss_check_task, task_id, job_timeout=60 * 15)
+    job = django_rq.enqueue(moss_check_task, task_id, notify, job_timeout=60 * 15)
     cache.set(moss_job_cache_key(task_id), job.id, timeout=60 * 60 * 8)
 
 
@@ -210,7 +252,7 @@ def do_periodic_moss_check():
         ):
             continue
         logging.info(f"Scheduling MOSS check for {task.id}")
-        enqueue_moss_check(task.id)
+        enqueue_moss_check(task.id, notify=True)
 
 
 # TODO: setup in code instead of UI (Django scheduler management command)
@@ -314,8 +356,7 @@ def moss_result(task_id, percent=None, lines=None):
 
     matches = []
     for match in cache_entry["matches"]:
-        if min(match['first_percent'], match['second_percent']) >= opts['percent'] and int(
-            match['lines']) >= opts['lines']:
+        if is_match_suspicious(match, opts):
             match['first_fullname'] = User.objects.get(
                 username=match['first_login']).get_full_name()
             match['second_fullname'] = User.objects.get(
