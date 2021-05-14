@@ -27,6 +27,7 @@
   
   tr.linecode {
     counter-increment: my-sec-counter;
+    cursor: row-resize;
   }
   tr.linecode td:first-of-type::before {
     content: counter(my-sec-counter);
@@ -71,6 +72,10 @@
   :global(.comment.automated) {
     background: #7DB4E4;
   }
+
+  .selected {
+    background: #ffff9349;
+  }
   
   </style>
   
@@ -85,10 +90,19 @@
   export let lineNumber;
   export let comments = [];
   export let showAddingForm = false;
+  export let selected = false;
+  export let scroll = false;
 
   let addingInProgress = false;
 
   const dispatch = createEventDispatcher();
+  let el;
+
+  $: if(scroll && el) {
+    setTimeout(()=> {
+      el.scrollIntoView();
+    }, 0);
+  }
 
   function addNewComment(evt) {
     if(evt.detail === '') {
@@ -108,7 +122,7 @@
   
 </script>
 
-<tr class="linecode">
+<tr class="linecode" class:selected={selected} bind:this={el}>
   <td>
     <span on:click={() => dispatch('showCommentForm', showAddingForm ? -1 : lineNumber)} style="cursor: pointer">+</span>
   </td>

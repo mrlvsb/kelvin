@@ -153,6 +153,8 @@
     submits = json['submits'];
     files = json['sources'].map((source) => new SourceFile(source));
     summaryComments = json['summary_comments'];
+
+    goToSelectedLines();
   }
 
   function countComments(comments) {
@@ -168,6 +170,26 @@
     });
   }
   load();
+
+  let selectedRows = null;
+
+  function goToSelectedLines() {
+    const s = document.location.hash.split(';', 2);
+    if(s.length == 2) {
+      const parts = s[1].split(':');
+      if(parts.length == 2) {
+        const range = parts[1].split('-');
+
+        selectedRows = {
+          path: parts[0],
+          from: parseInt(range[0]),
+          to: parseInt(range[1] || range[0]),
+        };
+      }
+    }
+  }
+
+  window.addEventListener('hashchange', goToSelectedLines);  
 </script>
 
 <style>
@@ -219,7 +241,7 @@
       {/if}
       </span>{#if file.source.type == 'source' && file.source.content}<CopyToClipboard content={() => file.source.content} title='Copy the source code to the clipboard'><span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px"></span></CopyToClipboard>{/if}
     </h2>
-    {#if file.opened }
+    {#if file.opened}
       {#if file.source.error}
         <span class="text-muted">{file.source.error}</span>
       {:else if file.source.type == 'source' }
@@ -227,8 +249,10 @@
           Content too large, show <a href="{ file.source.content_url }">raw content</a>.
         {:else}
           <SubmitSource
+          path={file.source.path}
           code={file.source.content}
           comments={showComments ? file.source.comments : []}
+          selectedRows={selectedRows && selectedRows.path === file.source.path ? selectedRows : null}
           on:setNotification={setNotification}
           on:saveComment={evt => saveComment({...evt.detail, source: file.source.path})} />
         {/if}
