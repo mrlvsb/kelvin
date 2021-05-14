@@ -9,6 +9,7 @@ from .views import statistics as statistics_view
 urlpatterns = [
     path('', common_view.index, name='index'),
 
+    path('find-task/<int:task_id>/<str:login>/', student_view.find_task_detail, name='find_task_detail'),
     path('task/<int:assignment_id>/<str:login>/', student_view.task_detail, name='task_detail'),
     path('task/<int:assignment_id>/<str:login>/<int:submit_num>/', student_view.task_detail, name='task_detail'),
     path('task/<int:assignment_id>/<str:login>/<int:submit_a>-<int:submit_b>.diff', student_view.submit_diff, name='submits_diff'),

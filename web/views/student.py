@@ -16,10 +16,11 @@ import magic
 import logging
 
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core import signing
 from django.core.files.uploadedfile import UploadedFile
 from django.utils import timezone as datetime
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404, resolve_url
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse, HttpResponseForbidden, FileResponse
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.contrib.auth.decorators import login_required
@@ -373,6 +374,25 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
             'submit_num': s.submit_num
         }) + '#result')
     return render(request, 'web/task_detail.html', data)
+
+
+@login_required()
+def find_task_detail(request, task_id, login=None):
+    """
+    Tries to find an assignment for a given task and a given student.
+    If an assignment is found, redirects to its source code.
+    """
+    student_id = User.objects.get(username=login).id
+    classes = Class.objects.filter(students__in=[student_id])
+    assignment = AssignedTask.objects\
+        .filter(task_id=task_id, clazz_id__in=classes)\
+        .order_by("-assigned")\
+        .first()
+    if assignment is None:
+        raise Http404()
+    url = "{}#src".format(resolve_url("task_detail", assignment_id=assignment.id, login=login))
+    return redirect(url)
+
 
 def comment_recipients(submit, current_author):
     recipients = [
