@@ -58,6 +58,13 @@ def teacher_task(request, task_id):
 
 @user_passes_test(is_teacher)
 def teacher_task_moss_check(request, task_id):
+    # clear MOSS notifications
+    Notification.objects.filter(
+        action_object_object_id=task_id,
+        recipient_id=request.user.id,
+        verb="plagiarism",
+    ).update(unread=False)
+
     cache = caches['default']
     key_job = moss_job_cache_key(task_id)
 

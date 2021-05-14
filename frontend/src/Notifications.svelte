@@ -59,18 +59,24 @@ async function openNotification(notification) {
                 </div>
                 <div>
                   <strong>{ item.actor }</strong>
-                  { item.verb }
-
-                  {#if item.action_object_url}
-                    <a href={item.action_object_url} on:click|preventDefault={() => openNotification(item)} on:auxclick={() => notifications.markRead(item.id)}>
-                      { item.action_object }
-                    </a>
+                  {#if item.custom_text}
+                    {@html item.custom_text}
                   {:else}
-                    { item.action_object }
-                  {/if}
+                    { item.verb }
 
-                  {#if item.target}on { item.target }{/if}
-                  (<TimeAgo datetime={item.timestamp} />)
+                    {#if item.action_object_url}
+                      <a href={item.action_object_url} on:click|preventDefault={() => openNotification(item)} on:auxclick={() => notifications.markRead(item.id)}>
+                        { item.action_object }
+                      </a>
+                    {:else}
+                      { item.action_object }
+                    {/if}
+
+                    {#if item.target}on { item.target }{/if}
+                  {/if}
+                  <span style="white-space:nowrap">
+                    (<TimeAgo datetime={item.timestamp} />)
+                  </span>
                 </div>
               </li>
               {/each}
