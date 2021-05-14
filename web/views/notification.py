@@ -59,7 +59,9 @@ def all_notifications(request):
                     struct[f"{obj_type}_url"] = obj.notification_url()
 
         if isinstance(notification.action_object, Comment):
-            struct['description'] = notification.action_object.text
+            comment = notification.action_object
+            struct['description'] = comment.text
+            struct['action_object_url'] += f';{comment.source}:{comment.line}'
 
         cache.set(key, struct, timeout=60*60*24)
         return struct
