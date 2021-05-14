@@ -55,6 +55,7 @@ def teacher_task(request, task_id):
           'max_inline_content_bytes': MAX_INLINE_CONTENT_BYTES,
     })
 
+
 @user_passes_test(is_teacher)
 def teacher_task_moss_check(request, task_id):
     cache = caches['default']
@@ -110,6 +111,10 @@ def teacher_task_moss_check(request, task_id):
             "has_result": False
         })
     else:
+        newer_submit_count = Submit.objects.filter(
+            assignment__task_id=task.id,
+            created_at__gt=res.timestamp
+        ).count()
         return render(request, 'web/moss.html', {
             "has_result": True,
             "success": res.success,
@@ -119,6 +124,7 @@ def teacher_task_moss_check(request, task_id):
             "opts": res.opts,
             "timestamp": res.timestamp,
             "moss_url": res.url,
+            "newer_submit_count": newer_submit_count,
             "task": task,
         })
 
