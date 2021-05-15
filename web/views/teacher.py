@@ -1,3 +1,4 @@
+import itertools
 import os
 import io
 import csv
@@ -197,27 +198,42 @@ def download_assignment_submits(request, assignment_id):
         return response
 
 
-@user_passes_test(is_teacher)
-def show_assignment_submits(request, assignment_id):
-    assignment = get_object_or_404(AssignedTask, pk=assignment_id)
-
+def get_assignment_submits(assignment: AssignedTask):
     results = []
     for result in assignedtask_results(assignment):
         submit = None
         if result['submits']:
-            if 'accepted_submit_num' not in result:
-                continue
-            submit = Submit.objects.get(
-                assignment_id=assignment.id,
-                student__username=result['student'],
-                submit_num=result['accepted_submit_num'],
-            )
+            if 'accepted_submit_num' in result:
+                submit = Submit.objects.get(
+                    assignment_id=assignment.id,
+                    student__username=result['student'],
+                    submit_num=result['accepted_submit_num'],
+                )
         results.append((submit, result))
+    return results
+
+
+@user_passes_test(is_teacher)
+def show_assignment_submits(request, assignment_id):
+    assignment = get_object_or_404(AssignedTask, pk=assignment_id)
+    results = get_assignment_submits(assignment)
 
     return render(request, 'web/submits_show_source.html', {
         'students': results,
-        'assignment': assignment,
     })
+
+
+@user_passes_test(is_teacher)
+def show_task_submits(request, task_id: int):
+    assignments = AssignedTask.objects.filter(task_id=task_id)
+    results = list(itertools.chain.from_iterable(
+        get_assignment_submits(assignment) for assignment in assignments
+    ))
+
+    return render(request, 'web/submits_show_source.html', {
+        'students': results,
+    })
+
 
 @user_passes_test(is_teacher)
 def submit_assign_points(request, submit_id):
