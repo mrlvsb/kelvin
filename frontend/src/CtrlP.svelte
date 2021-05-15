@@ -37,6 +37,7 @@
     }
 
     function keydown(e) {
+      if(shown) {
         if(e.ctrlKey && e.code == 'KeyP') {
             shown = true;
             selected = 0;
@@ -51,6 +52,7 @@
         } else if(e.code == 'Escape') {
           shown = false;
         }
+      }
     }
 </script>
 
