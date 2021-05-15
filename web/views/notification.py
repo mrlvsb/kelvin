@@ -61,7 +61,8 @@ def all_notifications(request):
         if isinstance(notification.action_object, Comment):
             comment = notification.action_object
             struct['description'] = comment.text
-            struct['action_object_url'] += f';{comment.source}:{comment.line}'
+            if comment.source and comment.line > 0:
+                struct['action_object_url'] += f';{comment.source}:{comment.line}'
 
         cache.set(key, struct, timeout=60*60*24)
         return struct
