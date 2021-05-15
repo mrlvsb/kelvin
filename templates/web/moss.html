@@ -86,9 +86,6 @@
                   "paging": false,
                   "order": [], // keep initial order
                   columnDefs: [{
-                      targets: [-1],
-                      orderSequence: ["asc", "desc"]
-                  }, {
                       targets: ["_all"],
                       orderSequence: ["desc", "asc"]
                   }, {
@@ -110,7 +107,7 @@
               <th>Percent B</th>
               <th>Line count</th>
               <th>MOSS link</th>
-              <th>Můj student</th>
+              <th>My student</th>
             </tr>
           </thead>
           <tbody>
@@ -126,7 +123,7 @@
               <td>
                 <a href="{{ match.link }}"><span class="iconify" data-icon="ant-design:search-outlined"></span></a>
               </td>
-              <td>{{ match.teaching|yesno:"Ano,Ne" }}</td>
+              <td>{{ match.teaching|yesno:"Yes,No" }}</td>
             </tr>
             {% endfor %}
           </tbody>

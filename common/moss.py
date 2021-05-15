@@ -92,9 +92,9 @@ def add_submit(logger, moss: mosspy.Moss, submit: Submit, counters):
 
 
 def is_match_suspicious(match, options) -> bool:
-    if min(match["first_percent"], match["second_percent"]) >= options["percent"]:
+    if min(int(match["first_percent"]), int(match["second_percent"])) >= int(options["percent"]):
         return True
-    if match["lines"] >= options["lines"]:
+    if int(match["lines"]) >= int(options["lines"]):
         return True
     return False
 
