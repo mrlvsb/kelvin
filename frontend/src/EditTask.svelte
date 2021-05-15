@@ -235,7 +235,12 @@ td:not(:nth-of-type(3)) {
         <AutoComplete bind:value={task.path} onChange={loadTask} on:click={() => syncPathWithTitle = false} />
         {#if taskLink}
         <div class="input-group-append">
-          <a class="btn btn-outline-info" title="Show task stats" href="/statistics/task/{task.id}" target=_blank><span class="iconify" data-icon="bx:bx-bar-chart-alt-2"></span></a>
+          <a class="btn btn-outline-info" href="/task/show/{task.id}" title="Show all source codes" target="_blank">
+            <span class="iconify" data-icon="bx-bx-code-alt"></span>
+          </a>
+          <a class="btn btn-outline-info" href="/statistics/task/{task.id}" title="Show task stats" target="_blank">
+            <span class="iconify" data-icon="bx-bx-bar-chart-alt-2"></span>
+          </a>
           <button class="btn btn-outline-info" title="Duplicate this task" on:click={duplicateTask}>
             <span class="iconify" data-icon="ant-design:copy-outlined"></span>
           </button>
