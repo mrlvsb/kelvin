@@ -86,10 +86,13 @@
                   "paging": false,
                   "order": [], // keep initial order
                   columnDefs: [{
-                      targets: ["_all" ],
+                      targets: [-1],
+                      orderSequence: ["asc", "desc"]
+                  }, {
+                      targets: ["_all"],
                       orderSequence: ["desc", "asc"]
                   }, {
-                      targets: [-1],
+                      targets: [-2],
                       orderable: false
                   }]
               });
@@ -107,6 +110,7 @@
               <th>Percent B</th>
               <th>Line count</th>
               <th>MOSS link</th>
+              <th>Můj student</th>
             </tr>
           </thead>
           <tbody>
@@ -122,6 +126,7 @@
               <td>
                 <a href="{{ match.link }}"><span class="iconify" data-icon="ant-design:search-outlined"></span></a>
               </td>
+              <td>{{ match.teaching|yesno:"Ano,Ne" }}</td>
             </tr>
             {% endfor %}
           </tbody>

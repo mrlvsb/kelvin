@@ -56,6 +56,21 @@ def teacher_task(request, task_id):
     })
 
 
+def add_teaching_flag_to_matches(matches, teacher: User, task: Task):
+    classes = Class.objects.current_semester().filter(teacher=teacher, assignedtask__task=task)
+    students = {v[0] for v in User.objects.filter(students__in=classes).values_list("username")}
+    for match in matches:
+        match["teaching"] = match["first_login"] in students or match["second_login"] in students
+
+
+def sort_matches(matches):
+    matches.sort(key=lambda v: (
+        v["teaching"],
+        v["lines"],
+        max(v["first_percent"], v["second_percent"])
+    ), reverse=True)
+
+
 @user_passes_test(is_teacher)
 def teacher_task_moss_check(request, task_id):
     # clear MOSS notifications
@@ -120,6 +135,8 @@ def teacher_task_moss_check(request, task_id):
             assignment__task_id=task.id,
             created_at__gt=res.timestamp
         ).count()
+        add_teaching_flag_to_matches(res.matches, request.user, task)
+        sort_matches(res.matches)
         return render(request, 'web/moss.html', {
             "has_result": True,
             "success": res.success,
