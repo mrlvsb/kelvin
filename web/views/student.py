@@ -150,10 +150,12 @@ SUBMIT_DROPPED_MIMES = [
 ]
 IGNORED_FILEPATHS = [
     re.compile(r".*__pycache__/.*"),
-    re.compile(r".*\.pyc$"),
+    re.compile(r".*CMakeFiles/.*"),
     re.compile(r".*\.git/.*"),
     re.compile(r".*\.idea/.*"),
-    re.compile(r".*\.vscode/.*")
+    re.compile(r".*\.vscode/.*"),
+    re.compile(r".*\.cmake/.*"),
+    re.compile(r".*\.pyc$"),
 ]
 
 
