@@ -50,6 +50,9 @@
   }
 
   function mousedown(e) {
+    if(e.target.tagName == 'SPAN') {
+      return;
+    }
     userSelected = true;
     const td = e.target.closest('tr td:first-of-type');
     if(td) {
