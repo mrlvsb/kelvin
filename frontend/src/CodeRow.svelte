@@ -12,6 +12,7 @@
     font-size: 87.5%;
     padding-right: 15px;
     vertical-align: top;
+    cursor: row-resize;
   }
   
   tr td:first-of-type span {
@@ -27,7 +28,6 @@
   
   tr.linecode {
     counter-increment: my-sec-counter;
-    cursor: row-resize;
   }
   tr.linecode td:first-of-type::before {
     content: counter(my-sec-counter);
