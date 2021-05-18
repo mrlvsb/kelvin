@@ -219,7 +219,7 @@ def moss_check_task(task_id: int, notify_teacher: bool):
 def enqueue_moss_check(task_id: int, notify=False):
     cache = caches['default']
     moss_delete_result_from_cache(task_id)
-    job = django_rq.enqueue(moss_check_task, task_id, notify, job_timeout=60 * 15)
+    job = django_rq.enqueue(moss_check_task, task_id, notify, job_timeout=60 * 60)
     cache.set(moss_job_cache_key(task_id), job.id, timeout=60 * 60 * 8)
 
 
