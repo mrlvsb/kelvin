@@ -4,7 +4,6 @@ import re
 import tarfile
 import tempfile
 import io
-import zipfile
 import shutil
 import hashlib
 from collections import namedtuple
@@ -18,32 +17,29 @@ import logging
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import signing
-from django.core.files.uploadedfile import UploadedFile
 from django.utils import timezone as datetime
 from django.shortcuts import render, redirect, get_object_or_404, resolve_url
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse, HttpResponseForbidden, FileResponse
-from django.core.exceptions import PermissionDenied, SuspiciousOperation
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse, FileResponse
+from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
-from django.utils import timezone as tz
 from django.urls import reverse
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import F
 from django.views.decorators.csrf import csrf_exempt
 
 from common.models import Submit, Class, AssignedTask, Task, Comment, assignedtask_results, current_semester
 from common.evaluate import evaluate_submit
 from common.moss import moss_result
 from web.task_utils import load_readme
-from api.models import UserToken
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES, MAX_INLINE_LINES
 from evaluator.testsets import TestSet
 from common.evaluate import get_meta
 from evaluator.results import EvaluationResult, PipeResult
 from common.utils import is_teacher
-from django.core.cache import caches
 
 from notifications.signals import notify
 from notifications.models import Notification
+
+from .upload import upload_submit_files
 
 mimedetector = magic.Magic(mime=True)
 
@@ -141,48 +137,6 @@ def get(submit):
         "results": results,
     }
     return data
-
-
-SUBMIT_DROPPED_MIMES = [
-    'application/x-object',
-    'application/x-pie-executable',
-    'application/x-sharedlib'
-]
-IGNORED_FILEPATHS = [
-    re.compile(r".*__pycache__/.*"),
-    re.compile(r".*CMakeFiles/.*"),
-    re.compile(r".*\.git/.*"),
-    re.compile(r".*\.idea/.*"),
-    re.compile(r".*\.vscode/.*"),
-    re.compile(r".*\.cmake/.*"),
-    re.compile(r".*\.pyc$"),
-]
-
-
-def store_uploaded_file(submit: Submit, path: str, file):
-    path = os.path.normpath(path)
-    if path[0] == '/' or '..' in path.split('/'):
-        raise SuspiciousOperation()
-
-    target_path = submit.source_path(path)
-    os.makedirs(os.path.dirname(target_path), exist_ok=True)
-
-    for ignored in IGNORED_FILEPATHS:
-        if ignored.match(path):
-            return
-
-    if isinstance(file, UploadedFile):
-        with open(target_path, "wb") as storage_file:
-            for chunk in file.chunks():
-                storage_file.write(chunk)
-    elif isinstance(file, zipfile.ZipFile):
-        file.extract(path, path=submit.dir())
-    else:
-        raise Exception(f"Invalid file type {type(file)}")
-
-    mime = mimedetector.from_file(target_path)
-    if mime in SUBMIT_DROPPED_MIMES:
-        os.unlink(target_path)
 
 JobStatus = namedtuple('JobStatus', ['finished', 'status', 'message'], defaults=[False, '', ''])
 
@@ -332,24 +286,15 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         s.assignment = assignment
         s.submit_num = Submit.objects.filter(assignment__id=s.assignment.id,
                                              student__id=request.user.id).count() + 1
-        s.save()
 
         solutions = request.FILES.getlist('solution')
         tmp = request.POST.get('paths', None)
-        paths = []
         if tmp:
             paths = [f.rstrip('\r') for f in tmp.split('\n') if f.rstrip('\r')]
         else:
             paths = [f.name for f in solutions]
-        for path, uploaded_file in zip(paths, solutions):
-            extension = os.path.splitext(path)[1]
-            if extension.lower() == ".zip":
-                with zipfile.ZipFile(uploaded_file, "r") as archive:
-                    for file in archive.filelist:
-                        if not file.is_dir():
-                            store_uploaded_file(s, file.filename, archive)
-            else:
-                store_uploaded_file(s, path, uploaded_file)
+
+        upload_submit_files(s, paths, solutions)
 
         s.jobid = evaluate_submit(request, s).id
         s.save()
