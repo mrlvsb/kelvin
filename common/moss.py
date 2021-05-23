@@ -99,18 +99,8 @@ def is_match_suspicious(match, options) -> bool:
     return False
 
 
-def moss_notify_teacher(task_id: int, matches):
-    options = moss_task_get_opts(task_id)
-
-    suspicious_students = set()
-    for match in matches:
-        if is_match_suspicious(match, options):
-            suspicious_students.add(match["first_login"])
-            suspicious_students.add(match["second_login"])
-    classes = Class.objects.filter(
-        assignedtask__task_id=task_id,
-        assignedtask__submit__student__username__in=suspicious_students
-    ).distinct()
+def moss_notify_teacher(task_id: int):
+    classes = Class.objects.filter(assignedtask__task_id=task_id).distinct()
     teachers = list(set([c.teacher for c in classes]))
     if not teachers:
         return
@@ -123,7 +113,7 @@ def moss_notify_teacher(task_id: int, matches):
         recipient=teachers,
         verb="plagiarism",
         action_object=task,
-        custom_text=f"MOSS detected plagiarism in <a href='{moss_url}'>{task.name}</a>.",
+        custom_text=f"MOSS plagiarism check of {task.name} finished. See results <a href='{moss_url}'>here</a>.",
         important=True
     )
 
@@ -216,7 +206,7 @@ def moss_check_task(task_id: int, notify_teacher: bool):
     }, timeout=60 * 60 * 24 * 90)
 
     if success and notify_teacher:
-        moss_notify_teacher(task_id, matches)
+        moss_notify_teacher(task_id)
 
 
 def enqueue_moss_check(task_id: int, notify=False):
@@ -336,7 +326,7 @@ def moss_task_set_opts(task_id, opts):
 
 def moss_task_get_opts(task_id):
     opts = {
-        'percent': 30,
+        'percent': 20,
         'lines': 10,
         'show_to_students': False,
     }
