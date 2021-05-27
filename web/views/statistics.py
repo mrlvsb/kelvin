@@ -1,9 +1,9 @@
 from typing import List, Set
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from bokeh.embed import file_html
-from bokeh.models import ColumnDataSource, HoverTool, Legend, Span
+from bokeh.models import ColumnDataSource, HoverTool, Legend, OpenURL, Span, TapTool
 from bokeh.palettes import Category20_20 as CategoricalPalette
 from bokeh.plotting import figure
 from bokeh.resources import CDN
@@ -11,6 +11,7 @@ from bokeh.transform import factor_cmap
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 
 from common.models import AssignedTask, Submit, Task
 from common.utils import is_teacher
@@ -50,31 +51,33 @@ def get_student_points(submits: List[Submit]):
 
 def draw_deadline_line(plot, deadline):
     line_args = dict(line_dash="dashed", line_color="red", line_width=2)
-    vline = Span(location=deadline, dimension='height',
+    vline = Span(location=deadline, dimension="height",
                  **line_args)
     plot.renderers.extend([vline])
-
-    deadline_line = plot.line([], [], **line_args)
-    legend = Legend(items=[
-        ("deadline", [deadline_line]),
-    ])
-
-    plot.add_layout(legend, "right")
+    plot.line([], [], **line_args)
 
 
-def create_submit_chart_html(submits: List[Submit], assignment: AssignedTask = None) -> str:
+def create_submit_chart_html(submits: List[Submit], assignments: List[AssignedTask]) -> str:
+    main_assignment = assignments[0] if assignments else None
+
     def format_points(submit: Submit):
-        if not assignment or not assignment.max_points:
+        if not main_assignment or not main_assignment.max_points:
             return "not graded"
         points = submit.points or submit.assigned_points
         if points is None:
             return "no points assigned"
-        return f"{points}/{assignment.max_points}"
+        return f"{points}/{main_assignment.max_points}"
 
     frame = pd.DataFrame({
         "date": [submit.created_at for submit in submits],
         "student": [submit.student.username for submit in submits],
         "submit_num": [submit.submit_num for submit in submits],
+        "submit_url": [reverse("task_detail", kwargs=dict(
+            assignment_id=submit.assignment.id,
+            login=submit.student.username,
+            submit_num=submit.submit_num
+        ))
+                       for submit in submits],
         "points": [format_points(submit) for submit in submits],
     })
     frame["count"] = 1
@@ -82,13 +85,18 @@ def create_submit_chart_html(submits: List[Submit], assignment: AssignedTask = N
 
     source = ColumnDataSource(data=frame)
 
-    plot = figure(plot_width=1200, plot_height=400, x_axis_type="datetime")
+    plot = figure(plot_width=1200, plot_height=400, x_axis_type="datetime",
+                  tools="pan,wheel_zoom,box_zoom,save,reset,tap")
     plot.line("date", "cumsum", source=source)
 
     students = sorted(set(frame["student"]))
     mapper = factor_cmap(field_name="student", palette=CategoricalPalette, factors=students)
     points = plot.circle("date", "cumsum", color=mapper, source=source, size=8)
     plot.yaxis.axis_label = "# submits"
+
+    url = "@submit_url#src"
+    taptool = plot.select(type=TapTool)
+    taptool.callback = OpenURL(url=url)
 
     hover = HoverTool(
         tooltips=[
@@ -101,8 +109,9 @@ def create_submit_chart_html(submits: List[Submit], assignment: AssignedTask = N
     )
     plot.add_tools(hover)
 
-    if assignment and assignment.deadline:
-        draw_deadline_line(plot, assignment.deadline)
+    for assignment in assignments:
+        if assignment.deadline is not None:
+            draw_deadline_line(plot, assignment.deadline)
 
     return file_html(plot, CDN, "Submits over time")
 
@@ -120,7 +129,7 @@ def create_point_chart_html(student_points):
     return file_html(plot, CDN, "Point distribution")
 
 
-def render_statistics(request, task, submits, assignment=None):
+def render_statistics(request, task, submits, assignments):
     students = get_students(submits)
     student_points = get_student_points(submits)
     points = list(student_points.values())
@@ -135,7 +144,7 @@ def render_statistics(request, task, submits, assignment=None):
         'submits': submits,
         'graded': graded_str,
         'average_points': average_points,
-        'submit_plot': create_submit_chart_html(submits, assignment=assignment),
+        'submit_plot': create_submit_chart_html(submits, assignments=assignments),
         'point_plot': create_point_chart_html(student_points)
     })
 
@@ -144,7 +153,8 @@ def render_statistics(request, task, submits, assignment=None):
 def for_task(request, task_id):
     task = get_object_or_404(Task, pk=task_id)
     submits = get_task_submits(task)
-    return render_statistics(request, task, submits)
+    assignments = AssignedTask.objects.filter(task_id=task_id)
+    return render_statistics(request, task, submits, assignments)
 
 
 @user_passes_test(is_teacher)
@@ -152,4 +162,4 @@ def for_assignment(request, assignment_id):
     assignment = get_object_or_404(AssignedTask, pk=assignment_id)
     task = assignment.task
     submits = get_assignment_submits(assignment)
-    return render_statistics(request, task, submits, assignment)
+    return render_statistics(request, task, submits, [assignment])
