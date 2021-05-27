@@ -134,7 +134,7 @@ def teacher_task_moss_check(request, task_id):
     else:
         newer_submit_count = Submit.objects.filter(
             assignment__task_id=task.id,
-            created_at__gt=res.timestamp
+            created_at__gt=res.started_at
         ).count()
         add_teaching_flag_to_matches(res.matches, request.user, task)
         sort_matches(res.matches)
@@ -145,7 +145,8 @@ def teacher_task_moss_check(request, task_id):
             "matches": res.matches,
             "graph": res.to_svg(anonymize=False),
             "opts": res.opts,
-            "timestamp": res.timestamp,
+            "started_at": res.started_at,
+            "finished_at": res.finished_at,
             "moss_url": res.url,
             "newer_submit_count": newer_submit_count,
             "task": task,

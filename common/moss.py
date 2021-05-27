@@ -130,6 +130,8 @@ def moss_notify_teacher(task_id: int, matches):
 
 @django_rq.job("default", timeout=60 * 15)
 def moss_check_task(task_id: int, notify_teacher: bool):
+    start_timestamp = datetime.datetime.now()
+
     log_stream = StringIO()
     log_handler = logging.StreamHandler(log_stream)
     log_handler.setFormatter(
@@ -208,7 +210,8 @@ def moss_check_task(task_id: int, notify_teacher: bool):
         "success": success,
         "url": url,
         "matches": matches,
-        "timestamp": datetime.datetime.now(),
+        "started_at": start_timestamp,
+        "finished_at": datetime.datetime.now(),
         "log": log_stream.getvalue()
     }, timeout=60 * 60 * 24 * 90)
 
@@ -264,12 +267,16 @@ def periodic_moss_check():
 class MossResult:
     def __init__(self,
                  success: bool, url: str, matches,
-                 opts, timestamp: datetime.datetime, log: str):
+                 opts,
+                 started_at: datetime.datetime,
+                 finished_at: datetime.datetime,
+                 log: str):
         self.success = success
         self.url = url
         self.matches = matches
         self.opts = opts
-        self.timestamp = timestamp
+        self.started_at = started_at
+        self.finished_at = finished_at
         self.log = log
         self.G = nx.Graph()
 
@@ -368,7 +375,8 @@ def moss_result(task_id, percent=None, lines=None):
         cache_entry.get("url"),
         matches,
         opts,
-        cache_entry.get("timestamp"),
+        cache_entry.get("started_at"),
+        cache_entry.get("finished_at"),
         cache_entry.get("log")
     )
 
