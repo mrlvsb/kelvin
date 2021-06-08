@@ -296,6 +296,8 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
 
         upload_submit_files(s, paths, solutions)
 
+        # we need submit_id before putting the job to the queue
+        s.save()
         s.jobid = evaluate_submit(request, s).id
         s.save()
 
