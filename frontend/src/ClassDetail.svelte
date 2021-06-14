@@ -195,7 +195,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
                 </div>
               </th>
               {/each}
-              <th>Celkem</th>
+              <th>Celkem ({clazz.assignments.reduce((sum, task)=>sum + task.max_points, 0)} b)</th>
             </tr>
           </thead>
 
