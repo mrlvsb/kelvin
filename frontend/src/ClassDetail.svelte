@@ -1,15 +1,13 @@
 <script>
   import {link} from 'svelte-spa-router'
   import {fetch} from './api.js'
-  import {user} from './global.js'
+
   import CopyToClipboard from './CopyToClipboard.svelte'
   import TimeAgo from './TimeAgo.svelte'
   import {localStorageStore} from './utils.js'
   import AddStudentsToClass from './AddStudentsToClass.svelte'
   import Markdown from './Markdown.svelte'
-
-  import { createEventDispatcher } from 'svelte';
-  const dispatch = createEventDispatcher();
+  import AssignmentPoints from './AssignmentPoints.svelte'
 
   export let clazz;
   export let showStudentsList = clazz['students'].length < 50; 
@@ -220,13 +218,16 @@ tr:hover td:first-of-type {
             <tr>
               <td>{ student.username }</td>
               <td>{ student.last_name } { student.first_name }</td>
-              {#each clazz.assignments.map(i => i.students[student.username]) as result}
+              {#each clazz.assignments.map(i => i.students[student.username]) as result, i}
                 <td>
-                  {#if result.submits != 0}
-                    <a href={result.link} style="color: {result.color}">
-                      { isNaN(parseFloat(result.assigned_points)) ? '?' : result.assigned_points}
-                    </a>
-                  {/if}
+                  <AssignmentPoints
+                    submit_id={result.accepted_submit_id}
+                    submits={result.submits}
+                    link={result.link}
+                    login={student.username}
+                    task={clazz.assignments[i].name}
+                    color={result.color}
+                    assigned_points={result.assigned_points} />
                 </td>
               {/each}
               <td>{studentPoints(clazz, student)}</td>
