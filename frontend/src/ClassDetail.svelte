@@ -54,6 +54,21 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
   text-align: center;
 }
 
+tr td:first-of-type, tr th:first-of-type {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: white;
+}
+
+tr:nth-of-type(odd) td:first-of-type {
+  background: #f2f2f2;
+}
+
+tr:hover td:first-of-type {
+  background: #ececec;
+}
+
 .card-body {
   overflow-x: auto;
 }
@@ -64,6 +79,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
   animation-iteration-count: infinite;
   animation-timing-function: linear;
 }
+
 @keyframes spin {
   from {
     transform:rotate(0deg);
@@ -139,85 +155,86 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
           {/if}
         {/if}
         <div style="position: relative; overflow: auto">
-        <table class="table table-sm table-hover">
-          <thead>
-            <tr>
-              <th>
-                Login<span class="d-none d-md-inline"><!--
-                --><CopyToClipboard content={clazz.students.map(s => s.username).join('\n')} title='Copy logins to clipboard'>
-                  <span class="iconify" data-icon="clarity:clipboard-line"></span>
-                </CopyToClipboard><!--
-                --><CopyToClipboard content={clazz.students.map(s => s.username + '@vsb.cz').join('\n')} title='Copy emails to clipboard'>
-                  <span class="iconify" data-icon="ic:round-alternate-email"></span>
-                </CopyToClipboard></span>
-              </th>
-              <th>Student</th>
-              {#each clazz.assignments as assignment, index}
-              <th class="more-hover">
-                <a href="{assignment.task_link}" 
-                   class:text-muted={assignment.assigned > new Date()}
-                   class:text-success={assignment.deadline > new Date()}>
-                  { $showFullTaskNames ? assignment.short_name : `#${index+1}` }{#if assignment.max_points > 0}&nbsp;({ assignment.max_points }b){/if}
-                </a>
-                <div class="more-content">
-                  {assignment.name}
-                  <a href="/task/edit/{assignment.task_id}" use:link title="Edit"><span class="iconify" data-icon="clarity:edit-solid"></span></a>
-                  <div style="display: flex; align-items: center;">
-                    <a href="{assignment.moss_link}" title="Send to MOSS"><span class="iconify" data-icon="bx:bx-check-double"></span></a>
-                    <a href="{assignment.sources_link}" title="Download all source codes"><span class="iconify" data-icon="fe:download" data-inline="false"></span></a>
-                    <a href="{assignment.csv_link}" title="Download CSV with results"><span class="iconify" data-icon="la:file-csv-solid"></span></a>
-                    <a href="/assignment/show/{assignment.assignment_id}" title="Show all source codes"><span class="iconify" data-icon="bx-bx-code-alt"></span></a>
-                    <button class="btn btn-link p-0" class:spin={reevaluateLoading} title='Reevaluate latest submits' on:click={() => reevaluateAssignment(assignment)}>
-                      <span class="iconify" data-icon="bx:bx-refresh"></span>
-                    </button>
-                    <a href="/statistics/assignment/{assignment.assignment_id}" title="Show assignment stats"><span class="iconify" data-icon="bx-bx-bar-chart-alt-2"></span></a>
-                  </div>
-                  <dl>
-                    <dt>Assigned</dt>
-                    <dd>
-                      {assignment.assigned.toLocaleString('cs')}{#if assignment.assigned > new Date()}, <TimeAgo datetime={assignment.assigned} />{/if}
-                    </dd>
-
-                    {#if assignment.deadline}
-                    <dt>Deadline</dt>
-                    <dd>
-                      {assignment.deadline.toLocaleString('cs')}{#if assignment.deadline > new Date()}, <TimeAgo datetime={assignment.deadline} />{/if}
-                    </dd>
-                    {/if}
-
-                    {#if assignment.max_points}
-                    <dt>Max points</dt>
-                    <dd>
-                      {assignment.max_points} 
-                    </dd>
-                    {/if}
-                  </dl>
-                </div>
-              </th>
-              {/each}
-              <th>Celkem ({clazz.assignments.reduce((sum, task)=>sum + task.max_points, 0)} b)</th>
-            </tr>
-          </thead>
-
-          <tbody>
-          {#each clazz.students as student}
-          <tr>
-            <td>{ student.username }</td>
-            <td>{ student.last_name } { student.first_name }</td>
-            {#each clazz.assignments.map(i => i.students[student.username]) as result}
-              <td>
-                {#if result.submits != 0}
-                  <a href={result.link} style="color: {result.color}">
-                    { isNaN(parseFloat(result.assigned_points)) ? '?' : result.assigned_points}
+          <table class="table table-sm table-hover table-striped">
+            <thead>
+              <tr>
+                <th>
+                  Login<span class="d-none d-md-inline"><!--
+                  --><CopyToClipboard content={clazz.students.map(s => s.username).join('\n')} title='Copy logins to clipboard'>
+                    <span class="iconify" data-icon="clarity:clipboard-line"></span>
+                  </CopyToClipboard><!--
+                  --><CopyToClipboard content={clazz.students.map(s => s.username + '@vsb.cz').join('\n')} title='Copy emails to clipboard'>
+                    <span class="iconify" data-icon="ic:round-alternate-email"></span>
+                  </CopyToClipboard></span>
+                </th>
+                <th>Student</th>
+                {#each clazz.assignments as assignment, index}
+                <th class="more-hover">
+                  <a href="{assignment.task_link}" 
+                    class:text-muted={assignment.assigned > new Date()}
+                    class:text-success={assignment.deadline > new Date()}>
+                    { $showFullTaskNames ? assignment.short_name : `#${index+1}` }{#if assignment.max_points > 0}&nbsp;({ assignment.max_points }b){/if}
                   </a>
-                {/if}
-              </td>
+                  <div class="more-content">
+                    {assignment.name}
+                    <a href="/task/edit/{assignment.task_id}" use:link title="Edit"><span class="iconify" data-icon="clarity:edit-solid"></span></a>
+                    <div style="display: flex; align-items: center;">
+                      <a href="{assignment.moss_link}" title="Send to MOSS"><span class="iconify" data-icon="bx:bx-check-double"></span></a>
+                      <a href="{assignment.sources_link}" title="Download all source codes"><span class="iconify" data-icon="fe:download" data-inline="false"></span></a>
+                      <a href="{assignment.csv_link}" title="Download CSV with results"><span class="iconify" data-icon="la:file-csv-solid"></span></a>
+                      <a href="/assignment/show/{assignment.assignment_id}" title="Show all source codes"><span class="iconify" data-icon="bx-bx-code-alt"></span></a>
+                      <button class="btn btn-link p-0" class:spin={reevaluateLoading} title='Reevaluate latest submits' on:click={() => reevaluateAssignment(assignment)}>
+                        <span class="iconify" data-icon="bx:bx-refresh"></span>
+                      </button>
+                      <a href="/statistics/assignment/{assignment.assignment_id}" title="Show assignment stats"><span class="iconify" data-icon="bx-bx-bar-chart-alt-2"></span></a>
+                    </div>
+                    <dl>
+                      <dt>Assigned</dt>
+                      <dd>
+                        {assignment.assigned.toLocaleString('cs')}{#if assignment.assigned > new Date()}, <TimeAgo datetime={assignment.assigned} />{/if}
+                      </dd>
+
+                      {#if assignment.deadline}
+                      <dt>Deadline</dt>
+                      <dd>
+                        {assignment.deadline.toLocaleString('cs')}{#if assignment.deadline > new Date()}, <TimeAgo datetime={assignment.deadline} />{/if}
+                      </dd>
+                      {/if}
+
+                      {#if assignment.max_points}
+                      <dt>Max points</dt>
+                      <dd>
+                        {assignment.max_points} 
+                      </dd>
+                      {/if}
+                    </dl>
+                  </div>
+                </th>
+                {/each}
+                <th>Celkem ({clazz.assignments.reduce((sum, task)=>sum + task.max_points, 0)} b)</th>
+              </tr>
+            </thead>
+
+            <tbody>
+            {#each clazz.students as student}
+            <tr>
+              <td>{ student.username }</td>
+              <td>{ student.last_name } { student.first_name }</td>
+              {#each clazz.assignments.map(i => i.students[student.username]) as result}
+                <td>
+                  {#if result.submits != 0}
+                    <a href={result.link} style="color: {result.color}">
+                      { isNaN(parseFloat(result.assigned_points)) ? '?' : result.assigned_points}
+                    </a>
+                  {/if}
+                </td>
+              {/each}
+              <td>{studentPoints(clazz, student)}</td>
+            </tr>
             {/each}
-            <td>{studentPoints(clazz, student)}</td>
-          </tr>
-          {/each}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
         {#if clazz.students.length == 0}
           <p class="text-center">
             No student added yet.
