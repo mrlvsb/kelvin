@@ -76,7 +76,7 @@
   }
 </style>
 
-<div class="container-fluid">
+<div class="container-fluid p-1">
   <div class="d-flex mb-1">
         <ClassFilter semester={filter.semester} subject={filter.subject} teacher={filter.teacher} clazz={filter.class} />
 

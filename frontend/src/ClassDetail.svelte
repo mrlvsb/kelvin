@@ -120,12 +120,12 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
       </div>
       <button class="btn" on:click={() => showStudentsList = !showStudentsList}>
           {clazz.subject_abbr} {clazz.timeslot} {clazz.code} {clazz.teacher_username}
-          <span class="text-muted">({clazz.students.length} students)</span>
+          <span class="text-muted d-none d-md-inline">({clazz.students.length} students)</span>
       </button>
   </div>
   <div> 
   {#if showStudentsList || showAddStudents}
-    <div class="card-body">
+    <div class="card-body p-1">
       {#if showAddStudents}
         <AddStudentsToClass class_id={clazz.id} on:update />
       {/if}
@@ -136,20 +136,20 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
                     on:click={() => showSummary = !showSummary}>{showSummary ? "Skrýt" : "Zobrazit"} informace o cvičení</button>
           {#if showSummary }
             <Markdown content={clazz.summary} />
-          {:else}
           {/if}
         {/if}
+        <div style="position: relative; overflow: auto">
         <table class="table table-sm table-hover">
           <thead>
             <tr>
               <th>
-                Login<!--
+                Login<span class="d-none d-md-inline"><!--
                 --><CopyToClipboard content={clazz.students.map(s => s.username).join('\n')} title='Copy logins to clipboard'>
                   <span class="iconify" data-icon="clarity:clipboard-line"></span>
                 </CopyToClipboard><!--
                 --><CopyToClipboard content={clazz.students.map(s => s.username + '@vsb.cz').join('\n')} title='Copy emails to clipboard'>
                   <span class="iconify" data-icon="ic:round-alternate-email"></span>
-                </CopyToClipboard>
+                </CopyToClipboard></span>
               </th>
               <th>Student</th>
               {#each clazz.assignments as assignment, index}
