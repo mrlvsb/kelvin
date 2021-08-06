@@ -4,10 +4,12 @@ import io
 import subprocess
 import tempfile
 import shlex
+import hashlib
 import logging
 from common.utils import points_to_color
 from .results import TestResult
 from . import testsets
+from kelvin.settings import BASE_DIR
 
 from .utils import parse_human_size, copyfile
 
@@ -61,19 +63,62 @@ def create_docker_cmd(evaluation, image, additional_args=None, cmd=None, limits=
         *cmd,
     ]
 
+def docker_image(name):
+    parts = name.split(':')
+    basename = parts[0]
+    version = 'latest' if len(parts) == 1 else parts[1]
+    
+    try:
+        with open(os.path.join(BASE_DIR, "evaluator", "images", name, "Dockerfile")) as f:
+            version = hashlib.md5(f.read().encode('utf-8')).hexdigest()
+    except FileNotFoundError:
+        pass
+
+    return f'{basename}:{version}'
+
+def prepare_container(name, before=None):
+    if not before:
+        before = []
+    
+    hash = hashlib.md5((name + "\n".join(before)).encode('utf-8')).hexdigest()
+    base_name = name.split(':')[0]
+
+    target_name = f'{base_name}:{hash}'
+
+    if not target_name.startswith('kelvin/'):
+        p = subprocess.Popen(["docker", "pull", target_name])
+        p.communicate()
+
+        if p.returncode == 0:
+            return target_name
+
+    p = subprocess.Popen(["docker", "images", target_name, "-q"], stdout=subprocess.PIPE)
+    stdout = p.communicate()[0]
+    if len(stdout.strip()) > 0:
+        return target_name   
+
+    instructions = [f'FROM {name}'] + [f'RUN {cmd}' for cmd in before]
+
+    logging.error("image %s not exist, rebuilding", target_name)
+    p = subprocess.Popen(["docker", "build", "-", "-t", target_name], stdin=subprocess.PIPE)
+    p.communicate(input=("\n".join(instructions)).encode('utf-8'))
+
+    return target_name
 
 
 class DockerPipe:
-    def __init__(self, image, limits=None, **kwargs):
+    def __init__(self, image, limits=None, before=None, **kwargs):
         self.image = image
         self.kwargs = kwargs
         self.limits = limits
+        self.before = [] if not before else before
 
     def run(self, evaluation):
         result_dir = os.path.join(evaluation.result_path, self.id)
         os.mkdir(result_dir)
 
-        args = create_docker_cmd(evaluation, self.image, env=self.kwargs, limits=self.limits)
+        image = prepare_container(docker_image(self.image), self.before)
+        args = create_docker_cmd(evaluation, image, env=self.kwargs, limits=self.limits)
 
         def res_path(p):
             return os.path.join(result_dir, p)
@@ -164,18 +209,20 @@ def text_compare(expected, actual):
 
 
 class TestsPipe:
-    def __init__(self, executable='./main', limits=None, timeout=5, **kwargs):
+    def __init__(self, executable='./main', limits=None, timeout=5, before=None, **kwargs):
         super().__init__(**kwargs)
         self.executable = executable
         self.limits = limits
         self.timeout = timeout
+        self.before = [] if not before else before
 
     def run(self, evaluation):
         results = []
         result_dir = os.path.join(evaluation.result_path, self.id)
         os.mkdir(result_dir)
 
-        container = subprocess.check_output(create_docker_cmd(evaluation, 'kelvin/run', additional_args=['-d'], cmd=['sleep', 300], limits=self.limits)).decode('utf-8').strip()
+        image = prepare_container(docker_image('kelvin/run'), self.before)
+        container = subprocess.check_output(create_docker_cmd(evaluation, image, additional_args=['-d'], cmd=['sleep', 300], limits=self.limits)).decode('utf-8').strip()
         for test in evaluation.tests:
             result = TestResult(result_dir, {'name': test.name})
 
