@@ -56,6 +56,7 @@ def create_docker_cmd(evaluation, image, additional_args=None, cmd=None, limits=
         '-v', evaluation.submit_path + ':/work',
         '--ulimit', f'fsize={limits["fsize"]}:{limits["fsize"]}',
         '-m', str(limits['memory']),
+        '--memory-swap', str(limits['memory']),
         '--user', str(os.getuid()),
         *additional_args,
         *env,
