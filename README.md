@@ -22,6 +22,11 @@ kelvin
 sudo apt install libldap2-dev libsasl2-dev libcap-dev pandoc
 ```
 
+### Local development
+```
+tmuxp load dev.yaml
+```
+
 ### Installing dependencies after the pull
 ```
 $ pip install -r requirements.txt

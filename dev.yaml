@@ -1,0 +1,9 @@
+session_name: kelvin
+windows:
+  - shell_command_before:
+      - cd ~/kelvin
+    panes:
+      - ./manage.py runserver
+      - ./manage.py rqworker
+      - cd frontend && npm run dev
+      - docker start kelvin_pgsql
