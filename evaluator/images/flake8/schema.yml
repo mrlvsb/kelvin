@@ -1,0 +1,17 @@
+type: object
+additionalProperties: false
+properties:
+ select:
+  description: "List of enabled PEP8 codes. Can be array or string delimited by comma"
+  oneOf:
+   - type: array
+     items:
+      type: string
+   - type: string
+ ignore:
+  description: "List of ignored PEP8 codes. Can be array or string delimited by comma"
+  oneOf:
+   - type: array
+     items:
+      type: string
+   - type: string

@@ -22,3 +22,5 @@ numpy==1.19.4
 pygraphviz==1.7
 networkx==2.5
 psycopg2
+yaml_source_map
+jsonschema
