@@ -6,6 +6,8 @@ import tarfile
 import tempfile
 import re
 import json
+import yaml
+import jsonschema
 import subprocess
 import datetime
 import shutil
@@ -41,6 +43,8 @@ from common.moss import enqueue_moss_check, moss_delete_job_from_cache, \
     moss_task_set_opts, \
     moss_task_get_opts
 from common.bulk_import import BulkImport
+from yaml_source_map import calculate
+from pathlib import Path
 
 @user_passes_test(is_teacher)
 def teacher_task(request, task_id):
@@ -341,3 +345,81 @@ def bulk_import(request):
             res['error'] = 'No file uploaded'
 
     return render(request, 'web/teacher/import.html', res)
+
+def load_yaml(path):
+    with open(path) as f:
+        return yaml.safe_load(f)
+
+def build_config_schema():
+    schema = load_yaml(os.path.join(BASE_DIR, "evaluator", "schema.yml"))    
+    known_runs = []
+    for path in Path(os.path.join(BASE_DIR, "evaluator", "images")).rglob('schema.yml'):
+        name = os.path.basename(os.path.dirname(path))
+        known_runs.append(name)
+        action_schema = load_yaml(path)
+        action_schema['properties']['type'] = {'const': name}
+        schema['properties']['pipeline']['items']['allOf'].append({
+            'if': {'properties': {'type': {'const': name}}},
+            'then': action_schema,
+        })
+    
+    # set enum for all known actions
+    schema['properties']['pipeline']['items']['allOf'].append({
+        'properties': {'type': {'type': 'string', 'enum': known_runs}},
+    })
+
+    # append common keys for each action
+    for k in schema['properties']['pipeline']['items']['allOf']:
+        if 'if' not in k:
+            continue
+        
+        k['then']['properties']['fail_on_error'] = {
+            'type': 'bool',
+            'description': 'Immediately stop a pipeline when this action fails.'
+        }
+
+        k['then']['properties']['enabled'] = {
+            'type': {
+                'oneOf': [
+                    {'type': 'boolean'},
+                    {'const': 'announce'}
+                ]
+            },
+            'description': 'Enable action (true/false) or before assigned date (announce)'
+        }
+
+        k['then']['properties']['before'] = {
+            'type': 'array',
+            'items': {'type': 'string'},
+            'description': 'List of commands for container setup, that will be cached. You can for example install some packages'
+        }
+    return schema
+
+
+@user_passes_test(is_teacher)
+def config_schema(request):
+    return JsonResponse(build_config_schema())
+
+@user_passes_test(is_teacher)
+def validate_config(request):
+    try:
+        instance = yaml.safe_load(request.body)
+        sourcemap = calculate(request.body.decode('utf-8'))
+        schema = build_config_schema()
+
+        errors = []
+        validator = jsonschema.Draft7Validator(schema)
+        for err in validator.iter_errors(instance):
+            path = ('/' + ('/'.join([str(i) for i in err.path]))).rstrip('/')
+
+            s = sourcemap[path]
+            error = {}
+            error['message'] = err.message
+            error['start_row'] = s.key_start.line if s.key_start else s.value_start.line
+            error['start_col'] = s.key_start.column if s.key_start else s.value_start.column
+            error['end_row'] = s.value_end.line if s.value_end else s.key_end.line
+            error['end_col'] = s.value_end.column if s.value_end else s.key_end.column
+            errors.append(error)
+        return JsonResponse({'errors': errors})
+    except yaml.scanner.ScannerError as err:
+        return JsonResponse({})

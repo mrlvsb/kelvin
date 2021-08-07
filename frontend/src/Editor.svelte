@@ -1,14 +1,37 @@
 <script>
-  import {onDestroy} from 'svelte';
-  import CodeMirror from 'codemirror';
-  import 'codemirror/lib/codemirror.css';
-  import 'codemirror/mode/clike/clike.js';
-  import 'codemirror/mode/yaml/yaml.js';
-  import 'codemirror/mode/python/python.js';
-  import 'codemirror/mode/markdown/markdown.js';
-  import 'codemirror/mode/htmlmixed/htmlmixed.js';
-  import 'codemirror/addon/display/fullscreen.js';
-  import 'codemirror/addon/display/fullscreen.css';
+  import {onDestroy} from 'svelte'
+  import CodeMirror from 'codemirror'
+  import 'codemirror/lib/codemirror.css'
+  import 'codemirror/mode/clike/clike.js'
+  import 'codemirror/mode/yaml/yaml.js'
+  import 'codemirror/mode/python/python.js'
+  import 'codemirror/mode/markdown/markdown.js'
+  import 'codemirror/mode/htmlmixed/htmlmixed.js'
+  import 'codemirror/addon/display/fullscreen.js'
+  import 'codemirror/addon/display/fullscreen.css'
+  import 'codemirror/addon/lint/lint.js'
+  import 'codemirror/addon/lint/lint.css'
+  import {fetch} from './api.js'
+
+  async function python_validator(content) {
+    if(filename !== '/config.yml') {
+      return [];
+    }
+
+    const res = await fetch('/validate_config', {
+      method: 'POST',
+      body: content,
+    });
+
+    const json = await res.json();
+    return json.errors.map(json => {
+      return {
+        from: CodeMirror.Pos(json.start_row, json.start_col),
+        to: CodeMirror.Pos(json.end_row, json.end_col),
+        message: json.message
+      };
+    });
+  }
 
   export let value;
   export let filename;
@@ -38,6 +61,9 @@
       editor = CodeMirror.fromTextArea(editorEl, {
         mode: toMode(filename),
         autofocus,
+        gutter: false,
+        gutters: ["CodeMirror-lint-markers"],
+        lint: python_validator,
         spellcheck: true,
         inputStyle: "contenteditable",
         readOnly: disabled,
@@ -81,6 +107,12 @@
 
   $: if(editor) {
     editor.setOption('readOnly', disabled);
+  }
+
+  $: if(editor) {
+    editor.setOption('gutter', filename == '/config.yml')
+    editor.setOption('spellcheck', filename != '/config.yml')
+    editor.setOption('gutters', filename == '/config.yml' ? ["CodeMirror-lint-markers"] : [])
   }
 
   onDestroy(() => {
