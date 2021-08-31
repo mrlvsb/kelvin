@@ -4,7 +4,6 @@
     import {link, push} from 'svelte-spa-router'
 
     let semesters = {};
-    let mySubjects = [];
     let allTeachers = [];
 
 
@@ -42,8 +41,6 @@
           }
         }
       }
-
-      mySubjects = [...new Set(subjs)];
     } 
 
     $: {
@@ -68,12 +65,6 @@
 
     load();
 </script>
-
-<div>
-  {#each mySubjects as s}
-    <a class="mr-2" class:font-weight-bold={subject == s} href="/?semester={semester}&subject={s}&teacher={$user.username}" use:link>{s}</a>
-  {/each}
-</div>
 
 <div class="ml-auto">
   <div class="input-group">
