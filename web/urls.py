@@ -50,9 +50,6 @@ urlpatterns = [
     path('tasks', teacher_view.all_tasks, name='tasks'),
     path('tasks/<str:subject__abbr>', teacher_view.all_tasks, name='tasks'),
 
-    path('validate_config', teacher_view.validate_config),
-    path('config.schema.json', teacher_view.config_schema),
-
     path('reevaluate/<int:submit_id>', teacher_view.reevaluate, name='reevaluate'),
 
     path('import', teacher_view.bulk_import),
