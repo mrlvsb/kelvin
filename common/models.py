@@ -286,18 +286,23 @@ def assignedtask_results(assignment, students=None, **kwargs):
     if not students:
         students = assignment.clazz.students.all().values_list('username', flat=True)
 
+    def ensure_student(student):
+        if student not in results:
+            results[student] = {
+                'student': student,
+                'submits': 0,
+                'submits_with_assigned_pts': 0,
+            }
+
     for student in students:
-        results[student] = {
-            'student': student,
-            'submits': 0,
-            'submits_with_assigned_pts': 0,
-        }
+        ensure_student(student)
 
     assignment_submits = Submit.objects.filter(assignment_id=assignment.id, **kwargs).select_related('student').order_by('id')
     for submit in assignment_submits:
         if submit.student.username not in results and is_teacher(submit.student):
             continue
 
+        ensure_student(submit.student.username)
         student_submit_stats = results[submit.student.username]
         student_submit_stats['submits'] += 1
 
