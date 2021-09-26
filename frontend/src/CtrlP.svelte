@@ -37,13 +37,13 @@
     }
 
     function keydown(e) {
-      if(shown) {
-        if(e.ctrlKey && e.code == 'KeyP') {
-            shown = true;
-            selected = 0;
-            query = '';
-            e.preventDefault();
-        } else if(e.code == 'Enter') {
+      if(e.ctrlKey && e.code == 'KeyP') {
+          shown = true;
+          selected = 0;
+          query = '';
+          e.preventDefault();
+      } else if(shown) {
+        if(e.code == 'Enter') {
           go(selected);
         } else if(e.code == 'ArrowDown') {
           selected++;
@@ -61,7 +61,7 @@ div.ctrlp {
   position: fixed;
   top: 0px;
   left: 0px;
-  z-index: 1;
+  z-index: 2;
   width: 100%;
 }
 ul {
