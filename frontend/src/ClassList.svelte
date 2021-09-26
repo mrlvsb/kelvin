@@ -80,7 +80,11 @@
   <div class="d-flex mb-1">
         <ClassFilter semester={filter.semester} subject={filter.subject} teacher={filter.teacher} clazz={filter.class} />
 
-        <a class="btn btn-sm" href="/admin/common/class/add/" title="Add class">
+        <a class="btn btn-sm p-1" href="/import" title="Bulk import students from EDISON">
+          <span class="iconify" data-icon="mdi:calendar-import"></span>
+        </a>
+
+        <a class="btn btn-sm p-1" href="/admin/common/class/add/" title="Add class">
           <span class="iconify" data-icon="ant-design:plus-outlined"></span>
         </a>
   </div>
