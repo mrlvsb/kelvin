@@ -49,6 +49,6 @@ for group in build_deps(deps):
 			with open(os.path.join(base_path, name, "Dockerfile"), 'rb') as f:
 				hash = hashlib.md5(f.read()).hexdigest()
 			image_name = f"{image}:{hash}"
-			cmd = ["docker", "build", "-t", image_name, "."]
+			cmd = ["docker", "build", "-t", image_name,  "-t", image, "."]
 			p = subprocess.Popen(cmd, cwd=name)
 			p.communicate()
