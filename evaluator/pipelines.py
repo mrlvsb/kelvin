@@ -69,7 +69,7 @@ def docker_image(name):
     parts = name.split(':')
     basename = parts[0]
     version = 'latest' if len(parts) == 1 else parts[1]
-    
+
     try:
         with open(os.path.join(BASE_DIR, "evaluator", "images", name, "Dockerfile")) as f:
             version = hashlib.md5(f.read().encode('utf-8')).hexdigest()
@@ -78,10 +78,13 @@ def docker_image(name):
 
     return f'{basename}:{version}'
 
+class ImageNotFoundException(Exception):
+    pass
+
 def prepare_container(name, before=None):
     if not before:
         before = []
-    
+
     hash = hashlib.md5((name + "\n".join(before)).encode('utf-8')).hexdigest()
     base_name = name.split(':')[0]
 
@@ -97,14 +100,17 @@ def prepare_container(name, before=None):
     p = subprocess.Popen(["docker", "images", target_name, "-q"], stdout=subprocess.PIPE)
     stdout = p.communicate()[0]
     if len(stdout.strip()) > 0:
-        return target_name   
+        return target_name
 
     instructions = [f'FROM {name}'] + [f'RUN {cmd}' for cmd in before]
 
-    logging.error("image %s not exist, rebuilding", target_name)
-    p = subprocess.Popen(["docker", "build", "-", "-t", target_name], stdin=subprocess.PIPE)
-    p.communicate(input=("\n".join(instructions)).encode('utf-8'))
-
+    logging.warning("image %s not exists, rebuilding", target_name)
+    try:
+        subprocess.check_output(["docker", "build", "-", "-t", target_name], input="\n".join(instructions), text=True, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        if 'pull access denied for' in e.output:
+            raise ImageNotFoundException(name)
+        raise Exception(e.output)
     return target_name
 
 
@@ -127,7 +133,7 @@ class DockerPipe:
 
         with open(res_path("stdout"), "w") as stdout, open(res_path("stderr"), "w") as stderr:
             p = subprocess.Popen(args, stdout=stdout, stderr=stderr)
-            p.communicate()        
+            p.communicate()
 
         result = {}
         try:
@@ -139,7 +145,7 @@ class DockerPipe:
         with open(res_path("stdout")) as stdout, open(res_path("stderr")) as stderr:
             print(stdout.read())
             print(stderr.read())
-            
+
         if 'failed' not in result:
             result['failed'] = p.returncode != 0
 
