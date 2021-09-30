@@ -15,15 +15,16 @@ from .utils import parse_human_size, copyfile
 
 logger = logging.getLogger('evaluator')
 
+DEFAULT_LIMITS = {
+    'fsize': '16M',
+    'memory': '128M',
+}
+
 
 def create_docker_cmd(evaluation, image, additional_args=None, cmd=None, limits=None, env=None):
     if not limits:
         limits = {}
-    limits = {
-        'fsize': '16M',
-        'memory': '128M',
-        **limits
-    }
+    limits = {**DEFAULT_LIMITS, **limits}
     limits = {k: parse_human_size(v) for k, v in limits.items()}
 
     if not cmd:
@@ -252,7 +253,11 @@ class TestsPipe:
                 isolate_cmd = shlex.split(f"docker exec -i {container}") + ['timeout', str(self.timeout)] + cmd
                 logger.debug("executing in isolation: %s",
                                 " ".join((isolate_cmd)))  # TODO: shlex.join only in python3.8
-                p = subprocess.Popen(isolate_cmd, **args, stdout=stdout_name, stderr=stderr_name)
+                def preexec_fn():
+                    import resource
+                    fsize = parse_human_size(DEFAULT_LIMITS['fsize'])
+                    resource.setrlimit(resource.RLIMIT_FSIZE, (fsize, fsize))
+                p = subprocess.Popen(isolate_cmd, **args, stdout=stdout_name, stderr=stderr_name, preexec_fn=preexec_fn)
                 p.communicate(**comm_args)
 
                 result['exit_code'] = p.returncode
