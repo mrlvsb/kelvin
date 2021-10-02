@@ -271,9 +271,16 @@ class PipelineRule {
     }
 
     validate(prefix, data, sourceMap) {
+        if(!Array.isArray(data)) {
+          return [err(sourceMap[mkey(prefix)].key, "Pipeline must be array")];
+        }
+
         let errors = [];
         let i = 0;
         for (const pipe of data) {
+            if(!pipe || pipe.constructor !== Object || !('type' in pipe)) {
+              return [err(sourceMap[mkey(prefix, i)].key, "Action must contain type")];
+            }
             const type = pipe['type'];
             if (type in this.pipes) {
                 delete pipe['type'];
