@@ -211,7 +211,8 @@ class TestSet:
                     pipe.title = item.get('title', item['type'])
                     pipe.fail_on_error = item.get('fail_on_error', True)
 
-                    pipe.enabled = True
+                    if not getattr(pipe, 'enabled', None):
+                        pipe.enabled = True
                     if 'enabled' in item:
                         if item['enabled'] == 'announce':
                             pipe.enabled = 'announce'

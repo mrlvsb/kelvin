@@ -844,6 +844,14 @@ def upload_results(request, assignment_id, submit_num, login):
     with tarfile.open(fileobj=io.BytesIO(request.body)) as tar:
         tar.extractall(result_path)
 
+    result  = get(submit)['results']
+    for pipe in result.pipelines:
+        if 'points' in pipe:
+            overwrite = 'points_overwrite' in pipe and pipe.points_overwrite
+            if (submit.assigned_points is not None and overwrite) or submit.assigned_points is None:
+                submit.assigned_points = pipe.points
+                submit.save()
+
     return JsonResponse({"success": True})
 
 

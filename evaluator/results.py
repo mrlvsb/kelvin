@@ -153,12 +153,23 @@ class TestResult:
 
 class PipeResult:
     def __init__(self, id):
+        self.__dict__['attrs'] = {}
         self.id = id
         self.title = None
         self.html = None
         self.tests = []
         self.comments = {}
-    
+        self.failed = False
+
+    def __getattr__(self, name):
+        return self.attrs[name]
+
+    def __setattr__(self, name, value):
+        self.attrs[name] = value
+
+    def __contains__(self, name):
+        return name in self.attrs
+
     def success(self):
         return len([t for t in self.tests if t.success])
 
@@ -174,10 +185,6 @@ class EvaluationResult:
             with open(os.path.join(self.result_dir, 'result.json')) as f:
                 for pipe_json in json.load(f):
                     pipe = PipeResult(pipe_json.get('id', ''))
-                    pipe.title = pipe_json.get('title', '')
-                    pipe.html = pipe_json.get('html', '')
-                    pipe.comments = pipe_json.get('comments', {})
-                    pipe.failed = pipe_json.get('failed', False)
                     for test_json in pipe_json.get('tests', []):
                         result_dir = os.path.join(self.result_dir, pipe.id)
 
@@ -186,6 +193,9 @@ class EvaluationResult:
 
                         pipe.tests.append(result)
                     self.pipelines.append(pipe)
+                    if 'tests' in pipe_json:
+                        del pipe_json['tests']
+                    pipe.attrs.update(pipe_json)
         except FileNotFoundError:
             pass
 

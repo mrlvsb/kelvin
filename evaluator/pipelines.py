@@ -354,30 +354,33 @@ class AutoGraderPipe:
         self.propose = propose
         self.after_deadline_multiplier = max(0, min(1.0, after_deadline_multiplier))
         self.overwrite = overwrite
+        self.enabled = 'always'
 
     def run(self, evaluation):
-        if 'submit_id' not in evaluation.tests.meta:
-            return
-
         total = 0
         success = 0
         for action in evaluation.result.pipelines:
             if 'tests' in action:
                 total += len(action['tests'])
                 success += len(list(filter(lambda t: t['success'], action['tests'])))
+            if action.get('failed', False):
+                success = 0
+                total = 0
+                break
 
-        if total <= 0:
-            return
+        max_points = evaluation.tests.meta['max_points']
+        deadline = evaluation.tests.meta['deadline']
+        is_after_deadline = deadline and deadline < evaluation.tests.meta['submitted_at']
+        points = 0
+        if total:
+            points = round(success * max_points * (self.after_deadline_multiplier if is_after_deadline else 1) / total, 2)
 
-        s = Submit.objects.get(id=evaluation.tests.meta['submit_id'])
-        is_after_deadline = s.assignment.deadline and s.assignment.deadline < s.created_at
-        points = round(success * s.assignment.max_points * (self.after_deadline_multiplier if is_after_deadline else 1) / total, 2)
 
-        if self.propose:
-            return {
-                "html": f"Kelvin proposes <span style='color: {points_to_color(points, s.assignment.max_points)}'>{points}</span> points from maximal {s.assignment.max_points} points."
-            }
-        else:
-            if (s.assigned_points is not None and self.overwrite) or s.assigned_points is None:
-                s.assigned_points = points
-                s.save()
+        result = {
+            "html": f"Kelvin {'proposes' if self.propose else 'assigned'} <span style='color: {points_to_color(points, max_points)}'>{points}</span> points from maximal {max_points} points."
+        }
+
+        if not self.propose:
+            result['points'] = points
+            result['points_overwrite'] = self.overwrite
+        return result
