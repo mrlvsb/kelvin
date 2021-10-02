@@ -1,6 +1,7 @@
 <script>
   import {onDestroy} from 'svelte';
   import CodeMirror from 'codemirror';
+  import {lintPipeline} from './PipelineValidation.js'
   import 'codemirror/lib/codemirror.css';
   import 'codemirror/mode/clike/clike.js';
   import 'codemirror/mode/yaml/yaml.js';
@@ -9,6 +10,10 @@
   import 'codemirror/mode/htmlmixed/htmlmixed.js';
   import 'codemirror/addon/display/fullscreen.js';
   import 'codemirror/addon/display/fullscreen.css';
+  import 'codemirror/addon/lint/lint.js'
+  import 'codemirror/addon/lint/lint.css'
+  import 'codemirror/addon/hint/show-hint.js'
+  import 'codemirror/addon/hint/show-hint.css'
 
   export let value;
   export let filename;
@@ -38,10 +43,13 @@
       editor = CodeMirror.fromTextArea(editorEl, {
         mode: toMode(filename),
         autofocus,
+        gutter: false,
+        gutters: ["CodeMirror-lint-markers"],
         spellcheck: true,
         inputStyle: "contenteditable",
         readOnly: disabled,
         extraKeys: {
+          "Ctrl-Space": "autocomplete",
           "F11": function(cm) {
             cm.setOption("fullScreen", !cm.getOption("fullScreen"));
           },
@@ -77,10 +85,13 @@
 
   $: if(editor) {
     editor.setOption('mode', toMode(filename));
-  }
-
-  $: if(editor) {
     editor.setOption('readOnly', disabled);
+
+    editor.setOption('gutters', filename == '/config.yml' ? ["CodeMirror-lint-markers"] : [])
+    editor.setOption('gutter', filename == '/config.yml')
+    editor.setOption('lint', filename == '/config.yml' ? lintPipeline : null)
+    editor.setOption('spellcheck', filename != '/config.yml')
+    editor.setOption('filename', filename);
   }
 
   onDestroy(() => {
