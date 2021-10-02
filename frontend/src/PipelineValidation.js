@@ -383,6 +383,14 @@ const rules = new DictRule({
             checks: new ArrayRule(new ValueRule()),
             files: new ArrayRule(new ValueRule()),
         }),
+        'tests': new DockerPipeRule({
+            executable: new ValueRule(),
+        }),
+        'auto_grader': new PipeRule({
+          propose: new EnumRule(['true', 'false']),
+          overwrite: new EnumRule(['true', 'false']),
+          after_deadline_multiplier: new ValueRule(),
+        }),
     }),
 });
 
