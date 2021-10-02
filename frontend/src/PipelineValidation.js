@@ -154,7 +154,12 @@ class DictRule {
 
     hint(path, depth, data) {
         if (path == '' || depth >= path.length) {
-            return Object.keys(this.keys).map(k => k + ': ');
+            let alreadyUsed = data;
+            for(const key of path) {
+              alreadyUsed = alreadyUsed[key];
+            }
+            alreadyUsed = Object.keys(alreadyUsed);
+            return Object.keys(this.keys).filter(k => alreadyUsed.indexOf(k) == -1).map(k => k + ': ');
         }
 
         if (path[depth] in this.keys) {
