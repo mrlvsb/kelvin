@@ -28,14 +28,12 @@ CodeMirror.registerHelper("hint", "yaml", function (cm, options) {
         }
         longest = parts.join('.');
 
-        if (cur.ch >= sourceMap[longest].value.from.ch) {
-            const list = rules.hint(longest.split('.'), 0, config);
-            const isKey = list.length && list[0].endsWith(': ');
-            return {
-                list: list,
-                from: isKey ? cur : sourceMap[longest].value.from,
-                to: isKey ? cur : sourceMap[longest].value.to,
-            }
+        const list = rules.hint(longest.split('.'), 0, config);
+        const isKey = list.length && list[0].endsWith(': ');
+        return {
+            list: list,
+            from: isKey ? cur : sourceMap[longest].value.from,
+            to: isKey ? cur : sourceMap[longest].value.to,
         }
     }
 });
@@ -281,9 +279,12 @@ class PipelineRule {
         }
 
         const pipeId = path[1];
-        const pipe = data['pipeline'][pipeId]['type'];
+        if(pipeId !== undefined) {
+          const pipe = data['pipeline'][pipeId]['type'];
 
-        return this.pipes[pipe].hint(path, depth + 1, data);
+          return this.pipes[pipe].hint(path, depth + 1, data);
+        }
+        return []
     }
 }
 
@@ -318,6 +319,18 @@ class PipeRule extends DictRule {
     }
 }
 
+class DockerPipeRule extends PipeRule {
+    constructor(keys) {
+        super({
+            ...keys,
+            limits: new DictRule({
+              fsize: new ValueRule(),
+              memory: new ValueRule(),
+            }),
+        })
+    }
+}
+
 const rules = new DictRule({
     queue: new EnumRule(['evaluator', 'cuda']),
     timeout: new ValueRule(),
@@ -328,13 +341,13 @@ const rules = new DictRule({
         args: new ArrayRule(new ValueRule()),
     })),
     pipeline: new PipelineRule({
-        gcc: new PipeRule({
+        gcc: new DockerPipeRule({
             flags: new ValueRule(),
             output: new ValueRule(),
             ldflags: new ValueRule(),
             cmakeflags: new ValueRule(),
         }),
-        run: new PipeRule({
+        run: new DockerPipeRule({
             commands: new ArrayRule(
                 new UnionRule(
                     new DictRule({
@@ -348,11 +361,11 @@ const rules = new DictRule({
                 )
             )
         }),
-        'flake8': new PipeRule({
+        'flake8': new DockerPipeRule({
             select: new ArrayRule(new ValueRule()),
             ignore: new ArrayRule(new ValueRule()),
         }),
-        'clang-tidy': new PipeRule({
+        'clang-tidy': new DockerPipeRule({
             checks: new ArrayRule(new ValueRule()),
             files: new ArrayRule(new ValueRule()),
         }),
