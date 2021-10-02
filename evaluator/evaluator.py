@@ -26,20 +26,22 @@ class Evaluation:
         job.save_meta()
 
         self.result = EvaluationResult(self.result_path)
+        failed = False
         for pipe in self.tests.pipeline:
-            if not pipe.enabled or (self.meta['before_announce'] and not pipe.enabled == 'announce'):
-                logger.info(f"skipping {pipe.id}")
-                continue
+            if not failed or pipe.enabled == 'always':
+                if not pipe.enabled or (self.meta['before_announce'] and not pipe.enabled == 'announce'):
+                    logger.info(f"skipping {pipe.id}")
+                    continue
 
-            logger.info(f"executing {pipe.id}")
-            res = pipe.run(self)
-            if res:
-                res['id'] = pipe.id
-                res['title'] = pipe.title
-                self.result.pipelines.append(res)
+                logger.info(f"executing {pipe.id}")
+                res = pipe.run(self)
+                if res:
+                    res['id'] = pipe.id
+                    res['title'] = pipe.title
+                    self.result.pipelines.append(res)
 
-                if pipe.fail_on_error and 'failed' in res and res['failed']:
-                    break
+                    if pipe.fail_on_error and 'failed' in res and res['failed']:
+                        failed = True
 
             job.meta['current_action'] += 1
             job.save_meta()
