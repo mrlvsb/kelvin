@@ -6,35 +6,44 @@ CodeMirror.registerHelper("hint", "yaml", function (cm, options) {
         return null;
     }
 
-    const sourceMap = yamlSourceMap(cm.getValue());
-    const config = yaml.load(cm.getValue());
-    const cur = cm.getCursor();
-    let longest = null;
-    for (const [key, pos] of Object.entries(sourceMap)) {
-        if (cur.line >= pos.key.from.line && cur.line <= pos.value.to.line) {
-            if (!longest || longest.length < key.length) {
-                longest = key;
-            }
-        }
-    }
-
-    if (longest !== null) {
-        let parts = longest.split('.');
-        while(parts.length) {
-          if(cur.ch > sourceMap[parts.join('.')].key.from.ch) {
-            break;
+    try {
+      const sourceMap = yamlSourceMap(cm.getValue());
+      const config = yaml.load(cm.getValue());
+      const cur = cm.getCursor();
+      let longest = null;
+      for (const [key, pos] of Object.entries(sourceMap)) {
+          if (cur.line >= pos.key.from.line && cur.line <= pos.value.to.line) {
+              if (!longest || longest.length < key.length) {
+                  longest = key;
+              }
           }
-          parts.pop();
-        }
-        longest = parts.join('.');
+      }
 
-        const list = rules.hint(longest.split('.'), 0, config);
-        const isKey = list.length && list[0].endsWith(': ');
-        return {
-            list: list,
-            from: isKey ? cur : sourceMap[longest].value.from,
-            to: isKey ? cur : sourceMap[longest].value.to,
-        }
+      if (longest !== null) {
+          let parts = longest.split('.');
+          while(parts.length) {
+            if(cur.ch > sourceMap[parts.join('.')].key.from.ch) {
+              break;
+            }
+            parts.pop();
+          }
+          longest = parts.join('.');
+
+          const list = rules.hint(longest.split('.'), 0, config);
+          const isKey = list.length && list[0].endsWith(': ');
+
+          return {
+              list: list,
+              from: isKey ? cur : sourceMap[longest].value.from,
+              to: isKey ? cur : sourceMap[longest].value.to,
+          }
+      }
+    } catch(e) {
+      if(e instanceof yaml.YAMLException) {
+        console.log(e);
+      } else {
+        throw e;
+      }
     }
 });
 
@@ -158,7 +167,7 @@ class DictRule {
             for(const key of path) {
               alreadyUsed = alreadyUsed[key];
             }
-            alreadyUsed = Object.keys(alreadyUsed);
+            alreadyUsed = Object.keys(alreadyUsed || {});
             return Object.keys(this.keys).filter(k => alreadyUsed.indexOf(k) == -1).map(k => k + ': ');
         }
 
