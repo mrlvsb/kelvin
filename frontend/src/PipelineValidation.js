@@ -19,11 +19,22 @@ CodeMirror.registerHelper("hint", "yaml", function (cm, options) {
     }
 
     if (longest !== null) {
+        let parts = longest.split('.');
+        while(parts.length) {
+          if(cur.ch > sourceMap[parts.join('.')].key.from.ch) {
+            break;
+          }
+          parts.pop();
+        }
+        longest = parts.join('.');
+
         if (cur.ch >= sourceMap[longest].value.from.ch) {
+            const list = rules.hint(longest.split('.'), 0, config);
+            const isKey = list.length && list[0].endsWith(': ');
             return {
-                list: rules.hint(longest.split('.'), 0, config),
-                from: cur,
-                to: cur,
+                list: list,
+                from: isKey ? cur : sourceMap[longest].value.from,
+                to: isKey ? cur : sourceMap[longest].value.to,
             }
         }
     }
@@ -52,6 +63,14 @@ function keyInfo(lineNumber, line, key) {
 
 function valueInfo(lineNumber, line, value) {
     if (isObject(value)) return lineInfo(lineNumber, line)
+    
+    if(value === null) {
+      const ch = line.indexOf(':')
+      return {
+          from: { line: lineNumber, ch: ch + 2 },
+          to: { line: lineNumber, ch: ch + 2 }
+      }
+    }
     const asString = String(value)
     const ch = line.lastIndexOf(asString)
     if (ch === -1) return lineInfo(lineNumber, line)
