@@ -84,10 +84,11 @@ ul input {
     if(!await fs.open(fileName)) {
       fs.createFile(fileName, `
 # https://github.com/mrlvsb/kelvin/blob/master/README.pipeline.md
+# You can also use CTRL+Space for autocompleting
 pipeline:
   # compile submitted source codes
-  #- type: gcc
-  #  flags: -Wall -Wextra -g -fsanitize=address -lm -static-libasan -Wno-unused-variable
+  - type: gcc
+  # flags: -Wall -Wextra -g -fsanitize=address -lm -Wno-unused-variable
 
   # add hints from clang-tidy as comments
   #- type: clang-tidy 
