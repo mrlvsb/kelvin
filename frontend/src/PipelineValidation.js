@@ -334,8 +334,12 @@ class PipelineRule {
 
         const pipeId = path[1];
         if(pipeId !== undefined) {
-          const pipe = data['pipeline'][pipeId]['type'];
-          return getRule(this.pipes[pipe]).hint(path, depth + 1, data);
+          const pipe = data['pipeline'][pipeId];
+          if(pipe && pipe['type']) {
+            return getRule(this.pipes[pipe]).hint(path, depth + 1, data);
+          } else {
+              return ['type: '];
+          }
         }
         return []
     }
