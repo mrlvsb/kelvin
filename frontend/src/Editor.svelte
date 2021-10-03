@@ -48,6 +48,7 @@
         spellcheck: true,
         inputStyle: "contenteditable",
         readOnly: disabled,
+        tabSize: 2,
         extraKeys: {
           "Ctrl-Space": "autocomplete",
           "F11": function(cm) {
@@ -57,6 +58,9 @@
             if(cm.getOption("fullScreen")) {
                 cm.setOption("fullScreen", false);
             }
+          },
+          "Tab": function(cm) {
+            cm.execCommand("insertSoftTab");
           },
           ...extraKeys,
         }
