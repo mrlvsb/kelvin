@@ -388,6 +388,32 @@ class DockerPipeRule extends PipeRule {
     }
 }
 
+function err(info, msg) {
+    return {
+        message: msg,
+        from: CodeMirror.Pos(info.from.line, info.from.ch),
+        to: CodeMirror.Pos(info.to.line, info.to.ch),
+    }
+}
+export function lintPipeline(content) {
+    try {
+        const config = yaml.load(content);
+        const sourceMap = yamlSourceMap(content);
+        return rules.validate('', config, sourceMap);
+    } catch (e) {
+        if (e instanceof yaml.YAMLException) {
+            const info = CodeMirror.Pos(e.mark.line, e.mark.column);
+            return [{
+                message: e.message,
+                from: CodeMirror.Pos(e.mark.line, e.mark.column),
+                to: CodeMirror.Pos(e.mark.line, e.mark.column + 1),
+            }]
+        } else {
+            throw e;
+        }
+    }
+}
+
 const rules = new DictRule({
     queue: [new EnumRule(['evaluator', 'cuda']), "Queue where to execute the job"],
     timeout: [new ValueRule(), "Maximal execution of the pipeline in seconds. You can also use <strong>15m</strong> or <strong>1h</strong>."],
@@ -436,29 +462,3 @@ const rules = new DictRule({
         }),
     }),
 });
-
-function err(info, msg) {
-    return {
-        message: msg,
-        from: CodeMirror.Pos(info.from.line, info.from.ch),
-        to: CodeMirror.Pos(info.to.line, info.to.ch),
-    }
-}
-export function lintPipeline(content) {
-    try {
-        const config = yaml.load(content);
-        const sourceMap = yamlSourceMap(content);
-        return rules.validate('', config, sourceMap);
-    } catch (e) {
-        if (e instanceof yaml.YAMLException) {
-            const info = CodeMirror.Pos(e.mark.line, e.mark.column);
-            return [{
-                message: e.message,
-                from: CodeMirror.Pos(e.mark.line, e.mark.column),
-                to: CodeMirror.Pos(e.mark.line, e.mark.column + 1),
-            }]
-        } else {
-            throw e;
-        }
-    }
-}
