@@ -384,10 +384,10 @@ class DockerPipeRule extends PipeRule {
         super({
             ...keys,
             before: [new ArrayRule(new ValueRule()), 'List of commands for container preparation. Will be cached for next run.'],
-            limits: new DictRule({
+            limits: [new DictRule({
               fsize: [new ValueRule(), 'Maximal size for one created file. You can use suffixes like 16M'],
               memory: [new ValueRule(), 'Maximal memory use for the container, not the process. You can use suffixes like 128M'],
-            }),
+            }), 'Container runtime limits like file size or maximal memory use'],
         })
     }
 }
@@ -448,21 +448,21 @@ const rules = new DictRule({
                 )
             ), 'Command can be string or a dict.<br>Commands prefixed with <strong>#</strong> are not shown on the result page.']
         }), 'Run custom commands and show the output.'],
-        'flake8': new DockerPipeRule({
+        'flake8': [new DockerPipeRule({
             select: [new ArrayRule(new ValueRule()), 'List of enabled PEP8 codes. Can be array or string delimited by comma'],
             ignore: [new ArrayRule(new ValueRule()), 'List of ignored PEP8 codes. Can be array or string delimited by comma'],
-        }),
-        'clang-tidy': new DockerPipeRule({
+        }), 'Python static analysis comments in source code'],
+        'clang-tidy': [new DockerPipeRule({
             checks: [new ArrayRule(new ValueRule()), 'List of used <a href="https://clang.llvm.org/extra/clang-tidy/checks/list.html">checks</a>. You may use asterisks <strong>*</strong> or block checks with hyphen <strong>-</strong>.'],
             files: [new ArrayRule(new ValueRule()), 'List of analyzed files.'],
-        }),
-        'tests': new DockerPipeRule({
+        }), 'C/C++ static analysis comments in source code'],
+        'tests': [new DockerPipeRule({
             executable: new ValueRule(),
-        }),
-        'auto_grader': new PipeRule({
+        }), 'Run input/output/files tests on compiled program.'],
+        'auto_grader': [new PipeRule({
           propose: [new EnumRule(['true', 'false']), 'Only propose points without assigning.'],
           overwrite: [new EnumRule(['true', 'false']), 'Do not overwrite already assigned points in current submit.'],
           after_deadline_multiplier: [new ValueRule(), 'Points multiplier in range of 0 to 1 when submit is after deadline'],
-        }),
+        }), 'Automatically assign or propose points based on executed tests.'],
     }),
 });
