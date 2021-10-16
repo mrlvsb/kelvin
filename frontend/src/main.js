@@ -121,3 +121,13 @@ function focusTab() {
 
 window.addEventListener("hashchange", focusTab);
 window.addEventListener("DOMContentLoaded", focusTab);
+
+document.addEventListener('click', evt => {
+  const btn = evt.target.closest('[data-toggle="collapse"]');
+  if(btn) {
+    const target = document.querySelector(btn.dataset.target);
+    if(target) {
+      target.classList.toggle('show');
+    }
+  }
+});
