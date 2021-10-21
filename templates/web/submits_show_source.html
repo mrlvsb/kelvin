@@ -7,11 +7,16 @@
 <div class="card mb-1">
   {% if submit %}
     <div class="card-header p-0">
-        <button data-toggle="collapse" data-target="#submit-{{ submit.assignment.id }}-{{submit.student}}" class="btn btn-link">
+        <button data-toggle="collapse" data-target="#submit-{{ submit.assignment.id }}-{{submit.student}}" class="btn">
           {{ submit.student}} - {{ submit.student.get_full_name }}
         </button>
-        <a href="{% url 'task_detail' login=submit.student.username assignment_id=submit.assignment.id submit_num=submit.submit_num %}#result" class="text-muted"><span class="iconify" data-icon="fa-solid:external-link-alt"></span></a>
-      {% include 'web/teacher/form_assign_points.html' %}
+        <a href="{% url 'task_detail' login=submit.student.username assignment_id=submit.assignment.id submit_num=submit.submit_num %}#result" class="text-decoration-none text-muted">
+          <span class="iconify" data-icon="fa-solid:external-link-alt"></span>
+          {%if points.total_tests%}
+            {{points.passed_tests}} / {{points.total_tests}}
+          {% endif %}
+        </a>
+        {% include 'web/teacher/form_assign_points.html' %}
     </div>
     <div id="submit-{{ submit.assignment.id }}-{{submit.student}}" class="collapse">
       <div class="card-body">

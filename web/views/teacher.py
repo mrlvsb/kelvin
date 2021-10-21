@@ -32,6 +32,7 @@ from notifications.models import Notification
 from unidecode import unidecode
 
 from common.models import Submit, Class, Task, AssignedTask, Subject, assignedtask_results, current_semester_conds, current_semester
+from evaluator.results import EvaluationResult
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from evaluator.testsets import TestSet
 from common.evaluate import get_meta, evaluate_submit
@@ -210,6 +211,10 @@ def get_assignment_submits(assignment: AssignedTask):
                     student__username=result['student'],
                     submit_num=result['accepted_submit_num'],
                 )
+                score = EvaluationResult(submit.pipeline_path()).test_score()
+                result['passed_tests'] = score[0]
+                result['total_tests'] = score[1]
+        
         results.append((submit, result))
     return results
 

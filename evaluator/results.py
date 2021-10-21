@@ -199,6 +199,17 @@ class EvaluationResult:
         except FileNotFoundError:
             pass
 
+    def test_score(self):
+        total = 0
+        failed = 0
+        for action in self.pipelines:
+            for test in action.tests:
+                if not test['success']:
+                    failed += 1
+                total += 1
+
+        return (total - failed, total)
+
     def save(self, path):
         with open(path, 'w') as f:
             json.dump(self.pipelines, f, indent=4, default=encode_json)
