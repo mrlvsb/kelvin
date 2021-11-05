@@ -125,24 +125,24 @@ import random
 def gen_tests(evaluation):
     r = random.randint(0, 100)
 
-    test = evaluation.create_test("01_dynamic_test") 
-    test.args = [f"input{r}.txt", f"output{r}.txt", str(r), evaluation.meta['login']]
+    test = evaluation.create_test('01_dynamic_test')
+    test.args = [f'input{r}.txt', f'output{r}.txt', str(r), evaluation.meta['login']]
     test.exit_code = r
 
-    f = test.add_memory_file("stdin", input=True)
-    f.write(f"stdin {evaluation.meta['login']}")
+    f = test.add_memory_file('stdin', input=True)
+    f.write(f'stdin {evaluation.meta["login"]}'.encode('utf-8'))
 
-    f = test.add_memory_file("stdout")
-    f.write(f"stdout {evaluation.meta['login']}")
+    f = test.add_memory_file('stdout')
+    f.write(f'stdout {evaluation.meta["login"]}'.encode('utf-8'))
 
-    f = test.add_memory_file("stderr")
-    f.write(f"stderr {evaluation.meta['login']}")
+    f = test.add_memory_file('stderr')
+    f.write(f'stderr {evaluation.meta["login"}'.encode('utf-8'))
 
-    f = test.add_memory_file("input.txt", input=True)
-    f.write(f"input.txt {evaluation.meta['login']}")
+    f = test.add_memory_file('input.txt', input=True)
+    f.write(f'input.txt {evaluation.meta["login"]}'.encode('utf-8'))
 
-    f = test.add_memory_file("output.txt")
-    f.write(f"output.txt {evaluation.meta['login']}")
+    f = test.add_memory_file('output.txt')
+    f.write(f'output.txt {evaluation.meta["login"]}'.encode('utf-8'))
 ``` 
 
 ## Autograder
