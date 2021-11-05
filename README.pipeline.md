@@ -112,17 +112,6 @@ tests:
     exit_code: null
 ```
 
-### Filters
-<a href="https://github.com/mrlvsb/kelvin/blob/63b6ffc294e3b91d1db13453d487c773764ba4a1/evaluator/filters.py#L30">Filters</a> are used for tolerant checking the outputs.
-It can ignore any whitespaces or make a case insensitive comparing.
-It was also possible to find the line with the answer in the output...
-
-```yaml
-filters:
-  - rstrip # remove the spaces after the last character on the line
-  - lower  # make case insensitive comparing
-```
-
 ## Dynamic tests
 Some bigger or dynamic tests can be configured by `script.py` in the task directory.
 Tests are created in the function `gen_tests` - you can also use numpy for generating the output for your random input.
