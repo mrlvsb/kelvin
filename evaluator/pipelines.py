@@ -200,8 +200,8 @@ def text_compare(expected, actual):
             "-u",
             "-i",
             "-w",
-            expected,
             actual,
+            expected,
         ]
 
         with tempfile.TemporaryFile() as out:
