@@ -95,8 +95,8 @@ class TestResult:
                     actual = actual.path
  
                 dest = os.path.join(self.result_dir, f"{self['name']}.{ext}")
-                if isinstance(actual, io.StringIO):
-                    with open(dest, "w") as f:
+                if isinstance(actual, io.StringIO) or isinstance(actual, io.BytesIO):
+                    with open(dest, "w" if isinstance(actual, io.StringIO) else "wb") as f:
                         f.write(actual.getvalue())
                 elif os.stat(actual).st_size > 0 or expected:
                     shutil.copyfile(actual, dest)
