@@ -213,7 +213,7 @@ def text_compare(expected, actual):
             out.seek(0)
             return success, None, out.read().decode('utf-8')
     except UnicodeDecodeError as e:
-        return False, str(e)
+        return False, str(e), None
 
 
 class TestsPipe:
