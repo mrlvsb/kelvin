@@ -24,4 +24,4 @@
   }
 </style>
 
-<div class="md">{@html safeMarkdown(content)}</div>
+<div class="md">{@html safeMarkdown(content, {breaks: false})}</div>

@@ -27,7 +27,7 @@ const sanitizeOpts = {
   ]
 };
 
-export function safeMarkdown(text) {
-    return DOMPurify.sanitize(marked(text), sanitizeOpts);
+export function safeMarkdown(text, opts = null) {
+    return DOMPurify.sanitize(marked(text, opts), sanitizeOpts);
 }
 
