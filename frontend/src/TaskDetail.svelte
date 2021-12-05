@@ -223,6 +223,7 @@
 
     <button class="btn p-0 btn-link" title="Toggle comments" on:click={() => showComments = !showComments}><span class="iconify" data-icon="fa-solid:comment"></span></button>
     <button class="btn p-0 btn-link" title="Diff vs previous version(s)" on:click={() => showDiff = !showDiff}><span class="iconify" data-icon="fa-solid:history"></span></button>
+    <a href="kelvin:{document.location.href.split('#')[0]}download" title="Open on your PC"><span class="iconify" data-icon="fa-solid:external-link-alt"></span></a>
     <a href="download" download title="Download"><span class="iconify" data-icon="fa-solid:download"></span></a>
   </div>
 
