@@ -67,7 +67,7 @@ customElements.define('kelvin-terminal-output', class extends ReplaceHtmlElement
 
 customElements.define('kelvin-markdown', class extends ReplaceHtmlElement {
     onConnect() {
-		this.innerHTML = safeMarkdown(this.innerText);
+		this.innerHTML = safeMarkdown(this.innerText, {breaks: false});
 		this.removeAttribute('hidden')
 		this.classList.add('md');
     }
