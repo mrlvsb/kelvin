@@ -14,7 +14,7 @@
 2. register schema with default app
 
    ```sh
-   $ xdg-mime default kelvin.desktop x-schema-handler/kelvin
+   $ xdg-mime default kelvin-open.desktop x-schema-handler/kelvin
    ```
 3. <a href="https://kelvin.cs.vsb.cz/api_token">generate your API token</a> and store it in `~/.config/kelvin/token`
 
