@@ -373,7 +373,11 @@ def submit_source(request, submit_id, path):
                 os.makedirs(os.path.dirname(path), exist_ok=True)
                 if not os.path.exists(path):
                     if mime.startswith("image/"):
-                        subprocess.check_call(["/usr/bin/convert", s.phys, f"WEBP:{path}"])
+                        try:
+                            subprocess.check_call(["/usr/bin/convert", s.phys, f"WEBP:{path}"])
+                        except subprocess.CalledProcessError as e:
+                            path = s.phys
+                            logging.exception(e)
                     else:
                         raise Exception(f"Unsuppored mime {mime} for convert")
                 mime = mimedetector.from_file(path)
