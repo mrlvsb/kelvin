@@ -9,7 +9,7 @@ let showOnlyUnread = localStorageStore('notification/showonlyunread', false);
 
 async function enablePushNotifications() {
   if(!(await pushNotifications.subscribePushNotifications())) {
-    alert('Notifications are denied, click on the icon before the URL address and enable them manually.');
+    alert('Notifications are denied, click on the icon before the URL address and enable them manually.\n\nAlso check if option "Use Google services for push messaging" in enabled in your browser privacy settings.');
   }
 }
 
