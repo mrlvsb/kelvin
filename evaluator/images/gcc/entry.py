@@ -32,6 +32,7 @@ output = os.getenv('PIPE_OUTPUT', 'main')
 flags = os.getenv('PIPE_FLAGS', '')
 ldflags = os.getenv('PIPE_LDFLAGS', '')
 cmakeflags = os.getenv('PIPE_CMAKEFLAGS', "[]")
+makeflags = os.getenv('PIPE_MAKEFLAGS', "[]")
 
 
 with open("result.html", "w") as out:
@@ -51,7 +52,8 @@ with open("result.html", "w") as out:
 
     # The file list needs to be queried again
     if 'makefile' in [f.lower() for f in os.listdir('.')]:
-        returncode = cmd_run(['make'], out, env=env)
+        makeflags = json.loads(makeflags)
+        returncode = cmd_run(['make', *makeflags], out, env=env)
     else:
         sources = []
         for root, dirs, files in os.walk('.'):
