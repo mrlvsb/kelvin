@@ -433,6 +433,7 @@ const rules = new DictRule({
             output: [new ValueRule(), 'Built executable name <strong>-o main</strong>'],
             ldflags: new ValueRule(),
             cmakeflags: new ValueRule(),
+            makeflags: new ValueRule()
         }), 'Build program with CMake, make or collect all files and compile them directly with <strong>gcc</strong> or <strong>g++</strong>'],
         run: [new DockerPipeRule({
             commands: [new ArrayRule(
