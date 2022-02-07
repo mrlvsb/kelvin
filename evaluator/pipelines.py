@@ -69,13 +69,6 @@ def docker_image(name):
     parts = name.split(':')
     basename = parts[0]
     version = 'latest' if len(parts) == 1 else parts[1]
-
-    try:
-        with open(os.path.join(BASE_DIR, "evaluator", "images", name, "Dockerfile")) as f:
-            version = hashlib.md5(f.read().encode('utf-8')).hexdigest()
-    except FileNotFoundError:
-        pass
-
     return f'{basename}:{version}'
 
 class ImageNotFoundException(Exception):
@@ -83,28 +76,15 @@ class ImageNotFoundException(Exception):
 
 def prepare_container(name, before=None):
     if not before:
-        before = []
+        return name
 
     hash = hashlib.md5((name + "\n".join(before)).encode('utf-8')).hexdigest()
     base_name = name.split(':')[0]
-
     target_name = f'{base_name}:{hash}'
-
-    if not target_name.startswith('kelvin/'):
-        p = subprocess.Popen(["docker", "pull", target_name])
-        p.communicate()
-
-        if p.returncode == 0:
-            return target_name
-
-    p = subprocess.Popen(["docker", "images", target_name, "-q"], stdout=subprocess.PIPE)
-    stdout = p.communicate()[0]
-    if len(stdout.strip()) > 0:
-        return target_name
 
     instructions = [f'FROM {name}'] + [f'RUN {cmd}' for cmd in before]
 
-    logging.warning("image %s not exists, rebuilding", target_name)
+    logging.warning(f"Building image {target_name}")
     try:
         subprocess.check_output(["docker", "build", "-", "-t", target_name], input="\n".join(instructions), text=True, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
