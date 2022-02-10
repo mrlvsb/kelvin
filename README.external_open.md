@@ -37,4 +37,13 @@
    # start in ubuntu container with X11 forwarding (xhost + or something like that required on your side)
    #exec gnome-terminal -- docker run --rm -v $PWD:/submit -w /submit -v /tmp:/tmp -e DISPLAY=:0 -it ubuntu bash
    ```
+5. make `kelvin-open` executable
 
+   ```sh
+   $ chmod u+x kelvin-open
+   ```
+6. update desktop database
+
+   ```sh
+   $ update-desktop-database ~/.local/share/applications/`
+   ```
