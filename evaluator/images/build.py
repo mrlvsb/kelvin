@@ -50,5 +50,5 @@ for group in build_deps(deps):
 				hash = hashlib.md5(f.read()).hexdigest()
 			image_name = f"{image}:{hash}"
 			cmd = ["docker", "build", "-t", image_name,  "-t", image, "."]
-			p = subprocess.Popen(cmd, cwd=name)
+			p = subprocess.Popen(cmd, cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), name))
 			p.communicate()
