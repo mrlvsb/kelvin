@@ -15,58 +15,22 @@ kelvin
 ```
 
 ## Getting started
-### First installation
-- docker
-- <a href="https://github.com/trnila/isolate">isolate</a>
-```
-sudo apt install libldap2-dev libsasl2-dev libcap-dev pandoc
-```
-
-### Local development
-```
-tmuxp load dev.yaml
-```
-
-### Installing dependencies after the pull
-```
-$ pip install -r requirements.txt
-$ cd frontend && npm install
+### Setup
+- install docker
+```shell-session
+$ sudo apt install python3 python3-virtualenv libldap2-dev libsasl2-dev pandoc
+$ virtualenv -p python3 venv
+$ source venv/bin/activate
+$ pip3 install -r requirements.txt # rerun if somebody changes requirements.txt
+$ (cd frontend/ && npm install) # rerun if somebody changes frontend/package.json
+$ ./sync_from_prod.sh # create psql container from production db, download all submits and tasks
+$ ./evaluator/images/build.py # rerun if pipeline images changes
 ```
 
-### Start a web server
-```
+### Start
+```shell-session
+$ docker start kelvin_pgsql # rerun ./sync_from_prod.sh if not exists
 $ ./manage.py runserver
-```
-
-### Start a worker
-```
-$ ./manage.py rqworker
-```
-
-### Continuously building the frontend
-```
-$ cd frontend && npm run dev
-```
-
-## Useful commands
-### Reevaluate a submit
-```
-./manage.py reevaluate --id <submit-id>
-```
-
-### Run testing evaluation
-```
-$ ./manage.py evaluate ./tasks/gaura/komb_05_strings/ ./submit.c
-$ chromium /tmp/eval/result.html
-```
-
-## Importing students
-Download 'Rozvrhove skupiny' from edison as html and run to import students according to their class:
-```sh
-$ ./manage.py import_students prezencni.html UPR 2020W
-```
-
-Ignore lectures and exercises and import all students to already existing class 'komb' in the current semester and subject:
-```sh
-$ ./manage.py import_students komb.html UPR 2020W --no-lectures --no-exercises --class-code komb
+$ (cd frontend && npm run dev) # watch & build frontend
+$ ./manage.py rqworker evaluator # start evaluator worker
 ```
