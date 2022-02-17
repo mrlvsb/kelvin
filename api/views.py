@@ -141,6 +141,14 @@ def class_detail_list(request):
             'students': students,
         })
 
+
+    days = ['PO', 'UT', 'ST', 'CT', 'PA', 'SO', 'NE']
+    def sort_fn(c):
+        timeslot = c['timeslot']
+        day = days.index(timeslot[:2])
+        return c['subject_abbr'], day, int(timeslot[2:])
+
+    result.sort(key=sort_fn)
     return JsonResponse({'classes': result})
 
 @user_passes_test(is_teacher)
