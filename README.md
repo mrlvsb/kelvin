@@ -15,7 +15,17 @@ kelvin
 ```
 
 ## Getting started
-### Setup
+
+### Using docker
+
+```shell-session
+$ cp .env.example .env
+$ docker-compose up -d
+$ docker-compose exec web ./manage.py migrate
+$ docker-compose exec web ./manage.py createsuperuser
+```
+
+### Native setup
 - install docker
 ```shell-session
 $ sudo apt install python3 python3-virtualenv libldap2-dev libsasl2-dev pandoc

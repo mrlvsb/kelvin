@@ -1,0 +1,64 @@
+services:
+  db:
+    image: postgres
+    volumes:
+      - kelvin-postgres-data:/var/lib/postgresql/data
+    container_name: kelvin_db
+    environment:
+      - POSTGRES_DB=${DB_DATABASE}
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    networks:
+      - kelvin-network
+
+  web:
+    user: ${HOST_USER_ID}:1000
+    build:
+      context: ./
+    command: python manage.py runserver 0.0.0.0:${WEB_EXPOSE_PORT}
+    working_dir: /kelvin
+    container_name: kelvin_web
+    volumes:
+      - ./:/kelvin:cached
+    ports:
+      - ${WEB_EXPOSE_PORT}:8000
+    environment:
+      - POSTGRES_HOST=${DB_HOST}
+      - POSTGRES_NAME=${DB_DATABASE}
+      - POSTGRES_DB=${DB_DATABASE}
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_EXPOSE_PORT=${REDIS_EXPOSE_PORT}
+    depends_on:
+      - db
+    networks:
+      - kelvin-network
+    links:
+      - db
+
+  frontend:
+    image: node
+    container_name: kelvin_frontend_build
+    volumes:
+      - ./:/kelvin
+    working_dir: /kelvin/frontend
+    command: sh -c "npm install && npm run dev"
+
+  redis:
+    image: redis
+    container_name: kelvin_redis
+    ports:
+      - ${REDIS_EXPOSE_PORT}:6379
+    volumes:
+      - kelvin-redis-data:/data
+    networks:
+      - kelvin-network
+
+volumes:
+  kelvin-postgres-data:
+  kelvin-redis-data:
+
+networks:
+  kelvin-network:
+    driver: bridge
