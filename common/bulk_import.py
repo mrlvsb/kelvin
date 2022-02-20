@@ -48,7 +48,11 @@ class BulkImport:
 
     def run(self, content, no_lectures=False, no_exercises=False, class_code=None):
         doc = parse(StringIO(content)).getroot()
-        subject = Subject.objects.get(abbr=self.parse_subject(doc))
+        abbr = self.parse_subject(doc)
+        try:
+            subject = Subject.objects.get(abbr=abbr)
+        except Subject.DoesNotExist:
+            raise ImportException(f"Subject {abbr} does not exist. Please create it first.")
 
         year, is_winter = self.parse_semester(doc)
         semester = Semester.objects.get(year=year, winter=is_winter)
