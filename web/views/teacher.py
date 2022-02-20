@@ -10,6 +10,8 @@ import subprocess
 import datetime
 import shutil
 import logging
+import traceback
+
 import rq
 import logging
 from shutil import copyfile
@@ -343,6 +345,8 @@ def bulk_import(request):
                 res['count'] = len(res['users'])
             except (ImportException, UnicodeDecodeError) as e:
                 res['error'] = e
+            except:
+                res['error'] = traceback.format_exc()
         else:
             res['error'] = 'No file uploaded'
 
