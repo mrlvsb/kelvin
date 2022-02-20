@@ -26,7 +26,7 @@ class BulkImport:
     def parse_subject(self, doc):
         h2 = doc.xpath('//h2[@class="nomargin"]')
         if not h2:
-            raise ImportException("Missing h2 element")
+            raise ImportException("Missing h2 element, have you imported correct file?")
         subject = re.search(r'\(([^)]+)', h2[0].text)
         if not subject:
             raise ImportException("Subject missing in h2 element")
