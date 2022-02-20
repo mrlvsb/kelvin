@@ -41,7 +41,8 @@ from common.moss import enqueue_moss_check, moss_delete_job_from_cache, \
     moss_job_cache_key, moss_result, \
     moss_task_set_opts, \
     moss_task_get_opts
-from common.bulk_import import BulkImport
+from common.bulk_import import BulkImport, ImportException
+
 
 @user_passes_test(is_teacher)
 def teacher_task(request, task_id):
@@ -340,7 +341,7 @@ def bulk_import(request):
                     no_lectures=not create_lectures
                 ))
                 res['count'] = len(res['users'])
-            except (ImportError, UnicodeDecodeError) as e:
+            except (ImportException, UnicodeDecodeError) as e:
                 res['error'] = e
         else:
             res['error'] = 'No file uploaded'
