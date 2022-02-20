@@ -98,6 +98,8 @@ class BulkImport:
 
                 return ' '.join(s.split()).strip()
 
+            if not row.xpath('./td[2]/a'):
+                raise ImportException("Student login not found in table. Have you imported correct file?")
 
             login = row.xpath('./td[2]/a/text()')[0].strip()
             email = row.xpath('./td[2]/a/@href')[0].replace('mailto:', '').strip()
