@@ -74,7 +74,9 @@ class BulkImport:
 
                 class_in_db[c] = Class()
                 class_in_db[c].code = c
-                class_in_db[c].day = s[6].upper()
+                day = s[6].upper()
+                mapping = {'ÚT': 'UT', 'ČT': 'CT', 'PÁ': 'PA'}
+                class_in_db[c].day = mapping.get(day, day)
                 class_in_db[c].hour = s[7]
                 class_in_db[c].year = datetime.datetime.now().year
                 class_in_db[c].winter = datetime.datetime.now().month >= 9
