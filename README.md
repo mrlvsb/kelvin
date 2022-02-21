@@ -23,6 +23,7 @@ $ cp .env.example .env
 $ docker-compose up -d
 $ docker-compose exec web ./manage.py migrate
 $ docker-compose exec web ./manage.py createsuperuser
+$ ./evaluator/images/build.py # rerun if pipeline images changes
 ```
 
 ### Native setup

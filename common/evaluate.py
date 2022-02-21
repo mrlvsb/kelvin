@@ -17,12 +17,18 @@ from evaluator.testsets import TestSet
 
 
 def evaluate_submit(request, submit, meta=None):
-    submit_url = request.build_absolute_uri(reverse('task_detail', kwargs={
+    def build_absolute_uri(location):
+        base_uri = os.getenv('API_INTERNAL_BASEURL', None)
+        if base_uri:
+            return "".join([base_uri, location])
+        return request.build_absolute_uri(location)
+
+    submit_url = build_absolute_uri(reverse('task_detail', kwargs={
         'login': submit.student.username,
         'assignment_id': submit.assignment_id,
         'submit_num': submit.submit_num,
     }))
-    task_url = request.build_absolute_uri(reverse('teacher_task_tar', kwargs={
+    task_url = build_absolute_uri(reverse('teacher_task_tar', kwargs={
         'task_id': submit.assignment.task_id,
     }))
     token = signing.dumps({

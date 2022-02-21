@@ -1,3 +1,34 @@
+version: "3.9"
+x-django-app:
+    &django-app
+    user: ${HOST_USER_ID}:1000
+    build:
+      context: ./
+    working_dir: /kelvin
+    volumes:
+      - ./:/kelvin:cached
+      # /tmp is used for mounts in docker pipelines
+      # the path needs to be same in evaluator and docker remote host
+      - /tmp:/tmp
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_NAME=${DB_DATABASE}
+      - POSTGRES_DB=${DB_DATABASE}
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_EXPOSE_PORT=${REDIS_EXPOSE_PORT}
+      - API_INTERNAL_BASEURL=http://web:8000
+      - DOCKER_HOST=docker:2375
+    depends_on:
+      - db
+      - redis
+    networks:
+      - kelvin-network
+    links:
+      - db
+      - redis
+
 services:
   db:
     image: postgres
@@ -12,30 +43,43 @@ services:
       - kelvin-network
 
   web:
-    user: ${HOST_USER_ID}:1000
-    build:
-      context: ./
+    <<: *django-app
     command: python manage.py runserver 0.0.0.0:${WEB_EXPOSE_PORT}
-    working_dir: /kelvin
     container_name: kelvin_web
-    volumes:
-      - ./:/kelvin:cached
     ports:
       - ${WEB_EXPOSE_PORT}:8000
-    environment:
-      - POSTGRES_HOST=${DB_HOST}
-      - POSTGRES_NAME=${DB_DATABASE}
-      - POSTGRES_DB=${DB_DATABASE}
-      - POSTGRES_USER=${DB_USERNAME}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_EXPOSE_PORT=${REDIS_EXPOSE_PORT}
-    depends_on:
-      - db
+
+  # main pipeline evaluator
+  evaluator:
+    <<: *django-app
+    container_name: kelvin_evaluator
+    command: python manage.py rqworker evaluator
+
+  # generic background task worker
+  worker:
+    <<: *django-app
+    container_name: kelvin_worker
+    command: python manage.py rqworker default
+
+  # worker for scheduled tasks (like moss checks)
+  rqscheduler:
+    <<: *django-app
+    container_name: kelvin_rqscheduler
+    command: python manage.py rqscheduler
+
+  # proxy from TCP to unix socket, so we dont need to run web as root with different uid
+  # or solve issues with socket permissions
+  docker:
+    image: alpine/socat
+    command: tcp-listen:2375,fork,reuseaddr unix-connect:/var/run/docker.sock
+    user: root
+    container_name: kelvin_docker
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
     networks:
       - kelvin-network
-    links:
-      - db
 
   frontend:
     image: node
