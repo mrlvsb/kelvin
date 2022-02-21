@@ -17,7 +17,7 @@ channels-redis==2.4.2
 django-redis-cache==2.1.1
 Jinja2==2.11.3
 bokeh==2.3.2
-pandas==1.1.4
+pandas==1.4.1
 pygraphviz==1.7
 networkx==2.5
 psycopg2
