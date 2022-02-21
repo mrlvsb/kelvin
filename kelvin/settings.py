@@ -162,7 +162,7 @@ CACHES = {
     'default': {
         'BACKEND': 'redis_cache.RedisCache',
         'LOCATION': [
-            os.getenv('REDIS_HOST') + ':' + os.getenv('REDIS_EXPOSE_PORT')
+            f"{os.getenv('REDIS_HOST', '127.0.0.1')}:{os.getenv('REDIS_EXPOSE_PORT', 6379)}"
         ]
     }
 }
