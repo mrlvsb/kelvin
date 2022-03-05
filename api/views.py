@@ -510,11 +510,14 @@ def search(request):
         conds['teacher_id'] = request.user.id
 
     tasks = set()
+    students = set()
     for cl in Class.objects.filter(semester_id=semester.id, **conds):
         owned = cl.teacher.id == request.user.id
         results += serialize(cl, owned=owned)
         for student in cl.students.all():
-            results += serialize(student, owned=owned)
+            if student.id not in students:
+                students.add(student.id)
+                results += serialize(student, owned=owned)
 
         for assignment in AssignedTask.objects.filter(clazz_id=cl.id):
             if assignment.task_id not in tasks:
