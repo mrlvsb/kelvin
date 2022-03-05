@@ -26,7 +26,6 @@
         text: item.text,
         normalized: normalize(item.text),
         url: item.url,
-        owned: item.owned,
       }));
     }
     load();

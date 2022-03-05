@@ -471,7 +471,6 @@ def search(request):
     results.append({
         'text': 'All classes',
         'url': '/',
-        'owned': True,
     })
 
     semester = current_semester()
@@ -507,22 +506,15 @@ def search(request):
 
     conds = {}
     if not request.user.is_superuser:
-        conds['teacher_id'] = request.user.id
+        conds['assignedtask__clazz__teacher_id'] = request.user.id
+    for task in Task.objects.filter(assignedtask__clazz__semester_id=semester.id, **conds):
+        results += serialize(task)
 
-    tasks = set()
-    students = set()
-    for cl in Class.objects.filter(semester_id=semester.id, **conds):
-        owned = cl.teacher.id == request.user.id
-        results += serialize(cl, owned=owned)
-        for student in cl.students.all():
-            if student.id not in students:
-                students.add(student.id)
-                results += serialize(student, owned=owned)
-
-        for assignment in AssignedTask.objects.filter(clazz_id=cl.id):
-            if assignment.task_id not in tasks:
-                tasks.add(assignment.task_id)
-                results += serialize(assignment.task, owned=owned)
+    conds = {}
+    if not request.user.is_superuser:
+        conds['students__teacher_id'] = request.user.id
+    for student in User.objects.filter(students__semester_id=semester.id, **conds).distinct('id'):
+        results += serialize(student)
 
     return JsonResponse({
         'results': results,
