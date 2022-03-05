@@ -25,9 +25,6 @@ x-django-app:
       - redis
     networks:
       - kelvin-network
-    links:
-      - db
-      - redis
 
 services:
   db:
