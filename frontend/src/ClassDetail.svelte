@@ -92,10 +92,6 @@ tr:hover td:first-of-type {
   text-align: left;
 }
 
-.more-hover {
-  position: relative;
-}
-
 .more-hover:hover .more-content {
   position: absolute;
   display: block;
@@ -152,7 +148,7 @@ tr:hover td:first-of-type {
             <Markdown content={clazz.summary} />
           {/if}
         {/if}
-        <div style="position: relative; overflow: auto">
+        <div style="overflow: auto">
           <table class="table table-sm table-hover table-striped">
             <thead>
               <tr>
