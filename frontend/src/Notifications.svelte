@@ -17,7 +17,9 @@ async function openNotification(notification) {
   if(notification.public) {
     await notifications.markRead(notification.id);
   }
-  document.location.href = notification.action_object_url;
+
+  history.replaceState(null, null, notification.action_object_url);
+  window.dispatchEvent(new HashChangeEvent('hashchange'));
 }
 
 </script>
@@ -48,6 +50,7 @@ async function openNotification(notification) {
               <button class="btn p-0" class:text-muted={$notificationsCount <= 0} on:click|preventDefault={notifications.markAllRead} title="Clear notifications">
                 <span class="iconify" data-icon="mdi:notification-clear-all"></span>
               </button>
+            </div>
             </div>
 					</li>
 					<div style="max-height: 300px; overflow-y: auto; font-size: 80% !important;">

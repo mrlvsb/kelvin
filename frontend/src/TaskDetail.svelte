@@ -180,11 +180,15 @@
       if(parts.length == 2) {
         const range = parts[1].split('-');
 
-        selectedRows = {
-          path: parts[0],
-          from: parseInt(range[0]),
-          to: parseInt(range[1] || range[0]),
-        };
+        selectedRows = null;
+
+        setTimeout(() => {
+          selectedRows = {
+            path: parts[0],
+            from: parseInt(range[0]),
+            to: parseInt(range[1] || range[0]),
+          };
+        }, 1);
       }
     }
   }
