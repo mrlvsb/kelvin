@@ -96,13 +96,6 @@
   let addingInProgress = false;
 
   const dispatch = createEventDispatcher();
-  let el;
-
-  $: if(scroll && el) {
-    setTimeout(()=> {
-      el.scrollIntoView();
-    }, 0);
-  }
 
   function addNewComment(evt) {
     if(evt.detail === '') {
@@ -122,7 +115,7 @@
   
 </script>
 
-<tr class="linecode" class:selected={selected} bind:this={el}>
+<tr class="linecode" class:selected={selected} data-line="{lineNumber}">
   <td>
     <span on:click={() => dispatch('showCommentForm', showAddingForm ? -1 : lineNumber)} style="cursor: pointer">+</span>
   </td>

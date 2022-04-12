@@ -9,6 +9,7 @@
   import {fetch} from './api.js'
   import { user } from "./global"
   import { notifications } from './notifications.js'
+  import {scroll} from "./CodeRow.svelte";
 
   export let url;
   let files = null;
@@ -180,15 +181,17 @@
       if(parts.length == 2) {
         const range = parts[1].split('-');
 
-        selectedRows = null;
+        selectedRows = {
+          path: parts[0],
+          from: parseInt(range[0]),
+          to: parseInt(range[1] || range[0]),
+        };
+
+        let el = document.querySelector('linecode[data-line=' + selectedRows.from + ']');
 
         setTimeout(() => {
-          selectedRows = {
-            path: parts[0],
-            from: parseInt(range[0]),
-            to: parseInt(range[1] || range[0]),
-          };
-        }, 1);
+          el.scrollIntoView();
+        }, 0);
       }
     }
   }
