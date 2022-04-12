@@ -9,7 +9,6 @@
   import {fetch} from './api.js'
   import { user } from "./global"
   import { notifications } from './notifications.js'
-  import {scroll} from "./CodeRow.svelte";
 
   export let url;
   let files = null;
