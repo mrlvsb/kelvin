@@ -63,6 +63,23 @@
 
     $: teachers = semester && subject && semesters && semesters[semester] && semesters[semester][subject] ? semesters[semester][subject] : allTeachers;
 
+    function sorted(items, compare_fn) {
+      items.sort(compare_fn);
+      return items;
+    }
+
+    function compare_semester(a, b) {
+      let year_a = Number(a.substring(0, 4));
+      let year_b = Number(b.substring(0, 4));
+      if (year_a < year_b) {
+        return -1;
+      } else if (year_a > year_b) {
+        return 1;
+      } else {
+        return a[4] === "W" ? -1 : 1;
+      }
+    }
+
     load();
 </script>
 
@@ -70,7 +87,7 @@
   <div class="input-group">
     <select class="custom-select custom-select-sm" bind:value={semester}>
         <option value="">Semester</option>
-        {#each Object.keys(semesters)as semester (semester)}
+        {#each sorted(Object.keys(semesters), compare_semester) as semester (semester)}
             <option>{semester}</option>
         {/each}
     </select>
@@ -78,7 +95,7 @@
     <select class="custom-select custom-select-sm" bind:value={subject} on:change={fillTeacher} disabled={!semester}>
         <option value="">Subject</option>
         {#if semesters && semesters[semester]}
-            {#each Object.keys(semesters[semester]) as subj (subj)}
+            {#each sorted(Object.keys(semesters[semester])) as subj (subj)}
                 <option>{subj}</option>
             {/each}
         {/if}
@@ -87,7 +104,7 @@
     {#if $user.is_superuser}
       <select class="custom-select custom-select-sm" bind:value={teacher}>
           <option value="">Teacher</option>
-            {#each teachers as teacher (teacher)}
+            {#each sorted(teachers) as teacher (teacher)}
                 <option>{teacher}</option>
             {/each}
       </select>
