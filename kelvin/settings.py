@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     'django_cas_ng',
     'notifications',
     'webpush',
-    'channels',
 ]
 
 MIDDLEWARE = [
@@ -82,7 +81,6 @@ TEMPLATES = [
 FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
 
 WSGI_APPLICATION = 'kelvin.wsgi.application'
-ASGI_APPLICATION = 'kelvin.routing.application'
 
 DJANGO_NOTIFICATIONS_CONFIG = { 'USE_JSONFIELD': True}
 
@@ -181,15 +179,6 @@ RQ_QUEUES = {
     },
 }
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
-        },
-    },
-}
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -209,11 +198,6 @@ LOGGING = {
             'propagate': True,
         },
         'evaluator': {
-            'handlers': ['console', 'mail_admins'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        'exams': {
             'handlers': ['console', 'mail_admins'],
             'level': 'DEBUG',
             'propagate': True,

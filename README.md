@@ -9,7 +9,6 @@ kelvin
 │   ├── images (docker images for custom pipeline actions)
 │   └── pipelines.py (integrated pipeline actions - evaluating in isolate, ...)
 ├── kelvin (base configuration of the application)
-├── examinator (real-time exams module without frontend)
 ├── survey (module for easy surveys defined in yaml)
 └── web (web interface for the kelvin)
 ```
