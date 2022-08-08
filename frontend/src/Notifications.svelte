@@ -18,8 +18,7 @@ async function openNotification(notification) {
     await notifications.markRead(notification.id);
   }
 
-  history.replaceState(null, null, notification.action_object_url);
-  window.dispatchEvent(new HashChangeEvent('hashchange'));
+  document.location.href = notification.action_object_url;
 }
 
 </script>

@@ -186,9 +186,8 @@
           to: parseInt(range[1] || range[0]),
         };
 
-        let el = document.querySelector('linecode[data-line=' + selectedRows.from + ']');
-
         setTimeout(() => {
+          const el = document.querySelector(`table[data-path="${CSS.escape(parts[0])}"] .linecode[data-line="${CSS.escape(selectedRows.from)}"]`);
           el.scrollIntoView();
         }, 0);
       }

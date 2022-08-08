@@ -69,7 +69,7 @@
   }
 </script>
 
-<table on:mousedown={mousedown} on:mouseover={mouseover} on:mouseup={() => selecting = 0}>
+<table on:mousedown={mousedown} on:mouseover={mouseover} on:mouseup={() => selecting = 0} data-path={path}>
   {#each highlightedLines as line, lineNumber}
     <CodeRow
       lineNumber={lineNumber + 1}
