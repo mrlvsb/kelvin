@@ -20,10 +20,15 @@ def current_semester_conds(prefix=''):
     }
 
 def current_semester():
-    return Semester.objects.filter(
+    semester = Semester.objects.filter(
             begin__lte=timezone.now(),
             end__gte=timezone.now()
         ).first()
+
+    if semester:
+        return semester
+
+    return Semester.objects.filter(begin__lte=timezone.now()).order_by('begin').last()
 
 
 class ClassManager(models.Manager):
