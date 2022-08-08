@@ -20,7 +20,7 @@
     "fuzzysort": "^1.1.4",
     "highlight.js": "^10.4.1",
     "js-yaml": "^4.1.0",
-    "marked": "^2.0.0",
+    "marked": "^4.0.10",
     "rollup": "^2.3.4",
     "rollup-plugin-livereload": "^2.0.0",
     "rollup-plugin-postcss": "^3.1.8",
