@@ -39,7 +39,7 @@ $ ./evaluator/images/build.py # rerun if pipeline images changes
 
 ### Start
 ```shell-session
-$ docker start kelvin_pgsql # rerun ./sync_from_prod.sh if not exists
+$ docker start kelvin_db # rerun ./sync_from_prod.sh if not exists
 $ ./manage.py runserver
 $ (cd frontend && npm run dev) # watch & build frontend
 $ ./manage.py rqworker evaluator # start evaluator worker
