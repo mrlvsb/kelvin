@@ -1,14 +1,14 @@
-FROM ubuntu:21.04
+FROM ubuntu:22.04
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    locales=2.33-0ubuntu5 \
-    gcc=4:10.3.0-1ubuntu1 \
-    g++=4:10.3.0-1ubuntu1 \
-    gdb=10.1-2ubuntu2 \
+    locales=2.35-0ubuntu3.1 \
+    gcc=4:11.2.0-1ubuntu1 \
+    g++=4:11.2.0-1ubuntu1 \
+    gdb=12.0.90-0ubuntu1 \
     nasm=2.15.05-1 \
-    python3=3.9.4-1 \
-    cmake=3.18.4-2ubuntu1
+    python3=3.10.4-0ubuntu2 \
+    cmake=3.22.1-1ubuntu1
 
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
 ENV LANG en_US.UTF-8
