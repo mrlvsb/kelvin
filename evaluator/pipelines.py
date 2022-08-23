@@ -243,14 +243,14 @@ class TestsPipe:
             cmd = [self.executable] + test.args
 
             with tempfile.NamedTemporaryFile() as stdout_name, tempfile.NamedTemporaryFile() as stderr_name:
-                isolate_cmd = shlex.split(f"docker exec -i {container}") + ['timeout', str(self.timeout)] + cmd
+                docker_cmd = shlex.split(f"docker exec -i {container}") + ['timeout', str(self.timeout)] + cmd
                 logger.debug("executing in isolation: %s",
-                                " ".join((isolate_cmd)))  # TODO: shlex.join only in python3.8
+                                " ".join((docker_cmd)))  # TODO: shlex.join only in python3.8
                 def preexec_fn():
                     import resource
                     fsize = parse_human_size(DEFAULT_LIMITS['fsize'])
                     resource.setrlimit(resource.RLIMIT_FSIZE, (fsize, fsize))
-                p = subprocess.Popen(isolate_cmd, **args, stdout=stdout_name, stderr=stderr_name, preexec_fn=preexec_fn)
+                p = subprocess.Popen(docker_cmd, **args, stdout=stdout_name, stderr=stderr_name, preexec_fn=preexec_fn)
                 p.communicate(**comm_args)
 
                 result['exit_code'] = p.returncode
