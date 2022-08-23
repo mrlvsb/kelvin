@@ -387,7 +387,7 @@ class DockerPipeRule extends PipeRule {
             limits: [new DictRule({
               fsize: [new ValueRule(), 'Maximal size for one created file. You can use suffixes like 16M'],
               memory: [new ValueRule(), 'Maximal memory use for the container, not the process. You can use suffixes like 128M'],
-              network: [new EnumRule(["none", "host"]), '"none" to disable network access (default) or "host" to enable it'],
+              network: [new EnumRule(["none", "bridge"]), '"none" to disable network access (default) or "bridge" to enable it'],
             }), 'Container runtime limits like file size or maximal memory use'],
         })
     }
