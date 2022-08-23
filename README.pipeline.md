@@ -10,7 +10,7 @@ If you add a new Docker pipeline, don't forget to also modify the config validat
 in `frontend/src/PipelineValidation.js` (variable `rules`).
 
 ### The sandbox environment limits
-Submits are evaluated in the sandboxed environment with the help of <a href="https://github.com/ioi/isolate">isolate tool</a>.
+Submits are evaluated in a sandboxed environment using Docker.
 Executing the student's submit is constrained to the <a href="https://github.com/mrlvsb/kelvin/blob/63b6ffc294e3b91d1db13453d487c773764ba4a1/evaluator/testsets.py#L122">default</a> wall clock time, memory, number of created processes etc.
 This can be overriden by the yaml configuration:
 

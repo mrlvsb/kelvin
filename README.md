@@ -7,7 +7,7 @@ kelvin
 ├── api
 ├── evaluator (pipeline for evaluating, linting submits)
 │   ├── images (docker images for custom pipeline actions)
-│   └── pipelines.py (integrated pipeline actions - evaluating in isolate, ...)
+│   └── pipelines.py (integrated pipeline actions - Docker evaluation, ...)
 ├── kelvin (base configuration of the application)
 ├── survey (module for easy surveys defined in yaml)
 └── web (web interface for the kelvin)
