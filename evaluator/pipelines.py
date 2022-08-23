@@ -53,9 +53,13 @@ def create_docker_cmd(evaluation, image, additional_args=None, cmd=None, limits=
         additional_args.append("-v")
         additional_args.append(f"{template_path}:/template:ro")
 
+    network = limits["network"]
+    # Forcefully disable using --network=host
+    if network == "host":
+        network = "bridge"
     return [
         'docker', 'run', '--rm',
-        '--network', limits["network"],
+        '--network', network,
         '-w', '/work',
         '-v', evaluation.submit_path + ':/work',
         '--ulimit', f'fsize={limits["fsize"]}:{limits["fsize"]}',
