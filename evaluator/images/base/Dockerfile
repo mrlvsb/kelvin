@@ -8,7 +8,8 @@ RUN apt-get update && \
     gdb=12.0.90-0ubuntu1 \
     nasm=2.15.05-1 \
     python3=3.10.4-0ubuntu2 \
-    cmake=3.22.1-1ubuntu1
+    cmake=3.22.1-1ubuntu1 && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
 ENV LANG en_US.UTF-8
