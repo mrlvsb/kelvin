@@ -18,6 +18,7 @@ logger = logging.getLogger('evaluator')
 DEFAULT_LIMITS = {
     'fsize': '16M',
     'memory': '128M',
+    'network': 'none'
 }
 
 
@@ -25,7 +26,9 @@ def create_docker_cmd(evaluation, image, additional_args=None, cmd=None, limits=
     if not limits:
         limits = {}
     limits = {**DEFAULT_LIMITS, **limits}
-    limits = {k: parse_human_size(v) for k, v in limits.items()}
+    for (k, v) in limits.items():
+        if k in ("fsize", "memory"):
+            limits[k] = parse_human_size(v)
 
     if not cmd:
         cmd = []
@@ -52,7 +55,7 @@ def create_docker_cmd(evaluation, image, additional_args=None, cmd=None, limits=
 
     return [
         'docker', 'run', '--rm',
-        '--network', 'none',
+        '--network', limits["network"],
         '-w', '/work',
         '-v', evaluation.submit_path + ':/work',
         '--ulimit', f'fsize={limits["fsize"]}:{limits["fsize"]}',
