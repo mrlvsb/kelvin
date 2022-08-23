@@ -6,10 +6,24 @@ Actions are defined in `config.yml` file in the task directory.
 
 <a href="https://github.com/mrlvsb/kelvin/blob/master/evaluator/pipelines.py">Builtin actions</a> are implemented directly in Kelvin source code, but it is also possible to run the action in <a href="https://github.com/mrlvsb/kelvin/tree/master/evaluator/images">docker container</a> with concrete compilers, so they don't need to be installed on the server.
 
+If you add a new Docker pipeline, don't forget to also modify the config validation rules
+in `frontend/src/PipelineValidation.js` (variable `rules`).
+
+### The sandbox environment limits
+Submits are evaluated in the sandboxed environment with the help of <a href="https://github.com/ioi/isolate">isolate tool</a>.
+Executing the student's submit is constrained to the <a href="https://github.com/mrlvsb/kelvin/blob/63b6ffc294e3b91d1db13453d487c773764ba4a1/evaluator/testsets.py#L122">default</a> wall clock time, memory, number of created processes etc.
+This can be overriden by the yaml configuration:
+
+```yaml
+limits:
+  fsize: 5M  # max filesize  
+  wall-time: 5 # max 5 seconds per test
+  cg-mem: 5M # max 5MB of memory usage
+```
+
 ## gcc
 Action for compiling all source codes in a submitted solution with or without a makefile.
 The errors and warnings are shown in the Result tab.
-
 
 ```yaml
 pipeline:
@@ -17,6 +31,21 @@ pipeline:
     output: main
     flags: -Wall -Wextra -g -fsanitize=address
     ldflags: -lm
+```
+
+## .NET
+Action for compiling a .NET (core) application and producing a binary executable file as an output.
+You have to use higher limits and enable network access to make the build work, see the example
+below.
+
+```yaml
+pipeline:
+  - type: dotnet
+    output: main
+    limits:
+      network: host
+      fsize: 128M
+      memory: 512M
 ```
 
 ## Tests
@@ -36,19 +65,6 @@ Static tests can be defined by files in the task directory.
 In these examples, the first line with the hash denotes filename.
 These files are grouped together by the matching filename prefix, which denotes a single test or a scenario.
 It is recommended to prepend the test number to each test because tests are ordered by name.
-
-
-### The sandbox environment limits
-Submits are evaluated in the sandboxed environment with the help of <a href="https://github.com/ioi/isolate">isolate tool</a>.
-Executing the student's submit is constrained to the <a href="https://github.com/mrlvsb/kelvin/blob/63b6ffc294e3b91d1db13453d487c773764ba4a1/evaluator/testsets.py#L122">default</a> wall clock time, memory, number of created processes etc.
-This can be overriden by the yaml configuration:
-
-```yaml
-limits:
-  fsize: 5M  # max filesize  
-  wall-time: 5 # max 5 seconds per test
-  cg-mem: 5M # max 5MB of memory usage
-```
 
 ### Check the standard output
 This test will execute the student program and checks if it prints `2020` in the standard output.
@@ -203,7 +219,6 @@ pipeline:
 
       - display: ['*.ppm', '*.pgm', '*.jpg']
 ```
-
 
 ## Docker
 Own private actions can be implemented in any language in a <a href="https://github.com/mrlvsb/kelvin/tree/master/evaluator/images">docker container</a> and published to the official docker hub.
