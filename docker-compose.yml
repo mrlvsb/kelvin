@@ -16,8 +16,7 @@ x-django-app:
       - POSTGRES_DB=${DB_DATABASE}
       - POSTGRES_USER=${DB_USERNAME}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_EXPOSE_PORT=${REDIS_EXPOSE_PORT}
+      - REDIS_HOST=redis
       - API_INTERNAL_BASEURL=http://web:8000
       - DOCKER_HOST=docker:2375
     depends_on:
@@ -90,7 +89,7 @@ services:
     image: redis
     container_name: kelvin_redis
     ports:
-      - ${REDIS_EXPOSE_PORT}:6379
+      - 6379
     volumes:
       - kelvin-redis-data:/data
     networks:
