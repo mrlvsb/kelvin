@@ -29,14 +29,15 @@ class BuildResult:
 def build_dotnet_project(output_name: str) -> BuildResult:
     # Rename .csprof file to <output-name>.csproj
     paths = os.listdir(os.getcwd())
-    csproj = [p for p in paths if Path(p).suffix == ".csproj"]
-    if not csproj:
-        return BuildResult.fail(stderr="No .csproj file was found")
-    elif len(csproj) > 1:
-        return BuildResult.fail(stderr="Multiple .csproj files were found")
+    sln = [p for p in paths if Path(p).suffix == ".sln"]
+    #csproj = [p for p in paths if Path(p).suffix == ".csproj"]
+    if not sln:
+        return BuildResult.fail(stderr="No .sln file was found")
+    elif len(sln) > 1:
+        return BuildResult.fail(stderr="Multiple .sln files were found")
     else:
-        csproj = csproj[0]
-        os.rename(csproj, f"{output_name}.csproj")
+        sln = sln[0]
+        os.rename(sln, f"{output_name}.sln")
 
     artifact_dir = "build"
 
@@ -48,11 +49,7 @@ def build_dotnet_project(output_name: str) -> BuildResult:
     # Build the .NET project
     result = subprocess.run([
         "dotnet",
-        "publish",
-        "-o", artifact_dir,
-        "--self-contained", "true",
-        "--runtime", "linux-x64",
-        "/p:PublishSingleFile=true"
+        "test"
     ],
         env=env,
         stderr=subprocess.PIPE,
@@ -65,10 +62,13 @@ def build_dotnet_project(output_name: str) -> BuildResult:
         )
 
     # Try to find binary
+    binaries = []
+    '''
     binary_path = Path(artifact_dir) / output_name
     binaries = []
     if os.access(binary_path, os.X_OK):
         binaries.append(binary_path)
+    '''
     return BuildResult(
         success=True,
         stderr=result.stderr.decode(),
@@ -91,7 +91,17 @@ with open("result.html", "w") as out:
         if stdout:
             out.write(f"<div>Stdout<br />{stdout}</div>")
         exit(1)
+    else:
+        stdout = bleach.clean(result.stdout.strip()).replace("\n", "<br />")
+        stderr = bleach.clean(result.stderr.strip()).replace("\n", "<br />")
+        out.write("<span style='color: red'>Project was not compiled successfully!</span>")
+        if stderr:
+            out.write(f"<div>Stderr<br />{stderr}</div>")
+        if stdout:
+            out.write(f"<div>Stdout<br />{stdout}</div>")
+        exit(1)
 
+    '''
     bins = result.binaries
     if len(bins) == 0:
         out.write("<span style='color: red'>No executable has been built.</span>")
@@ -107,3 +117,4 @@ with open("result.html", "w") as out:
             f"<code style='color: #444; font-weight: bold'>$ mv "
             f"{bleach.clean(str(bins[0]))} {output}</code>")
         os.rename(bins[0], output)
+    '''
