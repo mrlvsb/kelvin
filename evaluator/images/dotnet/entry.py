@@ -81,6 +81,57 @@ output = os.getenv("PIPE_OUTPUT", "main")
 
 result = build_dotnet_project(output_name=output)
 
+
+def get_test_output(stdout):
+    delim = '--------------------------------------------------------------------------------------<br />'
+    idx = stdout.find(delim)
+    test_output = f''
+    if idx >= 0:
+        test_output = stdout[idx + len(delim):]
+
+    return test_output
+
+
+def format_collapsed_stdout_html(stdout, test_output):
+    s = f"""
+<div id="accordion">
+  <div class="card">
+    <div class="card-header" id="headingOne">
+      <h5 class="mb-0">
+        <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+          Stdout
+        </button>
+      </h5>
+    </div>
+
+    <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
+      <div class="card-body">
+        {stdout}
+      </div>
+    </div>
+  </div>
+
+
+  <div class="card">
+    <div class="card-header" id="headingTwo">
+      <h5 class="mb-0">
+        <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+          Test Result
+        </button>
+      </h5>
+    </div>
+
+    <div id="collapseTwo" class="collapse show" aria-labelledby="headingTwo" data-parent="#accordion">
+      <div class="card-body">
+        {test_output}
+      </div>
+    </div>
+  </div>
+</div>"""
+
+    return s
+
+
 with open("result.html", "w") as out:
     if not result.success:
         stdout = bleach.clean(result.stdout.strip()).replace("\n", "<br />")
@@ -89,16 +140,20 @@ with open("result.html", "w") as out:
         if stderr:
             out.write(f"<div>Stderr<br />{stderr}</div>")
         if stdout:
-            out.write(f"<div>Stdout<br />{stdout}</div>")
+            test_output = get_test_output(stdout)
+            s = format_collapsed_stdout_html(stdout, test_output)
+            out.write(s)
         exit(1)
     else:
         stdout = bleach.clean(result.stdout.strip()).replace("\n", "<br />")
         stderr = bleach.clean(result.stderr.strip()).replace("\n", "<br />")
-        out.write("<span style='color: red'>Project was not compiled successfully!</span>")
+        out.write("<span>Project was compiled successfully!</span>")
         if stderr:
             out.write(f"<div>Stderr<br />{stderr}</div>")
         if stdout:
-            out.write(f"<div>Stdout<br />{stdout}</div>")
+            test_output = get_test_output(stdout)
+            s = format_collapsed_stdout_html(stdout, test_output)
+            out.write(s)
         exit(1)
 
     '''
