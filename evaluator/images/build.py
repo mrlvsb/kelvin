@@ -40,15 +40,13 @@ for path in Path(base_path).rglob('Dockerfile'):
     deps[name].append(parent)
 
 for group in build_deps(deps):
-	print(group)
 	for image in group:
 		if image.startswith('kelvin/'):
 			name = image.split('/')[1]
-			print(name)
+			print(f"============ {name} ============")
 
 			with open(os.path.join(base_path, name, "Dockerfile"), 'rb') as f:
 				hash = hashlib.md5(f.read()).hexdigest()
 			image_name = f"{image}:{hash}"
 			cmd = ["docker", "build", "-t", image_name,  "-t", image, "."]
-			p = subprocess.Popen(cmd, cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), name))
-			p.communicate()
+			p = subprocess.check_call(cmd, cwd=os.path.join(os.path.dirname(os.path.realpath(__file__)), name))
