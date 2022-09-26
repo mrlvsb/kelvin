@@ -95,8 +95,8 @@ def get_test_output(stdout):
 def format_collapsed_stdout_html(stdout, test_output):
     s = f"""
 <div id="accordion">
-  <div class="card">
-    <div class="card-header" id="headingOne">
+  <div class="card m-1">
+    <div class="card-header p-0" id="headingOne">
       <h5 class="mb-0">
         <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
           Stdout
@@ -112,8 +112,8 @@ def format_collapsed_stdout_html(stdout, test_output):
   </div>
 
 
-  <div class="card">
-    <div class="card-header" id="headingTwo">
+  <div class="card m-1">
+    <div class="card-header p-0" id="headingTwo">
       <h5 class="mb-0">
         <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
           Test Result
