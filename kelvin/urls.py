@@ -38,3 +38,13 @@ urlpatterns = [
     path('webpush/', include('webpush.urls')),
     path('django-rq/', include('django_rq.urls'))
 ]
+
+if settings.DEBUG:
+    from django.contrib.auth import login as login_fn
+    from django.contrib.auth.models import User
+    from django.shortcuts import redirect
+
+    def su(request, login):
+        login_fn(request, User.objects.get(username=login.upper()), backend='django.contrib.auth.backends.ModelBackend')
+        return redirect('/')
+    urlpatterns.append(path('su/<str:login>', su))
