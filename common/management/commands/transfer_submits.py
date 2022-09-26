@@ -32,7 +32,7 @@ class Command(BaseCommand):
 
             prev_dir = submit.dir()
             submit.assignment_id = new_assigned_task.id
-            submit.submit_id = submits + 1
+            submit.submit_num = submits + 1
 
             if opts['really']:
                 shutil.move(prev_dir, submit.dir())
