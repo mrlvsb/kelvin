@@ -36,8 +36,10 @@
   <li>{{ error|safe }}</li>
   {% endfor %}
 </ul>
+{% endif %}
+{% if test.command or test.message %}
 <pre style="color: #444; font-weight: bold">
-$ {{ test.command }}{% if test.message %}
+{% if test.command %}$ {{ test.command }}{% endif %}{% if test.message %}
 {{ test.message }}{%endif%}
 </pre>
 {% endif %}
