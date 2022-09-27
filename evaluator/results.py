@@ -36,30 +36,33 @@ class TestResult:
     def discover_files(self):
         aliases = {v: k for k, v in self.aliases.items()}
 
-        for file in os.listdir(self.result_dir):
-            if not file.startswith(f"{self['name']}."):
-                continue
+        try:
+            for file in os.listdir(self.result_dir):
+                if not file.startswith(f"{self['name']}."):
+                    continue
 
-            n = file[len(self['name'])+1:]
-            base = re.sub(r'\.expected$', '', n)
-            base = re.sub(r'^(file_in|html|diff)\.', '', base)
-            base = aliases.get(base, base)
+                n = file[len(self['name'])+1:]
+                base = re.sub(r'\.expected$', '', n)
+                base = re.sub(r'^(file_in|html|diff)\.', '', base)
+                base = aliases.get(base, base)
 
-            if base not in self.files:
-                self.files[base] = {}
+                if base not in self.files:
+                    self.files[base] = {}
 
-            key = 'actual'
-            if n.endswith('.expected'):
-                key = 'expected'
-            elif n.startswith('html'):
-                key = 'html'
-            elif n.startswith('diff'):
-                key = 'diff'
+                key = 'actual'
+                if n.endswith('.expected'):
+                    key = 'expected'
+                elif n.startswith('html'):
+                    key = 'html'
+                elif n.startswith('diff'):
+                    key = 'diff'
 
-            self.files[base][key] = TestFile(File(os.path.join(self.result_dir, file)))
+                self.files[base][key] = TestFile(File(os.path.join(self.result_dir, file)))
 
-            if n.startswith('file_in'):
-                self.files[base][key].input = True
+                if n.startswith('file_in'):
+                    self.files[base][key].input = True
+        except FileNotFoundError:
+            pass
 
     def copy_input_file(self, local_name, real_file):
         if local_name == 'stdin':
