@@ -112,7 +112,7 @@ def build_dotnet_project(run_tests: bool) -> BuildResult:
     )
 
 
-run_tests = os.getenv("PIPE_TESTS", False)
+run_tests = os.getenv("PIPE_UNITTESTS", False)
 result = build_dotnet_project(run_tests)
 
 with open("result.html", "w") as out:

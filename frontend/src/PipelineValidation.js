@@ -430,7 +430,7 @@ const rules = new DictRule({
     })),
     pipeline: new PipelineRule({
         dotnet: [new DockerPipeRule({
-            tests: [new ValueRule(), 'Run unit tests. By default <strong>false</strong>'],
+            unittests: [new ValueRule(), 'Run unit tests. By default <strong>false</strong>'],
         })],
         gcc: [new DockerPipeRule({
             flags: [new ValueRule(), 'Flags for the gcc/g++ compiler.'],
