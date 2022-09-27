@@ -603,7 +603,7 @@ def submit_comments(request, assignment_id, login, submit_num):
         for source, comments in pipe.comments.items():
             for comment in comments:
                 try:
-                    line = min(result[source]['content'].count('\n'), comment['line']) - 1
+                    line = min(result[source]['content'].count('\n'), int(comment['line'])) - 1
                     if not any(filter(lambda c: c['text'] == comment['text'], result[source]['comments'].setdefault(line, []))):
                         result[source]['comments'].setdefault(line, []).append({
                             'id': -1,
