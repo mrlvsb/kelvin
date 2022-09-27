@@ -66,6 +66,7 @@ def create_docker_cmd(evaluation, image, additional_args=None, cmd=None, limits=
         '-m', str(limits['memory']),
         '--memory-swap', str(limits['memory']),
         '--user', str(os.getuid()),
+        '-i',
         *additional_args,
         *env,
         image,

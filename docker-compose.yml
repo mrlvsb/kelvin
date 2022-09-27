@@ -50,6 +50,8 @@ services:
     <<: *django-app
     container_name: kelvin_evaluator
     command: python manage.py rqworker evaluator
+    stdin_open: true
+    tty: true
 
   # generic background task worker
   worker:
