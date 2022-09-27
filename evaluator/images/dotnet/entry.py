@@ -78,19 +78,18 @@ def build_dotnet_project(run_tests: bool) -> BuildResult:
     if run_tests:
         cmd += ['test', '-l', f'trx;LogFileName=../../{tests_path}']
     else:
-        cmd += ['publish']
+        cmd += ['publish', '--use-current-runtime', '--self-contained']
     process = subprocess.run(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     # find binary and create symlink for a following tasks in pipeline
-    binaries = []
-    for root, dirs, files in os.walk('bin/Debug/'):
-        for file in files:
-            full_path = os.path.join(root, file)
-            if os.access(full_path, os.X_OK):
-                binaries.append(full_path)
+    if csproj:
+        for root, dirs, files in os.walk('bin/Debug/'):
+            for file in files:
+                full_path = os.path.join(root, file)
+                if full_path.endswith(f'/linux-x64/publish/{Path(csproj[0]).stem}'):
+                    os.symlink(full_path, "main")
     
-    if len(binaries) == 1:
-        os.symlink(binaries[0], "main")
+        
 
     # parse compiler warnings / errors and add them as comments to the code
     comments = defaultdict(list)
