@@ -1,11 +1,13 @@
 #!/usr/bin/python3
-
 import dataclasses
-import logging
 import os
 import subprocess
+import json
+import re
+from collections import defaultdict
 from pathlib import Path
 from typing import List, Optional
+import xml.etree.ElementTree as ET
 
 import bleach
 
@@ -13,163 +15,113 @@ import bleach
 @dataclasses.dataclass
 class BuildResult:
     success: bool
-    stderr: Optional[str] = None
-    stdout: Optional[str] = None
-    binaries: Optional[List[Path]] = None
+    error: Optional[str] = None
+    output: Optional[str] = None
+    comments: Optional[List[dict]] = dataclasses.field(default_factory=list)
+    tests: Optional[List[dict]] = dataclasses.field(default_factory=list)
 
     @staticmethod
-    def fail(stdout: str = "", stderr: str = "") -> "BuildResult":
+    def fail(error: str) -> "BuildResult":
         return BuildResult(
             success=False,
-            stdout=stdout,
-            stderr=stderr
+            error=error,
         )
 
 
-def build_dotnet_project(output_name: str) -> BuildResult:
-    # Rename .csprof file to <output-name>.csproj
+def parse_tests_report(path):
+    try:
+        ns={'ns': 'http://microsoft.com/schemas/VisualStudio/TeamTest/2010'}
+        tree = ET.parse(path)
+        os.unlink(path)
+
+        tests = []
+        for node in tree.findall('ns:Results/ns:UnitTestResult', namespaces=ns):
+            text = []
+
+            for sel in ['./ns:Output/ns:ErrorInfo/ns:Message', './ns:Output/ns:ErrorInfo/ns:StackTrace']:
+                el = node.find(sel, namespaces=ns)
+                if el is not None:
+                    text.append(el.text)
+
+            success = node.attrib['outcome'] == 'Passed'
+
+            tests.append({
+                'name': node.attrib['testName'],
+                'success': success,
+                'message': "\n".join(text).strip(),
+            })
+
+        return tests
+    except FileNotFoundError:
+        return []
+
+def build_dotnet_project(run_tests: bool) -> BuildResult:
     paths = os.listdir(os.getcwd())
     sln = [p for p in paths if Path(p).suffix == ".sln"]
-    #csproj = [p for p in paths if Path(p).suffix == ".csproj"]
-    if not sln:
-        return BuildResult.fail(stderr="No .sln file was found")
-    elif len(sln) > 1:
-        return BuildResult.fail(stderr="Multiple .sln files were found")
-    else:
-        sln = sln[0]
-        os.rename(sln, f"{output_name}.sln")
+    csproj = [p for p in paths if Path(p).suffix == ".csproj"]
 
-    artifact_dir = "build"
+    if sln and csproj:
+        return BuildResult.fail("Both .sln and .csproj file was found.")
+    if not sln and not csproj:
+        return BuildResult.fail("No .sln or .csproj file was found")
+    if len(sln) > 1:
+        return BuildResult.fail("Multiple .sln files were found")
+    if len(csproj) > 1:
+        return BuildResult.fail("Multiple .csproj files were found")
 
+    # build or build+run tests
+    tests_path = "tests.xml"
     env = os.environ.copy()
     env["DOTNET_CLI_HOME"] = "/tmp/dotnet-cli-home"
+    env["DOTNET_NOLOGO"] = "1"
+    cmd = ['dotnet']
+    if run_tests:
+        cmd += ['test', '-l', f'trx;LogFileName=../../{tests_path}']
+    else:
+        cmd += ['publish']
+    process = subprocess.run(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-    logging.info("Building dotnet project")
-
-    # Build the .NET project
-    result = subprocess.run([
-        "dotnet",
-        "test"
-    ],
-        env=env,
-        stderr=subprocess.PIPE,
-        stdout=subprocess.PIPE)
-    if result.returncode != 0:
-        return BuildResult(
-            success=False,
-            stderr=result.stderr.decode(),
-            stdout=result.stdout.decode(),
-        )
-
-    # Try to find binary
+    # find binary and create symlink for a following tasks in pipeline
     binaries = []
-    '''
-    binary_path = Path(artifact_dir) / output_name
-    binaries = []
-    if os.access(binary_path, os.X_OK):
-        binaries.append(binary_path)
-    '''
+    for root, dirs, files in os.walk('bin/Debug/'):
+        for file in files:
+            full_path = os.path.join(root, file)
+            if os.access(full_path, os.X_OK):
+                binaries.append(full_path)
+    
+    if len(binaries) == 1:
+        os.symlink(binaries[0], "main")
+
+    # parse compiler warnings / errors and add them as comments to the code
+    comments = defaultdict(list)
+    for line in process.stdout.decode().splitlines():
+        # /work/Program.cs(82,32): warning CS8600: Converting null literal or possible null value to non-nullable type. [/work/Du1.csproj]
+        match = re.match(r'^/work/(?P<path>[^(]+)\((?P<line>[0-9]+),[0-9]+\): [^ ]+ (?P<source>[^ :])+:\s*(?P<text>.*?)\s\[.*?\]$', line)
+        if match:
+            comment = match.groupdict()
+            comments[comment['path']].append(comment)  
+
+    tests = []
+    if run_tests:
+        tests = parse_tests_report(tests_path)
+
     return BuildResult(
-        success=True,
-        stderr=result.stderr.decode(),
-        stdout=result.stdout.decode(),
-        binaries=binaries
+        success=process.returncode == 0,
+        output=process.stdout.decode(),
+        comments=comments,
+        tests=tests,
     )
 
 
-output = os.getenv("PIPE_OUTPUT", "main")
-
-result = build_dotnet_project(output_name=output)
-
-
-def get_test_output(stdout):
-    delim = '--------------------------------------------------------------------------------------<br />'
-    idx = stdout.find(delim)
-    test_output = f''
-    if idx >= 0:
-        test_output = stdout[idx + len(delim):]
-
-    return test_output
-
-
-def format_collapsed_stdout_html(stdout, test_output):
-    s = f"""
-<div id="accordion">
-  <div class="card m-1">
-    <div class="card-header p-0" id="headingOne">
-      <h5 class="mb-0">
-        <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-          Stdout
-        </button>
-      </h5>
-    </div>
-
-    <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
-      <div class="card-body">
-        {stdout}
-      </div>
-    </div>
-  </div>
-
-
-  <div class="card m-1">
-    <div class="card-header p-0" id="headingTwo">
-      <h5 class="mb-0">
-        <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
-          Test Result
-        </button>
-      </h5>
-    </div>
-
-    <div id="collapseTwo" class="collapse show" aria-labelledby="headingTwo" data-parent="#accordion">
-      <div class="card-body">
-        {test_output}
-      </div>
-    </div>
-  </div>
-</div>"""
-
-    return s
-
+run_tests = os.getenv("PIPE_TESTS", False)
+result = build_dotnet_project(run_tests)
 
 with open("result.html", "w") as out:
-    if not result.success:
-        stdout = bleach.clean(result.stdout.strip()).replace("\n", "<br />")
-        stderr = bleach.clean(result.stderr.strip()).replace("\n", "<br />")
-        out.write("<span style='color: red'>Project was not compiled successfully!</span>")
-        if stderr:
-            out.write(f"<div>Stderr<br />{stderr}</div>")
-        if stdout:
-            test_output = get_test_output(stdout)
-            s = format_collapsed_stdout_html(stdout, test_output)
-            out.write(s)
-        exit(1)
-    else:
-        stdout = bleach.clean(result.stdout.strip()).replace("\n", "<br />")
-        stderr = bleach.clean(result.stderr.strip()).replace("\n", "<br />")
-        out.write("<span>Project was compiled successfully!</span>")
-        if stderr:
-            out.write(f"<div>Stderr<br />{stderr}</div>")
-        if stdout:
-            test_output = get_test_output(stdout)
-            s = format_collapsed_stdout_html(stdout, test_output)
-            out.write(s)
-        exit(1)
+    stdout = bleach.clean(result.output.strip()).replace("\n", "<br />")
+    out.write(f'<pre>{stdout}</pre>')
 
-    '''
-    bins = result.binaries
-    if len(bins) == 0:
-        out.write("<span style='color: red'>No executable has been built.</span>")
-        exit(1)
-    elif len(bins) > 1:
-        out.write(
-            f"<span style='color: red'>Multiple executables have been built: "
-            f"{','.join([bleach.clean(bin.name) for bin in bins])}</span>")
-        exit(1)
-    else:
-        out.write("<div>Project was successfully built</div>")
-        out.write(
-            f"<code style='color: #444; font-weight: bold'>$ mv "
-            f"{bleach.clean(str(bins[0]))} {output}</code>")
-        os.rename(bins[0], output)
-    '''
+with open('piperesult.json', 'w') as out:
+    json.dump({"comments": result.comments, "tests": result.tests}, out, indent=4, sort_keys=True)
+
+
+exit(not result.success)
