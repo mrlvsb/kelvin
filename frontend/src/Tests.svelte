@@ -7,9 +7,10 @@
     
 
 <script>
+    import yaml from 'js-yaml';
     import {fs, cwd, openedFiles} from './fs.js'
     import Editor from './Editor.svelte'
-    import yaml from 'js-yaml';
+    import SyncLoader from './SyncLoader.svelte'
 
     let loaded = false;
     $: tests = {};
@@ -143,6 +144,7 @@
     load();
 </script>
 
+{#if loaded}
 <div class="tests">
 {#each Object.values(tests) as test}
     <h2>
@@ -198,3 +200,8 @@
 </button>
 
 </div>
+{:else}
+    <div class="d-flex justify-content-center">
+        <SyncLoader />
+    </div>
+{/if}
