@@ -47,7 +47,6 @@ ul input {
   let renamingPath = null;
   let ctxMenu = null;
   let newDirName = false;
-  let testsShown = false;
   let testsActivated = false;
 
   function finishRename(e) {
@@ -117,6 +116,11 @@ pipeline:
   async function reevaluate() {
     await fetch(`/api/reevaluate_task/${taskid}`, {method: 'POST'});
   }
+
+  function openTests() {
+    testsActivated = true;
+    currentOpenedFile.update(() => {return null;});
+  }
 </script>
 
 <div>
@@ -142,7 +146,7 @@ pipeline:
       <span on:click={openConfigYaml}>
         <span class="iconify" data-icon="vscode-icons:file-type-light-config"></span>
       </span>
-      <span on:click={() => testsActivated = testsShown = true}>
+      <span on:click={openTests}>
         <span class="iconify" data-icon="fa6-solid:t"></span>
       </span>
     </div>
@@ -173,43 +177,46 @@ pipeline:
   </div>
   <div class="w-100" style="overflow: hidden">
     <ul class="nav nav-tabs">
+      {#if testsActivated}
+      <li class="nav-item" style="cursor: pointer">
+        <span class="nav-link" class:active={!$currentOpenedFile}>
+          <span on:click={openTests}>Tests</span>
+        </span>
+      </li>
+      {/if}
+
       {#each Object.entries($openedFiles).filter(([_, inode]) => !inode.hide_tab) as [path, file]}
       <li class="nav-item" style="cursor: pointer">
-        <span class="nav-link" class:active={!testsShown && path === $currentOpenedFile}>
-          <span on:click={() => {testsShown = false; fs.open(path, {hide_tab: false})}}>{path.split('/').slice(-1)[0]}</span>
+        <span class="nav-link" class:active={path === $currentOpenedFile}>
+          <span on:click={() => fs.open(path)}>{path.split('/').slice(-1)[0]}</span>
           <span on:click={() => fs.close(path)}><span class="iconify" data-icon="fa:times"></span></span>
         </span>
       </li>
       {/each}
-      {#if testsActivated}
-      <li class="nav-item" style="cursor: pointer">
-        <span class="nav-link" class:active={testsShown}>
-          <span on:click={() => testsShown = true}>Tests</span>
-        </span>
-      </li>
-      {/if}
     </ul>
 
-    {#if $currentOpenedFile}
-      <div class="editor-container">
-        {#if $currentOpenedFile === '/config.yml'}
-        <div style="position: absolute; z-index: 3; right: 5px;">
-          <button class="btn btn-link p-0" title="Reevaluate all submits" on:click={reevaluate}>
-            <span class="iconify" data-icon="bx:bx-refresh"></span> 
-          </button>
-          <a href="https://github.com/mrlvsb/kelvin/blob/master/README.pipeline.md" target="_blank">
-            <span class="iconify" data-icon="entypo:help"></span>
-          </a>
-        </div>
-        {/if}
-
-        {#if testsShown}
-          <Tests />
-        {:else}
-          <Editor filename={$currentOpenedFile} bind:value={$openedFiles[$currentOpenedFile].content} />
-        {/if}
+    <div class="editor-container">
+      {#if $currentOpenedFile === '/config.yml'}
+      <div style="position: absolute; z-index: 3; right: 5px;">
+        <button class="btn btn-link p-0" title="Reevaluate all submits" on:click={reevaluate}>
+          <span class="iconify" data-icon="bx:bx-refresh"></span> 
+        </button>
+        <a href="https://github.com/mrlvsb/kelvin/blob/master/README.pipeline.md" target="_blank">
+          <span class="iconify" data-icon="entypo:help"></span>
+        </a>
       </div>
-    {/if}
+      {/if}
+
+      {#if testsActivated}
+        <div hidden={$currentOpenedFile}>
+          <Tests />
+        </div>
+      {/if}
+
+      {#if $currentOpenedFile}
+        <Editor filename={$currentOpenedFile} bind:value={$openedFiles[$currentOpenedFile].content} />
+      {/if}
+    </div>
   </div>
 </div>
 
