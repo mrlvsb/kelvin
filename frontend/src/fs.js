@@ -202,6 +202,10 @@ function createFs() {
     },
 
     open: async (path, opts={}) => {
+      if(!opts.hide_tab) {
+        opts.hide_tab = false;
+      }
+
       path = absolutePath(path);
       const inode = getInode(path, get(fs)['root']);
       if(!inode) {
@@ -223,6 +227,15 @@ function createFs() {
             files[path] = {
               path,
               content,
+              ...opts,
+            };
+
+            return files;
+          });
+        } else {
+          openedFiles.update(files => {
+            files[path] = {
+              ...files[path],
               ...opts,
             };
 
