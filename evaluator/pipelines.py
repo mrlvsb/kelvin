@@ -21,11 +21,18 @@ DEFAULT_LIMITS = {
     'network': 'none'
 }
 
+IMAGE_LIMITS = {
+    'kelvin/dotnet': {
+        'network': 'bridge',
+        'memory': '512M',
+        'fsize': '128M',
+    }
+}
 
 def create_docker_cmd(evaluation, image, additional_args=None, cmd=None, limits=None, env=None):
     if not limits:
         limits = {}
-    limits = {**DEFAULT_LIMITS, **limits}
+    limits = {**DEFAULT_LIMITS, **IMAGE_LIMITS.get(image.split(':')[0], {}), **limits}
     for (k, v) in limits.items():
         if k in ("fsize", "memory"):
             limits[k] = parse_human_size(v)

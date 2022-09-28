@@ -34,18 +34,13 @@ pipeline:
 ```
 
 ## .NET
-Action for compiling a .NET (core) application and producing a binary executable file as an output.
-You have to use higher limits and enable network access to make the build work, see the example
-below.
+Action for compiling a .NET (core) application and producing a standalone binary executable file as an output.
+Optionally you can build and run unit tests.
 
 ```yaml
 pipeline:
   - type: dotnet
-    output: main
-    limits:
-      network: host
-      fsize: 128M
-      memory: 512M
+    unittests: true
 ```
 
 ## Tests
