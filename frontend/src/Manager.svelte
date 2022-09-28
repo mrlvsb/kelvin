@@ -39,6 +39,7 @@ ul input {
   import {clickOutside} from './utils.js';
   import {fs, currentPath, cwd, openedFiles, currentOpenedFile} from './fs.js'
   import Editor from './Editor.svelte'
+  import Tests from './Tests.svelte'
   import {fetch} from './api.js'
 
   export let taskid;
@@ -46,6 +47,8 @@ ul input {
   let renamingPath = null;
   let ctxMenu = null;
   let newDirName = false;
+  let testsShown = false;
+  let testsActivated = false;
 
   function finishRename(e) {
     if(e.keyCode == 13) {
@@ -139,6 +142,9 @@ pipeline:
       <span on:click={openConfigYaml}>
         <span class="iconify" data-icon="vscode-icons:file-type-light-config"></span>
       </span>
+      <span on:click={() => testsActivated = testsShown = true}>
+        <span class="iconify" data-icon="fa6-solid:t"></span>
+      </span>
     </div>
     <ul>
       {#if $currentPath != '/'}
@@ -167,14 +173,21 @@ pipeline:
   </div>
   <div class="w-100" style="overflow: hidden">
     <ul class="nav nav-tabs">
-      {#each Object.entries($openedFiles) as [path, file]}
+      {#each Object.entries($openedFiles).filter(([_, inode]) => !inode.hide_tab) as [path, file]}
       <li class="nav-item" style="cursor: pointer">
-        <span class="nav-link" class:active={path === $currentOpenedFile}>
-          <span on:click={() => fs.open(path)}>{path.split('/').slice(-1)[0]}</span>
+        <span class="nav-link" class:active={!testsShown && path === $currentOpenedFile}>
+          <span on:click={() => {testsShown = false; fs.open(path, {hide_tab: false})}}>{path.split('/').slice(-1)[0]}</span>
           <span on:click={() => fs.close(path)}><span class="iconify" data-icon="fa:times"></span></span>
         </span>
       </li>
       {/each}
+      {#if testsActivated}
+      <li class="nav-item" style="cursor: pointer">
+        <span class="nav-link" class:active={testsShown}>
+          <span on:click={() => testsShown = true}>Tests</span>
+        </span>
+      </li>
+      {/if}
     </ul>
 
     {#if $currentOpenedFile}
@@ -189,7 +202,12 @@ pipeline:
           </a>
         </div>
         {/if}
-        <Editor filename={$currentOpenedFile} bind:value={$openedFiles[$currentOpenedFile].content} />
+
+        {#if testsShown}
+          <Tests />
+        {:else}
+          <Editor filename={$currentOpenedFile} bind:value={$openedFiles[$currentOpenedFile].content} />
+        {/if}
       </div>
     {/if}
   </div>

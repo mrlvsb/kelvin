@@ -201,7 +201,7 @@ function createFs() {
         }
     },
 
-    open: async (path) => {
+    open: async (path, opts={}) => {
       path = absolutePath(path);
       const inode = getInode(path, get(fs)['root']);
       if(!inode) {
@@ -223,13 +223,16 @@ function createFs() {
             files[path] = {
               path,
               content,
+              ...opts,
             };
 
             return files;
           });
         }
 
-        currentOpenedFile.set(path);
+        if(!opts.hide_tab) {
+          currentOpenedFile.set(path);
+        }
       }
       
       return true;
