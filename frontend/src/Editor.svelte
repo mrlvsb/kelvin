@@ -16,7 +16,7 @@
   import 'codemirror/addon/hint/show-hint.css'
 
   export let value;
-  export let filename;
+  export let filename = '';
   export let autofocus = false;
   export let disabled = false;
   export let extraKeys = {};
