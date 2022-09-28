@@ -9,6 +9,7 @@
 
 .tree ul li {
   cursor: pointer;
+  overflow-x: hidden;
 }
 
 .newdir {
