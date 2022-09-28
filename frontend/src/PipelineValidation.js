@@ -375,6 +375,7 @@ class PipeRule extends DictRule {
             ...keys,
             enabled: new EnumRule(['true', 'false', 'always', 'announce']),
             fail_on_error: [new EnumRule(['true', 'false']), 'Stop execution of successive actions if this action fails'],
+            title: [new ValueRule(), ['Human readable title of this action in pipeline']],
         })
     }
 }
