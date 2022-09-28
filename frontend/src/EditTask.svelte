@@ -213,7 +213,7 @@ td:not(:nth-of-type(3)) {
 <svelte:window on:keydown={keydown} />
 
 {#if task != null}
-<div class="container">
+<div class="container-fluid">
   <div style="position: relative">
     {#if syncing}
       <div style="position: absolute; top: 50%; left: 50%; z-index: 1">
