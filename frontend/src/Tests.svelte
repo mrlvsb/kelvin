@@ -76,12 +76,15 @@
         }
 
         if(await fs.open('tests.yml', {'hide_tab': true})) {
-            const desc = yaml.load($openedFiles['/tests.yml'].content);
+            const descs = yaml.load($openedFiles['/tests.yml'].content);
 
-            for(const test of desc) {
-                if(test.args) {
+            for(const test of descs) {
+                if(test.name) {
                     newtests[test.name] = newtests[test.name] || create(test.name);
-                    newtests[test.name]['args'] = test.args.join(' ')
+                    if(test.args) {
+                        newtests[test.name].args = test.args.join(' ')
+                    }
+                    newtests[test.name].title = test.title;
                 }
             }
         }
@@ -98,10 +101,18 @@
     async function save(tests) {
         let description = [];
         for(const [name, test] of Object.entries(tests)) {
-            description.push({
-                name: name,
-                args: test.args.split(' '),
-            });
+            let data = {};
+            if(test.args) {
+                data.args = test.args.split(' ');
+            }
+
+            if(test.title) {
+                data.title = test.title;
+            }
+
+            if(data) {
+                description.push({name: name, ...data});
+            }
         }
 
         if(!await fs.open('tests.yml', {hide_tab: true})) {
@@ -158,7 +169,15 @@
         </button>
     </h2>
 
-    <input type="text" class="form-control" placeholder="Program arguments" bind:value={test.args}>
+    <div class="form-group row">
+        <label class="col-sm-2 col-form-label">Title</label>
+        <input type="text" class="form-control form-control-sm col-sm-10" bind:value={test.title}>
+    </div>
+
+    <div class="form-group row">
+        <label class="col-sm-2 col-form-label">Program Arguments</label>
+        <input type="text" class="form-control form-control-sm col-sm-10" bind:value={test.args}>
+    </div>
 
     {#each Object.entries(test.files).sort(file_sorter) as [k, v]}
         <h3>
