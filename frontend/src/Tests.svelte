@@ -8,7 +8,7 @@
 
 <script>
     import yaml from 'js-yaml';
-    import {fs, cwd, openedFiles} from './fs.js'
+    import {fs, cwd, openedFiles, currentOpenedFile} from './fs.js'
     import Editor from './Editor.svelte'
     import SyncLoader from './SyncLoader.svelte'
 
@@ -33,6 +33,8 @@
             fs.remove(path);
         }
 
+        currentOpenedFile.update(current => {return null});
+
         delete tests[name];
         tests = tests;
     }
@@ -48,6 +50,7 @@
         const path = tests[name]['files'][file_name];
         delete tests[name]['files'][file_name];
         await fs.remove(path);
+        currentOpenedFile.update(current => {return null});
     }
 
     async function load() {
