@@ -29,14 +29,16 @@
     }
 
     async function delete_test(name) {
-        for(const path of Object.values(tests[name]['files'])) {
-            fs.remove(path);
-        }
-
-        currentOpenedFile.update(current => {return null});
+        const filesToDelete = tests[name]['files'];
 
         delete tests[name];
         tests = tests;
+
+        for(const path of Object.values(filesToDelete)) {
+            await fs.remove(path);
+        }
+
+        currentOpenedFile.update(current => {return null});
     }
 
     async function add_file(name, shown_name, file_name) {
