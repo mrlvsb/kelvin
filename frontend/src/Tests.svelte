@@ -49,6 +49,7 @@
     async function remove_file(name, file_name) {
         const path = tests[name]['files'][file_name];
         delete tests[name]['files'][file_name];
+        tests = tests;
         await fs.remove(path);
         currentOpenedFile.update(current => {return null});
     }
