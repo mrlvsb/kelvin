@@ -4,6 +4,7 @@ import os
 import subprocess
 import json
 import re
+import glob
 from collections import defaultdict
 from pathlib import Path
 from typing import List, Optional
@@ -56,6 +57,7 @@ def parse_tests_report(path):
         return []
 
 def build_dotnet_project(run_tests: bool) -> BuildResult:
+    output_dir = "output"
     paths = os.listdir(os.getcwd())
     sln = [p for p in paths if Path(p).suffix == ".sln"]
     csproj = [p for p in paths if Path(p).suffix == ".csproj"]
@@ -78,19 +80,16 @@ def build_dotnet_project(run_tests: bool) -> BuildResult:
     if run_tests:
         cmd += ['test', '-l', f'trx;LogFileName=../../{tests_path}']
     else:
-        cmd += ['publish', '--use-current-runtime', '--self-contained']
+        cmd += ['publish', '--use-current-runtime', '--self-contained', '-o', output_dir]
     process = subprocess.run(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     # find binary and create symlink for a following tasks in pipeline
-    if csproj:
-        for root, dirs, files in os.walk('bin/Debug/'):
-            for file in files:
-                full_path = os.path.join(root, file)
-                if full_path.endswith(f'/linux-x64/publish/{Path(csproj[0]).stem}'):
-                    os.symlink(full_path, "main")
+    binaries = []
+    for proj in glob.glob('**/*.csproj', recursive=True):
+        binaries.append(Path(output_dir) / Path(proj).stem)
+    if len(binaries) == 1:
+        os.symlink(binaries[0], "main")
     
-        
-
     # parse compiler warnings / errors and add them as comments to the code
     comments = defaultdict(list)
     for line in process.stdout.decode().splitlines():
