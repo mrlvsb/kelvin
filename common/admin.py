@@ -80,6 +80,8 @@ class AssignedTaskAdmin(admin.ModelAdmin):
     list_filter = ('clazz__subject', 'task__name', ByAssignedTaskTeacherFilter, 'clazz',)
 
     autocomplete_fields = ['task', 'clazz']
+    search_fields = ['task__name', 'clazz__teacher__username', 'clazz__subject_abbr']
+
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "clazz":
@@ -130,6 +132,7 @@ class TaskAdmin(admin.ModelAdmin):
 
 class SubmitAdmin(admin.ModelAdmin):
     list_filter = ('assignment__task__subject', 'assignment__task__name')
+    autocomplete_fields = ['assignment']
 
 admin.site.register(models.Task, TaskAdmin)
 admin.site.register(models.Class, ClassAdmin)

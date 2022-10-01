@@ -250,7 +250,7 @@ class Submit(models.Model):
         return sources
 
     def __str__(self):
-        return f"#{self.id} {self.student.username} {self.assignment.task.name} {self.submit_num}"
+        return f"#{self.id} {self.student.username} {self.assignment.task.name} (task_id={self.assignment.task_id}) #{self.submit_num}"
 
     def notification_str(self):
         return f"{self.assignment.task.name} #{self.submit_num}"
