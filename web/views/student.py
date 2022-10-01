@@ -728,7 +728,10 @@ def task_asset(request, task_name, path):
                 task.save()
             return HttpResponse(status=204)
         elif request.method == 'DELETE':
-            os.unlink(system_path)
+            try:
+                os.unlink(system_path)
+            except FileNotFoundError:
+                pass
             return HttpResponse(status=204)
         elif request.method == 'MOVE':
             dst = request.headers['Destination']
