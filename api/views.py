@@ -332,6 +332,11 @@ def task_detail(request, task_id=None):
 
         tasks_in_path = [str(p.parent) for p in Path(task.dir()).rglob('.taskid')]
         if len(tasks_in_path) != 1:
+            if not tasks_in_path:
+                return JsonResponse({
+                    'errors': [f'Cannot delete task, maybe you didn\'t save the task first?']
+                }) 
+
             return JsonResponse({
                 'errors': [f'Cannot delete task - there are multiple taskids:\n{chr(10).join(tasks_in_path)}']
             })
