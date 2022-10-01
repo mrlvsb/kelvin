@@ -83,13 +83,15 @@
         if(await fs.open('tests.yml', {'hide_tab': true})) {
             const descs = yaml.load($openedFiles['/tests.yml'].content);
 
-            for(const test of descs) {
-                if(test.name) {
-                    newtests[test.name] = newtests[test.name] || create(test.name);
-                    if(test.args) {
-                        newtests[test.name].args = test.args.join(' ')
+            if(Array.isArray(descs)) {
+                for(const test of descs) {
+                    if(test.name) {
+                        newtests[test.name] = newtests[test.name] || create(test.name);
+                        if(test.args) {
+                            newtests[test.name].args = test.args.join(' ')
+                        }
+                        newtests[test.name].title = test.title;
                     }
-                    newtests[test.name].title = test.title;
                 }
             }
         }
