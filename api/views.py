@@ -182,7 +182,7 @@ def info(request):
         'is_superuser': request.user.is_superuser,
     }
 
-    semester = current_semester();
+    semester = current_semester()
     res['semester'] = {
         'begin': semester.begin,
         'year': semester.year,
@@ -471,12 +471,10 @@ def reevaluate_task(request, task_id):
 
 @user_passes_test(is_teacher)
 def search(request):
-    results = []
-
-    results.append({
+    results = [{
         'text': 'All classes',
         'url': '/',
-    })
+    }]
 
     semester = current_semester()
 

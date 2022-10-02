@@ -253,7 +253,7 @@ class TestsPipe:
             with tempfile.NamedTemporaryFile() as stdout_name, tempfile.NamedTemporaryFile() as stderr_name:
                 docker_cmd = ['docker', 'exec', '-i', container, 'timeout', str(self.timeout)] + cmd
                 logger.debug("executing in isolation: %s",
-                                " ".join((docker_cmd)))  # TODO: shlex.join only in python3.8
+                                " ".join(docker_cmd))  # TODO: shlex.join only in python3.8
                 def preexec_fn():
                     import resource
                     fsize = parse_human_size(DEFAULT_LIMITS['fsize'])

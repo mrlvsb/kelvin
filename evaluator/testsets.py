@@ -74,15 +74,15 @@ class Test:
             f = item[1]
 
             if name == 'stdin':
-                return (0, 'stdin')
+                return 0, 'stdin'
 
             if f.input:
-                return (1, name)
+                return 1, name
 
             if name == 'stdout':
-                return (2, 'stdout')
+                return 2, 'stdout'
 
-            return (3, name)
+            return 3, name
 
         sorted_values = list(self.files.items())
         sorted_values.sort(key=sorter)

@@ -211,7 +211,7 @@ class EvaluationResult:
                     failed += 1
                 total += 1
 
-        return (total - failed, total)
+        return total - failed, total
 
     def save(self, path):
         with open(path, 'w') as f:
