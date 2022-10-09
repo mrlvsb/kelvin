@@ -37,6 +37,7 @@ class Test:
         self.name = name
         self.args = []
         self.exit_code = 0
+        self.pos = 99
         self.files = {}
         self.check = None
         self._title = None
@@ -152,7 +153,7 @@ class TestSet:
         self.load_tests()
 
     def __iter__(self):
-        return iter(sorted(self.tests_dict.values(), key=lambda t: t.name))
+        return iter(sorted(self.tests_dict.values(), key=lambda t: (t.pos, t.name)))
 
     @property
     def required_files(self):
@@ -229,11 +230,12 @@ class TestSet:
     def parse_conf_tests(self, conf):
         allowed_keys = ['name', 'title', 'exit_code', 'args', 'files']
 
-        for test_conf in conf:
+        for pos, test_conf in enumerate(conf):
             t = self.create_test(test_conf.get('name', f'test {len(self.tests_dict)}'))
             t.title = test_conf.get('title', t.name)
             t.exit_code = test_conf.get('exit_code', 0)
             t.args = [str(s) for s in test_conf.get('args', [])]
+            t.pos = pos
             files = test_conf.get('files', [])
             for f in files:
                 t.files[f['path']] = TestFile(File(os.path.join(self.task_path, f['expected'])))

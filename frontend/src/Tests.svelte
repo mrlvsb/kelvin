@@ -58,6 +58,24 @@
 
     async function load() {
         let newtests = {};
+
+        if(await fs.open('tests.yml', {'hide_tab': true})) {
+            const descs = yaml.load($openedFiles['/tests.yml'].content);
+
+            if(Array.isArray(descs)) {
+                for(const test of descs) {
+                    if(test.name) {
+                        newtests[test.name] = newtests[test.name] || create(test.name);
+                        if(test.args) {
+                            newtests[test.name].args = test.args.join(' ')
+                        }
+                        newtests[test.name].title = test.title;
+                        newtests[test.name].exit_code = test.exit_code;
+                    }
+                }
+            }
+        }
+
         for(const inode of $cwd) {
             if(inode.type != 'file') {
                 continue;
@@ -78,23 +96,6 @@
                 const dir = parts[1];
                 if(dir == 'file_in' || dir == 'file_out') {
                     await add(name, parts.slice(2).join('.'), inode.name);
-                }
-            }
-        }
-
-        if(await fs.open('tests.yml', {'hide_tab': true})) {
-            const descs = yaml.load($openedFiles['/tests.yml'].content);
-
-            if(Array.isArray(descs)) {
-                for(const test of descs) {
-                    if(test.name) {
-                        newtests[test.name] = newtests[test.name] || create(test.name);
-                        if(test.args) {
-                            newtests[test.name].args = test.args.join(' ')
-                        }
-                        newtests[test.name].title = test.title;
-                        newtests[test.name].exit_code = test.exit_code;
-                    }
                 }
             }
         }
