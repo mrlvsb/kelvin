@@ -93,6 +93,7 @@
                             newtests[test.name].args = test.args.join(' ')
                         }
                         newtests[test.name].title = test.title;
+                        newtests[test.name].exit_code = test.exit_code;
                     }
                 }
             }
@@ -117,6 +118,10 @@
 
             if(test.title) {
                 data.title = test.title;
+            }
+
+            if(test.exit_code) {
+                data.exit_code = parseInt(test.exit_code); 
             }
 
             if(data) {
@@ -179,14 +184,19 @@
         </button>
     </h2>
 
-    <div class="form-group row">
+    <div class="form-group row mb-0">
         <label class="col-sm-2 col-form-label">Title</label>
         <input type="text" class="form-control form-control-sm col-sm-10" bind:value={test.title}>
     </div>
 
-    <div class="form-group row">
+    <div class="form-group row mb-0">
         <label class="col-sm-2 col-form-label">Program Arguments</label>
         <input type="text" class="form-control form-control-sm col-sm-10" bind:value={test.args}>
+    </div>
+
+    <div class="form-group row mb-0">
+        <label class="col-sm-2 col-form-label">Exit code</label>
+        <input type="number" class="form-control form-control-sm col-sm-10" bind:value={test.exit_code} placeholder="Default 0">
     </div>
 
     {#each Object.entries(test.files).sort(file_sorter) as [k, v]}
