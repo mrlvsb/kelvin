@@ -251,7 +251,15 @@ class TestSet:
     def load_tests(self):
         self.discover_tests()
 
-        try:
+        def process_file(fn):
+            try:
+                fn()
+            except yaml.scanner.ScannerError as e:
+                self.add_warning(e)
+            except FileNotFoundError:
+                pass
+
+        def load_config_yaml():
             with open(os.path.join(self.task_path, 'config.yml')) as f:
                 conf = yaml.load(f.read(), Loader=yaml.SafeLoader)
                 if conf:
@@ -262,14 +270,14 @@ class TestSet:
                         else:
                             fn(value)
 
-                with open(os.path.join(self.task_path, 'tests.yml')) as f:
-                    tests = yaml.load(f.read(), Loader=yaml.SafeLoader)
-                    if tests:
-                        self.parse_conf_tests(tests)
-        except yaml.scanner.ScannerError as e:
-            self.add_warning(e)
-        except FileNotFoundError:
-            pass
+        def load_tests_yaml():
+            with open(os.path.join(self.task_path, 'tests.yml')) as f:
+                tests = yaml.load(f.read(), Loader=yaml.SafeLoader)
+                if tests:
+                    self.parse_conf_tests(tests)
+
+        process_file(load_config_yaml)
+        process_file(load_tests_yaml)
 
         if self.script:
             self.script.call("gen_tests", self)
