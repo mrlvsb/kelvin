@@ -262,6 +262,7 @@ class TestsPipe:
                 p = subprocess.Popen(docker_cmd, **args, stdout=stdout_name, stderr=stderr_name, preexec_fn=preexec_fn)
                 p.communicate(**comm_args)
 
+                timeouted = p.returncode == 124 and test.exit_code != 124
                 result['exit_code'] = p.returncode
 
                 if have_file_stdin:
@@ -312,7 +313,10 @@ class TestsPipe:
                             msg = "Standard error (<strong>stderr</strong>) doesn't match"
                 result.add_result(success, msg, output)
 
-            if test.exit_code is not None:
+            if timeouted:
+                result.add_result(success=False,
+                                  message=f"<strong>The test has timeouted after {self.timeout}s</strong>. Make sure that you do not use e.g. `sleep` in your program.")
+            elif test.exit_code is not None:
                 result.add_result(test.exit_code == result['exit_code'],
                                   f"<strong>main</strong> or <strong>exit</strong> function terminated the program with exit status <strong>{result['exit_code']}</strong> instead of <strong>{test.exit_code}</strong>")
 
