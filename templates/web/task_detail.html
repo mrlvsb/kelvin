@@ -25,14 +25,27 @@
 
 {% if submit %}
     <h6>
+
     Submit 
+
+    {% if submit.submit_num > 2 %}
+    <a href="{% url 'task_detail' login=submit.student.username assignment_id=submit.assignment.id submit_num=1 %}#src" title="First submit"><span class="iconify" data-icon="fluent:arrow-previous-12-filled"></span></a>
+    {% endif %}
+
     {% if prev_submit %}
         <a href="{% url 'task_detail' login=submit.student.username assignment_id=submit.assignment.id submit_num=prev_submit %}#src" title="Previous submit"><span class="iconify" data-icon="fa-solid:chevron-left"></span></a>
     {% else %}
       <span class="iconify" data-icon="fa-solid:chevron-left"></span>
     {% endif %}
 
+    
+
+
+
     {{ submit.submit_num }} / 
+
+
+
     {% if late_submit %}
     <strong class="text-danger">{{ total_submits }}</strong>
     {% else %}
@@ -44,9 +57,15 @@
     {% else %}
       <span class="iconify" data-icon="fa-solid:chevron-right"></span>
     {% endif %}
-    -
-    {{ submit.student.get_full_name }} ({{ submit.student.username }}),
 
+    {% if total_submits > 2 and total_submits > submit.submit_num %}
+      <a href="{% url 'task_detail' login=submit.student.username assignment_id=submit.assignment.id submit_num=total_submits %}#src" title="Last submit"><span class="iconify" data-icon="fluent:arrow-next-12-filled"></span></a>
+    {% endif %}
+    -
+
+
+    {{ submit.student.get_full_name }} ({{ submit.student.username }}),
+    <a href="{% url 'task_detail' login=submit.student.username assignment_id=submit.assignment.id submit_num=total_submits %}#src" title="Next submit"><span class="iconify" data-icon="ci:chevron-duo-right"></span></a>
     {{ submit.created_at|date:'d.m.Y H:i' }}
 
     {% if submit.created_at > submit.assignment.deadline %}
@@ -56,7 +75,6 @@
     </span>
     {% endif %}
     </h6>
-
 
     {% if is_teacher %}
     <a href="{% url 'submits' submit.student.username %}">Student submits</a>
