@@ -16,8 +16,7 @@ import bleach
 @dataclasses.dataclass
 class BuildResult:
     success: bool
-    error: Optional[str] = None
-    output: Optional[str] = None
+    output: str
     comments: Optional[List[dict]] = dataclasses.field(default_factory=list)
     tests: Optional[List[dict]] = dataclasses.field(default_factory=list)
 
@@ -25,7 +24,7 @@ class BuildResult:
     def fail(error: str) -> "BuildResult":
         return BuildResult(
             success=False,
-            error=error,
+            output=error,
         )
 
 
@@ -55,6 +54,7 @@ def parse_tests_report(path):
         return tests
     except FileNotFoundError:
         return []
+
 
 def build_dotnet_project(run_tests: bool) -> BuildResult:
     output_dir = "output"
