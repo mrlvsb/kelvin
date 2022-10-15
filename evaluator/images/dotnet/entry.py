@@ -75,6 +75,8 @@ def build_dotnet_project(run_tests: bool) -> BuildResult:
     tests_path = "tests.xml"
     env = os.environ.copy()
     env["DOTNET_CLI_HOME"] = "/tmp/dotnet-cli-home"
+    # workaround for https://github.com/dotnet/core/issues/7868
+    env["XDG_DATA_HOME"] = "/tmp/dotnet-cli-home"
     env["DOTNET_NOLOGO"] = "1"
     cmd = ['dotnet']
     if run_tests:
