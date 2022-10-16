@@ -522,3 +522,36 @@ def search(request):
     return JsonResponse({
         'results': results,
     })
+
+@user_passes_test(is_teacher)
+def transfer_students(request):
+    if request.method != 'POST':
+        return HttpResponseBadRequest()
+
+    post = json.loads(request.body.decode('utf-8'))
+    src = get_object_or_404(Class, pk=post['src_class'])
+    dst = get_object_or_404(Class, pk=post['dst_class'])
+    student = get_object_or_404(User, username=post['student'])
+
+    # add student to new class
+    dst.students.add(student)
+
+    # transfer all tasks
+    transfers = []
+    for assignment in post['assignments']:
+        for submit in Submit.objects.filter(assignment_id=assignment['src_assignment_id'], student_id=student.id):
+            prev_dir = submit.dir()
+            submit.assignment_id = assignment['dst_assignment_id']
+
+            transfers.append({
+                'submit_id': submit.id,
+                'before': prev_dir,
+                'after': submit.dir(),
+            })
+            shutil.move(prev_dir, submit.dir())
+            submit.save()
+
+    # remove student from previous class
+    src.students.remove(student)
+        
+    return JsonResponse({'transfers': transfers})
