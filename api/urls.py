@@ -14,4 +14,5 @@ urlpatterns = [
     path('subject/<subject_abbr>', views.subject_list),
     path('reevaluate_task/<int:task_id>', views.reevaluate_task),
     path('search', views.search),
+    path('transfer_students', views.transfer_students),
 ]
