@@ -37,6 +37,8 @@ ALLOWED_EXTENSIONS = {
     "java": "java",
 
     "py": "python",
+
+    "cs": "csharp"
 }
 
 
