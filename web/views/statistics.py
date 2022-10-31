@@ -2,8 +2,9 @@ from typing import List, Set
 
 import numpy as np
 import pandas as pd
+import pytz
 from bokeh.embed import file_html
-from bokeh.models import ColumnDataSource, HoverTool, Legend, OpenURL, Span, TapTool
+from bokeh.models import ColumnDataSource, HoverTool, OpenURL, Span, TapTool
 from bokeh.palettes import Category20_20 as CategoricalPalette
 from bokeh.plotting import figure
 from bokeh.resources import CDN
@@ -12,6 +13,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+from django.utils import timezone
 
 from common.models import AssignedTask, Submit, Task
 from common.utils import is_teacher
@@ -68,8 +70,11 @@ def create_submit_chart_html(submits: List[Submit], assignments: List[AssignedTa
             return "no points assigned"
         return f"{points}/{main_assignment.max_points}"
 
+    # Move the datetime to local time zone and then forcefully treat it as UTC (remove timezone
+    # information) to make Bokeh render it correctly.
     frame = pd.DataFrame({
-        "date": [submit.created_at for submit in submits],
+        "date": [timezone.localtime(submit.created_at).replace(tzinfo=pytz.UTC) for submit in
+                 submits],
         "student": [submit.student.username for submit in submits],
         "submit_num": [submit.submit_num for submit in submits],
         "submit_url": [reverse("task_detail", kwargs=dict(
