@@ -1,3 +1,4 @@
+import datetime
 from typing import List, Set
 
 import numpy as np
@@ -59,6 +60,14 @@ def draw_deadline_line(plot, deadline):
     plot.line([], [], **line_args)
 
 
+def normalize_date(date: datetime.datetime) -> datetime.datetime:
+    """
+    Move the datetime to local time zone and then forcefully treat it as UTC (remove timezone
+    information) to make Bokeh render it correctly.
+    """
+    return timezone.localtime(date).replace(tzinfo=pytz.UTC)
+
+
 def create_submit_chart_html(submits: List[Submit], assignments: List[AssignedTask]) -> str:
     main_assignment = assignments[0] if assignments else None
 
@@ -70,11 +79,8 @@ def create_submit_chart_html(submits: List[Submit], assignments: List[AssignedTa
             return "no points assigned"
         return f"{points}/{main_assignment.max_points}"
 
-    # Move the datetime to local time zone and then forcefully treat it as UTC (remove timezone
-    # information) to make Bokeh render it correctly.
     frame = pd.DataFrame({
-        "date": [timezone.localtime(submit.created_at).replace(tzinfo=pytz.UTC) for submit in
-                 submits],
+        "date": [normalize_date(submit.created_at) for submit in submits],
         "student": [submit.student.username for submit in submits],
         "submit_num": [submit.submit_num for submit in submits],
         "submit_url": [reverse("task_detail", kwargs=dict(
@@ -116,7 +122,7 @@ def create_submit_chart_html(submits: List[Submit], assignments: List[AssignedTa
 
     for assignment in assignments:
         if assignment.deadline is not None:
-            draw_deadline_line(plot, assignment.deadline)
+            draw_deadline_line(plot, normalize_date(assignment.deadline))
 
     return file_html(plot, CDN, "Submits over time")
 
