@@ -90,7 +90,7 @@ def store_uploaded_file(submit: Submit, uploader: Uploader, path: str, file):
         os.unlink(target_path)
 
 
-IGNORED_FILEPATH_REGEX = re.compile(r"(__pycache__/)|(CMakeFiles/)|(\.git/)|(\.vscode/)|(\.cmake/)|(\.pyc$)")
+IGNORED_FILEPATH_REGEX = re.compile(r"(__pycache__/)|(CMakeFiles/)|(\.git/)|(\.vscode/)|(\.cmake/)|(\.pyc$)|(bin/)|(obj/)")
 MAX_UPLOAD_FILECOUNT = 200
 
 
