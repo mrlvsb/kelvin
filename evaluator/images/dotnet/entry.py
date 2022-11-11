@@ -56,6 +56,27 @@ def parse_tests_report(path):
         return []
 
 
+def get_executable_project_names(directory: Path) -> List[str]:
+    """
+    Find all `.csproj` files in the given directory and return the names of the found
+    projects that should produce an executable output.
+    """
+    import xml.etree.ElementTree as ET
+
+    names = []
+    for proj_path in glob.glob(f"{directory}/**/*.csproj", recursive=True):
+        try:
+            tree = ET.parse(proj_path)
+            root = tree.getroot()
+            output_type = root.findtext("PropertyGroup/OutputType")
+            if output_type == "Exe":
+                name = Path(proj_path).stem
+                names.append(name)
+        except:
+            pass
+    return names
+
+
 def build_dotnet_project(run_tests: bool) -> BuildResult:
     output_dir = "output"
     paths = os.listdir(os.getcwd())
@@ -85,13 +106,18 @@ def build_dotnet_project(run_tests: bool) -> BuildResult:
         cmd += ['publish', '--use-current-runtime', '--self-contained', '-o', output_dir]
     process = subprocess.run(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-    # find binary and create symlink for a following tasks in pipeline
-    binaries = []
-    for proj in glob.glob('**/*.csproj', recursive=True):
-        binaries.append(Path(output_dir) / Path(proj).stem)
+    # find an executable file in the output directory and create a symlink for the following tasks
+    # in the pipeline
+    exe_project_names = get_executable_project_names(Path(os.getcwd()))
+    binaries = [Path(output_dir) / name for name in exe_project_names]
     if len(binaries) == 1:
         os.symlink(binaries[0], "main")
-    
+    elif len(binaries) > 1:
+        return BuildResult.fail(
+            f"Multiple executable projects found ({','.join(exe_project_names)}). "
+            f"Only upload one executable project."
+        )
+
     # parse compiler warnings / errors and add them as comments to the code
     comments = defaultdict(list)
     for line in process.stdout.decode().splitlines():
