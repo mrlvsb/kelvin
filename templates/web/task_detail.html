@@ -25,7 +25,9 @@
 
 {% if submit %}
     <h6>
+
     Submit 
+
     {% if submit.submit_num > 2 %}
     <a href="{% url 'task_detail' login=submit.student.username assignment_id=submit.assignment.id submit_num=1 %}#src" title="First submit"><span class="iconify" data-icon="fluent:arrow-previous-12-filled"></span></a>
     {% endif %}
@@ -35,7 +37,15 @@
     {% else %}
       <span class="iconify" data-icon="fa-solid:chevron-left"></span>
     {% endif %}
+
+    
+
+
+
     {{ submit.submit_num }} / 
+
+
+
     {% if late_submit %}
     <strong class="text-danger">{{ total_submits }}</strong>
     {% else %}
@@ -52,8 +62,9 @@
       <a href="{% url 'task_detail' login=submit.student.username assignment_id=submit.assignment.id submit_num=total_submits %}#src" title="Last submit"><span class="iconify" data-icon="fluent:arrow-next-12-filled"></span></a>
     {% endif %}
     -
+
+
     {{ submit.student.get_full_name }} ({{ submit.student.username }}),
-    <a href="{% url 'task_detail' login=submit.student.username assignment_id=submit.assignment.id submit_num=total_submits %}#src" title="Next submit"><span class="iconify" data-icon="ci:chevron-duo-right"></span></a>
     {{ submit.created_at|date:'d.m.Y H:i' }}
 
     {% if submit.created_at > submit.assignment.deadline %}
@@ -63,6 +74,7 @@
     </span>
     {% endif %}
     </h6>
+
     {% if is_teacher %}
     <a href="{% url 'submits' submit.student.username %}">Student submits</a>
     <a href="{% url 'reevaluate' submit.id %}" title="Reevaluate"><span class="iconify" data-icon="fa-solid:sync"></span></a>
@@ -97,6 +109,7 @@
                   Source code
                   {% if comment_count and comment_count > 0 %}
                     <span class="badge badge-dark">{{ comment_count }}</span>
+
                   {% endif %}
                 </a>
             </li>
@@ -104,7 +117,9 @@
             <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#result">
                     Result #{{ submit.submit_num }} 
+                    
                 </a>
+                
             </li>
             {% endif %}
 
@@ -114,6 +129,7 @@
               {% if submit and submit.assignment.max_points is not None %}
                 <li class="nav-item ml-auto">
                   {% include 'web/teacher/form_assign_points.html' %}
+                  
                 <li>
               {% endif %}
             {% else %}
@@ -154,9 +170,11 @@
                 {{ text|safe }}
                 {% if inputs.required_files %}
                 <h2>Required files</h2>
+                
                 <ul>
                 {% for file in inputs.required_files %}
                   <li>{{ file }}</li>
+
                 {% endfor %}
                 </ul>
                 {% endif %}
@@ -166,6 +184,8 @@
 
                 {% for input in inputs %}
                 <h2>{{ input.title }}{% if input.title != input.name %} <span class="text-muted">({{ input.name }})</span>{% endif %}</h2>
+                <span class="badge badge-dark">{{ comment_count }}</span>
+
                 {{ input.assignment | markdown:task.code | safe }}
 
                 <code style="display: block">$ ./main {{ input.escaped_args }}</code>
@@ -197,6 +217,7 @@
             {% if submit %}
             <div class="tab-pane overflow-auto" id="tab_src">
               <kelvin-submit-sources url="{% url 'submit_comments' submit.assignment.id submit.student submit.submit_num %}"></kelvin-submit-sources>
+              {{ comment.count }}
             </div>
 
             {% if has_pipeline %}
