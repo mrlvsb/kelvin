@@ -38,13 +38,7 @@
       <span class="iconify" data-icon="fa-solid:chevron-left"></span>
     {% endif %}
 
-    
-
-
-
     {{ submit.submit_num }} / 
-
-
 
     {% if late_submit %}
     <strong class="text-danger">{{ total_submits }}</strong>
@@ -62,7 +56,6 @@
       <a href="{% url 'task_detail' login=submit.student.username assignment_id=submit.assignment.id submit_num=total_submits %}#src" title="Last submit"><span class="iconify" data-icon="fluent:arrow-next-12-filled"></span></a>
     {% endif %}
     -
-
 
     {{ submit.student.get_full_name }} ({{ submit.student.username }}),
     {{ submit.created_at|date:'d.m.Y H:i' }}
@@ -109,7 +102,6 @@
                   Source code
                   {% if comment_count and comment_count > 0 %}
                     <span class="badge badge-dark">{{ comment_count }}</span>
-
                   {% endif %}
                 </a>
             </li>
@@ -117,9 +109,7 @@
             <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#result">
                     Result #{{ submit.submit_num }} 
-                    
                 </a>
-                
             </li>
             {% endif %}
 
