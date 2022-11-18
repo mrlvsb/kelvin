@@ -34,7 +34,7 @@
           .map(result => parseFloat(result.assigned_points))
           .reduce((acc, val) => acc + val, 0).toFixed(2);
   }
-
+  console.log(clazz)
   let showFullTaskNames = localStorageStore('classDetail/showFullTaskNames', false);
   let showSummary = false;
 </script>
@@ -205,7 +205,7 @@ tr:hover td:first-of-type {
                   </div>
                 </th>
                 {/each}
-                <th>Celkem ({clazz.assignments.reduce((sum, task)=>sum + task.max_points, 0)} b)</th>
+                <th>(Celkem{clazz.assignments.reduce((sum, task)=>sum + task.max_points, 0)} b)</th>
               </tr>
             </thead>
 
