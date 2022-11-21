@@ -27,7 +27,7 @@ x-django-app:
 
 services:
   db:
-    image: postgres
+    image: postgres:14
     volumes:
       - kelvin-postgres-data:/var/lib/postgresql/data
     container_name: kelvin_db
