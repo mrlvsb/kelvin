@@ -41,7 +41,7 @@
     word-break: break-word;
     border: 2px solid #000000;
     border-radius: 5px;
-    max-width: 980px;
+    max-width: 960px;
     margin-bottom: 1px;
   }
   :global(.comment p) {
