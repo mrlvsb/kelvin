@@ -215,7 +215,7 @@
     <SyncLoader />
   </div>
 {:else}
-  <div class="float-right">
+  <div class="float-right" >
     {#if files.length > 1}
       <button class="btn btn-link p-0" on:click={toggleOpen} title="Expand or collapse all files">
         {#if allOpen}
