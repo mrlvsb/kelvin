@@ -14,7 +14,7 @@
     "autoprefixer": "^10.0.1",
     "bootstrap": "^4.6.0",
     "codemirror": "^5.58.2",
-    "diff2html": "^3.4.0",
+    "diff2html": "^3.4.22",
     "dompurify": "^2.2.2",
     "flatpickr": "^4.6.6",
     "fuzzysort": "^1.1.4",
