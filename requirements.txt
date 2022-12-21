@@ -6,7 +6,7 @@ six==1.13.0
 pyyaml==5.4
 mosspy==1.0.8
 django-cas-ng==4.2.1
-imageio==2.6.1
+imageio==2.23.0
 django-notifications-hq
 Unidecode==1.1.1
 cssselect
