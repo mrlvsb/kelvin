@@ -9,7 +9,7 @@
   "devDependencies": {
     "@iconify/iconify": "^1.0.7",
     "@rollup/plugin-commonjs": "^14.0.0",
-    "@rollup/plugin-node-resolve": "^8.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.1",
     "ansi_up": "^5.0.0",
     "autoprefixer": "^10.0.1",
     "bootstrap": "^4.6.0",
