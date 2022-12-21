@@ -29,7 +29,7 @@
     "svelte": "^3.49.0",
     "svelte-spa-router": "^3.0.3",
     "timeago.js": "^4.0.2",
-    "uppie": "1.1.4"
+    "uppie": "3.0.3"
   },
   "dependencies": {
     "sirv-cli": "^1.0.0"
