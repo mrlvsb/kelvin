@@ -4,7 +4,7 @@ django-rq==2.3.2
 readwise-django-rq-scheduler==1.2.1
 six==1.13.0
 pyyaml==5.4
-mosspy==1.0.8
+mosspy==1.0.9
 django-cas-ng==4.2.1
 imageio==2.6.1
 django-notifications-hq
