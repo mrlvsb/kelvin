@@ -10,7 +10,7 @@ imageio==2.6.1
 django-notifications-hq
 Unidecode==1.1.1
 cssselect
-django-webpush==0.3.2
+django-webpush==0.3.4
 python-magic==0.4.18
 django-redis-cache==2.1.1
 Jinja2==2.11.3
