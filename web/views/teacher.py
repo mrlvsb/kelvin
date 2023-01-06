@@ -15,6 +15,7 @@ import traceback
 import rq
 import logging
 from shutil import copyfile
+from typing import Dict
 from collections import OrderedDict
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -45,6 +46,7 @@ from common.moss import enqueue_moss_check, moss_delete_job_from_cache, \
     moss_task_get_opts
 from common.bulk_import import BulkImport, ImportException
 
+from . import statistics
 
 @user_passes_test(is_teacher)
 def teacher_task(request, task_id):
@@ -298,11 +300,37 @@ def build_score_csv(assignments, filename):
         response['Content-Disposition'] = f'attachment; filename="{unidecode(filename)}"'
         return response
 
+def build_edison_task_score_csv(student_points: Dict, filename: str):
+    """
+    Build CSV file importable by Edison system.
+    Edison requires delimiter set to `;`.
+    """
+    with io.StringIO() as out:
+        for student, points in student_points.items():
+            w = csv.writer(out, delimiter=';')
+            w.writerow([student.username, points])
+
+        response = HttpResponse(out.getvalue(), 'text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{unidecode(filename)}"'
+        return response
+
+
 @user_passes_test(is_teacher)
-def download_csv_per_task(request, assignment_id: int):
+def download_csv_per_assignment(request, assignment_id: int):
     assigned_task = AssignedTask.objects.get(pk=assignment_id)
     csv_filename = f"{assigned_task.task.sanitized_name()}_{assigned_task.clazz.day}{assigned_task.clazz.time:%H%M}.csv"
     return build_score_csv([assigned_task], csv_filename)
+
+@user_passes_test(is_teacher)
+def download_csv_per_task(request, task_id: int):
+    """
+    Students without a submit are excluded.
+    """
+    task = get_object_or_404(Task, pk=task_id)
+    submits = statistics.get_task_submits(task)
+    student_points = statistics.get_student_points(submits)
+
+    return build_edison_task_score_csv(student_points, f"{task.sanitized_name()}.csv")
 
 @user_passes_test(is_teacher)
 def download_csv_per_class(request, class_id: int):
