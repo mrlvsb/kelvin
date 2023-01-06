@@ -306,8 +306,8 @@ def build_edison_task_score_csv(student_points: Dict, filename: str):
     Edison requires delimiter set to `;`.
     """
     with io.StringIO() as out:
+        w = csv.writer(out, delimiter=';')
         for student, points in student_points.items():
-            w = csv.writer(out, delimiter=';')
             w.writerow([student.username, points])
 
         response = HttpResponse(out.getvalue(), 'text/csv')
