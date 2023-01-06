@@ -40,12 +40,14 @@ urlpatterns = [
     path('statistics/assignment/<int:assignment_id>', statistics_view.for_assignment, name='assignment'),
 
     path('assignment/download/<int:assignment_id>', teacher_view.download_assignment_submits, name='download_assignment_submits'),
-    path('assignment/download/<int:assignment_id>/csv', teacher_view.download_csv_per_task, name='download_csv_per_task'),
+    path('assignment/download/<int:assignment_id>/csv', teacher_view.download_csv_per_assignment, name='download_csv_per_assignment'),
     path('assignment/show/<int:assignment_id>', teacher_view.show_assignment_submits, name='show_assignment_submits'),
     path('task/show/<int:task_id>', teacher_view.show_task_submits, name='show_task_submits'),
     path('submit/<int:submit_id>/points', teacher_view.submit_assign_points, name='submit_assign_points'),
 
     path('class/download/<int:class_id>/csv', teacher_view.download_csv_per_class, name='download_csv_per_class'),
+    path('task/<int:task_id>/csv', teacher_view.download_csv_per_task, name='download_csv_per_task'),
+
 
     path('tasks', teacher_view.all_tasks, name='tasks'),
     path('tasks/<str:subject__abbr>', teacher_view.all_tasks, name='tasks'),

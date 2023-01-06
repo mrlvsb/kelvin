@@ -101,7 +101,7 @@ def class_detail_list(request):
 
                 'moss_link': reverse('teacher_task_moss_check', kwargs={'task_id': assignment.task.id}),
                 'sources_link': reverse('download_assignment_submits', kwargs={'assignment_id': assignment.id}),
-                'csv_link': reverse('download_csv_per_task', kwargs={'assignment_id': assignment.id}),
+                'csv_link': reverse('download_csv_per_assignment', kwargs={'assignment_id': assignment.id}),
 
                 'assigned': assignment.assigned,
                 'deadline': assignment.deadline,
