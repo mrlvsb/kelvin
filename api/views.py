@@ -371,7 +371,8 @@ def task_detail(request, task_id=None):
             'path': '_'
         })).rstrip('_'),
         'errors': errors,
-        'task_link': reverse('teacher_task', kwargs={'task_id': task.id}),
+        'task_link': reverse('teacher_task', kwargs=dict(task_id=task.id)),
+        'moss_link': reverse('teacher_task_moss_check', kwargs=dict(task_id=task.id))
     }
 
     ignore_list = [
