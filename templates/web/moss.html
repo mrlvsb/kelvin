@@ -86,7 +86,10 @@
           $(document).ready(function () {
               $(".moss-table").DataTable({
                   "paging": false,
-                  "order": [], // keep initial order
+                  "order": [
+                      [5, "desc"], // Percent B descending
+                      [6, "desc"]  // Line count descending
+                  ],
                   columnDefs: [{
                       targets: ["_all"],
                       orderSequence: ["desc", "asc"]
