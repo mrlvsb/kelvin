@@ -1,3 +1,4 @@
+import dataclasses
 import itertools
 import os
 import io
@@ -15,7 +16,7 @@ import traceback
 import rq
 import logging
 from shutil import copyfile
-from typing import Dict
+from typing import Dict, List
 from collections import OrderedDict
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -40,7 +41,7 @@ from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from evaluator.testsets import TestSet
 from common.evaluate import get_meta, evaluate_submit
 from common.utils import is_teacher
-from common.moss import enqueue_moss_check, moss_delete_job_from_cache, \
+from common.moss import PlagiarismMatch, enqueue_moss_check, moss_delete_job_from_cache, \
     moss_job_cache_key, moss_result, \
     moss_task_set_opts, \
     moss_task_get_opts
@@ -65,19 +66,25 @@ def teacher_task(request, task_id):
     })
 
 
-def add_teaching_flag_to_matches(matches, teacher: User, task: Task):
+def enrich_matches(matches: List[PlagiarismMatch], teacher: User, task: Task) -> List[Dict[str, str]]:
+    """
+    Converts PlagiarismMatches to dictionaries and adds additional information
+    used by the frontend to them.
+    """
     classes = Class.objects.current_semester().filter(teacher=teacher, assignedtask__task=task)
     students = {v[0] for v in User.objects.filter(students__in=classes).values_list("username")}
+    match_items = []
     for match in matches:
-        match["teaching"] = match["first_login"] in students or match["second_login"] in students
-
-
-def sort_matches(matches):
-    matches.sort(key=lambda v: (
-        v["teaching"],
-        v["lines"],
-        max(v["first_percent"], v["second_percent"])
-    ), reverse=True)
+        match_data = dataclasses.asdict(match)
+        match_data["teaching"] = match.first.login in students or match.second.login in students
+        match_data["first_fullname"] = User.objects.get(
+            username=match.first.login
+        ).get_full_name()
+        match_data["second_fullname"] = User.objects.get(
+            username=match.second.login
+        ).get_full_name()
+        match_items.append(match_data)
+    return match_items
 
 
 @user_passes_test(is_teacher)
@@ -144,13 +151,12 @@ def teacher_task_moss_check(request, task_id):
             assignment__task_id=task.id,
             created_at__gt=res.started_at
         ).count()
-        add_teaching_flag_to_matches(res.matches, request.user, task)
-        sort_matches(res.matches)
-        return render(request, 'web/moss.html', {
+        matches = enrich_matches(res.matches, request.user, task)
+        return render(request, "web/moss.html", {
             "has_result": True,
             "success": res.success,
             "log": res.log,
-            "matches": res.matches,
+            "matches": matches,
             "graph": res.to_svg(anonymize=False),
             "opts": res.opts,
             "started_at": res.started_at,
