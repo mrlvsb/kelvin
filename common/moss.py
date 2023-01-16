@@ -68,6 +68,21 @@ def add_file(logger, moss: mosspy.Moss, file_path: str, name: str, counters):
     moss.addFile(file_path, name)
 
 
+def create_submit_identifier(submit: Submit) -> str:
+    """
+    Creates an identifier that is used by MOSS to identify a single submission.
+    """
+    return f"{submit.student.username}-{submit.assignment.id}"
+
+
+def get_login_and_assignment(identifier: str) -> (str, int):
+    """
+    Parses MOSS identifier back into login and assignment ID.
+    """
+    student, assignment = identifier.split("-", maxsplit=2)
+    return (student, int(assignment))
+
+
 def add_submit(logger, moss: mosspy.Moss, submit: Submit, counters):
     logger.info(f"Checking submit {submit.id} by {submit.student.username}")
     sources = [source for source in submit.all_sources() if is_source_valid(logger, source)]
@@ -79,11 +94,12 @@ def add_submit(logger, moss: mosspy.Moss, submit: Submit, counters):
 
     def generate_filename(virt_path):
         name = os.path.basename(virt_path)
-        fullname = os.path.join(submit.student.username, name)
+        identifier = create_submit_identifier(submit)
+        fullname = os.path.join(identifier, name)
         index = 1
 
         while fullname in filenames:
-            fullname = os.path.join(submit.student.username, f"{index}_{name}")
+            fullname = os.path.join(identifier, f"{index}_{name}")
             index += 1
         return fullname
 
@@ -117,6 +133,7 @@ def moss_notify_teacher(task_id: int):
 class MatchedStudent:
     login: str
     percent: int
+    assignment_id: int
 
 
 @dataclasses.dataclass(frozen=True)
@@ -198,20 +215,25 @@ def moss_check_task(task_id: int, notify_teacher: bool):
 
             with open(out.name) as f:
                 regex = r'<TR>' \
-                        '<TD><A HREF="(?P<link>[^"]+)">(?P<first_login>[^/]+)/(?P<first_path>.*?) \((?P<first_percent>\d+)%\)</A>' \
-                        '\s*<TD><A HREF="[^"]+">(?P<second_login>[^/]+)/(?P<second_path>.*?) \((?P<second_percent>\d+)%\)</A>' \
+                        '<TD><A HREF="(?P<link>[^"]+)">(?P<first_id>[^/]+)/(?P<first_path>.*?) \((?P<first_percent>\d+)%\)</A>' \
+                        '\s*<TD><A HREF="[^"]+">(?P<second_id>[^/]+)/(?P<second_path>.*?) \((?P<second_percent>\d+)%\)</A>' \
                         '\s*<TD[^>]+>(?P<lines>\d+)'
 
                 for moss_client in re.finditer(regex, f.read()):
                     d = moss_client.groupdict()
+                    (first_login, first_assignment) = get_login_and_assignment(d["first_id"])
+                    (second_login, second_assignment) = get_login_and_assignment(d["second_id"])
+
                     matches.append(PlagiarismMatch(
                         first=MatchedStudent(
                             percent=int(d["first_percent"]),
-                            login=d["first_login"],
+                            login=first_login,
+                            assignment_id=first_assignment
                         ),
                         second=MatchedStudent(
                             percent=int(d["second_percent"]),
-                            login=d["second_login"],
+                            login=second_login,
+                            assignment_id=second_assignment
                         ),
                         lines=int(d["lines"]),
                         link=d["link"]
@@ -302,7 +324,8 @@ class MossResult:
         for match in matches:
             percent = max(float(match.first.percent), float(match.second.percent))
             self.G.add_edge(
-                match.first.login, match.second.login,
+                match.first.login,
+                match.second.login,
                 percent=percent,
                 label=f"{int(percent)}%",
                 href=match.link

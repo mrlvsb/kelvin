@@ -35,7 +35,8 @@ from notifications.signals import notify
 from notifications.models import Notification
 from unidecode import unidecode
 
-from common.models import Submit, Class, Task, AssignedTask, Subject, assignedtask_results, current_semester_conds, current_semester
+from common.models import Submit, Class, Task, AssignedTask, Subject, \
+    assignedtask_results, current_semester
 from evaluator.results import EvaluationResult
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from evaluator.testsets import TestSet
@@ -71,6 +72,14 @@ def enrich_matches(matches: List[PlagiarismMatch], teacher: User, task: Task) ->
     Converts PlagiarismMatches to dictionaries and adds additional information
     used by the frontend to them.
     """
+    def format_class(assignment_id: int) -> str:
+        assignment = AssignedTask.objects.get(pk=assignment_id)
+        clazz = assignment.clazz
+        code = clazz.code
+        semester = clazz.semester
+        return f"{code} ({semester})"
+
+
     classes = Class.objects.current_semester().filter(teacher=teacher, assignedtask__task=task)
     students = {v[0] for v in User.objects.filter(students__in=classes).values_list("username")}
     match_items = []
@@ -80,9 +89,11 @@ def enrich_matches(matches: List[PlagiarismMatch], teacher: User, task: Task) ->
         match_data["first_fullname"] = User.objects.get(
             username=match.first.login
         ).get_full_name()
+        match_data["first_class"] = format_class(match.first.assignment_id)
         match_data["second_fullname"] = User.objects.get(
             username=match.second.login
         ).get_full_name()
+        match_data["second_class"] = format_class(match.second.assignment_id)
         match_items.append(match_data)
     return match_items
 
@@ -164,6 +175,7 @@ def teacher_task_moss_check(request, task_id):
             "moss_url": res.url,
             "newer_submit_count": newer_submit_count,
             "task": task,
+            "semester": str(current_semester())
         })
 
 
