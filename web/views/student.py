@@ -40,6 +40,7 @@ from notifications.signals import notify
 from notifications.models import Notification
 
 from .upload import upload_submit_files
+from .utils import file_response
 
 mimedetector = magic.Magic(mime=True)
 
@@ -640,11 +641,6 @@ def submit_comments(request, assignment_id, login, submit_num):
         'current_submit': submit.submit_num,
         'deadline': submit.assignment.deadline,
     })
-
-def file_response(file, filename, mimetype):
-    response = HttpResponse(file, mimetype)
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    return response
 
 
 def raw_test_content(request, task_name, test_name, file):
