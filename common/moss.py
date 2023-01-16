@@ -1,3 +1,4 @@
+import dataclasses
 import datetime
 import logging
 import os
@@ -5,12 +6,12 @@ import re
 import subprocess
 import tempfile
 from io import StringIO
+from typing import List, Optional
 
 import django_rq
 import mosspy
 import networkx as nx
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.core.cache import caches
 from django.db.models import DurationField, ExpressionWrapper, F
 from django.db.models.functions import Now
@@ -93,14 +94,6 @@ def add_submit(logger, moss: mosspy.Moss, submit: Submit, counters):
         add_file(logger, moss, filepath, filename, counters)
 
 
-def is_match_suspicious(match, options) -> bool:
-    if min(int(match["first_percent"]), int(match["second_percent"])) >= int(options["percent"]):
-        return True
-    if int(match["lines"]) >= int(options["lines"]):
-        return True
-    return False
-
-
 def moss_notify_teacher(task_id: int):
     classes = Class.objects.filter(assignedtask__task_id=task_id).distinct()
     teachers = list(set([c.teacher for c in classes]))
@@ -118,6 +111,28 @@ def moss_notify_teacher(task_id: int):
         custom_text=f"MOSS plagiarism check of {task.name} finished. See results <a href='{moss_url}'>here</a>.",
         important=True
     )
+
+
+@dataclasses.dataclass(frozen=True)
+class MatchedStudent:
+    login: str
+    percent: int
+
+
+@dataclasses.dataclass(frozen=True)
+class PlagiarismMatch:
+    first: MatchedStudent
+    second: MatchedStudent
+    lines: int
+    link: str
+
+
+def is_match_suspicious(match: PlagiarismMatch, options) -> bool:
+    if min(match.first.percent, match.second.percent) >= int(options["percent"]):
+        return True
+    if match.lines >= int(options["lines"]):
+        return True
+    return False
 
 
 @django_rq.job("default", timeout=60 * 15)
@@ -141,13 +156,14 @@ def moss_check_task(task_id: int, notify_teacher: bool):
     success = True
 
     try:
+        # TODO: sort by year/created date instead
         submits = Submit.objects.filter(assignment__task__id=task_id).order_by("-submit_num")
-        m = mosspy.Moss(settings.MOSS_USERID)
+        moss_client = mosspy.Moss(settings.MOSS_USERID)
         # do not ignore matches that occur frequently
-        m.setIgnoreLimit(10000)
+        moss_client.setIgnoreLimit(10000)
 
         # group submissions by directory
-        m.setDirectoryMode(1)
+        moss_client.setDirectoryMode(1)
 
         # template files
         tpl_path = os.path.join(submits[0].assignment.task.dir(), "template")
@@ -156,7 +172,7 @@ def moss_check_task(task_id: int, notify_teacher: bool):
                 full_path = os.path.join(root, f)
                 if is_ext_allowed(f) and check_file_size(full_path):
                     logger.info(f"Task {task_id}: adding base file {f}")
-                    m.addBaseFile(full_path)
+                    moss_client.addBaseFile(full_path)
                 else:
                     logger.warning(f"Skipping template file {full_path}")
 
@@ -164,7 +180,7 @@ def moss_check_task(task_id: int, notify_teacher: bool):
         for submit in submits:
             if submit.student_id not in processed:
                 try:
-                    add_submit(logger, m, submit, counters)
+                    add_submit(logger, moss_client, submit, counters)
                     processed.add(submit.student_id)
                 except IOError as e:
                     logger.error(
@@ -172,13 +188,13 @@ def moss_check_task(task_id: int, notify_teacher: bool):
 
         detected_lang = max(counters, key=counters.get)
         if counters[detected_lang] > 0:
-            m.options["l"] = detected_lang
+            moss_client.options["l"] = detected_lang
 
-        logger.info(f"Sending files to Moss: {m.files}")
-        url = m.send()
+        logger.info(f"Sending files to Moss: {moss_client.files}")
+        url = moss_client.send()
         logger.info(f"Moss returned: {url}")
         with tempfile.NamedTemporaryFile() as out:
-            m.saveWebPage(url, out.name)
+            moss_client.saveWebPage(url, out.name)
 
             with open(out.name) as f:
                 regex = r'<TR>' \
@@ -186,11 +202,20 @@ def moss_check_task(task_id: int, notify_teacher: bool):
                         '\s*<TD><A HREF="[^"]+">(?P<second_login>[^/]+)/(?P<second_path>.*?) \((?P<second_percent>\d+)%\)</A>' \
                         '\s*<TD[^>]+>(?P<lines>\d+)'
 
-                for m in re.finditer(regex, f.read()):
-                    d = m.groupdict()
-                    d["first_percent"] = int(d['first_percent'])
-                    d["second_percent"] = int(d['second_percent'])
-                    matches.append(d)
+                for moss_client in re.finditer(regex, f.read()):
+                    d = moss_client.groupdict()
+                    matches.append(PlagiarismMatch(
+                        first=MatchedStudent(
+                            percent=int(d["first_percent"]),
+                            login=d["first_login"],
+                        ),
+                        second=MatchedStudent(
+                            percent=int(d["second_percent"]),
+                            login=d["second_login"],
+                        ),
+                        lines=int(d["lines"]),
+                        link=d["link"]
+                    ))
         logger.info(f"Plagiarism checking finished, URL: {url}")
     except BaseException as e:
         logger.exception(e)
@@ -258,7 +283,9 @@ def periodic_moss_check():
 
 class MossResult:
     def __init__(self,
-                 success: bool, url: str, matches,
+                 success: bool,
+                 url: str,
+                 matches: List[PlagiarismMatch],
                  opts,
                  started_at: datetime.datetime,
                  finished_at: datetime.datetime,
@@ -273,21 +300,15 @@ class MossResult:
         self.G = nx.Graph()
 
         for match in matches:
-            percent = max(float(match['first_percent']), float(match['second_percent']))
+            percent = max(float(match.first.percent), float(match.second.percent))
             self.G.add_edge(
-                match['first_login'], match['second_login'],
+                match.first.login, match.second.login,
                 percent=percent,
-                label=f'{int(percent)}%',
-                href=match['link']
+                label=f"{int(percent)}%",
+                href=match.link
             )
 
     def to_svg(self, anonymize=True, login=None):
-        max_percent = 0
-        for d in self.matches:
-            percent = max(int(d['first_percent']), int(d['second_percent']))
-            if percent > max_percent:
-                max_percent = percent
-
         with tempfile.NamedTemporaryFile("w") as out:
             G = self.G.copy()
 
@@ -311,8 +332,8 @@ class MossResult:
                     del mapping[login]
 
                 G = nx.relabel_nodes(G, mapping)
-                for _, _, d in G.edges(data=True):
-                    d.pop('href')
+                for _, _, match in G.edges(data=True):
+                    match.pop('href')
 
             write_dot(G, out)
             out.flush()
@@ -339,7 +360,7 @@ def moss_task_get_opts(task_id):
     }
 
 
-def moss_result(task_id, percent=None, lines=None):
+def moss_result(task_id, percent=None, lines=None) -> Optional[MossResult]:
     cache = caches['default']
 
     key = moss_result_cache_key(task_id)
@@ -356,10 +377,6 @@ def moss_result(task_id, percent=None, lines=None):
     matches = []
     for match in cache_entry["matches"]:
         if is_match_suspicious(match, opts):
-            match['first_fullname'] = User.objects.get(
-                username=match['first_login']).get_full_name()
-            match['second_fullname'] = User.objects.get(
-                username=match['second_login']).get_full_name()
             matches.append(match)
 
     return MossResult(
