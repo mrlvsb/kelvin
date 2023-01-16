@@ -33,6 +33,7 @@ urlpatterns = [
     path('teacher/task/<int:task_id>', teacher_view.teacher_task, name='teacher_task'),
     path('teacher/task/<int:task_id>.tar', student_view.teacher_task_tar, name='teacher_task_tar'),
     path('teacher/task/<int:task_id>/moss', teacher_view.teacher_task_moss_check, name='teacher_task_moss_check'),
+    path('teacher/task/<int:task_id>/moss/graph', teacher_view.teacher_task_moss_graph, name='teacher_task_moss_graph'),
     path('submits', teacher_view.submits, name='submits'),
     path('submits/<str:student_username>', teacher_view.submits, name='submits'),
 

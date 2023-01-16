@@ -47,6 +47,7 @@
         </div>
         <input type="submit" class="btn btn-sm btn-primary" value="Set threshold">
       </form>
+      <a href="{% url "teacher_task_moss_graph" task_id=task.id %}" class="btn btn-primary mt-2">Download anonymized graph</a>
 
       {% if matches %}
         {% if newer_submit_count %}

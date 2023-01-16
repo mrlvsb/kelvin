@@ -19,7 +19,7 @@ from typing import Dict
 from collections import OrderedDict
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -47,6 +47,8 @@ from common.moss import enqueue_moss_check, moss_delete_job_from_cache, \
 from common.bulk_import import BulkImport, ImportException
 
 from . import statistics
+from .utils import file_response
+
 
 @user_passes_test(is_teacher)
 def teacher_task(request, task_id):
@@ -160,6 +162,16 @@ def teacher_task_moss_check(request, task_id):
 
 
 @user_passes_test(is_teacher)
+def teacher_task_moss_graph(request, task_id):
+    res = moss_result(task_id)
+    if res is None:
+        raise Http404
+    task = get_object_or_404(Task, pk=task_id)
+    graph = res.to_svg(anonymize=True)
+    return file_response(graph.encode("utf8"), f"{task.name}-graph.svg", "image/svg+xml")
+
+
+@user_passes_test(is_teacher)
 def submits(request, student_username=None):
     filters = {}
     student_full_name = None
@@ -199,10 +211,8 @@ def download_assignment_submits(request, assignment_id):
                     tar.add(source.phys, f"{submit.student.username}/{source.virt}")
 
         f.seek(0)
-        response = HttpResponse(f.read(), 'application/tar')
         filename = f"{assignment.task.sanitized_name()}_{assignment.clazz.day}{assignment.clazz.time:%H%M}.tar.gz"
-        response['Content-Disposition'] = f'attachment; filename="{unidecode(filename)}"'
-        return response
+        return file_response(f, filename, "application/tar")
 
 
 def get_assignment_submits(assignment: AssignedTask):
@@ -296,9 +306,7 @@ def build_score_csv(assignments, filename):
         for login, row in result.items():
             w.writerow(row)
 
-        response = HttpResponse(out.getvalue(), 'text/csv')
-        response['Content-Disposition'] = f'attachment; filename="{unidecode(filename)}"'
-        return response
+        return file_response(out.getvalue(), filename, "text/csv")
 
 def build_edison_task_score_csv(student_points: Dict, filename: str):
     """
@@ -310,9 +318,7 @@ def build_edison_task_score_csv(student_points: Dict, filename: str):
         for student, points in student_points.items():
             w.writerow([student.username, points])
 
-        response = HttpResponse(out.getvalue(), 'text/csv')
-        response['Content-Disposition'] = f'attachment; filename="{unidecode(filename)}"'
-        return response
+        return file_response(out.getvalue(), filename, "text/csv")
 
 
 @user_passes_test(is_teacher)
