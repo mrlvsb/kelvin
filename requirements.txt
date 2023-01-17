@@ -19,6 +19,6 @@ pandas==1.4.1
 pygraphviz==1.7
 networkx==2.5
 psycopg2
-
+beautifulsoup4==4.11.1
 MarkupSafe==2.0.1
 numpy==1.24.1

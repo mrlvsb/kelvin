@@ -6,6 +6,7 @@ import re
 import subprocess
 import tempfile
 from io import StringIO
+from pathlib import Path
 from typing import List, Optional
 
 import django_rq
@@ -16,10 +17,12 @@ from django.core.cache import caches
 from django.db.models import DurationField, ExpressionWrapper, F
 from django.db.models.functions import Now
 from django.shortcuts import resolve_url
+from django.urls import reverse
 from networkx.drawing.nx_agraph import write_dot
 from notifications.signals import notify
 
 from common.models import AssignedTask, Class, Submit, Task
+from kelvin.settings import BASE_DIR
 
 MAX_FILE_SIZE = 128 * 1024
 
@@ -138,10 +141,12 @@ class MatchedStudent:
 
 @dataclasses.dataclass(frozen=True)
 class PlagiarismMatch:
+    id: int
     first: MatchedStudent
     second: MatchedStudent
     lines: int
     link: str
+    moss_link: str
 
 
 def is_match_suspicious(match: PlagiarismMatch, options) -> bool:
@@ -150,6 +155,15 @@ def is_match_suspicious(match: PlagiarismMatch, options) -> bool:
     if match.lines >= int(options["lines"]):
         return True
     return False
+
+
+def get_match_local_dir(task: Task, match: PlagiarismMatch) -> Path:
+    """
+    Returns a path on the local filesystem that wil be used to store the match result.
+    """
+    directory = Path(BASE_DIR) / task.dir() / ".moss-results"
+    id = f"{match.first.login}-{match.first.assignment_id}_{match.second.login}-{match.second.assignment_id}"
+    return directory / id
 
 
 @django_rq.job("default", timeout=60 * 15)
@@ -224,7 +238,10 @@ def moss_check_task(task_id: int, notify_teacher: bool):
                     (first_login, first_assignment) = get_login_and_assignment(d["first_id"])
                     (second_login, second_assignment) = get_login_and_assignment(d["second_id"])
 
-                    matches.append(PlagiarismMatch(
+                    moss_link = d["link"]
+                    match_id = len(matches)
+                    match = PlagiarismMatch(
+                        id=match_id,
                         first=MatchedStudent(
                             percent=int(d["first_percent"]),
                             login=first_login,
@@ -236,8 +253,13 @@ def moss_check_task(task_id: int, notify_teacher: bool):
                             assignment_id=second_assignment
                         ),
                         lines=int(d["lines"]),
-                        link=d["link"]
-                    ))
+                        link=reverse("teacher_task_moss_result",
+                                     kwargs=dict(task_id=task_id, match_id=match_id,
+                                                 path="index.html")),
+                        moss_link=moss_link
+                    )
+
+                    matches.append(match)
         logger.info(f"Plagiarism checking finished, URL: {url}")
     except BaseException as e:
         logger.exception(e)
@@ -367,7 +389,7 @@ class MossResult:
 
 def moss_task_set_opts(task_id, opts):
     cache = caches['default']
-    cache.set(f"moss.{task_id}.opts", opts, timeout=60*60*24*90)
+    cache.set(f"moss.{task_id}.opts", opts, timeout=60 * 60 * 24 * 90)
 
 
 def moss_task_get_opts(task_id):
