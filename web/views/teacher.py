@@ -1,53 +1,43 @@
-import dataclasses
-import itertools
-import os
-import io
 import csv
+import dataclasses
+import io
+import itertools
+import logging
+import mimetypes
+import os
+import shutil
 import tarfile
 import tempfile
-import re
-import json
-import subprocess
-import datetime
-import shutil
-import logging
 import traceback
-
-import rq
-import logging
-from shutil import copyfile
-from typing import Dict, List
 from collections import OrderedDict
-
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
-from django.contrib.auth.decorators import user_passes_test
-from django.contrib.auth.models import User
-from django.urls import reverse
-from django.utils import timezone as tz
-from django.conf import settings
-from django.db.models import Max, Min, Count
-from django.core.cache import caches
-from django.contrib.contenttypes.models import ContentType
+from typing import Dict, List
 
 import django_rq
-from notifications.signals import notify
+import rq
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
+from django.core.cache import caches
+from django.http import Http404, HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.views.decorators.cache import cache_page
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from notifications.models import Notification
-from unidecode import unidecode
+from notifications.signals import notify
 
-from common.models import Submit, Class, Task, AssignedTask, Subject, \
-    assignedtask_results, current_semester
-from evaluator.results import EvaluationResult
-from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
-from evaluator.testsets import TestSet
-from common.evaluate import get_meta, evaluate_submit
-from common.utils import is_teacher
-from common.moss import PlagiarismMatch, enqueue_moss_check, moss_delete_job_from_cache, \
-    moss_job_cache_key, moss_result, \
-    moss_task_set_opts, \
-    moss_task_get_opts
 from common.bulk_import import BulkImport, ImportException
-
+from common.evaluate import evaluate_submit, get_meta
+from common.models import AssignedTask, Class, Subject, Submit, Task, assignedtask_results, \
+    current_semester
+from common.moss import PlagiarismMatch, enqueue_moss_check, get_match_local_dir, \
+    moss_delete_job_from_cache, \
+    moss_job_cache_key, moss_result, moss_task_get_opts, moss_task_set_opts
+from common.moss.local_result import download_moss_result
+from common.utils import is_teacher
+from evaluator.results import EvaluationResult
+from evaluator.testsets import TestSet
+from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from . import statistics
 from .utils import file_response
 
@@ -60,25 +50,26 @@ def teacher_task(request, task_id):
     testset = TestSet(task_dir, get_meta(request.user.username))
 
     return render(request, 'web/task_detail.html', {
-          'task': task,
-          'text': testset.load_readme(),
-          'inputs': testset,
-          'max_inline_content_bytes': MAX_INLINE_CONTENT_BYTES,
+        'task': task,
+        'text': testset.load_readme(),
+        'inputs': testset,
+        'max_inline_content_bytes': MAX_INLINE_CONTENT_BYTES,
     })
 
 
-def enrich_matches(matches: List[PlagiarismMatch], teacher: User, task: Task) -> List[Dict[str, str]]:
+def enrich_matches(matches: List[PlagiarismMatch], teacher: User, task: Task) -> List[
+    Dict[str, str]]:
     """
     Converts PlagiarismMatches to dictionaries and adds additional information
     used by the frontend to them.
     """
+
     def format_class(assignment_id: int) -> str:
         assignment = AssignedTask.objects.get(pk=assignment_id)
         clazz = assignment.clazz
         code = clazz.code
         semester = clazz.semester
         return f"{code} ({semester})"
-
 
     classes = Class.objects.current_semester().filter(teacher=teacher, assignedtask__task=task)
     students = {v[0] for v in User.objects.filter(students__in=classes).values_list("username")}
@@ -116,7 +107,8 @@ def teacher_task_moss_check(request, task_id):
     if job_id:
         refresh = False
         try:
-            job = django_rq.jobs.get_job_class().fetch(job_id, connection=django_rq.queues.get_connection())
+            job = django_rq.jobs.get_job_class().fetch(job_id,
+                                                       connection=django_rq.queues.get_connection())
             status = job.get_status()
             if status == "started":
                 refresh = True
@@ -189,6 +181,41 @@ def teacher_task_moss_graph(request, task_id):
     return file_response(graph.encode("utf8"), f"{task.name}-graph.svg", "image/svg+xml")
 
 
+@login_required
+@xframe_options_sameorigin
+@cache_page(60 * 60)
+def teacher_task_moss_result(request, task_id: int, match_id: int, path: str):
+    """
+    Returns a HTML (or other resource) content of a MOSS result.
+    If the result is not available locally, it is first fetched from MOSS and cached in a
+    directory belonging to the task.
+
+    Only teachers and students that were matched in the specified `match_id` can view this content.
+    """
+    task = get_object_or_404(Task, pk=task_id)
+    res = moss_result(task_id)
+    if res is None or not (0 <= match_id < len(res.matches)):
+        raise Http404
+    match: PlagiarismMatch = res.matches[match_id]
+
+    user_is_teacher = is_teacher(request.user)
+    if not user_is_teacher and request.user.username not in (match.first.login, match.second.login):
+        raise Http404
+
+    refresh_requested = request.GET.get("refresh") is not None and user_is_teacher
+
+    match_dir = get_match_local_dir(task, match)
+    if not match_dir.is_dir() or refresh_requested:
+        download_moss_result(match.moss_link, match_dir)
+
+    local_path = match_dir / path
+    if local_path.parent != match_dir:
+        raise Http404
+
+    mimetype = mimetypes.guess_type(local_path)[0]
+    return HttpResponse(open(match_dir / path, "rb"), mimetype)
+
+
 @user_passes_test(is_teacher)
 def submits(request, student_username=None):
     filters = {}
@@ -197,7 +224,10 @@ def submits(request, student_username=None):
         filters['student__username'] = student_username
         student_full_name = get_object_or_404(User, username=student_username).get_full_name()
 
-    submits = Submit.objects.filter(**filters).order_by('-id').select_related('student', 'assignment', 'assignment__task')[:100]
+    submits = Submit.objects.filter(**filters).order_by('-id').select_related('student',
+                                                                              'assignment',
+                                                                              'assignment__task')[
+              :100]
     return render(request, "web/submits.html", {
         'submits': submits,
         'student_username': student_username,
@@ -206,7 +236,8 @@ def submits(request, student_username=None):
 
 
 def get_last_submits(assignment_id):
-    submits = Submit.objects.filter(assignment_id=assignment_id).order_by('-submit_num', 'student_id')
+    submits = Submit.objects.filter(assignment_id=assignment_id).order_by('-submit_num',
+                                                                          'student_id')
 
     result = []
     processed = set()
@@ -247,7 +278,7 @@ def get_assignment_submits(assignment: AssignedTask):
                 score = EvaluationResult(submit.pipeline_path()).test_score()
                 result['passed_tests'] = score[0]
                 result['total_tests'] = score[1]
-        
+
         results.append((submit, result))
     return results
 
@@ -284,11 +315,11 @@ def submit_assign_points(request, submit_id):
 
     if submit.assigned_points != points:
         notify.send(
-                sender=request.user,
-                recipient=[submit.student],
-                verb='assigned points to',
-                action_object=submit,
-                important=True,
+            sender=request.user,
+            recipient=[submit.student],
+            verb='assigned points to',
+            action_object=submit,
+            important=True,
         )
 
     submit.assigned_points = points
@@ -315,7 +346,8 @@ def build_score_csv(assignments, filename):
             if login not in result:
                 result[login] = {'LOGIN': login}
 
-            result[login][assignment.task.name] = record['assigned_points'] if 'assigned_points' in record else 0
+            result[login][assignment.task.name] = record[
+                'assigned_points'] if 'assigned_points' in record else 0
 
     with io.StringIO() as out:
         w = csv.DictWriter(out, fieldnames=header)
@@ -325,6 +357,7 @@ def build_score_csv(assignments, filename):
             w.writerow(row)
 
         return file_response(out.getvalue(), filename, "text/csv")
+
 
 def build_edison_task_score_csv(student_points: Dict, filename: str):
     """
@@ -345,6 +378,7 @@ def download_csv_per_assignment(request, assignment_id: int):
     csv_filename = f"{assigned_task.task.sanitized_name()}_{assigned_task.clazz.day}{assigned_task.clazz.time:%H%M}.csv"
     return build_score_csv([assigned_task], csv_filename)
 
+
 @user_passes_test(is_teacher)
 def download_csv_per_task(request, task_id: int):
     """
@@ -356,10 +390,12 @@ def download_csv_per_task(request, task_id: int):
 
     return build_edison_task_score_csv(student_points, f"{task.sanitized_name()}.csv")
 
+
 @user_passes_test(is_teacher)
 def download_csv_per_class(request, class_id: int):
     clazz = Class.objects.get(pk=class_id)
-    return build_score_csv(clazz.assignedtask_set.all(), f"{clazz.subject.abbr}_{clazz.day}{clazz.time:%H%M}.csv")
+    return build_score_csv(clazz.assignedtask_set.all(),
+                           f"{clazz.subject.abbr}_{clazz.day}{clazz.time:%H%M}.csv")
 
 
 @user_passes_test(is_teacher)
@@ -381,6 +417,7 @@ def reevaluate(request, submit_id):
     submit.jobid = evaluate_submit(request, submit).id
     submit.save()
     return redirect(request.META.get('HTTP_REFERER', reverse('submits')) + "#result")
+
 
 @user_passes_test(is_teacher)
 def bulk_import(request):
