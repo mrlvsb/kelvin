@@ -7,7 +7,7 @@
     "start": "sirv public"
   },
   "devDependencies": {
-    "@iconify/iconify": "^1.0.7",
+    "@iconify/iconify": "^3.1.0",
     "@rollup/plugin-commonjs": "^14.0.0",
     "@rollup/plugin-node-resolve": "^8.0.0",
     "ansi_up": "^5.0.0",
