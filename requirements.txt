@@ -14,7 +14,7 @@ django-webpush==0.3.2
 python-magic==0.4.27
 django-redis-cache==2.1.1
 Jinja2==2.11.3
-bokeh==2.3.2
+bokeh==3.0.3
 pandas==1.5.3
 pygraphviz==1.7
 networkx==2.5
