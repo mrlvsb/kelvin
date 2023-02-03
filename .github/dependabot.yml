@@ -7,12 +7,14 @@ version: 2
 updates:
   - package-ecosystem: "pip"
     directory: "/"
-    open-pull-requests-limit: 5
+    # Only allow security updates
+    open-pull-requests-limit: 0
     schedule:
       interval: "monthly"
 
   - package-ecosystem: "npm"
     directory: "/frontend/"
-    open-pull-requests-limit: 5
+    # Only allow security updates
+    open-pull-requests-limit: 0
     schedule:
       interval: "monthly"
