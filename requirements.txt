@@ -3,7 +3,7 @@ python-ldap==3.4.0
 django-rq==2.3.2
 readwise-django-rq-scheduler==1.2.1
 six==1.16.0
-pyyaml==5.4
+pyyaml==6.0
 mosspy==1.0.9
 django-cas-ng==4.2.1
 imageio==2.6.1
