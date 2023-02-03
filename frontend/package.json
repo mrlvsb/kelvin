@@ -13,7 +13,7 @@
     "ansi_up": "^5.0.0",
     "autoprefixer": "^10.0.1",
     "bootstrap": "^4.6.0",
-    "codemirror": "^5.58.2",
+    "codemirror": "^6.0.1",
     "diff2html": "^3.4.31",
     "dompurify": "^2.4.3",
     "flatpickr": "^4.6.6",
