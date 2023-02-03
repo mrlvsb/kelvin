@@ -16,7 +16,7 @@ django-redis-cache==2.1.1
 Jinja2==2.11.3
 bokeh==2.3.2
 pandas==1.5.3
-pygraphviz==1.7
+pygraphviz==1.10
 networkx==2.5
 psycopg2
 
