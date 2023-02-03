@@ -8,7 +8,7 @@ mosspy==1.0.9
 django-cas-ng==4.2.1
 imageio==2.6.1
 django-notifications-hq
-Unidecode==1.1.1
+Unidecode==1.3.6
 cssselect
 django-webpush==0.3.2
 python-magic==0.4.27
