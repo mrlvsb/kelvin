@@ -1,4 +1,6 @@
 from datetime import timedelta
+from typing import Dict
+from . import inbus
 import re
 import ldap
 from functools import lru_cache
@@ -59,3 +61,7 @@ def ldap_search_user(login):
         "first_name": u['givenname'][0].decode('utf-8'),
         "email": u['mail'][0].decode('utf-8'),
     }
+
+
+def inbus_search_user(login: str) -> Dict:
+    return inbus.search_user(login)
