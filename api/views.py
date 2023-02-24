@@ -27,7 +27,7 @@ from pathlib import Path
 from shutil import copytree, ignore_patterns
 from django.utils.dateparse import parse_datetime
 
-from common.utils import ldap_search_user
+from common.utils import inbus_search_user
 
 logger = logging.getLogger(__name__)
 
@@ -207,7 +207,7 @@ def add_student_to_class(request, class_id):
         try:
             user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
-            info = ldap_search_user(username)
+            info = inbus_search_user(username)
             if info:
                 user = User(**info)
                 user.username = username
