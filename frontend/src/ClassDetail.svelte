@@ -35,6 +35,18 @@
           .reduce((acc, val) => acc + val, 0).toFixed(2);
   }
 
+  function taskPoints(clazz, k) {
+  let assignmentPoints = 0;
+
+  for (let i = 0; i < clazz.students.length; i++) {
+    const student = clazz.students[i];
+      if (!isNaN(clazz.assignments[k].students[student.username].assigned_points)) {
+        assignmentPoints += clazz.assignments[k].students[student.username].assigned_points;
+      }
+  }
+  return assignmentPoints;
+}
+
   let showFullTaskNames = localStorageStore('classDetail/showFullTaskNames', false);
   let showSummary = false;
 </script>
@@ -229,6 +241,16 @@ tr:hover td:first-of-type {
               <td>{studentPoints(clazz, student)}</td>
             </tr>
             {/each}
+            <tr>
+              <td>&nbsp;</td>
+              <td>&nbsp;</td>
+              <!--{#each clazz.students as student}-->
+                {#each clazz.assignments as assignment, k}
+                  <td style="text-align: center">{taskPoints(clazz, k)}</td>
+                {/each}
+                <td style="text-align: left">&nbsp;</td>
+              <!--{/each}-->
+            </tr>
             </tbody>
           </table>
         </div>
