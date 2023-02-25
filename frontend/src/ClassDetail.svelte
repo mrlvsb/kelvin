@@ -35,17 +35,45 @@
           .reduce((acc, val) => acc + val, 0).toFixed(2);
   }
 
-  function taskPoints(clazz, k) {
+  function totalTaskPoints(clazz, assignment_index) {
     let assignmentPoints = 0;
 
     for (let i = 0; i < clazz.students.length; i++) {
       const student = clazz.students[i];
-      if (!isNaN(clazz.assignments[k].students[student.username].assigned_points)) {
-        assignmentPoints += Math.max(0, clazz.assignments[k].students[student.username].assigned_points);
+      if (!isNaN(clazz.assignments[assignment_index].students[student.username].assigned_points)) {
+        assignmentPoints += Math.max(0, clazz.assignments[assignment_index].students[student.username].assigned_points);
       }
     }
 
     return assignmentPoints;
+  }
+
+  function createTaskSummary(clazz, assignment_index) {
+      let maxPoints = clazz.assignments[assignment_index].max_points;
+      if (isNaN(maxPoints)) {
+          maxPoints = 0;
+      }
+
+      let totalMaximumPoints = maxPoints * clazz.students.length;
+      let assignmentPoints = 0;
+      let gradedStudents = 0;
+
+      for (let i = 0; i < clazz.students.length; i++) {
+          const student = clazz.students[i];
+          if (!isNaN(clazz.assignments[assignment_index].students[student.username].assigned_points)) {
+              assignmentPoints += Math.max(0, clazz.assignments[assignment_index].students[student.username].assigned_points);
+              gradedStudents += 1;
+          }
+      }
+
+      let average = "N/A";
+      if (gradedStudents > 0) {
+          average = (assignmentPoints / gradedStudents).toFixed(2);
+      }
+
+      return `Graded ${gradedStudents}/${clazz.students.length} student(s)
+Total points: ${assignmentPoints}/${totalMaximumPoints}
+Average points: ${average}`;
   }
 
   let showFullTaskNames = localStorageStore('classDetail/showFullTaskNames', false);
@@ -246,7 +274,7 @@ tr:hover td:first-of-type {
               <td></td>
               <td></td>
                 {#each clazz.assignments as assignment, k}
-                  <td style="text-align: center">{taskPoints(clazz, k)}</td>
+                  <td title="{createTaskSummary(clazz, k)}">{totalTaskPoints(clazz, k)}</td>
                 {/each}
               <td></td>
             </tr>
