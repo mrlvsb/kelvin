@@ -51,12 +51,12 @@ def request_new_token() -> Dict:
 
 
 def is_response_ok_or_new_token_(response: requests.Response) -> bool:
-    if response.status_code == 404:
+    if response.status_code == requests.codes.OK:
+        return True
+    elif response.status_code == requests.codes.UNAUTHORIZED:
         token = request_new_token()
         set_token_to_cache(token)
         return False
-    elif response.status_code == 200:
-        return True
     else:
         return False
 
