@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import Dict
+from typing import Optional
 from . import inbus
 import re
 import ldap
@@ -63,5 +63,5 @@ def ldap_search_user(login):
     }
 
 
-def inbus_search_user(login: str) -> Dict:
+def inbus_search_user(login: str) -> Optional[inbus.PersonSimple]:
     return inbus.search_user(login)

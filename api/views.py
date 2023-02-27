@@ -207,9 +207,9 @@ def add_student_to_class(request, class_id):
         try:
             user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
-            info = inbus_search_user(username)
-            if info:
-                user = User(**info)
+            person_inbus = inbus_search_user(username)
+            if person_inbus:
+                user = User(first_name=person_inbus.first_name, last_name=person_inbus.second_name, email=person_inbus.email)
                 user.username = username
                 user.save()
  
