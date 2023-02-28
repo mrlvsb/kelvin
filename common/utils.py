@@ -1,6 +1,7 @@
 from datetime import timedelta
 from typing import Optional
 from . import inbus
+import django.contrib.auth.models
 import re
 import ldap
 from functools import lru_cache
@@ -65,3 +66,14 @@ def ldap_search_user(login):
 
 def inbus_search_user(login: str) -> Optional[inbus.PersonSimple]:
     return inbus.search_user(login)
+
+
+def user_from_inbus_person(person: inbus.PersonSimple) -> django.contrib.auth.models.User:
+    """
+    Returns a Django user from provided person info.
+
+    NOTE: `username` is note set and has to be provided later on.
+    """
+    user = django.contrib.auth.models.User(first_name=person.first_name, last_name=person.second_name, email=person.email)
+
+    return user
