@@ -10,7 +10,7 @@ import django_rq
 from common.evaluate import evaluate_submit
 from django.http import JsonResponse
 from django.contrib.auth.decorators import user_passes_test
-from common.utils import is_teacher, points_to_color
+from common.utils import is_teacher, points_to_color, inbus_search_user, user_from_inbus_person
 from common.models import Task, Class, current_semester_conds
 from evaluator.testsets import TestSet 
 from common.models import current_semester, Subject
@@ -27,7 +27,6 @@ from pathlib import Path
 from shutil import copytree, ignore_patterns
 from django.utils.dateparse import parse_datetime
 
-from common.utils import inbus_search_user
 
 logger = logging.getLogger(__name__)
 
@@ -209,7 +208,7 @@ def add_student_to_class(request, class_id):
         except User.DoesNotExist:
             person_inbus = inbus_search_user(username)
             if person_inbus:
-                user = User(first_name=person_inbus.first_name, last_name=person_inbus.second_name, email=person_inbus.email)
+                user = user_from_inbus_person(person_inbus)
                 user.username = username
                 user.save()
  
