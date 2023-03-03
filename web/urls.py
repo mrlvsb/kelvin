@@ -1,5 +1,6 @@
 from django.urls import path
 
+from .views import moss
 from .views import teacher as teacher_view
 from .views import student as student_view
 from .views import notification as notification_view
@@ -32,9 +33,10 @@ urlpatterns = [
     # teacher
     path('teacher/task/<int:task_id>', teacher_view.teacher_task, name='teacher_task'),
     path('teacher/task/<int:task_id>.tar', student_view.teacher_task_tar, name='teacher_task_tar'),
-    path('teacher/task/<int:task_id>/moss', teacher_view.teacher_task_moss_check, name='teacher_task_moss_check'),
-    path('teacher/task/<int:task_id>/moss/graph', teacher_view.teacher_task_moss_graph, name='teacher_task_moss_graph'),
-    path('teacher/task/<int:task_id>/moss/match/<int:match_id>/<path:path>', teacher_view.teacher_task_moss_result, name='teacher_task_moss_result'),
+    path('teacher/task/<int:task_id>/moss', moss.task_moss_check, name='teacher_task_moss_check'),
+    path('teacher/task/<int:task_id>/moss/graph', moss.task_moss_graph, name='teacher_task_moss_graph'),
+    path('teacher/task/<int:task_id>/moss/match/<int:match_id>/<path:path>',
+         moss.task_moss_result, name='teacher_task_moss_result'),
     path('submits', teacher_view.submits, name='submits'),
     path('submits/<str:student_username>', teacher_view.submits, name='submits'),
 

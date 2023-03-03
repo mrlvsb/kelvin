@@ -12,6 +12,20 @@ from bs4 import Comment
 logger = logging.getLogger("moss.local.result")
 
 
+def download_moss_result(root_url: str, directory: Path):
+    """
+    Downloads a MOSS result from the MOSS website and stores all its HTML files
+    locally, under the given `directory`.
+    """
+    logger.info(f"Downloading {root_url} from MOSS")
+
+    shutil.rmtree(directory, ignore_errors=True)
+    directory.mkdir(parents=True, exist_ok=True)
+
+    downloaded = set()
+    download_recursively(root_url, root_url, directory, downloaded, name="index.html")
+
+
 def load_url(url: str) -> bytes:
     return requests.get(url).content
 
@@ -77,13 +91,3 @@ def download_recursively(
         data = str(page).encode()
     logger.info(f"Saving {directory}/{name}")
     save_data(data, directory / name)
-
-
-def download_moss_result(root_url: str, directory: Path):
-    logger.info(f"Downloading {root_url} from MOSS")
-
-    shutil.rmtree(directory, ignore_errors=True)
-    directory.mkdir(parents=True, exist_ok=True)
-
-    downloaded = set()
-    download_recursively(root_url, root_url, directory, downloaded, name="index.html")
