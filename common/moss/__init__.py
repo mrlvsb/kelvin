@@ -397,7 +397,7 @@ class MossResult:
 
 def moss_task_set_opts(task_id: int, opts: MossTaskOptions):
     cache = caches["default"]
-    cache.set(f"moss.{task_id}.opts", opts, timeout=60 * 60 * 24 * 90)
+    cache.set(f"moss.{task_id}.opts", dataclasses.asdict(opts), timeout=60 * 60 * 24 * 90)
 
 
 def moss_task_get_opts(task_id: int) -> MossTaskOptions:
@@ -408,10 +408,6 @@ def moss_task_get_opts(task_id: int) -> MossTaskOptions:
     )
 
     saved_opts = caches["default"].get(f"moss.{task_id}.opts", {})
-    # Keep compatibility with old dictionary-based storage
-    if isinstance(saved_opts, MossTaskOptions):
-        saved_opts = dataclasses.asdict(saved_opts)
-
     opts_dict = dataclasses.asdict(opts)
     opts_dict.update(saved_opts)
     return MossTaskOptions(**opts_dict)
