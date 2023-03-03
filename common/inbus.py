@@ -75,7 +75,9 @@ def is_response_ok_or_new_token_(response: requests.Response) -> bool:
         return False
 
 
-def inbus_request(url, params={}):
+def inbus_request(url, params=None) -> Optional[requests.Response]:
+    if params is None:
+        params={}
     token = inbus_token()
     headers = {
         "Authorization": f"Bearer {token['access_token']}",
