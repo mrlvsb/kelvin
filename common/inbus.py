@@ -88,7 +88,7 @@ def inbus_request(url, params={}):
         response = requests.get(url, headers=headers, params=params)
         
         # if we still don't get right response, fail with None
-        if response.status_code != 200:
+        if response.status_code != requests.codes.OK:
             return None
 
     return response
@@ -104,8 +104,13 @@ def person_by_login(login: str) -> Optional[PersonSimple]:
         return None
     person_json = person_resp.json()
 
-    person_simple = PersonSimple(login=person_json["login"].upper(), first_name=person_json["firstName"], second_name=person_json["secondName"],
-                                full_name=person_json["fullName"], email=person_json["email"])
+    # INBUS may return response that has missing fields
+    if 'login' not in person_json:
+        return None
+
+    person_simple = PersonSimple(login=person_json["login"].upper(), first_name=person_json.get('firstName', ''), second_name=person_json.get('secondName', ''),
+                                full_name=person_json.get('fullName', ''), email=person_json.get('email', ''))
+
     return person_simple
 
 

@@ -3,7 +3,6 @@ from typing import Optional
 from . import inbus
 import django.contrib.auth.models
 import re
-import ldap
 from functools import lru_cache
 
 LDAP_CONNECTION = None
@@ -32,36 +31,6 @@ def parse_time_interval(text):
         if match:
             parsed = {**parsed, **{k: int(v) for k, v in match.groupdict().items()}}
     return timedelta(**parsed)
-
-def ldap_search_user(login):
-    global LDAP_CONNECTION
-
-    def connect():
-        global LDAP_CONNECTION
-        LDAP_CONNECTION = ldap.ldapobject.ReconnectLDAPObject('ldap://ldap.vsb.cz')
-
-    if not LDAP_CONNECTION:
-        connect()
-
-    def get():
-        return LDAP_CONNECTION.search_s("", ldap.SCOPE_SUBTREE, f"(cn={login})", ["sn", "givenname", "mail"])
-
-    # TODO: escape needed?
-    try:
-        res = get()
-    except ldap.UNAVAILABLE:
-        connect()
-        res = get()
-
-    if not res:
-        return None
-
-    u = res[0][1]
-    return {
-        "last_name": u['sn'][0].decode('utf-8'),
-        "first_name": u['givenname'][0].decode('utf-8'),
-        "email": u['mail'][0].decode('utf-8'),
-    }
 
 
 def inbus_search_user(login: str) -> Optional[inbus.PersonSimple]:
