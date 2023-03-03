@@ -149,10 +149,18 @@ class PlagiarismMatch:
     moss_link: str
 
 
-def is_match_suspicious(match: PlagiarismMatch, options) -> bool:
-    if min(match.first.percent, match.second.percent) >= int(options["percent"]):
+@dataclasses.dataclass
+class MossTaskOptions:
+    percent: int
+    lines: int
+    show_to_students: bool
+    # New attributes below this line must provide a default value!
+
+
+def is_match_suspicious(match: PlagiarismMatch, options: MossTaskOptions) -> bool:
+    if min(match.first.percent, match.second.percent) >= options.percent:
         return True
-    if match.lines >= int(options["lines"]):
+    if match.lines >= options.lines:
         return True
     return False
 
@@ -281,7 +289,7 @@ def moss_check_task(task_id: int, notify_teacher: bool):
 
 
 def enqueue_moss_check(task_id: int, notify=False):
-    cache = caches['default']
+    cache = caches["default"]
     moss_delete_result_from_cache(task_id)
     job = django_rq.enqueue(moss_check_task, task_id, notify, job_timeout=60 * 60)
     cache.set(moss_job_cache_key(task_id), job.id, timeout=60 * 60 * 8)
@@ -330,7 +338,7 @@ class MossResult:
                  success: bool,
                  url: str,
                  matches: List[PlagiarismMatch],
-                 opts,
+                 opts: MossTaskOptions,
                  started_at: datetime.datetime,
                  finished_at: datetime.datetime,
                  log: str):
@@ -387,26 +395,34 @@ class MossResult:
             return re.sub(r'width="[^"]+" height="[^"]+"', '', graph)
 
 
-def moss_task_set_opts(task_id, opts):
-    cache = caches['default']
+def moss_task_set_opts(task_id: int, opts: MossTaskOptions):
+    cache = caches["default"]
     cache.set(f"moss.{task_id}.opts", opts, timeout=60 * 60 * 24 * 90)
 
 
-def moss_task_get_opts(task_id):
-    opts = {
-        'percent': 20,
-        'lines': 10,
-        'show_to_students': False,
-    }
+def moss_task_get_opts(task_id: int) -> MossTaskOptions:
+    opts = MossTaskOptions(
+        percent=20,
+        lines=10,
+        show_to_students=False,
+    )
 
-    return {
-        **opts,
-        **caches['default'].get(f"moss.{task_id}.opts", {})
-    }
+    saved_opts = caches["default"].get(f"moss.{task_id}.opts", {})
+    # Keep compatibility with old dictionary-based storage
+    if isinstance(saved_opts, MossTaskOptions):
+        saved_opts = dataclasses.asdict(saved_opts)
+
+    opts_dict = dataclasses.asdict(opts)
+    opts_dict.update(saved_opts)
+    return MossTaskOptions(**opts_dict)
 
 
-def moss_result(task_id, percent=None, lines=None) -> Optional[MossResult]:
-    cache = caches['default']
+def moss_result(
+    task_id: int,
+    percent: Optional[int] = None,
+    lines: Optional[int] = None
+) -> Optional[MossResult]:
+    cache = caches["default"]
 
     key = moss_result_cache_key(task_id)
     cache_entry = cache.get(key)
@@ -415,9 +431,9 @@ def moss_result(task_id, percent=None, lines=None) -> Optional[MossResult]:
 
     opts = moss_task_get_opts(task_id)
     if percent:
-        opts['percent'] = percent
+        opts.percent = percent
     if lines:
-        opts['lines'] = lines
+        opts.lines = lines
 
     matches = []
     for match in cache_entry["matches"]:

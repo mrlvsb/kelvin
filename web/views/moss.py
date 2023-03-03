@@ -31,7 +31,7 @@ def task_moss_check(request, task_id):
         verb="plagiarism",
     ).update(unread=False)
 
-    cache = caches['default']
+    cache = caches["default"]
     key_job = moss_job_cache_key(task_id)
 
     task = get_object_or_404(Task, pk=task_id)
@@ -61,24 +61,21 @@ def task_moss_check(request, task_id):
             "refresh": refresh
         })
 
-    if request.method == 'POST':
+    if request.method == "POST":
         enqueue_moss_check(task_id)
         return redirect(request.path_info)
 
     opts = moss_task_get_opts(task_id)
 
-    if 'percent' in request.GET:
-        opts = {
-            **opts,
-            "percent": int(request.GET.get("percent", 5)),
-            "lines": int(request.GET.get("lines", 1)),
-            "show_to_students": int(request.GET.get("show_to_students", False)),
-        }
+    if "percent" in request.GET:
+        opts.percent = int(request.GET["percent"])
+        opts.lines = int(request.GET.get("lines", opts.lines))
+        opts.show_to_students = request.GET.get("show_to_students") == "1"
         moss_task_set_opts(task_id, opts)
 
-    res = moss_result(task_id, percent=opts['percent'], lines=opts['lines'])
+    res = moss_result(task_id, percent=opts.percent, lines=opts.lines)
     if not res:
-        return render(request, 'web/moss.html', {
+        return render(request, "web/moss.html", {
             "task": task,
             "has_result": False
         })
