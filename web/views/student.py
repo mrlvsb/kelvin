@@ -229,7 +229,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         data['comment_count'] = current_submit.comment_set.count()
 
         moss_res = moss_result(current_submit.assignment.task.id)
-        if moss_res and (is_teacher(request.user) or moss_res.opts.get('show_to_students', False)):
+        if moss_res and (is_teacher(request.user) or moss_res.opts.show_to_students):
             svg = moss_res.to_svg(login=current_submit.student.username, anonymize=not is_teacher(request.user))
             if svg:
                 data['has_pipeline'] = True
@@ -239,7 +239,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
 
                 prepend = ""
                 if is_teacher(request.user):
-                    if not moss_res.opts.get('show_to_students', False):
+                    if not moss_res.opts.show_to_students:
                         prepend = "<div class='text-muted'>Not shown to students</div>"
                     prepend += f'<a href="/teacher/task/{current_submit.assignment.task_id}/moss">Change thresholds</a>'
 
