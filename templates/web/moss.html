@@ -139,10 +139,10 @@
           <tbody>
             {% for match in matches %}
             <tr>
-              <td><a target="_blank" href="{% url 'find_task_detail' task_id=task.id login=match.first.login  %}">{{ match.first.login }}</a> ({{ match.first_fullname }})</td>
+              <td><a target="_blank" href="{{ match.first_link }}">{{ match.first.login }}</a> ({{ match.first_fullname }})</td>
               <td>{{ match.first_class }}</td>
               <td>{{ match.first.percent }}%</td>
-              <td><a target="_blank" href="{% url 'find_task_detail' task_id=task.id login=match.second.login  %}">{{ match.second.login }}</a> ({{ match.second_fullname }})</td>
+              <td><a target="_blank" href="{{ match.second_link }}">{{ match.second.login }}</a> ({{ match.second_fullname }})</td>
               <td>{{ match.second_class }}</td>
               <td>{{ match.second.percent }}%</td>
               <td>{{ match.lines }}</td>
