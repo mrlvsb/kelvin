@@ -88,7 +88,6 @@
           $(document).ready(function () {
               $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
                   var enabled = $("#this-semester").is(":checked");
-                  console.log(enabled);
                   if (!enabled) return true;
 
                   var firstSemester = data[1].match(semesterRegex)[1];
@@ -120,7 +119,7 @@
         </script>
 
         <div style="display: flex; justify-content: end;">
-          <input type="checkbox" checked="checked" id="this-semester" />
+          <input type="checkbox" id="this-semester" />
           <span style="padding-left: 5px;">Show only this semester</span>
         </div>
         <table class="table table-sm table-hover table-striped moss-table">
