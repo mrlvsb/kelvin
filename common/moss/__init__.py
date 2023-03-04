@@ -174,6 +174,27 @@ def get_match_local_dir(task: Task, match: PlagiarismMatch) -> Path:
     return directory / id
 
 
+def get_relevant_submits(task_id: int) -> List[Submit]:
+    """
+    Find all submits that should be checked for plagiarism for this given task.
+    It will return both submits of the task with the given `task_id` and also from other
+    tasks that have the same `plagiarism_key` and are for the same subject.
+    """
+    task = Task.objects.get(pk=task_id)
+    tasks = [task]
+    if task.plagiarism_key is not None and task.plagiarism_key.strip() != "":
+        tasks = (
+            Task.objects.filter(subject__id=task.subject.id, plagiarism_key=task.plagiarism_key)
+        )
+
+    submits = (
+        Submit.objects.filter(assignment__task__in=tasks)
+        .annotate(year=F("assignment__clazz__semester__year"))
+        .order_by("-year", "-submit_num")
+    )
+    return list(submits.all())
+
+
 @django_rq.job("default", timeout=60 * 15)
 def moss_check_task(task_id: int, notify_teacher: bool):
     start_timestamp = datetime.datetime.now()
@@ -195,8 +216,10 @@ def moss_check_task(task_id: int, notify_teacher: bool):
     success = True
 
     try:
-        # TODO: sort by year/created date instead
-        submits = Submit.objects.filter(assignment__task__id=task_id).order_by("-submit_num")
+        submits = get_relevant_submits(task_id)
+        if not submits:
+            return
+
         moss_client = mosspy.Moss(settings.MOSS_USERID)
         # do not ignore matches that occur frequently
         moss_client.setIgnoreLimit(10000)

@@ -8,7 +8,7 @@ import tarfile
 import tempfile
 import traceback
 from collections import OrderedDict
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
@@ -52,12 +52,14 @@ def enrich_matches(matches: List[PlagiarismMatch], teacher: User, task: Task) ->
     used by the frontend to them.
     """
 
-    def format_class(assignment_id: int) -> str:
+    def get_class_and_link(assignment_id: int, login: str) -> Tuple[str, str]:
         assignment = AssignedTask.objects.get(pk=assignment_id)
         clazz = assignment.clazz
         code = clazz.code
         semester = clazz.semester
-        return f"{code} ({semester})"
+        class_str = f"{code} ({semester})"
+        link = reverse("find_task_detail", kwargs=dict(task_id=assignment.task.id, login=login))
+        return (class_str, link)
 
     classes = Class.objects.current_semester().filter(teacher=teacher, assignedtask__task=task)
     students = {v[0] for v in User.objects.filter(students__in=classes).values_list("username")}
@@ -68,11 +70,17 @@ def enrich_matches(matches: List[PlagiarismMatch], teacher: User, task: Task) ->
         match_data["first_fullname"] = User.objects.get(
             username=match.first.login
         ).get_full_name()
-        match_data["first_class"] = format_class(match.first.assignment_id)
+
+        (first_class, first_link) = get_class_and_link(match.first.assignment_id, match.first.login)
+        match_data["first_class"] = first_class
+        match_data["first_link"] = first_link
         match_data["second_fullname"] = User.objects.get(
             username=match.second.login
         ).get_full_name()
-        match_data["second_class"] = format_class(match.second.assignment_id)
+
+        (second_class, second_link) = get_class_and_link(match.second.assignment_id, match.second.login)
+        match_data["second_class"] = second_class
+        match_data["second_link"] = second_link
         match_items.append(match_data)
     return match_items
 
