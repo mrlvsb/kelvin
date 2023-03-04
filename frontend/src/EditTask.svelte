@@ -301,6 +301,11 @@ td:not(:nth-of-type(3)) {
         {/if}
       </div>
 
+      <div title="All tasks with the same plagiarism key will be checked together">
+        <label for="plagiarism-key">Plagiarism key:</label>
+        <input type="text" id="plagiarism-key" maxlength="255" bind:value="{task.plagiarism_key}" />
+      </div>
+
       <div class="form-group">
         <Manager taskid={task.id} />
       </div>

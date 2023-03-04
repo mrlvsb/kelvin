@@ -299,6 +299,13 @@ def task_detail(request, task_id=None):
         os.makedirs(task.dir(), exist_ok=True)
         if not task.name:
             task.name = task.code
+
+        plagiarism_key = data.get("plagiarism_key")
+        if plagiarism_key is None or plagiarism_key.strip() == "":
+            task.plagiarism_key = None
+        else:
+            task.plagiarism_key = plagiarism_key[:255]
+
         task.save()
 
         taskid_path = os.path.join(task.dir(), '.taskid')
@@ -371,7 +378,8 @@ def task_detail(request, task_id=None):
         })).rstrip('_'),
         'errors': errors,
         'task_link': reverse('teacher_task', kwargs=dict(task_id=task.id)),
-        'moss_link': reverse('teacher_task_moss_check', kwargs=dict(task_id=task.id))
+        'moss_link': reverse('teacher_task_moss_check', kwargs=dict(task_id=task.id)),
+        'plagiarism_key': task.plagiarism_key
     }
 
     ignore_list = [
