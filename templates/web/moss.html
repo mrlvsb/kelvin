@@ -6,6 +6,12 @@
 (<a href="{{ moss_url }}" target="_blank">MOSS URL</a>)
 {% endif %}
 </h1>
+  <div>
+    <span>Linked tasks:</span>
+    {% for task in linked_tasks %}
+      <a href="{% url 'teacher_task' task_id=task.id %}">{{ task.name }}</a>
+    {% endfor %}
+  </div>
 {% if started_at %}
   <div>Started at {{ started_at|date:"d. m. Y H:i:s" }}</div>
   <div>Finished at {{ finished_at|date:"d. m. Y H:i:s" }}</div>

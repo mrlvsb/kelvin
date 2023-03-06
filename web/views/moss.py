@@ -12,7 +12,7 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 from notifications.models import Notification
 
 from common.models import Submit, Task, current_semester
-from common.moss import PlagiarismMatch, enqueue_moss_check, get_match_local_dir, \
+from common.moss import PlagiarismMatch, enqueue_moss_check, get_linked_tasks, get_match_local_dir, \
     moss_delete_job_from_cache, \
     moss_job_cache_key, \
     moss_result, moss_task_get_opts, moss_task_set_opts
@@ -35,6 +35,7 @@ def task_moss_check(request, task_id):
     key_job = moss_job_cache_key(task_id)
 
     task = get_object_or_404(Task, pk=task_id)
+    linked_tasks = get_linked_tasks(task_id)
 
     job_id = cache.get(key_job)
     if job_id:
@@ -58,7 +59,8 @@ def task_moss_check(request, task_id):
         return render(request, "web/moss.html", {
             "status": status,
             "task": task,
-            "refresh": refresh
+            "refresh": refresh,
+            "linked_tasks": linked_tasks
         })
 
     if request.method == "POST":
@@ -77,7 +79,8 @@ def task_moss_check(request, task_id):
     if not res:
         return render(request, "web/moss.html", {
             "task": task,
-            "has_result": False
+            "has_result": False,
+            "linked_tasks": linked_tasks
         })
     else:
         newer_submit_count = Submit.objects.filter(
@@ -97,7 +100,8 @@ def task_moss_check(request, task_id):
             "moss_url": res.url,
             "newer_submit_count": newer_submit_count,
             "task": task,
-            "semester": str(current_semester())
+            "semester": str(current_semester()),
+            "linked_tasks": linked_tasks
         })
 
 
