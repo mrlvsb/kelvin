@@ -174,18 +174,25 @@ def get_match_local_dir(task: Task, match: PlagiarismMatch) -> Path:
     return directory / id
 
 
+def get_linked_tasks(task_id: int) -> List[Task]:
+    task = Task.objects.get(pk=task_id)
+    tasks = [task]
+    if task.plagiarism_key is not None and task.plagiarism_key.strip() != "":
+        tasks = (
+            Task.objects
+                .filter(subject__id=task.subject.id, plagiarism_key=task.plagiarism_key)
+                .order_by("-id")
+        )
+    return list(tasks)
+
+
 def get_relevant_submits(task_id: int) -> List[Submit]:
     """
     Find all submits that should be checked for plagiarism for this given task.
     It will return both submits of the task with the given `task_id` and also from other
     tasks that have the same `plagiarism_key` and are for the same subject.
     """
-    task = Task.objects.get(pk=task_id)
-    tasks = [task]
-    if task.plagiarism_key is not None and task.plagiarism_key.strip() != "":
-        tasks = (
-            Task.objects.filter(subject__id=task.subject.id, plagiarism_key=task.plagiarism_key)
-        )
+    tasks = get_linked_tasks(task_id)
 
     submits = (
         Submit.objects.filter(assignment__task__in=tasks)
