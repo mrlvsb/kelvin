@@ -226,6 +226,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
 
     if current_submit:
         data = {**data, **get(current_submit)}
+        has_failure = any(r.failed for r in data["results"])
         data['comment_count'] = current_submit.comment_set.count()
 
         moss_res = moss_result(current_submit.assignment.task.id)
@@ -279,7 +280,19 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         data['total_submits'] = submits.count()
         data['late_submit'] = assignment.deadline and submits.order_by('id').reverse()[0].created_at > assignment.deadline
         data['diff_versions'] = [(s.submit_num, s.created_at) for s in submits.order_by('id')]
-        data['job_status'] = not get_submit_job_status(current_submit.jobid).finished
+
+        job_status = get_submit_job_status(current_submit.jobid)
+
+        if not job_status.finished:
+            data['job_status'] = True
+            result_icon = "line-md:loading-loop"
+        else:
+            data['job_status'] = False
+            if job_status.status == "failed" or has_failure:
+                result_icon = "akar-icons:cross"
+            else:
+                result_icon = "mdi:success-circle-outline"
+        data["pipeline_result_icon"] = result_icon
 
     if request.method == 'POST':
         s = Submit()
