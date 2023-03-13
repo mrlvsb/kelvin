@@ -15,6 +15,9 @@
         <script src="{% static 'frontend.js' %}"></script>
         <link rel="stylesheet" href="{% static 'frontend.css' %}">
         <title>{% block title %}Kelvin{% endblock %}</title>
+
+        <meta name="color-scheme" content="light dark">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vinorodrigues/bootstrap-dark@0.6.1/dist/bootstrap-dark.min.css">
     </head>
     <body>
         {% if is_teacher %}
