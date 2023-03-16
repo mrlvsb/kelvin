@@ -9,7 +9,7 @@
   <div>
     <span>Linked tasks:</span>
     {% for task in linked_tasks %}
-      <a href="{% url 'teacher_task' task_id=task.id %}">{{ task.name }}</a>
+      <a href="{% url 'teacher_task' task_id=task.id %}">{{ task.name }} ({{ task.semesters }})</a>{% if not forloop.last %},{% endif %}
     {% endfor %}
   </div>
 {% if started_at %}
