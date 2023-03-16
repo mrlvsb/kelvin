@@ -1,5 +1,7 @@
+import dataclasses
 import logging
 import mimetypes
+from typing import List
 
 import django_rq
 import rq
@@ -11,7 +13,7 @@ from django.views.decorators.cache import cache_page
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from notifications.models import Notification
 
-from common.models import Submit, Task, current_semester
+from common.models import Semester, Submit, Task, current_semester
 from common.moss import PlagiarismMatch, enqueue_moss_check, get_linked_tasks, get_match_local_dir, \
     moss_delete_job_from_cache, \
     moss_job_cache_key, \
@@ -20,6 +22,31 @@ from common.moss.local_result import download_moss_result
 from common.utils import is_teacher
 from web.views.teacher import enrich_matches
 from web.views.utils import file_response
+
+
+@dataclasses.dataclass
+class LinkedTask:
+    id: int
+    name: str
+    semesters: str
+
+
+def get_linked_task_data(task_id: int) -> List[LinkedTask]:
+    tasks = get_linked_tasks(task_id)
+    linked_tasks = []
+    for task in tasks:
+        semesters = (
+            Semester.objects.filter(pk__in=task.assignedtask_set.values('clazz__semester'))
+            .distinct().all()
+        )
+        semesters = ", ".join(str(s) for s in sorted(semesters))
+        linked_tasks.append(LinkedTask(
+            id=task.id,
+            name=task.name,
+            semesters=semesters
+        ))
+
+    return linked_tasks
 
 
 @user_passes_test(is_teacher)
@@ -35,7 +62,7 @@ def task_moss_check(request, task_id):
     key_job = moss_job_cache_key(task_id)
 
     task = get_object_or_404(Task, pk=task_id)
-    linked_tasks = get_linked_tasks(task_id)
+    linked_tasks = get_linked_task_data(task_id)
 
     job_id = cache.get(key_job)
     if job_id:
