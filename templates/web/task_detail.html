@@ -63,19 +63,19 @@
 
     {{ submit.student.get_full_name }} ({{ submit.student.username }}),
     {{ submit.created_at|date:'d.m.Y H:i' }}{% if submit.created_at > submit.assignment.deadline %},
-    <span class="text-danger font-weight-bold" title="{{ stud.last_submit_date|date:'d.m.Y H:i' }}">
+    <span class="text-danger fw-bold" title="{{ stud.last_submit_date|date:'d.m.Y H:i' }}">
         {{ submit.created_at|timeuntil:submit.assignment.deadline }} after deadline
     </span>
     {% endif %}
     </h6>
 
     {% if is_teacher %}
-    <a href="{% url 'submits' submit.student.username %}">Student submits</a>
+    <a href="{% url 'submits' submit.student.username %}" class="text-decoration-none">Student submits</a>
     <a href="{% url 'reevaluate' submit.id %}" title="Reevaluate"><span class="iconify" data-icon="fa-solid:sync"></span></a>
     {% endif %}
 {% endif %}
 {% if upload != False %}
-<div class="text-right" style="font-size: 0.8rem">Select multiple files using CTRL or SHIFT or <strong>drag them to this window</strong></div>
+<div class="text-end" style="font-size: 0.8rem">Select multiple files using CTRL or SHIFT or <strong>drag them to this window</strong></div>
 {% endif %}
 
 {% if is_teacher and inputs.warnings %}
@@ -102,7 +102,7 @@
                 <a class="nav-link" data-toggle="tab" href="#src">
                   Source code
                   {% if comment_count and comment_count > 0 %}
-                    <span class="badge badge-dark">{{ comment_count }}</span>
+                    <span class="badge bg-dark">{{ comment_count }}</span>
                   {% endif %}
                 </a>
             </li>
@@ -118,16 +118,16 @@
 
             {% if is_teacher and not upload%}
               {% if submit and submit.assignment.max_points is not None %}
-                <li class="nav-item ml-auto">
+                <li class="nav-item ms-auto">
                   {% include 'web/teacher/form_assign_points.html' %}
                   
                 <li>
               {% endif %}
             {% else %}
-            <li class="nav-item ml-auto">
+            <li class="nav-item ms-auto">
                 <ul class="navbar-nav">
                     {% if submit and submit.assigned_points is not None %}
-                    <li class="nav-item mr-2 pt-1">
+                    <li class="nav-item me-2 pt-1">
                         {{ submit.assigned_points }} / {{ submit.assignment.max_points }}
                     </li>
                     {% endif %}
@@ -171,7 +171,7 @@
                 {% endif %}
             </div>
             <div class="tab-pane" id="tab_tests">
-                <a href="{% url 'tar_test_data' task.code %}{% if submit %}?student={{submit.student}}{%endif%}" class="float-right">Download all tests</a>
+                <a href="{% url 'tar_test_data' task.code %}{% if submit %}?student={{submit.student}}{%endif%}" class="float-end">Download all tests</a>
 
                 {% for input in inputs %}
                 <h2>{{ input.title }}{% if input.title != input.name %} <span class="text-muted">({{ input.name }})</span>{% endif %}</h2>
@@ -188,14 +188,14 @@
                     <div class="card-header">
                         <h5>
                           {{ path }}
-                          (<a href="{% url 'raw_test_content' task.code input.name path %}{% if submit %}?student={{submit.student}}{%endif%}">Raw content</a>)
+                          (<a href="{% url 'raw_test_content' task.code input.name path %}{% if submit %}?student={{submit.student}}{%endif%}" class="text-decoration-none">Raw content</a>)
                         </h5>
                     </div>
                     <div class="card-body">
                         {% if file.size < max_inline_content_bytes or not max_inline_content_bytes %}
                         <pre>{{ file.read }}</pre>
                         {% else %}
-                            Content too large, show <a href='{% url 'raw_test_content' task.code input.name path %}'>raw content</a>.
+                            Content too large, show <a href='{% url 'raw_test_content' task.code input.name path %}' class="text-decoration-none">raw content</a>.
                         {% endif %}
                     </div>
                 </div>

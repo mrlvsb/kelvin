@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html data-bs-theme="light">
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
@@ -21,14 +21,14 @@
           <kelvin-ctrlp></kelvin-ctrlp>
         {% endif %}
         <nav class="navbar navbar-light bg-light navbar-expand-sm mb-2">
+          <div class="container-fluid">
             <a class="navbar-brand" href="/">Kelvin</a>
               <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
               </button>
 
-
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
-              <ul class="navbar-nav mr-auto">
+              <ul class="navbar-nav me-auto">
                 {% if is_teacher %}
                 <li class="nav-item"><a class="nav-link" href="{% url 'submits' %}">Submits</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'tasks' %}">Tasks</a></li>
@@ -46,10 +46,11 @@
                   <span id="notifications">
                     <kelvin-notifications></kelvin-notifications>
                   </span>
-                  <a href="/accounts/logout/?next=/">Logout</a>
+                  <a href="/accounts/logout/?next=/" class="text-decoration-none">Logout</a>
               </div>
               {% endif %}
             </div>
+          </div>
         </nav>
 
         <div class="content container">

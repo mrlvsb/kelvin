@@ -100,14 +100,6 @@ tr td:first-of-type, tr th:first-of-type {
   background: white;
 }
 
-tr:nth-of-type(odd) td:first-of-type {
-  background: #f2f2f2;
-}
-
-tr:hover td:first-of-type {
-  background: #ececec;
-}
-
 .card-body {
   overflow-x: auto;
 }
@@ -147,7 +139,7 @@ tr:hover td:first-of-type {
 
 <div class="card mb-2" style="position: initial">
   <div class="card-header p-0">
-      <div class="float-right p-2" style="display: flex; align-items: center;">
+      <div class="float-end p-2" style="display: flex; align-items: center;">
         <a href="/task/add/{clazz.subject_abbr}" use:link title="Assign new task">
           <span class="iconify" data-icon="bx:bx-calendar-plus"></span>
         </a>
@@ -183,7 +175,7 @@ tr:hover td:first-of-type {
 
       {#if showStudentsList}
         {#if clazz.summary }
-          <button class="p-0 btn btn-link"
+          <button class="p-0 btn btn-link text-decoration-none"
                     on:click={() => showSummary = !showSummary}>{showSummary ? "Skrýt" : "Zobrazit"} informace o cvičení</button>
           {#if showSummary }
             <Markdown content={clazz.summary} />
@@ -205,7 +197,8 @@ tr:hover td:first-of-type {
                 <th>Student</th>
                 {#each clazz.assignments as assignment, index}
                 <th class="more-hover">
-                  <a href="{assignment.task_link}" 
+                  <a href="{assignment.task_link}"
+                     class="text-decoration-none"
                     class:text-muted={assignment.assigned > new Date()}
                     class:text-success={assignment.deadline > new Date()}>
                     { $showFullTaskNames ? assignment.short_name : `#${index+1}` }{#if assignment.max_points > 0}&nbsp;({ assignment.max_points }b){/if}

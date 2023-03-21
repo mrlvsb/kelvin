@@ -1,135 +1,141 @@
 {% extends 'web/layout.html' %}
 
 {% block content %}
-<h1>MOSS for {{ task.name }}
-{% if moss_url %}
-(<a href="{{ moss_url }}" target="_blank">MOSS URL</a>)
-{% endif %}
-</h1>
+  <h1>MOSS for {{ task.name }}
+    {% if moss_url %}
+      (<a href="{{ moss_url }}" target="_blank" class="text-decoration-none">MOSS URL</a>)
+    {% endif %}
+  </h1>
   <div>
     <span>Linked tasks:</span>
     {% for task in linked_tasks %}
-      <a href="{% url 'teacher_task' task_id=task.id %}">{{ task.name }} ({{ task.semesters }})</a>{% if not forloop.last %},{% endif %}
+      <a href="{% url 'teacher_task' task_id=task.id %}"
+         class="text-decoration-none">{{ task.name }} ({{ task.semesters }})</a>{% if not forloop.last %},{% endif %}
     {% endfor %}
   </div>
-{% if started_at %}
-  <div>Started at {{ started_at|date:"d. m. Y H:i:s" }}</div>
-  <div>Finished at {{ finished_at|date:"d. m. Y H:i:s" }}</div>
-{% endif %}
-{% if status %}
-  <div style="text-align: center; font-size: 30px">
+  {% if started_at %}
+    <div>Started at {{ started_at|date:"d. m. Y H:i:s" }}</div>
+    <div>Finished at {{ finished_at|date:"d. m. Y H:i:s" }}</div>
+  {% endif %}
+  {% if status %}
+    <div style="text-align: center; font-size: 30px">
     <pre>
       {{ status }}
     </pre>
-  </div>
-  {% if refresh %}
-    <meta http-equiv="refresh" content="15" />
-  {% endif %}
-{% else %}
-  <form method="post" class="float-right">
-   {% csrf_token %}
-    <button class="btn btn-sm btn-primary">Send to MOSS</button>
-  </form>
+    </div>
+    {% if refresh %}
+      <meta http-equiv="refresh" content="15"/>
+    {% endif %}
+  {% else %}
+    <form method="post" class="float-end">
+      {% csrf_token %}
+      <button class="btn btn-sm btn-primary">Send to MOSS</button>
+    </form>
 
-  {% if has_result %}
-    {% if success %}
-      <form class="form-inline">
-        <div class="input-group input-group-sm mr-2">
-        <input type="number" min="0" max="100" class="form-control form-control-sm" name="percent" value={{opts.percent}} />
-          <div class="input-group-append">
+    {% if has_result %}
+      {% if success %}
+        <form class="d-flex align-items-center">
+          <div class="input-group input-group-sm me-1 w-auto">
+            <input type="number" min="0" max="100" class="form-control form-control-sm"
+                   name="percent" value="{{ opts.percent }}" />
             <div class="input-group-text">%</div>
           </div>
-        </div>
-
-        <div class="input-group input-group-sm mr-2">
-          <input type="number" min="0" max="1000" placeholder="Max lines" class="form-control form-control-sm" name="lines" value={{opts.lines}} />
-          <div class="input-group-append">
+          <div class="input-group input-group-sm me-1 w-auto">
+            <input type="number" min="0" max="1000" placeholder="Max lines"
+                   class="form-control form-control-sm" name="lines" value="{{ opts.lines }}" />
             <div class="input-group-text">lines</div>
           </div>
-        </div>
-        <div class="form-check mr-2">
-          <input class="form-check-input" type="checkbox" name="show_to_students"{% if opts.show_to_students %} checked{% endif %} id="filter-show-to-students" value="1">
-          <label class="form-check-label" for="filter-show-to-students"> Show to students on the Result tab</label>
-        </div>
-        <input type="submit" class="btn btn-sm btn-primary" value="Set threshold">
-      </form>
-      <a href="{% url "teacher_task_moss_graph" task_id=task.id %}" class="btn btn-primary mt-2">Download anonymized graph</a>
+          <div class="form-check me-2 w-auto">
+            <input class="form-check-input" type="checkbox" name="show_to_students"
+                {% if opts.show_to_students %} checked{% endif %} id="filter-show-to-students"
+                   value="1">
+            <label class="form-check-label" for="filter-show-to-students"> Show to students on the
+              Result tab</label>
+          </div>
+          <input type="submit" class="btn btn-sm btn-primary w-auto" value="Save settings">
+        </form>
+        <a href="{% url "teacher_task_moss_graph" task_id=task.id %}" class="btn btn-primary mt-2">Download
+          anonymized graph</a>
 
-      {% if matches %}
-        {% if newer_submit_count %}
-          There were <span class="badge badge-danger">{{ newer_submit_count }}</span> submit(s) since the check was performed!
-        {% endif %}
+        {% if matches %}
+          {% if newer_submit_count %}
+            There were <span class="badge bg-danger">{{ newer_submit_count }}</span> submit(s) since
+            the check was performed!
+          {% endif %}
 
-        <div id="graph" style="margin-bottom: 20px;">
-          {{ graph | safe }}
-        </div>
+          <div id="graph" style="margin-bottom: 20px;">
+            {{ graph | safe }}
+          </div>
 
-        <style>
-        #graph svg {
-          width: 100%;
-          height: auto;
-          min-height: 300px;
-        }
-        table td {
-          white-space: nowrap;
-          width: 1%;
-        }
-        table td, th {
-          text-align: center;
-        }
-        </style>
-        <link rel="stylesheet" type="text/css"
-              href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css" />
+          <style>
+              #graph svg {
+                  width: 100%;
+                  height: auto;
+                  min-height: 300px;
+              }
 
-        <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
-        <script>svgPanZoom('#graph svg')</script>
-        <script
-            src="https://code.jquery.com/jquery-3.6.0.min.js"
-            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
-            crossorigin="anonymous"></script>
-        <script src="//cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
-        <script>
-          var semesterRegex = /.*\((.*)\)$/;
+              table td {
+                  white-space: nowrap;
+                  width: 1%;
+              }
 
-          $(document).ready(function () {
-              $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
-                  var enabled = $("#this-semester").is(":checked");
-                  if (!enabled) return true;
+              table td, th {
+                  text-align: center;
+              }
+          </style>
+          <link rel="stylesheet" type="text/css"
+                href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css"/>
 
-                  var firstSemester = data[1].match(semesterRegex)[1];
-                  var secondSemester = data[4].match(semesterRegex)[1];
+          <script
+              src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+          <script>svgPanZoom('#graph svg')</script>
+          <script
+              src="https://code.jquery.com/jquery-3.6.0.min.js"
+              integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+              crossorigin="anonymous"></script>
+          <script src="//cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+          <script>
+              var semesterRegex = /.*\((.*)\)$/;
 
-                  var thisSemester = "{{ semester }}";
-                  return firstSemester === thisSemester || secondSemester === thisSemester;
+              $(document).ready(function () {
+                  $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+                      var enabled = $("#this-semester").is(":checked");
+                      if (!enabled) return true;
+
+                      var firstSemester = data[1].match(semesterRegex)[1];
+                      var secondSemester = data[4].match(semesterRegex)[1];
+
+                      var thisSemester = "{{ semester }}";
+                      return firstSemester === thisSemester || secondSemester === thisSemester;
+                  });
+
+                  var table = $(".moss-table").DataTable({
+                      "paging": false,
+                      "order": [
+                          [5, "desc"], // Percent B descending
+                          [6, "desc"]  // Line count descending
+                      ],
+                      columnDefs: [{
+                          targets: ["_all"],
+                          orderSequence: ["desc", "asc"]
+                      }, {
+                          targets: [-2],
+                          orderable: false
+                      }]
+                  });
+
+                  $("#this-semester").change(function () {
+                      table.draw();
+                  });
               });
+          </script>
 
-              var table = $(".moss-table").DataTable({
-                  "paging": false,
-                  "order": [
-                      [5, "desc"], // Percent B descending
-                      [6, "desc"]  // Line count descending
-                  ],
-                  columnDefs: [{
-                      targets: ["_all"],
-                      orderSequence: ["desc", "asc"]
-                  }, {
-                      targets: [-2],
-                      orderable: false
-                  }]
-              });
-
-              $("#this-semester").change(function() {
-                  table.draw();
-              });
-          });
-        </script>
-
-        <div style="display: flex; justify-content: end;">
-          <input type="checkbox" checked="checked" id="this-semester" />
-          <span style="padding-left: 5px;">Show only this semester</span>
-        </div>
-        <table class="table table-sm table-hover table-striped moss-table">
-          <thead>
+          <div style="display: flex; justify-content: end;">
+            <input type="checkbox" checked="checked" id="this-semester"/>
+            <span style="padding-left: 5px;">Show only this semester</span>
+          </div>
+          <table class="table table-sm table-hover table-striped moss-table">
+            <thead>
             <tr>
               <th>Student A</th>
               <th>Class A</th>
@@ -141,37 +147,42 @@
               <th>MOSS link</th>
               <th>My student</th>
             </tr>
-          </thead>
-          <tbody>
+            </thead>
+            <tbody>
             {% for match in matches %}
-            <tr>
-              <td><a target="_blank" href="{{ match.first_link }}">{{ match.first.login }}</a> ({{ match.first_fullname }})</td>
-              <td>{{ match.first_class }}</td>
-              <td>{{ match.first.percent }}%</td>
-              <td><a target="_blank" href="{{ match.second_link }}">{{ match.second.login }}</a> ({{ match.second_fullname }})</td>
-              <td>{{ match.second_class }}</td>
-              <td>{{ match.second.percent }}%</td>
-              <td>{{ match.lines }}</td>
-              <td>
-                <a target="_blank" href="{{ match.link }}"><span class="iconify" data-icon="ant-design:search-outlined"></span></a>
-              </td>
-              <td>{{ match.teaching|yesno:"Yes,No" }}</td>
-            </tr>
+              <tr>
+                <td><a target="_blank" href="{{ match.first_link }}">{{ match.first.login }}</a>
+                  ({{ match.first_fullname }})
+                </td>
+                <td>{{ match.first_class }}</td>
+                <td>{{ match.first.percent }}%</td>
+                <td><a target="_blank" href="{{ match.second_link }}">{{ match.second.login }}</a>
+                  ({{ match.second_fullname }})
+                </td>
+                <td>{{ match.second_class }}</td>
+                <td>{{ match.second.percent }}%</td>
+                <td>{{ match.lines }}</td>
+                <td>
+                  <a target="_blank" href="{{ match.link }}"><span class="iconify"
+                                                                   data-icon="ant-design:search-outlined"></span></a>
+                </td>
+                <td>{{ match.teaching|yesno:"Yes,No" }}</td>
+              </tr>
             {% endfor %}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
         {% else %}
-        <p class="alert alert-info mt-2">
-          No matches found - try to set different thresholds.
-        </p>
-      {% endif %}
-    {% else %}
+          <p class="alert alert-info mt-2">
+            No matches found - try to set different thresholds.
+          </p>
+        {% endif %}
+      {% else %}
         <div>MOSS check has failed</div>
+      {% endif %}
+      <div>
+        <h4>Log</h4>
+        <pre>{{ log }}</pre>
+      </div>
     {% endif %}
-    <div>
-      <h4>Log</h4>
-      <pre>{{ log }}</pre>
-    </div>
   {% endif %}
-{% endif %}
 {% endblock %}

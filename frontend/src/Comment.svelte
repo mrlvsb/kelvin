@@ -49,7 +49,7 @@
           {/if}
         {:else if $user}
           {#if unread && type != 'automated' && author_id != $user.id}
-            <button class="btn p-0 float-right" on:click|preventDefault={handleNotification} style="line-height: normal">
+            <button class="btn p-0 float-end" on:click|preventDefault={handleNotification} style="line-height: normal">
               <span class="iconify" data-icon="cil-check"></span>
             </button>
           {/if}
