@@ -80,7 +80,7 @@
     
     <div on:contextmenu={ctxMenu} on:keydown={keydown} on:click={click} bind:this={container}>
         {#if submits != 0}
-        <a href={link} style="color: {color}">
+        <a href={link} style="color: {color}" class="text-decoration-none">
             { isNaN(parseFloat(assigned_points)) ? '?' : assigned_points}
         </a>
         {/if}

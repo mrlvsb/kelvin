@@ -5,7 +5,7 @@
 <div class="container">
     <div class="row">
         <form class="mb-1 col-sm-3 offset-sm-9 p-0">
-            <select name="semester" class="custom-select custom-select-sm" onchange="this.value != '' && this.form.submit()">
+            <select name="semester" class="form-select form-select-sm" onchange="this.value != '' && this.form.submit()">
                 <option value=''>Semester</option>
                 {% for s in semesters %}
                     <option value="{{ s.value }}"{% if selected_semester == s.value %} selected{% endif %}>
@@ -42,17 +42,17 @@
                     <th>Task</th>
                     <th>Assigned</th>
                     <th>Deadline</th>
-                    <th class="text-right">Earned points</th>
-                    <th class="text-right">Max points</th>
+                    <th class="text-end">Earned points</th>
+                    <th class="text-end">Max points</th>
                 </tr>
             </thead>
             {% for task in node.tasks  %}
             <tr>
                 <td>
                     {% if task.accepted_submit_num %}
-                        <a href="{% url 'task_detail' login=task.student assignment_id=task.id submit_num=task.accepted_submit_num %}">{{ task.name }}</a>
+                        <a href="{% url 'task_detail' login=task.student assignment_id=task.id submit_num=task.accepted_submit_num %}" class="text-decoration-none">{{ task.name }}</a>
                     {% else %}
-                        <a href="{% url 'task_detail' login=task.student assignment_id=task.id %}">{{ task.name }}</a>
+                        <a href="{% url 'task_detail' login=task.student assignment_id=task.id %}" class="text-decoration-none">{{ task.name }}</a>
                     {% endif %}
                 </td>
                 {% comment %}
@@ -69,12 +69,12 @@
                     {{ task.deadline|date:"d.m.Y, H:i" }} <span class="text-muted">({{ task.deadline|timeuntil }} left)</span>
                     {% endif %}
                 </td>
-                <td class="text-right">
+                <td class="text-end">
                     {% if task.assigned_points is not None %}
                       {{ task.assigned_points|floatformat:2 }}
                     {% endif %}
                 </td>
-                <td class="text-right">
+                <td class="text-end">
                     {% if task.assignment.max_points is not None %}
                       {{ task.assignment.max_points|floatformat:2 }}
                     {% endif %}
@@ -83,8 +83,8 @@
             {% endfor %}
             <tr>
               <td colspan="3">Celkem</td>
-              <td class="text-right">{{ node.earned_points|floatformat:2 }}</td>
-              <td class="text-right">{{ node.max_points|floatformat:2 }}</td>
+              <td class="text-end">{{ node.earned_points|floatformat:2 }}</td>
+              <td class="text-end">{{ node.max_points|floatformat:2 }}</td>
             </tr>
         </table>
         {% else %}

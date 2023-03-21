@@ -28,7 +28,7 @@ async function openNotification(notification) {
     <span on:click={() => show = !show} style="cursor: pointer">
       <img src="/static/notify_icon.png" style="height: 15px;" draggable="false" />
       {#if $notificationsCount > 0}
-        <span class="badge badge-pill {$importantNotificationsCount >= 1 ? 'badge-danger' : 'badge-warning'}" style="margin-left: -3px">{$notificationsCount}</span>
+        <span class="badge rounded-pill {$importantNotificationsCount >= 1 ? 'bg-danger' : 'bg-warning'}" style="margin-left: -3px">{$notificationsCount}</span>
       {/if}
     </span>
 
@@ -39,7 +39,7 @@ async function openNotification(notification) {
             <div class="d-flex">
               <div>Notifications {#if $notificationsCount > 0}({$notificationsCount}){/if}</div>
 
-            <div class="ml-auto">
+            <div class="ms-auto">
               {#if $pushNotifications.supported && !$pushNotifications.enabled}
               <button class="btn p-0" title="Enable desktop notifications" on:click|preventDefault={enablePushNotifications}>
                 <span class="iconify" data-icon="ic:outline-notifications-active"></span>
