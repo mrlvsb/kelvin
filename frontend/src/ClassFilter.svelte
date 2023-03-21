@@ -83,16 +83,16 @@
     load();
 </script>
 
-<div class="ml-auto">
+<div class="ms-auto">
   <div class="input-group">
-    <select class="custom-select custom-select-sm" bind:value={semester}>
+    <select class="form-select form-select-sm" bind:value={semester}>
         <option value="">Semester</option>
         {#each sorted(Object.keys(semesters), compare_semester) as semester (semester)}
             <option>{semester}</option>
         {/each}
     </select>
 
-    <select class="custom-select custom-select-sm" bind:value={subject} on:change={fillTeacher} disabled={!semester}>
+    <select class="form-select form-select-sm" bind:value={subject} on:change={fillTeacher} disabled={!semester}>
         <option value="">Subject</option>
         {#if semesters && semesters[semester]}
             {#each sorted(Object.keys(semesters[semester])) as subj (subj)}
@@ -102,7 +102,7 @@
     </select>
 
     {#if $user.is_superuser}
-      <select class="custom-select custom-select-sm" bind:value={teacher}>
+      <select class="form-select form-select-sm" bind:value={teacher}>
           <option value="">Teacher</option>
             {#each sorted(teachers) as teacher (teacher)}
                 <option>{teacher}</option>

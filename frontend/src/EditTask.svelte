@@ -234,7 +234,6 @@ td:not(:nth-of-type(3)) {
       <div class="input-group mb-1">
         <AutoComplete bind:value={task.path} onChange={loadTask} on:click={() => syncPathWithTitle = false} />
         {#if taskLink}
-        <div class="input-group-append">
           <a class="btn btn-outline-info" href={task.moss_link} title="Plagiarism check" target="_blank">
             <span class="iconify" data-icon="bx:bx-check-double"></span>
           </a>
@@ -258,11 +257,10 @@ td:not(:nth-of-type(3)) {
             <span slot="description">
               Do you really want to delete the task with path <strong>{savedPath}</strong>? <strong>Readme.md</strong> and all files will be <strong>DELETED!</strong></span>
           </Confirm>
-        </div>
         {/if}
       </div>
 
-      <div class="form-group">
+      <div class="mb-2">
         <table class="table table-hover table-striped mb-0">
           <tbody>
             {#each shownClasses as clazz}
@@ -278,11 +276,9 @@ td:not(:nth-of-type(3)) {
               <td style="width: 1%">
                 <div class="input-group" style="flex-wrap: nowrap">
                   <input class="form-control form-control-sm" type="number" min=0 step=1 disabled={!clazz.assigned} bind:value={clazz.max_points} placeholder="Max points" style="max-width: 110px; width: 110px" />
-                  <div class="input-group-append">
-                    <button class="btn btn-sm btn-secondary" disabled={!clazz.assigned} on:click|preventDefault={() => assignPointsToAll(clazz.max_points)} title="Set points to all assigned classes">
-                      <span class="iconify" data-icon="mdi:content-duplicate"></span>
-                    </button>
-                  </div>
+                  <button class="btn btn-sm btn-secondary" disabled={!clazz.assigned} on:click|preventDefault={() => assignPointsToAll(clazz.max_points)} title="Set points to all assigned classes">
+                    <span class="iconify" data-icon="mdi:content-duplicate"></span>
+                  </button>
                 </div>
               </td>
               <td>
@@ -306,7 +302,7 @@ td:not(:nth-of-type(3)) {
         <input type="text" id="plagiarism-key" maxlength="255" bind:value="{task.plagiarism_key}" />
       </div>
 
-      <div class="form-group">
+      <div class="mb-1">
         <Manager taskid={task.id} />
       </div>
 

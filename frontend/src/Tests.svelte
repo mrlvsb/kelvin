@@ -159,14 +159,14 @@
 </script>
 
 {#if loaded}
-<div class="tests">
+<div class="tests ps-3">
 {#each Object.values(tests) as test}
     <h2>
         {test.name}
 
         {#each ['stdin', 'stdout', 'stderr'] as fd}
             {#if !test.files[fd]}
-                <button on:click={add_file(test.name, fd, fd.replace('std', ''))} class="btn btn-sm btn-success mr-1">
+                <button on:click={add_file(test.name, fd, fd.replace('std', ''))} class="btn btn-sm btn-success me-1">
                     <span class="iconify" data-icon="ant-design:plus-outlined"></span>
                     {fd}
                 </button>
@@ -185,17 +185,17 @@
         </button>
     </h2>
 
-    <div class="form-group row mb-0">
+    <div class="row mb-0">
         <label class="col-sm-2 col-form-label">Title</label>
         <input type="text" class="form-control form-control-sm col-sm-10" bind:value={test.title}>
     </div>
 
-    <div class="form-group row mb-0">
+    <div class="row mb-0">
         <label class="col-sm-2 col-form-label">Program Arguments</label>
         <input type="text" class="form-control form-control-sm col-sm-10" bind:value={test.args}>
     </div>
 
-    <div class="form-group row mb-0">
+    <div class="row mb-0">
         <label class="col-sm-2 col-form-label">Exit code</label>
         <input type="number" class="form-control form-control-sm col-sm-10" bind:value={test.exit_code} placeholder="Default 0">
     </div>

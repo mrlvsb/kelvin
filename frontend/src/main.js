@@ -1,5 +1,5 @@
-import './global.css'
-import 'bootstrap/dist/css/bootstrap.min.css'
+import "bootstrap/dist/css/bootstrap.css";
+import "./global.css";
 
 import 'highlight.js/styles/github.css'
 import hljs from 'highlight.js/lib/core'

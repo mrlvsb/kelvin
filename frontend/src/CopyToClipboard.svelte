@@ -31,7 +31,7 @@ span {
   </span>
   {#if tooltip}
   <div class="tooltip bs-tooltip-right show d-flex align-items-center" role="tooltip" style="left: {tooltip.left}px; top: {tooltip.top}px" out:fade={{duration: 200}}>
-    <div class="arrow"></div>
+    <div class="popover-arrow"></div>
     <div class="tooltip-inner">
       Copied!
     </div>

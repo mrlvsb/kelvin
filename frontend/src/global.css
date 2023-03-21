@@ -22,6 +22,7 @@ h3 {
   align-self: center;
 }
 .statistics-table {
+  width: 30%;
   margin: 10px 0;
 }
 .statistics-table th, .statistics-table td {
@@ -32,4 +33,8 @@ h3 {
 .morehover:hover .morehover-content {
   display: block !important;
   z-index: 100;
+}
+
+body {
+  font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,Liberation Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;
 }
