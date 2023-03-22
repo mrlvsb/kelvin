@@ -39,7 +39,7 @@ def get_linked_task_data(task_id: int) -> List[LinkedTask]:
             Semester.objects.filter(pk__in=task.assignedtask_set.values('clazz__semester'))
             .distinct().all()
         )
-        semesters = ", ".join(str(s) for s in sorted(semesters))
+        semesters = ", ".join(str(s) for s in sorted(semesters, key=lambda s: (s.year, 0 if s.winter else 1)))
         linked_tasks.append(LinkedTask(
             id=task.id,
             name=task.name,
