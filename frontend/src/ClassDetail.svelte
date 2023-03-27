@@ -72,7 +72,7 @@
       }
 
       return `Graded ${gradedStudents}/${clazz.students.length} student(s)
-Total points: ${assignmentPoints}/${totalMaximumPoints}
+Total points: ${assignmentPoints.toFixed(2)}/${totalMaximumPoints}
 Average points: ${average}`;
   }
 
@@ -274,7 +274,7 @@ tr:hover td:first-of-type {
               <td></td>
               <td></td>
                 {#each clazz.assignments as assignment, k}
-                  <td title="{createTaskSummary(clazz, k)}">{totalTaskPoints(clazz, k)}</td>
+                  <td title="{createTaskSummary(clazz, k)}">{totalTaskPoints(clazz, k).toFixed(2)}</td>
                 {/each}
               <td></td>
             </tr>
