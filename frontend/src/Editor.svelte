@@ -20,6 +20,7 @@
   export let autofocus = false;
   export let disabled = false;
   export let extraKeys = {};
+  export let wrap = false;
 
   function toMode(filename) {
     const parts = filename.split('.');
@@ -43,6 +44,7 @@
       editor = CodeMirror.fromTextArea(editorEl, {
         mode: toMode(filename),
         autofocus,
+        lineWrapping: wrap,
         gutter: false,
         gutters: ["CodeMirror-lint-markers"],
         spellcheck: true,
