@@ -446,8 +446,13 @@ def moss_task_get_opts(task_id: int) -> MossTaskOptions:
 def moss_result(
     task_id: int,
     percent: Optional[int] = None,
-    lines: Optional[int] = None
+    lines: Optional[int] = None,
+    filtered: bool = True
 ) -> Optional[MossResult]:
+    """
+    If `filtered` is True, matches will be filtered according to saved or passed filter options.
+    """
+
     cache = caches["default"]
 
     key = moss_result_cache_key(task_id)
@@ -462,8 +467,8 @@ def moss_result(
         opts.lines = lines
 
     matches = []
-    for match in cache_entry["matches"]:
-        if is_match_suspicious(match, opts):
+    for match in cache_entry.get("matches", []):
+        if (not filtered) or is_match_suspicious(match, opts):
             matches.append(match)
 
     return MossResult(
