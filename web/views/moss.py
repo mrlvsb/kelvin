@@ -14,7 +14,8 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 from notifications.models import Notification
 
 from common.models import Semester, Submit, Task, current_semester
-from common.moss import PlagiarismMatch, enqueue_moss_check, get_linked_tasks, get_match_local_dir, \
+from common.moss import PlagiarismMatch, enqueue_moss_check, get_linked_tasks, \
+    get_match_local_dir, \
     moss_delete_job_from_cache, \
     moss_job_cache_key, \
     moss_result, moss_task_get_opts, moss_task_set_opts
@@ -147,17 +148,21 @@ def task_moss_graph(request, task_id):
 @cache_page(60 * 60)
 def task_moss_result(request, task_id: int, match_id: int, path: str):
     """
-    Returns a HTML (or other resource) content of a MOSS result.
+    Returns an HTML (or other resource) content of a MOSS result.
     If the result is not available locally, it is first fetched from MOSS and cached in a
     directory belonging to the task.
 
     Only teachers and students that were matched in the specified `match_id` can view this content.
     """
     task = get_object_or_404(Task, pk=task_id)
-    res = moss_result(task_id)
-    if res is None or not (0 <= match_id < len(res.matches)):
+    res = moss_result(task_id, filtered=False)
+    if res is None:
         raise Http404
-    match: PlagiarismMatch = res.matches[match_id]
+
+    found_matches = [match for match in res.matches if match.id == match_id]
+    if len(found_matches) != 1:
+        raise Http404
+    match: PlagiarismMatch = found_matches[0]
 
     user_is_teacher = is_teacher(request.user)
     if not user_is_teacher and request.user.username not in (match.first.login, match.second.login):
