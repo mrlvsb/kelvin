@@ -26,7 +26,7 @@ async function openNotification(notification) {
 {#if $notifications}
 <span style="position: relative" use:clickOutside on:click_outside={() => show = false}>
     <span on:click={() => show = !show} style="cursor: pointer">
-      <img src="/static/notify_icon.png" style="height: 15px;" draggable="false"  alt="Notify icon"/>
+      <img src="/static/notify_icon.png" style="height: 15px;" draggable="false" />
       {#if $notificationsCount > 0}
         <span class="badge badge-pill {$importantNotificationsCount >= 1 ? 'badge-danger' : 'badge-warning'}" style="margin-left: -3px">{$notificationsCount}</span>
       {/if}

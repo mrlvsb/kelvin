@@ -10,7 +10,7 @@ import django_rq
 from common.evaluate import evaluate_submit
 from django.http import JsonResponse
 from django.contrib.auth.decorators import user_passes_test
-from common.utils import is_teacher, points_to_color, is_staff
+from common.utils import is_teacher, points_to_color, inbus_search_user, user_from_inbus_person, is_staff
 from common.models import Task, Class, current_semester_conds
 from evaluator.testsets import TestSet 
 from common.models import current_semester, Subject
