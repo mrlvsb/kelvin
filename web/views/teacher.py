@@ -9,6 +9,7 @@ import tempfile
 import traceback
 from collections import OrderedDict
 from typing import Dict, List, Tuple
+from django.db.models import Q
 
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
@@ -309,3 +310,42 @@ def bulk_import(request):
             res['error'] = 'No file uploaded'
 
     return render(request, 'web/teacher/import.html', res)
+
+
+@user_passes_test(is_teacher)
+def all_tasks(request, **kwargs):
+    search_term = request.GET.get('search')
+    if search_term:
+        tasks = Task.objects.filter(name__icontains=search_term, **kwargs).order_by('-id')
+    else:
+        tasks = Task.objects.filter(**kwargs).order_by('-id')
+
+    filter_type = request.GET.get('filter')
+
+    if filter_type == 'lessons':
+        tasks = tasks.filter(
+        Q(name__istartswith='lesson') |
+        Q(name__istartswith='bonus') |
+        Q(name__istartswith='du') |
+        Q(name__istartswith='doma') |
+        Q(name__istartswith='cv')
+        )
+    elif filter_type == 'tests':
+        tasks = tasks.filter(
+        Q(name__istartswith='test') |
+        Q(name__istartswith='pisemka') |
+        Q(name__istartswith='písemka')
+        )
+    elif filter_type == 'projects':
+        tasks = tasks.filter(
+        Q(name__istartswith='project') |
+        Q(name__istartswith='projekt')
+        )
+
+    context = {
+    'tasks': tasks,
+    'subjects': Subject.objects.all().order_by('abbr').distinct('abbr'),
+    'filter_type': filter_type # Add the filter type to the context
+    }
+
+    return render(request, 'web/all_tasks.html', context)
