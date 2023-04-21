@@ -62,6 +62,7 @@
 
     processing = false;
   }
+  
 </script>
 
 <form class="p-0 mb-2">

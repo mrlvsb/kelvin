@@ -26,12 +26,11 @@ async function openNotification(notification) {
 {#if $notifications}
 <span style="position: relative" use:clickOutside on:click_outside={() => show = false}>
     <span on:click={() => show = !show} style="cursor: pointer">
-      <img src="/static/notify_icon.png" style="height: 15px;" />
+      <img src="/static/notify_icon.png" style="height: 15px;" draggable="false"  alt="Notify icon"/>
       {#if $notificationsCount > 0}
         <span class="badge badge-pill {$importantNotificationsCount >= 1 ? 'badge-danger' : 'badge-warning'}" style="margin-left: -3px">{$notificationsCount}</span>
       {/if}
     </span>
-
     {#if show}
     <div style="position: absolute; width: 300px; right: 0px; z-index: 10; background: whitesmoke;">
 				<ul class="list-group">

@@ -40,6 +40,7 @@ from notifications.signals import notify
 from notifications.models import Notification
 
 from .upload import upload_submit_files
+from .utils import file_response
 
 mimedetector = magic.Magic(mime=True)
 
@@ -225,10 +226,11 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
 
     if current_submit:
         data = {**data, **get(current_submit)}
+        has_failure = any(r.failed for r in data["results"])
         data['comment_count'] = current_submit.comment_set.count()
 
         moss_res = moss_result(current_submit.assignment.task.id)
-        if moss_res and (is_teacher(request.user) or moss_res.opts.get('show_to_students', False)):
+        if moss_res and (is_teacher(request.user) or moss_res.opts.show_to_students):
             svg = moss_res.to_svg(login=current_submit.student.username, anonymize=not is_teacher(request.user))
             if svg:
                 data['has_pipeline'] = True
@@ -238,7 +240,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
 
                 prepend = ""
                 if is_teacher(request.user):
-                    if not moss_res.opts.get('show_to_students', False):
+                    if not moss_res.opts.show_to_students:
                         prepend = "<div class='text-muted'>Not shown to students</div>"
                     prepend += f'<a href="/teacher/task/{current_submit.assignment.task_id}/moss">Change thresholds</a>'
 
@@ -278,7 +280,19 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         data['total_submits'] = submits.count()
         data['late_submit'] = assignment.deadline and submits.order_by('id').reverse()[0].created_at > assignment.deadline
         data['diff_versions'] = [(s.submit_num, s.created_at) for s in submits.order_by('id')]
-        data['job_status'] = not get_submit_job_status(current_submit.jobid).finished
+
+        job_status = get_submit_job_status(current_submit.jobid)
+
+        if not job_status.finished:
+            data['job_status'] = True
+            result_icon = "line-md:loading-loop"
+        else:
+            data['job_status'] = False
+            if job_status.status == "failed" or has_failure:
+                result_icon = "akar-icons:cross"
+            else:
+                result_icon = "mdi:success-circle-outline"
+        data["pipeline_result_icon"] = result_icon
 
     if request.method == 'POST':
         s = Submit()
@@ -640,11 +654,6 @@ def submit_comments(request, assignment_id, login, submit_num):
         'current_submit': submit.submit_num,
         'deadline': submit.assignment.deadline,
     })
-
-def file_response(file, filename, mimetype):
-    response = HttpResponse(file, mimetype)
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    return response
 
 
 def raw_test_content(request, task_name, test_name, file):

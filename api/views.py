@@ -10,7 +10,7 @@ import django_rq
 from common.evaluate import evaluate_submit
 from django.http import JsonResponse
 from django.contrib.auth.decorators import user_passes_test
-from common.utils import is_teacher, points_to_color
+from common.utils import is_teacher, points_to_color, is_staff
 from common.models import Task, Class, current_semester_conds
 from evaluator.testsets import TestSet 
 from common.models import current_semester, Subject
@@ -27,7 +27,6 @@ from pathlib import Path
 from shutil import copytree, ignore_patterns
 from django.utils.dateparse import parse_datetime
 
-from common.utils import ldap_search_user
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +100,7 @@ def class_detail_list(request):
 
                 'moss_link': reverse('teacher_task_moss_check', kwargs={'task_id': assignment.task.id}),
                 'sources_link': reverse('download_assignment_submits', kwargs={'assignment_id': assignment.id}),
-                'csv_link': reverse('download_csv_per_task', kwargs={'assignment_id': assignment.id}),
+                'csv_link': reverse('download_csv_per_assignment', kwargs={'assignment_id': assignment.id}),
 
                 'assigned': assignment.assigned,
                 'deadline': assignment.deadline,
@@ -192,6 +191,24 @@ def info(request):
 
     return JsonResponse(res)
 
+@user_passes_test(is_staff)
+
+def remove_student_from_class(request, class_id):
+    clazz = get_object_or_404(Class, id=class_id)
+    data = json.loads(request.body.decode('utf-8'))
+    username = data['username']
+    student_id = username.strip().upper()
+   
+    user = User.objects.get(username__iexact=student_id)
+    clazz.students.remove(user.id)
+
+    return JsonResponse({
+        'success': True,
+        'username': user.username,
+        'firstname': user.first_name,
+        'lastname': user.last_name
+    })
+
 @user_passes_test(is_teacher)
 def add_student_to_class(request, class_id):
     clazz = get_object_or_404(Class, id=class_id)
@@ -207,9 +224,9 @@ def add_student_to_class(request, class_id):
         try:
             user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
-            info = ldap_search_user(username)
-            if info:
-                user = User(**info)
+            person_inbus = inbus_search_user(username)
+            if person_inbus:
+                user = user_from_inbus_person(person_inbus)
                 user.username = username
                 user.save()
  
@@ -300,6 +317,13 @@ def task_detail(request, task_id=None):
         os.makedirs(task.dir(), exist_ok=True)
         if not task.name:
             task.name = task.code
+
+        plagiarism_key = data.get("plagiarism_key")
+        if plagiarism_key is None or plagiarism_key.strip() == "":
+            task.plagiarism_key = None
+        else:
+            task.plagiarism_key = plagiarism_key[:255]
+
         task.save()
 
         taskid_path = os.path.join(task.dir(), '.taskid')
@@ -371,7 +395,9 @@ def task_detail(request, task_id=None):
             'path': '_'
         })).rstrip('_'),
         'errors': errors,
-        'task_link': reverse('teacher_task', kwargs={'task_id': task.id}),
+        'task_link': reverse('teacher_task', kwargs=dict(task_id=task.id)),
+        'moss_link': reverse('teacher_task_moss_check', kwargs=dict(task_id=task.id)),
+        'plagiarism_key': task.plagiarism_key
     }
 
     ignore_list = [

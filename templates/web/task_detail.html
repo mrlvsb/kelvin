@@ -28,8 +28,10 @@
 
     Submit 
 
-    {% if submit.submit_num > 2 %}
+    {% if submit.submit_num > 1 %}
     <a href="{% url 'task_detail' login=submit.student.username assignment_id=submit.assignment.id submit_num=1 %}#src" title="First submit"><span class="iconify" data-icon="fluent:arrow-previous-12-filled"></span></a>
+    {% else %}
+      <span class="iconify" data-icon="fluent:arrow-previous-12-filled"></span>
     {% endif %}
 
     {% if prev_submit %}
@@ -38,13 +40,7 @@
       <span class="iconify" data-icon="fa-solid:chevron-left"></span>
     {% endif %}
 
-    
-
-
-
     {{ submit.submit_num }} / 
-
-
 
     {% if late_submit %}
     <strong class="text-danger">{{ total_submits }}</strong>
@@ -60,15 +56,13 @@
 
     {% if total_submits > 2 and total_submits > submit.submit_num %}
       <a href="{% url 'task_detail' login=submit.student.username assignment_id=submit.assignment.id submit_num=total_submits %}#src" title="Last submit"><span class="iconify" data-icon="fluent:arrow-next-12-filled"></span></a>
+    {% else %}
+      <span class="iconify" data-icon="fluent:arrow-next-12-filled"></span>
     {% endif %}
     -
 
-
     {{ submit.student.get_full_name }} ({{ submit.student.username }}),
-    {{ submit.created_at|date:'d.m.Y H:i' }}
-
-    {% if submit.created_at > submit.assignment.deadline %}
-    ,
+    {{ submit.created_at|date:'d.m.Y H:i' }}{% if submit.created_at > submit.assignment.deadline %},
     <span class="text-danger font-weight-bold" title="{{ stud.last_submit_date|date:'d.m.Y H:i' }}">
         {{ submit.created_at|timeuntil:submit.assignment.deadline }} after deadline
     </span>
@@ -109,17 +103,14 @@
                   Source code
                   {% if comment_count and comment_count > 0 %}
                     <span class="badge badge-dark">{{ comment_count }}</span>
-
                   {% endif %}
                 </a>
             </li>
             {% if has_pipeline %}
             <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#result">
-                    Result #{{ submit.submit_num }} 
-                    
+                  Result #{{ submit.submit_num }} <span class="iconify" data-icon="{{ pipeline_result_icon }}"></span>
                 </a>
-                
             </li>
             {% endif %}
 
@@ -184,7 +175,6 @@
 
                 {% for input in inputs %}
                 <h2>{{ input.title }}{% if input.title != input.name %} <span class="text-muted">({{ input.name }})</span>{% endif %}</h2>
-                <span class="badge badge-dark">{{ comment_count }}</span>
 
                 {{ input.assignment | markdown:task.code | safe }}
 
@@ -217,7 +207,6 @@
             {% if submit %}
             <div class="tab-pane overflow-auto" id="tab_src">
               <kelvin-submit-sources url="{% url 'submit_comments' submit.assignment.id submit.student submit.submit_num %}"></kelvin-submit-sources>
-              {{ comment.count }}
             </div>
 
             {% if has_pipeline %}

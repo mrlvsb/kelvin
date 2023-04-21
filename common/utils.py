@@ -1,6 +1,8 @@
 from datetime import timedelta
+from typing import Optional
+from . import inbus
+import django.contrib.auth.models
 import re
-import ldap
 from functools import lru_cache
 
 LDAP_CONNECTION = None
@@ -8,7 +10,8 @@ LDAP_CONNECTION = None
 @lru_cache()
 def is_teacher(user):
     return user.groups.filter(name='teachers').exists()
-
+def is_staff(user):
+    return user.is_staff
 def points_to_color(points, max_points):
     ratio = max(0, min(1, points / max_points))
     green = int(ratio * 200)
@@ -30,32 +33,17 @@ def parse_time_interval(text):
             parsed = {**parsed, **{k: int(v) for k, v in match.groupdict().items()}}
     return timedelta(**parsed)
 
-def ldap_search_user(login):
-    global LDAP_CONNECTION
 
-    def connect():
-        global LDAP_CONNECTION
-        LDAP_CONNECTION = ldap.ldapobject.ReconnectLDAPObject('ldap://ldap.vsb.cz')
+def inbus_search_user(login: str) -> Optional[inbus.PersonSimple]:
+    return inbus.search_user(login)
 
-    if not LDAP_CONNECTION:
-        connect()
 
-    def get():
-        return LDAP_CONNECTION.search_s("", ldap.SCOPE_SUBTREE, f"(cn={login})", ["sn", "givenname", "mail"])
+def user_from_inbus_person(person: inbus.PersonSimple) -> django.contrib.auth.models.User:
+    """
+    Returns a Django user from provided person info.
 
-    # TODO: escape needed?
-    try:
-        res = get()
-    except ldap.UNAVAILABLE:
-        connect()
-        res = get()
+    NOTE: `username` is note set and has to be provided later on.
+    """
+    user = django.contrib.auth.models.User(first_name=person.first_name, last_name=person.second_name, email=person.email)
 
-    if not res:
-        return None
-
-    u = res[0][1]
-    return {
-        "last_name": u['sn'][0].decode('utf-8'),
-        "first_name": u['givenname'][0].decode('utf-8'),
-        "email": u['mail'][0].decode('utf-8'),
-    }
+    return user

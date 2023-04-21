@@ -160,14 +160,14 @@ pipeline:
       {#if newDirName !== false}
       <li class="newdir">
           <span class="iconify" data-icon='ic:baseline-folder'></span>
-          <input type="text" on:keyup|preventDefault={createDir} autofocus>
+          <input type="text" on:keyup|preventDefault={createDir} >
       </li>
       {/if}
       {#each $cwd as inode (inode)}
         <li on:contextmenu|preventDefault={(e) => showCtxMenu(e, inode.name)} style="white-space: nowrap">
           <span class="iconify" data-icon="{inode.type == 'dir' ? 'ic:baseline-folder' : 'ic:outline-insert-drive-file'}"></span>
           {#if renamingPath == $currentPath + '/' + inode.name}
-            <input value={inode.name} on:keyup={finishRename} autofocus>
+            <input value={inode.name} on:keyup={finishRename} >
           {:else}
             <span on:click={() => fs.open(inode.name)}>{inode.name}</span>
           {/if}

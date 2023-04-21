@@ -235,6 +235,9 @@ td:not(:nth-of-type(3)) {
         <AutoComplete bind:value={task.path} onChange={loadTask} on:click={() => syncPathWithTitle = false} />
         {#if taskLink}
         <div class="input-group-append">
+          <a class="btn btn-outline-info" href={task.moss_link} title="Plagiarism check" target="_blank">
+            <span class="iconify" data-icon="bx:bx-check-double"></span>
+          </a>
           <a class="btn btn-outline-info" href="/task/show/{task.id}" title="Show all source codes" target="_blank">
             <span class="iconify" data-icon="bx-bx-code-alt"></span>
           </a>
@@ -296,6 +299,11 @@ td:not(:nth-of-type(3)) {
             <span class="iconify" data-icon="la:eye"></span> Show all classes
           </button>
         {/if}
+      </div>
+
+      <div title="All tasks with the same plagiarism key will be checked together">
+        <label for="plagiarism-key">Plagiarism key:</label>
+        <input type="text" id="plagiarism-key" maxlength="255" bind:value="{task.plagiarism_key}" />
       </div>
 
       <div class="form-group">

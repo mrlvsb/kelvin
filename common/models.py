@@ -56,6 +56,9 @@ class Task(models.Model):
     code = models.CharField(max_length=255, verbose_name='Directory', unique=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     announce = models.BooleanField(default=False)
+    # Key used to combine plagiarism checks for multiple relevant tasks
+    # All tasks with the same key will be checked together
+    plagiarism_key = models.CharField(max_length=255, null=True)
 
     def path_to_code(path):
         path = os.path.realpath(os.path.abspath(path))
@@ -132,6 +135,7 @@ class Class(models.Model):
             return self.day * 60 * 60 * 24 + self.time.hour * 60 * 60 + self.time.minute * 60
         except ValueError as e:
             return 0
+
 
     def summary(self, login, show_output=False):
         path = os.path.join(

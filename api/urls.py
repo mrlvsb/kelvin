@@ -11,6 +11,7 @@ urlpatterns = [
     path('classes', views.class_detail_list),
     path('classes/all', views.all_classess),
     path('classes/<int:class_id>/add_students', views.add_student_to_class),
+    path('classes/<int:class_id>/remove_students', views.remove_student_from_class),
     path('subject/<subject_abbr>', views.subject_list),
     path('reevaluate_task/<int:task_id>', views.reevaluate_task),
     path('search', views.search),

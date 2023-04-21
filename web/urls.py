@@ -1,5 +1,6 @@
 from django.urls import path
 
+from .views import moss
 from .views import teacher as teacher_view
 from .views import student as student_view
 from .views import notification as notification_view
@@ -32,7 +33,10 @@ urlpatterns = [
     # teacher
     path('teacher/task/<int:task_id>', teacher_view.teacher_task, name='teacher_task'),
     path('teacher/task/<int:task_id>.tar', student_view.teacher_task_tar, name='teacher_task_tar'),
-    path('teacher/task/<int:task_id>/moss', teacher_view.teacher_task_moss_check, name='teacher_task_moss_check'),
+    path('teacher/task/<int:task_id>/moss', moss.task_moss_check, name='teacher_task_moss_check'),
+    path('teacher/task/<int:task_id>/moss/graph', moss.task_moss_graph, name='teacher_task_moss_graph'),
+    path('teacher/task/<int:task_id>/moss/match/<int:match_id>/<path:path>',
+         moss.task_moss_result, name='teacher_task_moss_result'),
     path('submits', teacher_view.submits, name='submits'),
     path('submits/<str:student_username>', teacher_view.submits, name='submits'),
 
@@ -40,12 +44,14 @@ urlpatterns = [
     path('statistics/assignment/<int:assignment_id>', statistics_view.for_assignment, name='assignment'),
 
     path('assignment/download/<int:assignment_id>', teacher_view.download_assignment_submits, name='download_assignment_submits'),
-    path('assignment/download/<int:assignment_id>/csv', teacher_view.download_csv_per_task, name='download_csv_per_task'),
+    path('assignment/download/<int:assignment_id>/csv', teacher_view.download_csv_per_assignment, name='download_csv_per_assignment'),
     path('assignment/show/<int:assignment_id>', teacher_view.show_assignment_submits, name='show_assignment_submits'),
     path('task/show/<int:task_id>', teacher_view.show_task_submits, name='show_task_submits'),
     path('submit/<int:submit_id>/points', teacher_view.submit_assign_points, name='submit_assign_points'),
 
     path('class/download/<int:class_id>/csv', teacher_view.download_csv_per_class, name='download_csv_per_class'),
+    path('task/<int:task_id>/csv', teacher_view.download_csv_per_task, name='download_csv_per_task'),
+
 
     path('tasks', teacher_view.all_tasks, name='tasks'),
     path('tasks/<str:subject__abbr>', teacher_view.all_tasks, name='tasks'),

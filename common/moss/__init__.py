@@ -1,3 +1,4 @@
+import dataclasses
 import datetime
 import logging
 import os
@@ -5,20 +6,23 @@ import re
 import subprocess
 import tempfile
 from io import StringIO
+from pathlib import Path
+from typing import List, Optional
 
 import django_rq
 import mosspy
 import networkx as nx
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.core.cache import caches
 from django.db.models import DurationField, ExpressionWrapper, F
 from django.db.models.functions import Now
 from django.shortcuts import resolve_url
+from django.urls import reverse
 from networkx.drawing.nx_agraph import write_dot
 from notifications.signals import notify
 
 from common.models import AssignedTask, Class, Submit, Task
+from kelvin.settings import BASE_DIR
 
 MAX_FILE_SIZE = 128 * 1024
 
@@ -67,6 +71,21 @@ def add_file(logger, moss: mosspy.Moss, file_path: str, name: str, counters):
     moss.addFile(file_path, name)
 
 
+def create_submit_identifier(submit: Submit) -> str:
+    """
+    Creates an identifier that is used by MOSS to identify a single submission.
+    """
+    return f"{submit.student.username}-{submit.assignment.id}"
+
+
+def get_login_and_assignment(identifier: str) -> (str, int):
+    """
+    Parses MOSS identifier back into login and assignment ID.
+    """
+    student, assignment = identifier.split("-", maxsplit=2)
+    return (student, int(assignment))
+
+
 def add_submit(logger, moss: mosspy.Moss, submit: Submit, counters):
     logger.info(f"Checking submit {submit.id} by {submit.student.username}")
     sources = [source for source in submit.all_sources() if is_source_valid(logger, source)]
@@ -78,11 +97,12 @@ def add_submit(logger, moss: mosspy.Moss, submit: Submit, counters):
 
     def generate_filename(virt_path):
         name = os.path.basename(virt_path)
-        fullname = os.path.join(submit.student.username, name)
+        identifier = create_submit_identifier(submit)
+        fullname = os.path.join(identifier, name)
         index = 1
 
         while fullname in filenames:
-            fullname = os.path.join(submit.student.username, f"{index}_{name}")
+            fullname = os.path.join(identifier, f"{index}_{name}")
             index += 1
         return fullname
 
@@ -91,14 +111,6 @@ def add_submit(logger, moss: mosspy.Moss, submit: Submit, counters):
         filename = generate_filename(source.virt)
         filenames.add(filename)
         add_file(logger, moss, filepath, filename, counters)
-
-
-def is_match_suspicious(match, options) -> bool:
-    if min(int(match["first_percent"]), int(match["second_percent"])) >= int(options["percent"]):
-        return True
-    if int(match["lines"]) >= int(options["lines"]):
-        return True
-    return False
 
 
 def moss_notify_teacher(task_id: int):
@@ -118,6 +130,76 @@ def moss_notify_teacher(task_id: int):
         custom_text=f"MOSS plagiarism check of {task.name} finished. See results <a href='{moss_url}'>here</a>.",
         important=True
     )
+
+
+@dataclasses.dataclass(frozen=True)
+class MatchedStudent:
+    login: str
+    percent: int
+    assignment_id: int
+
+
+@dataclasses.dataclass(frozen=True)
+class PlagiarismMatch:
+    id: int
+    first: MatchedStudent
+    second: MatchedStudent
+    lines: int
+    link: str
+    moss_link: str
+
+
+@dataclasses.dataclass
+class MossTaskOptions:
+    percent: int
+    lines: int
+    show_to_students: bool
+    # New attributes below this line must provide a default value!
+
+
+def is_match_suspicious(match: PlagiarismMatch, options: MossTaskOptions) -> bool:
+    if min(match.first.percent, match.second.percent) >= options.percent:
+        return True
+    if match.lines >= options.lines:
+        return True
+    return False
+
+
+def get_match_local_dir(task: Task, match: PlagiarismMatch) -> Path:
+    """
+    Returns a path on the local filesystem that wil be used to store the match result.
+    """
+    directory = Path(BASE_DIR) / task.dir() / ".moss-results"
+    id = f"{match.first.login}-{match.first.assignment_id}_{match.second.login}-{match.second.assignment_id}"
+    return directory / id
+
+
+def get_linked_tasks(task_id: int) -> List[Task]:
+    task = Task.objects.get(pk=task_id)
+    tasks = [task]
+    if task.plagiarism_key is not None and task.plagiarism_key.strip() != "":
+        tasks = (
+            Task.objects
+                .filter(subject__id=task.subject.id, plagiarism_key=task.plagiarism_key)
+                .order_by("-id")
+        )
+    return list(tasks)
+
+
+def get_relevant_submits(task_id: int) -> List[Submit]:
+    """
+    Find all submits that should be checked for plagiarism for this given task.
+    It will return both submits of the task with the given `task_id` and also from other
+    tasks that have the same `plagiarism_key` and are for the same subject.
+    """
+    tasks = get_linked_tasks(task_id)
+
+    submits = (
+        Submit.objects.filter(assignment__task__in=tasks)
+        .annotate(year=F("assignment__clazz__semester__year"))
+        .order_by("-year", "-submit_num")
+    )
+    return list(submits.all())
 
 
 @django_rq.job("default", timeout=60 * 15)
@@ -141,13 +223,16 @@ def moss_check_task(task_id: int, notify_teacher: bool):
     success = True
 
     try:
-        submits = Submit.objects.filter(assignment__task__id=task_id).order_by("-submit_num")
-        m = mosspy.Moss(settings.MOSS_USERID)
+        submits = get_relevant_submits(task_id)
+        if not submits:
+            return
+
+        moss_client = mosspy.Moss(settings.MOSS_USERID)
         # do not ignore matches that occur frequently
-        m.setIgnoreLimit(10000)
+        moss_client.setIgnoreLimit(10000)
 
         # group submissions by directory
-        m.setDirectoryMode(1)
+        moss_client.setDirectoryMode(1)
 
         # template files
         tpl_path = os.path.join(submits[0].assignment.task.dir(), "template")
@@ -156,7 +241,7 @@ def moss_check_task(task_id: int, notify_teacher: bool):
                 full_path = os.path.join(root, f)
                 if is_ext_allowed(f) and check_file_size(full_path):
                     logger.info(f"Task {task_id}: adding base file {f}")
-                    m.addBaseFile(full_path)
+                    moss_client.addBaseFile(full_path)
                 else:
                     logger.warning(f"Skipping template file {full_path}")
 
@@ -164,7 +249,7 @@ def moss_check_task(task_id: int, notify_teacher: bool):
         for submit in submits:
             if submit.student_id not in processed:
                 try:
-                    add_submit(logger, m, submit, counters)
+                    add_submit(logger, moss_client, submit, counters)
                     processed.add(submit.student_id)
                 except IOError as e:
                     logger.error(
@@ -172,25 +257,47 @@ def moss_check_task(task_id: int, notify_teacher: bool):
 
         detected_lang = max(counters, key=counters.get)
         if counters[detected_lang] > 0:
-            m.options["l"] = detected_lang
+            moss_client.options["l"] = detected_lang
 
-        logger.info(f"Sending files to Moss: {m.files}")
-        url = m.send()
+        logger.info(f"Sending files to Moss: {moss_client.files}")
+        url = moss_client.send()
         logger.info(f"Moss returned: {url}")
         with tempfile.NamedTemporaryFile() as out:
-            m.saveWebPage(url, out.name)
+            moss_client.saveWebPage(url, out.name)
 
             with open(out.name) as f:
                 regex = r'<TR>' \
-                        '<TD><A HREF="(?P<link>[^"]+)">(?P<first_login>[^/]+)/(?P<first_path>.*?) \((?P<first_percent>\d+)%\)</A>' \
-                        '\s*<TD><A HREF="[^"]+">(?P<second_login>[^/]+)/(?P<second_path>.*?) \((?P<second_percent>\d+)%\)</A>' \
+                        '<TD><A HREF="(?P<link>[^"]+)">(?P<first_id>[^/]+)/(?P<first_path>.*?) \((?P<first_percent>\d+)%\)</A>' \
+                        '\s*<TD><A HREF="[^"]+">(?P<second_id>[^/]+)/(?P<second_path>.*?) \((?P<second_percent>\d+)%\)</A>' \
                         '\s*<TD[^>]+>(?P<lines>\d+)'
 
-                for m in re.finditer(regex, f.read()):
-                    d = m.groupdict()
-                    d["first_percent"] = int(d['first_percent'])
-                    d["second_percent"] = int(d['second_percent'])
-                    matches.append(d)
+                for moss_client in re.finditer(regex, f.read()):
+                    d = moss_client.groupdict()
+                    (first_login, first_assignment) = get_login_and_assignment(d["first_id"])
+                    (second_login, second_assignment) = get_login_and_assignment(d["second_id"])
+
+                    moss_link = d["link"]
+                    match_id = len(matches)
+                    match = PlagiarismMatch(
+                        id=match_id,
+                        first=MatchedStudent(
+                            percent=int(d["first_percent"]),
+                            login=first_login,
+                            assignment_id=first_assignment
+                        ),
+                        second=MatchedStudent(
+                            percent=int(d["second_percent"]),
+                            login=second_login,
+                            assignment_id=second_assignment
+                        ),
+                        lines=int(d["lines"]),
+                        link=reverse("teacher_task_moss_result",
+                                     kwargs=dict(task_id=task_id, match_id=match_id,
+                                                 path="index.html")),
+                        moss_link=moss_link
+                    )
+
+                    matches.append(match)
         logger.info(f"Plagiarism checking finished, URL: {url}")
     except BaseException as e:
         logger.exception(e)
@@ -212,7 +319,7 @@ def moss_check_task(task_id: int, notify_teacher: bool):
 
 
 def enqueue_moss_check(task_id: int, notify=False):
-    cache = caches['default']
+    cache = caches["default"]
     moss_delete_result_from_cache(task_id)
     job = django_rq.enqueue(moss_check_task, task_id, notify, job_timeout=60 * 60)
     cache.set(moss_job_cache_key(task_id), job.id, timeout=60 * 60 * 8)
@@ -258,8 +365,10 @@ def periodic_moss_check():
 
 class MossResult:
     def __init__(self,
-                 success: bool, url: str, matches,
-                 opts,
+                 success: bool,
+                 url: str,
+                 matches: List[PlagiarismMatch],
+                 opts: MossTaskOptions,
                  started_at: datetime.datetime,
                  finished_at: datetime.datetime,
                  log: str):
@@ -273,21 +382,16 @@ class MossResult:
         self.G = nx.Graph()
 
         for match in matches:
-            percent = max(float(match['first_percent']), float(match['second_percent']))
+            percent = max(float(match.first.percent), float(match.second.percent))
             self.G.add_edge(
-                match['first_login'], match['second_login'],
+                match.first.login,
+                match.second.login,
                 percent=percent,
-                label=f'{int(percent)}%',
-                href=match['link']
+                label=f"{int(percent)}%",
+                href=match.link
             )
 
     def to_svg(self, anonymize=True, login=None):
-        max_percent = 0
-        for d in self.matches:
-            percent = max(int(d['first_percent']), int(d['second_percent']))
-            if percent > max_percent:
-                max_percent = percent
-
         with tempfile.NamedTemporaryFile("w") as out:
             G = self.G.copy()
 
@@ -311,8 +415,8 @@ class MossResult:
                     del mapping[login]
 
                 G = nx.relabel_nodes(G, mapping)
-                for _, _, d in G.edges(data=True):
-                    d.pop('href')
+                for _, _, match in G.edges(data=True):
+                    match.pop('href')
 
             write_dot(G, out)
             out.flush()
@@ -321,26 +425,35 @@ class MossResult:
             return re.sub(r'width="[^"]+" height="[^"]+"', '', graph)
 
 
-def moss_task_set_opts(task_id, opts):
-    cache = caches['default']
-    cache.set(f"moss.{task_id}.opts", opts, timeout=60*60*24*90)
+def moss_task_set_opts(task_id: int, opts: MossTaskOptions):
+    cache = caches["default"]
+    cache.set(f"moss.{task_id}.opts", dataclasses.asdict(opts), timeout=60 * 60 * 24 * 90)
 
 
-def moss_task_get_opts(task_id):
-    opts = {
-        'percent': 20,
-        'lines': 10,
-        'show_to_students': False,
-    }
+def moss_task_get_opts(task_id: int) -> MossTaskOptions:
+    opts = MossTaskOptions(
+        percent=20,
+        lines=10,
+        show_to_students=False,
+    )
 
-    return {
-        **opts,
-        **caches['default'].get(f"moss.{task_id}.opts", {})
-    }
+    saved_opts = caches["default"].get(f"moss.{task_id}.opts", {})
+    opts_dict = dataclasses.asdict(opts)
+    opts_dict.update(saved_opts)
+    return MossTaskOptions(**opts_dict)
 
 
-def moss_result(task_id, percent=None, lines=None):
-    cache = caches['default']
+def moss_result(
+    task_id: int,
+    percent: Optional[int] = None,
+    lines: Optional[int] = None,
+    filtered: bool = True
+) -> Optional[MossResult]:
+    """
+    If `filtered` is True, matches will be filtered according to saved or passed filter options.
+    """
+
+    cache = caches["default"]
 
     key = moss_result_cache_key(task_id)
     cache_entry = cache.get(key)
@@ -349,17 +462,13 @@ def moss_result(task_id, percent=None, lines=None):
 
     opts = moss_task_get_opts(task_id)
     if percent:
-        opts['percent'] = percent
+        opts.percent = percent
     if lines:
-        opts['lines'] = lines
+        opts.lines = lines
 
     matches = []
-    for match in cache_entry["matches"]:
-        if is_match_suspicious(match, opts):
-            match['first_fullname'] = User.objects.get(
-                username=match['first_login']).get_full_name()
-            match['second_fullname'] = User.objects.get(
-                username=match['second_login']).get_full_name()
+    for match in cache_entry.get("matches", []):
+        if (not filtered) or is_match_suspicious(match, opts):
             matches.append(match)
 
     return MossResult(

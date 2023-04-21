@@ -6,6 +6,12 @@
 (<a href="{{ moss_url }}" target="_blank">MOSS URL</a>)
 {% endif %}
 </h1>
+  <div>
+    <span>Linked tasks:</span>
+    {% for task in linked_tasks %}
+      <a href="{% url 'teacher_task' task_id=task.id %}">{{ task.name }} ({{ task.semesters }})</a>{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  </div>
 {% if started_at %}
   <div>Started at {{ started_at|date:"d. m. Y H:i:s" }}</div>
   <div>Finished at {{ finished_at|date:"d. m. Y H:i:s" }}</div>
@@ -47,6 +53,7 @@
         </div>
         <input type="submit" class="btn btn-sm btn-primary" value="Set threshold">
       </form>
+      <a href="{% url "teacher_task_moss_graph" task_id=task.id %}" class="btn btn-primary mt-2">Download anonymized graph</a>
 
       {% if matches %}
         {% if newer_submit_count %}
@@ -82,10 +89,26 @@
             crossorigin="anonymous"></script>
         <script src="//cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
         <script>
+          var semesterRegex = /.*\((.*)\)$/;
+
           $(document).ready(function () {
-              $(".moss-table").DataTable({
+              $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+                  var enabled = $("#this-semester").is(":checked");
+                  if (!enabled) return true;
+
+                  var firstSemester = data[1].match(semesterRegex)[1];
+                  var secondSemester = data[4].match(semesterRegex)[1];
+
+                  var thisSemester = "{{ semester }}";
+                  return firstSemester === thisSemester || secondSemester === thisSemester;
+              });
+
+              var table = $(".moss-table").DataTable({
                   "paging": false,
-                  "order": [], // keep initial order
+                  "order": [
+                      [5, "desc"], // Percent B descending
+                      [6, "desc"]  // Line count descending
+                  ],
                   columnDefs: [{
                       targets: ["_all"],
                       orderSequence: ["desc", "asc"]
@@ -94,17 +117,25 @@
                       orderable: false
                   }]
               });
+
+              $("#this-semester").change(function() {
+                  table.draw();
+              });
           });
         </script>
 
+        <div style="display: flex; justify-content: end;">
+          <input type="checkbox" checked="checked" id="this-semester" />
+          <span style="padding-left: 5px;">Show only this semester</span>
+        </div>
         <table class="table table-sm table-hover table-striped moss-table">
           <thead>
             <tr>
-              <th>Login A</th>
-              <th>Name A</th>
+              <th>Student A</th>
+              <th>Class A</th>
               <th>Percent A</th>
-              <th>Login B</th>
-              <th>Name B</th>
+              <th>Student B</th>
+              <th>Class B</th>
               <th>Percent B</th>
               <th>Line count</th>
               <th>MOSS link</th>
@@ -114,15 +145,15 @@
           <tbody>
             {% for match in matches %}
             <tr>
-              <td><a href="{% url 'find_task_detail' task_id=task.id login=match.first_login  %}">{{ match.first_login }}</a></td>
-              <td>{{ match.first_fullname }}</td>
-              <td>{{ match.first_percent }}%</td>
-              <td><a href="{% url 'find_task_detail' task_id=task.id login=match.second_login  %}">{{ match.second_login }}</a></td>
-              <td>{{ match.second_fullname }}</td>
-              <td>{{ match.second_percent }}%</td>
+              <td><a target="_blank" href="{{ match.first_link }}">{{ match.first.login }}</a> ({{ match.first_fullname }})</td>
+              <td>{{ match.first_class }}</td>
+              <td>{{ match.first.percent }}%</td>
+              <td><a target="_blank" href="{{ match.second_link }}">{{ match.second.login }}</a> ({{ match.second_fullname }})</td>
+              <td>{{ match.second_class }}</td>
+              <td>{{ match.second.percent }}%</td>
               <td>{{ match.lines }}</td>
               <td>
-                <a href="{{ match.link }}"><span class="iconify" data-icon="ant-design:search-outlined"></span></a>
+                <a target="_blank" href="{{ match.link }}"><span class="iconify" data-icon="ant-design:search-outlined"></span></a>
               </td>
               <td>{{ match.teaching|yesno:"Yes,No" }}</td>
             </tr>

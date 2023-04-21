@@ -1,17 +1,18 @@
 <script>
   import {link} from 'svelte-spa-router'
   import {fetch} from './api.js'
-
   import CopyToClipboard from './CopyToClipboard.svelte'
   import TimeAgo from './TimeAgo.svelte'
   import {localStorageStore} from './utils.js'
   import AddStudentsToClass from './AddStudentsToClass.svelte'
   import Markdown from './Markdown.svelte'
   import AssignmentPoints from './AssignmentPoints.svelte'
+  import RemoveStudentFromClass from './RemoveStudentFromClass.svelte'
 
   export let clazz;
   export let showStudentsList = clazz['students'].length < 50; 
 
+  
   let showAddStudents = clazz.students.length == 0;
 
   let reevaluateLoading = false;
@@ -26,7 +27,7 @@
     }
     reevaluateLoading = false;
   }
-
+  
   function studentPoints(clazz, student) {
       return clazz.assignments
           .map(i => i.students[student.username])
@@ -35,8 +36,68 @@
           .reduce((acc, val) => acc + val, 0).toFixed(2);
   }
 
+  function totalTaskPoints(clazz, assignment_index) {
+    let assignmentPoints = 0;
+
+    for (let i = 0; i < clazz.students.length; i++) {
+      const student = clazz.students[i];
+      if (!isNaN(clazz.assignments[assignment_index].students[student.username].assigned_points)) {
+        assignmentPoints += Math.max(0, clazz.assignments[assignment_index].students[student.username].assigned_points);
+      }
+    }
+
+    return assignmentPoints;
+  }
+
+  function createTaskSummary(clazz, assignment_index) {
+      let maxPoints = clazz.assignments[assignment_index].max_points;
+      if (isNaN(maxPoints)) {
+          maxPoints = 0;
+      }
+
+      let totalMaximumPoints = maxPoints * clazz.students.length;
+      let assignmentPoints = 0;
+      let gradedStudents = 0;
+
+      for (let i = 0; i < clazz.students.length; i++) {
+          const student = clazz.students[i];
+          if (!isNaN(clazz.assignments[assignment_index].students[student.username].assigned_points)) {
+              assignmentPoints += Math.max(0, clazz.assignments[assignment_index].students[student.username].assigned_points);
+              gradedStudents += 1;
+          }
+      }
+
+      let average = "N/A";
+      if (gradedStudents > 0) {
+          average = (assignmentPoints / gradedStudents).toFixed(2);
+      }
+
+      return `Graded ${gradedStudents}/${clazz.students.length} student(s)
+Total points: ${assignmentPoints.toFixed(2)}/${totalMaximumPoints}
+Average points: ${average}`;
+  }
+
   let showFullTaskNames = localStorageStore('classDetail/showFullTaskNames', false);
   let showSummary = false;
+
+  function removeStudent(clazz, student){
+
+    let username = student.username;
+    let class_id = clazz.id;
+    let student_id = student.id;
+    console.log({class_id});
+    console.log({username});
+    console.log({student});
+    console.log({student_id})
+    return student.username;
+  }
+
+  let showColumn = false;
+
+  function toggleColumn() {
+    showColumn = !showColumn;
+  }
+
 </script>
 
 <style>
@@ -102,6 +163,11 @@ tr:hover td:first-of-type {
   z-index: 10;
 }
 
+.Remove-text{
+  color: black;
+  white-space: nowrap;
+  font-weight: 900;
+}
 </style>
 
 <div class="card mb-2" style="position: initial">
@@ -152,6 +218,12 @@ tr:hover td:first-of-type {
           <table class="table table-sm table-hover table-striped">
             <thead>
               <tr>
+                <th title='Remove student from class'>
+                  <button class="p-0 btn btn-link Remove-text"  on:click={toggleColumn} title="Remove from class">
+                    {showColumn ? "Remove" : ""}
+                    <span style="color:black;" class="iconify" data-icon="ri:delete-bin-line"></span>
+                  </button>
+                </th>
                 <th>
                   Login<span class="d-none d-md-inline"><!--
                   --><CopyToClipboard content={clazz.students.map(s => s.username).join('\n')} title='Copy logins to clipboard'>
@@ -173,7 +245,7 @@ tr:hover td:first-of-type {
                     {assignment.name}
                     <a href="/task/edit/{assignment.task_id}" use:link title="Edit"><span class="iconify" data-icon="clarity:edit-solid"></span></a>
                     <div style="display: flex; align-items: center;">
-                      <a href="{assignment.moss_link}" title="Send to MOSS"><span class="iconify" data-icon="bx:bx-check-double"></span></a>
+                      <a href="{assignment.moss_link}" title="Plagiarism check"><span class="iconify" data-icon="bx:bx-check-double"></span></a>
                       <a href="{assignment.sources_link}" title="Download all source codes"><span class="iconify" data-icon="fe:download" data-inline="false"></span></a>
                       <a href="{assignment.csv_link}" title="Download CSV with results"><span class="iconify" data-icon="la:file-csv-solid"></span></a>
                       <a href="/assignment/show/{assignment.assignment_id}" title="Show all source codes"><span class="iconify" data-icon="bx-bx-code-alt"></span></a>
@@ -212,6 +284,13 @@ tr:hover td:first-of-type {
             <tbody>
             {#each clazz.students as student}
             <tr>
+                <td id="bin">
+                  <div></div>
+              {#if showColumn}
+                
+               <RemoveStudentFromClass  class_id={clazz.id} student_id={student.username}/>
+              {/if}
+                </td>
               <td>{ student.username }</td>
               <td>{ student.last_name } { student.first_name }</td>
               {#each clazz.assignments.map(i => i.students[student.username]) as result, i}
@@ -229,6 +308,14 @@ tr:hover td:first-of-type {
               <td>{studentPoints(clazz, student)}</td>
             </tr>
             {/each}
+            <tr>
+              <td></td>
+              <td></td>
+                {#each clazz.assignments as assignment, k}
+                  <td title="{createTaskSummary(clazz, k)}">{totalTaskPoints(clazz, k).toFixed(2)}</td>
+                {/each}
+              <td></td>
+            </tr>
             </tbody>
           </table>
         </div>

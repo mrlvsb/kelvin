@@ -67,14 +67,20 @@
       update(td.closest('tr').rowIndex + 1);
     }
   }
+  function focus(){
+    const td = e.target.closest('tr td:first-of-type');
+    if(td && selecting >= 1) {
+      update(td.closest('tr').rowIndex + 1);
+    }
+  }
 </script>
 
-<table on:mousedown={mousedown} on:mouseover={mouseover} on:mouseup={() => selecting = 0} data-path={path}>
+<table on:mousedown={mousedown} on:mouseover={mouseover} on:focus={focus} on:mouseup={() => selecting = 0} data-path={path}>
   {#each highlightedLines as line, lineNumber}
     <CodeRow
       lineNumber={lineNumber + 1}
       {line}
-      comments={comments[lineNumber]}
+      comments={comments[lineNumber]} 
       showAddingForm={addingCommentToLine === lineNumber + 1}
       selected={selectedRows && lineNumber + 1 >= selectedRows.from && lineNumber + 1 <= selectedRows.to}
       scroll={selectedRows && userSelected == 0 && lineNumber + 1 == selectedRows.from}

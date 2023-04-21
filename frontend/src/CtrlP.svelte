@@ -75,7 +75,7 @@ ul li {
 
 {#if shown}
   <div class="ctrlp">
-    <input type="text" class="form-control form-control-xs" bind:value={query} autofocus>
+    <input type="text" class="form-control form-control-xs" bind:value={query}>
     <ul>
       {#each filtered as result, row}
         <li class:bg-info={row == selected} class:text-white={row == selected} on:click={() => go(row)}>

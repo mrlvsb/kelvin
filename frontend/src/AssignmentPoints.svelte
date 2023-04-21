@@ -90,7 +90,7 @@
                 <h2>{login}</h2>
                 <h3>{task}</h3>
                 <form on:submit|preventDefault={save}>
-                    <input class="form-control" type="number" bind:value={value} autofocus>
+                    <input class="form-control" type="number" bind:value={value} >
                     <button class="btn btn-success mt-1">
                         {#if saving}
                             <div class="spinner-border spinner-border-sm" role="status"></div>

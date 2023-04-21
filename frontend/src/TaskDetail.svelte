@@ -9,6 +9,7 @@
   import {fetch} from './api.js'
   import { user } from "./global"
   import { notifications } from './notifications.js'
+  import { loop_guard } from "svelte/internal";
 
   export let url;
   let files = null;
@@ -160,7 +161,9 @@
   function countComments(comments) {
       comments = comments || {};
       return Object.values(comments).reduce((sum, line) => sum + line.length, 0);
+      
   }
+
 
   $: allOpen = files && files.reduce((sum, file) => sum + file.opened, 0) === files.length;
   async function toggleOpen() {
@@ -233,8 +236,9 @@
   </div>
 
   {#if showDiff}
-    <SubmitsDiff {submits} {current_submit} {deadline} />
+    <SubmitsDiff {submits} {current_submit} {deadline}  />
   {/if}
+
 
   <SummaryComments {summaryComments} on:saveComment={evt => saveComment(evt.detail)} on:setNotification={setNotification} />
 
@@ -263,9 +267,10 @@
           on:saveComment={evt => saveComment({...evt.detail, source: file.source.path})} />
         {/if}
       {:else if file.source.type === 'img'}
-        <img src={file.source.src} />
+        <img src={file.source.src} alt=""/>
       {:else if file.source.type === 'video'}
         <video controls>
+          <track kind="captions" src="captions.vtt" />
           {#each file.source.sources as src}
             <source {src} />
           {/each}

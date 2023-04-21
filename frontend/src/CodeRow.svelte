@@ -91,7 +91,6 @@
   export let comments = [];
   export let showAddingForm = false;
   export let selected = false;
-  export let scroll = false;
 
   let addingInProgress = false;
 
