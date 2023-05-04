@@ -41,7 +41,7 @@ def user_from_inbus_person(person: inbus.PersonSimple) -> django.contrib.auth.mo
     """
     Returns a Django user from provided person info.
 
-    NOTE: `username` is note set and has to be provided later on.
+    NOTE: `username` is not set and has to be provided later on.
     """
     user = django.contrib.auth.models.User(first_name=person.first_name, last_name=person.second_name, email=person.email)
 
