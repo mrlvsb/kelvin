@@ -54,7 +54,7 @@
       <span class="iconify" data-icon="fa-solid:chevron-right"></span>
     {% endif %}
 
-    {% if total_submits > 2 and total_submits > submit.submit_num %}
+    {% if total_submits > 1 and total_submits > submit.submit_num %}
       <a href="{% url 'task_detail' login=submit.student.username assignment_id=submit.assignment.id submit_num=total_submits %}#src" title="Last submit"><span class="iconify" data-icon="fluent:arrow-next-12-filled"></span></a>
     {% else %}
       <span class="iconify" data-icon="fluent:arrow-next-12-filled"></span>
