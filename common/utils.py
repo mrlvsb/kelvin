@@ -1,6 +1,6 @@
 from datetime import timedelta
 from typing import Optional
-from . import inbus
+from .inbus import inbus
 import django.contrib.auth.models
 import re
 from functools import lru_cache
@@ -33,11 +33,11 @@ def parse_time_interval(text):
     return timedelta(**parsed)
 
 
-def inbus_search_user(login: str) -> Optional[inbus.PersonSimple]:
+def inbus_search_user(login: str) -> Optional[inbus.dto.PersonSimple]:
     return inbus.search_user(login)
 
 
-def user_from_inbus_person(person: inbus.PersonSimple) -> django.contrib.auth.models.User:
+def user_from_inbus_person(person: inbus.dto.PersonSimple) -> django.contrib.auth.models.User:
     """
     Returns a Django user from provided person info.
 
