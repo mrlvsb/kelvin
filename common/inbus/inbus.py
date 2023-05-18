@@ -1,7 +1,6 @@
 import requests
 import urllib.parse
 
-from dataclasses import dataclass
 from oauthlib.oauth2 import BackendApplicationClient
 from requests_oauthlib import OAuth2Session
 from typing import Dict, Optional
@@ -9,22 +8,11 @@ from typing import Dict, Optional
 from django.conf import settings
 from django.core.cache import caches
 
+from . import dto
+
 INBUS_BASE_URL: str = 'https://inbus.vsb.cz/service/'
 INBUS_SERVICE_EDISON_URL: str = urllib.parse.urljoin(INBUS_BASE_URL, 'edison/v1/')
 INBUS_SERVICE_IDM_URL: str = urllib.parse.urljoin(INBUS_BASE_URL, 'idm/v1/')
-
-
-@dataclass
-class PersonSimple:
-    """
-    Info about person provided by DTO from INBUS. Not all attributes are present since we don't need them.
-    Attribute names are in PEP-8 convention.
-    """
-    login: str
-    full_name: str
-    first_name: str
-    second_name: str
-    email: str
 
 
 def authenticate(client_id=settings.INBUS_CLIENT_ID, client_secret=settings.INBUS_CLIENT_SECRET) -> Dict:
@@ -98,7 +86,7 @@ def inbus_request(url, params=None) -> Optional[requests.Response]:
 
 # Actual INBUS API calls
 
-def person_by_login(login: str) -> Optional[PersonSimple]:
+def person_by_login(login: str) -> Optional[dto.PersonSimple]:
     url = urllib.parse.urljoin(INBUS_SERVICE_IDM_URL, f'person/login/{login}')
 
     person_resp = inbus_request(url, {})
@@ -110,7 +98,7 @@ def person_by_login(login: str) -> Optional[PersonSimple]:
     if 'login' not in person_json:
         return None
 
-    person_simple = PersonSimple(login=person_json["login"].upper(), first_name=person_json.get('firstName', ''), second_name=person_json.get('secondName', ''),
+    person_simple = dto.PersonSimple(login=person_json["login"].upper(), first_name=person_json.get('firstName', ''), second_name=person_json.get('secondName', ''),
                                 full_name=person_json.get('fullName', ''), email=person_json.get('email', ''))
 
     return person_simple
@@ -118,7 +106,7 @@ def person_by_login(login: str) -> Optional[PersonSimple]:
 
 # Kelvin's interface
 
-def search_user(login: str) -> Optional[PersonSimple]:
+def search_user(login: str) -> Optional[dto.PersonSimple]:
     person_inbus = person_by_login(login)
 
     return person_inbus
