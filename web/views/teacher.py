@@ -10,6 +10,8 @@ import traceback
 from collections import OrderedDict
 from typing import Dict, List, Tuple
 
+import django.http
+
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
@@ -203,7 +205,7 @@ def submit_assign_points(request, submit_id):
     return redirect(request.META.get('HTTP_REFERER', '/'))
 
 
-def build_score_csv(assignments, filename):
+def build_score_csv(assignments, filename: str) -> django.http.HttpResponse:
     result = OrderedDict()
 
     header = ['LOGIN']
@@ -219,7 +221,7 @@ def build_score_csv(assignments, filename):
                 'assigned_points'] if 'assigned_points' in record else 0
 
     with io.StringIO() as out:
-        w = csv.DictWriter(out, fieldnames=header)
+        w = csv.DictWriter(out, fieldnames=header, delimiter=';')
         w.writeheader()
 
         for login, row in result.items():
@@ -228,7 +230,19 @@ def build_score_csv(assignments, filename):
         return file_response(out.getvalue(), filename, "text/csv")
 
 
-def build_edison_task_score_csv(student_points: Dict, filename: str):
+def build_score_for_assignment_without_header_and_zero_scores_csv(assignment: AssignedTask, filename: str) -> django.http.HttpResponse:
+    result = (record for record in assignedtask_results(assignment) if 'assigned_points' in record)
+
+    with io.StringIO() as out:
+        w = csv.writer(out, delimiter=';')
+
+        for result in result:
+            w.writerow([result['student'], result['assigned_points']])
+
+        return file_response(out.getvalue(), filename, "text/csv")
+
+
+def build_edison_task_score_csv(student_points, filename: str) -> django.http.HttpResponse:
     """
     Build CSV file importable by Edison system.
     Edison requires delimiter set to `;`.
@@ -245,7 +259,7 @@ def build_edison_task_score_csv(student_points: Dict, filename: str):
 def download_csv_per_assignment(request, assignment_id: int):
     assigned_task = AssignedTask.objects.get(pk=assignment_id)
     csv_filename = f"{assigned_task.task.sanitized_name()}_{assigned_task.clazz.day}{assigned_task.clazz.time:%H%M}.csv"
-    return build_score_csv([assigned_task], csv_filename)
+    return build_score_for_assignment_without_header_and_zero_scores_csv(assigned_task, csv_filename)
 
 
 @user_passes_test(is_teacher)
