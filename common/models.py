@@ -44,12 +44,17 @@ class Semester(models.Model):
     def __str__(self):
         return f"{self.year}{'W' if self.winter else 'S'}"
 
+
 class Subject(models.Model):
     name = models.CharField(max_length=60)
     abbr = models.CharField(max_length=10)
 
     def __str__(self):
         return self.name
+
+    def as_dict(self):
+        return {'name': self.name, 'abbr': self.abbr}
+
 
 class Task(models.Model):
     name = models.CharField(max_length=255)

@@ -164,6 +164,20 @@ def subject_list(request, subject_abbr):
 
     return JsonResponse({'classes': classes})
 
+
+@user_passes_test(is_teacher)
+def subjects_all(request) -> JsonResponse:
+    """
+    Returns list of all subjects.
+    """
+    subjects = Subject.objects.all()
+    subjects_dicts = [ s.as_dict() for s in subjects ]
+
+    resp = {'subjects': subjects_dicts}
+
+    return JsonResponse(resp)
+
+
 @login_required
 def info(request):
     res = {}
