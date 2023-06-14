@@ -47,7 +47,7 @@ def is_response_ok_or_new_token_(response: requests.Response) -> bool:
         return False
 
 
-def inbus_request(url, params=None) -> Optional[requests.Response]:
+def inbus_request(url, params: Dict = None) -> Optional[requests.Response]:
     if params is None:
         params={}
     token = inbus_token()
@@ -57,13 +57,15 @@ def inbus_request(url, params=None) -> Optional[requests.Response]:
         "Accept-Language" : "cz"
         }
 
-    response = requests.get(url, headers=headers, params=params)
-    if not is_response_ok_or_new_token_(response):
+    try:
         response = requests.get(url, headers=headers, params=params)
-        
-        # if we still don't get right response, fail with None
-        if response.status_code != requests.codes.OK:
-            return None
+        if not is_response_ok_or_new_token_(response):
+            response = requests.get(url, headers=headers, params=params)
 
-    return response
+            # if we still don't get right response, fail with None
+            if response.status_code != requests.codes.OK:
+                return None
 
+        return response
+    except requests.exceptions.ConnectionError:
+        return None
