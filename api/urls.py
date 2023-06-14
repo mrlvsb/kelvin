@@ -1,6 +1,7 @@
 from django.urls import path
 
 from . import views
+from common.inbus import views as inbus_views
 
 urlpatterns = [
     path('tasks/<int:task_id>', views.task_detail),
@@ -16,4 +17,6 @@ urlpatterns = [
     path('reevaluate_task/<int:task_id>', views.reevaluate_task),
     path('search', views.search),
     path('transfer_students', views.transfer_students),
+
+    path('inbus/subject_versions', inbus_views.subject_versions),
 ]

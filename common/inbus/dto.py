@@ -1,4 +1,10 @@
 from dataclasses import dataclass
+from typing import NewType
+
+import serde
+
+DepartmentId = NewType('DepartmentId', int)
+
 
 @dataclass
 class PersonSimple:
@@ -12,3 +18,28 @@ class PersonSimple:
     second_name: str
     email: str
 
+
+@serde.serde
+@dataclass
+class Person:
+    personId: int
+    login: str
+    fullName: str
+
+
+@dataclass
+class Subject:
+    subjectId: int
+    code: str
+    abbrev: str
+    title: str
+    guarantee: Person
+
+
+@serde.serde
+@dataclass
+class SubjectVersion:
+    subjectVersionId: int
+    subject: Subject
+    subjectVersionCompleteCode: str
+    guarantee: Person
