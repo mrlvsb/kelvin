@@ -19,4 +19,5 @@ urlpatterns = [
     path('transfer_students', views.transfer_students),
 
     path('inbus/subject_versions', inbus_views.subject_versions),
+    path('inbus/schedule/subject/version/<int:subject_version_id>', inbus_views.schedule_subject_by_version_id),
 ]
