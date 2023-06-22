@@ -63,6 +63,20 @@ def subject_versions(department_id: dto.DepartmentId = 386) -> List[dto.SubjectV
     return subject_versions
 
 
+def schedule_subject_by_version_id(subject_version_id: dto.SubjectVersionId) -> dto.SubjectVersionSchedule:
+    """
+    Complete schedule for given subject version for current semester.
+    """
+    url = urllib.parse.urljoin(config.INBUS_SERVICE_EDISON_URL, 'schedule')
+    concrete_activities_resp = utils.inbus_request(url, {'subjectVersionId': subject_version_id})
+
+    concrete_activities_json = concrete_activities_resp.json()
+
+    concrete_activities = [ serde.from_dict(dto.ConcreteActivity, concrete_activity_dict) for concrete_activity_dict in concrete_activities_json ]
+
+    return concrete_activities
+
+
 # Kelvin's interface
 
 def search_user(login: str) -> Optional[dto.PersonSimple]:
