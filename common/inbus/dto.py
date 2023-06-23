@@ -6,6 +6,7 @@ import serde
 DepartmentId = NewType('DepartmentId', int)
 SubjectVersionId = NewType('SubjectVersionId', int)
 SubjectVersionSchedule = NewType('SubjectVersionSchedule', List['ConcreteActivity'])
+ConcreteActivityId = NewType('ConcreteActivityId', int)
 
 
 @dataclass
@@ -107,3 +108,53 @@ class ConcreteActivity:
     teacherFullNames: str = '' # optimalizační předpočítávaný atribut z vazby na vyučující
     teacherLogins: str = '' # optimalizační předpočítávaný atribut z vazby na vyučující
     teacherShortNames: str = '' # optimalizační předpočítávaný atribut z vazby na vyučující
+
+
+@serde.serde
+@dataclass
+class StudyRelation:
+    """
+    Relation of student and university.
+    """
+
+    studyRelationId: int # ID studijního vztahu
+    personId: int # ID osoby
+    login: str # osobní číslo (login)
+    fullName: str # celé jméno včetně titulů
+    email: str # školní email
+    studyCode: str # kód studijního poměru, např.: 2. FEI B IVT en P
+    beginDate: str #($date-time) začátek studijního vztahu (yyyy-MM-dd)
+    endDate: str #($date-time) konec studijního vztahu (yyyy-MM-dd)
+    facultyId: int # ID fakulty (OrgUnit)
+    facultyAbbrev: str #zkratka fakulty
+    facultyTitle: str #název fakulty
+    studyTypeId: int #ID typu studia
+    studyTypeCode: str # kód typu studia
+    studyTypeTitle: str # název typu studia
+    studyFormId: int # ID formy studia
+    studyFormCode: str # kód formy studia
+    studyFormTitle: str # název formy studia
+    studyLanguageId: int # ID jazyka výuky
+    studyLanguageCode: str # kód jazyka výuky
+    studyLanguageTitle: str # název jazyka výuky
+    classYearId: int # ID ročníku
+    classYearYear: int # ročník ročníku
+    tutorialCentreId: int # ID konzultačního střediska
+    tutorialCentreAbbrev: str # zkratka konzultačního střediska
+    tutorialCentreTitle: str # název konzultačního střediska
+    studyProgrammeId: int # ID studijního programu
+    studyProgrammeCode: str # kód studijního programu
+    studyProgrammeAbbrev: str # zkratka studijního programu
+    studyProgrammeTitle: str # název studijního programu
+    firstName: str # křestní jméno
+    secondName: str # přijmení
+    degreeBefore: str = '' #titul před jménem
+    degreeAfter: str = '' # titul za jménem
+    studySpecializationId: int = 0 # ID studijní specializace
+    studySpecializationCode: str = '' # kód studijní specializace
+    studySpecializationAbbrev: str = '' # zkratka studijní specializace
+    studySpecializationTitle: str = '' # název studijní specializace
+    studyBrancheId: int = 0 # ID studijního oboru
+    studyBrancheCode: str = '' # kód studijního oboru
+    studyBrancheAbbrev: str = '' # zkratka studijního oboru
+    studyBrancheTitle: str = '' # název studijního oboru
