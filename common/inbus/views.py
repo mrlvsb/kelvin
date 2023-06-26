@@ -1,5 +1,6 @@
 import serde.json
 
+from django.core.cache import cache
 from django.contrib.auth.decorators import user_passes_test
 from django.http import HttpResponse
 
@@ -10,7 +11,10 @@ from common.utils import is_teacher
 
 @user_passes_test(is_teacher)
 def subject_versions(request):
-    subject_versions = inbus.subject_versions()
+    subject_versions = cache.get('subject_versions')
+    if not subject_versions:
+        subject_versions = inbus.subject_versions()
+        cache.set('subject_versions', subject_versions, 60*60)
 
     # TODO: When upgrading, see: https://docs.djangoproject.com/en/4.2/ref/request-response/#httpresponse-objects
     # for a way to set content type.
