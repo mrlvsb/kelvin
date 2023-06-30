@@ -77,6 +77,16 @@ def schedule_subject_by_version_id(subject_version_id: dto.SubjectVersionId) -> 
     return concrete_activities
 
 
+def concrete_activity(concrete_activity_id: dto.ConcreteActivityId) -> dto.ConcreteActivity:
+    url = urllib.parse.urljoin(config.INBUS_SERVICE_EDISON_URL, f'schedule/{concrete_activity_id}')
+    concrete_activity_resp = utils.inbus_request(url, {})
+    concrete_activity_json = concrete_activity_resp.json()
+
+    concrete_activity = serde.from_dict(dto.ConcreteActivity, concrete_activity_json)
+
+    return concrete_activity
+
+
 def students_in_concrete_activity(concrete_activity_id: dto.ConcreteActivityId) -> List[dto.StudyRelation]:
     url = urllib.parse.urljoin(config.INBUS_SERVICE_EDISON_URL, f'schedule/{concrete_activity_id}/studyRelations')
     study_relation_resp = utils.inbus_request(url, {})
