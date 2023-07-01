@@ -1,5 +1,6 @@
 import "bootstrap/dist/css/bootstrap.css";
 import "./global.css";
+import "bootstrap/js/dist/collapse";
 
 import 'highlight.js/styles/github.css'
 import hljs from 'highlight.js/lib/core'
@@ -42,6 +43,7 @@ import UploadSolution from './UploadSolution.svelte'
 import PipelineStatus from './PipelineStatus.svelte'
 import {safeMarkdown} from './markdown.js'
 import CtrlP from './CtrlP.svelte'
+import ColorTheme from "./ColorTheme.svelte"
 
 class ReplaceHtmlElement extends HTMLElement {
 	constructor() {
@@ -102,7 +104,7 @@ createElement('notifications', Notifications);
 createElement('upload-solution', UploadSolution);
 createElement('pipeline-status', PipelineStatus);
 createElement('ctrlp', CtrlP);
-
+createElement("color-theme", ColorTheme);
 
 function focusTab() {
 	const hash = document.location.hash.replace('#', '').split('-')[0].split(';')[0];
@@ -121,13 +123,3 @@ function focusTab() {
 
 window.addEventListener("hashchange", focusTab);
 window.addEventListener("DOMContentLoaded", focusTab);
-
-document.addEventListener('click', evt => {
-  const btn = evt.target.closest('[data-toggle="collapse"]');
-  if(btn) {
-    const target = document.querySelector(btn.dataset.target);
-    if(target) {
-      target.classList.toggle('show');
-    }
-  }
-});

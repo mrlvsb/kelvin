@@ -1,10 +1,11 @@
 <!doctype html>
-<html data-bs-theme="light">
+<html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
         <script src="https://cdn.jsdelivr.net/npm/asciinema-player@2.6.1/resources/public/js/asciinema-player.min.js"></script>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciinema-player@2.6.1/resources/public/css/asciinema-player.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
         <meta name="csrf-token" content="{{ csrf_token }}">
         {% load static %}
         <meta name="django-webpush-vapid-key" content="{{ vapid_public_key }}">
@@ -20,12 +21,12 @@
         {% if is_teacher %}
           <kelvin-ctrlp></kelvin-ctrlp>
         {% endif %}
-        <nav class="navbar navbar-light bg-light navbar-expand-sm mb-2">
+        <nav class="navbar navbar-expand-sm mb-2">
           <div class="container-fluid">
             <a class="navbar-brand" href="/">Kelvin</a>
-              <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-              </button>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
 
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
               <ul class="navbar-nav me-auto">
@@ -40,15 +41,15 @@
                 <li class="nav-item"><a class="nav-link" href="{% url 'admin:index' %}">Admin</a></li>
                 {% endif %}
               </ul>
-              {% if user.is_authenticated %}
-              <div class="my-2 my-lg-0">
-                  {{ user.get_full_name }} ({{ user.username }})
-                  <span id="notifications">
-                    <kelvin-notifications></kelvin-notifications>
-                  </span>
-                  <a href="/accounts/logout/?next=/" class="text-decoration-none">Logout</a>
-              </div>
+              <ul class="navbar-nav">
+                {% if user.is_authenticated %}
+                <span class="ml-auto navbar-text">{{ user.get_full_name }} ({{ user.username }})</span>
+                <kelvin-notifications></kelvin-notifications>
+                
+                <kelvin-color-theme></kelvin-color-theme>
+                <li class="nav-item"><a class="nav-link text-primary" href="/accounts/logout/?next=/" class="text-decoration-none">Logout</a></li>
               {% endif %}
+              </ul>
             </div>
           </div>
         </nav>
