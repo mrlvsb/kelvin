@@ -24,18 +24,22 @@ async function openNotification(notification) {
 </script>
 
 {#if $notifications}
-<span style="position: relative" use:clickOutside on:click_outside={() => show = false}>
-    <span on:click={() => show = !show} style="cursor: pointer">
-      <img src="/static/notify_icon.png" style="height: 15px;" draggable="false" />
-      {#if $notificationsCount > 0}
-        <span class="badge rounded-pill {$importantNotificationsCount >= 1 ? 'bg-danger' : 'bg-warning'}" style="margin-left: -3px">{$notificationsCount}</span>
-      {/if}
-    </span>
+<li class="nav-item" use:clickOutside on:click_outside={() => show = false}>
+  <button class="btn btn-link nav-link" on:click={() => show = !show}>
+    <i class="bi bi-bell"></i>
+    {#if $notificationsCount > 0}
+      <span class="position-absolute top-0 start-100 translate-middle p-2 {$importantNotificationsCount >= 1 ? 'bg-danger' : 'bg-warning'} border border-light rounded-circle">
+        {$notificationsCount}
+        <span class="visually-hidden">New alerts</span>
+      </span>
+    {/if}
+  </button>
+</li>
 
     {#if show}
-    <div style="position: absolute; width: 300px; right: 0px; z-index: 10; background: whitesmoke;">
+    <div style="position: absolute; width: 300px; right: 0px; z-index: 10;">
 				<ul class="list-group">
-					<li class="list-group-item" style="background-color: rgba(0,0,0,.03)">
+					<li class="list-group-item">
             <div class="d-flex">
               <div>Notifications {#if $notificationsCount > 0}({$notificationsCount}){/if}</div>
 
@@ -89,5 +93,4 @@ async function openNotification(notification) {
 				</ul>
     </div>
     {/if}
-  </span>
 {/if}
