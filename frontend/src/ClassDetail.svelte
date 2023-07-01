@@ -93,13 +93,6 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
   text-align: center;
 }
 
-tr td:first-of-type, tr th:first-of-type {
-  position: sticky;
-  left: 0;
-  z-index: 1;
-  background: white;
-}
-
 .card-body {
   overflow-x: auto;
 }
