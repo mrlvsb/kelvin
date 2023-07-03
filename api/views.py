@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from django.core import serializers
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
@@ -47,6 +48,7 @@ def tasks_list(request):
 @user_passes_test(is_teacher)
 def all_classes(request):
     conds = {}
+
     if not request.user.is_superuser:
         conds['teacher_id'] = request.user.id
 
@@ -571,3 +573,15 @@ def transfer_students(request):
     src.students.remove(student)
         
     return JsonResponse({'transfers': transfers})
+
+
+@user_passes_test(is_teacher)
+def semesters(request):
+    semesters = Semester.objects.all()
+
+    semesters_json = serializers.serialize('json', semesters)
+
+    # TODO: When upgrading, see: https://docs.djangoproject.com/en/4.2/ref/request-response/#httpresponse-objects
+    # for a way to set content type.
+    return HttpResponse(semesters_json,
+                        content_type="application/json")
