@@ -17,6 +17,7 @@ urlpatterns = [
     path('reevaluate_task/<int:task_id>', views.reevaluate_task),
     path('search', views.search),
     path('transfer_students', views.transfer_students),
+    path('semesters', views.semesters),
 
     path('inbus/subject_versions', inbus_views.subject_versions),
     path('inbus/schedule/subject/version/<int:subject_version_id>', inbus_views.schedule_subject_by_version_id),
