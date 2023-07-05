@@ -37,7 +37,9 @@
         {% if is_teacher %}
           <kelvin-ctrlp></kelvin-ctrlp>
         {% endif %}
-        <nav class="navbar navbar-expand-sm mb-2">
+        {# when updating colabsibility, make sure to update the visibility for icon descriptions, User text and #}
+        {# size of Notification dropdown #}
+        <nav class="navbar navbar-expand-md mb-2">
           <div class="container-fluid">
             <a class="navbar-brand" href="/">Kelvin</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,11 +61,13 @@
               </ul>
               <ul class="navbar-nav">
                 {% if user.is_authenticated %}
-                <span class="ml-auto navbar-text">{{ user.get_full_name }} ({{ user.username }})</span>
+                <span class="ml-auto navbar-text">
+                  <span class="d-md-none">Logged as: </span><span class="text-body-emphasis">{{ user.get_full_name }} ({{ user.username }})</span>
+                </span>
                 <kelvin-notifications></kelvin-notifications>
                 
                 <kelvin-color-theme></kelvin-color-theme>
-                <li class="nav-item"><a class="nav-link text-primary" href="/accounts/logout/?next=/" class="text-decoration-none">Logout</a></li>
+                <li class="nav-item"><a class="nav-link text-primary-emphasis" href="/accounts/logout/?next=/" class="text-decoration-none">Logout</a></li>
               {% endif %}
               </ul>
             </div>

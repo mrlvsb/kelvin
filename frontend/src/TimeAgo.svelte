@@ -30,5 +30,5 @@
 </script>
 
 <time datetime={new Date(datetime).toISOString()} title={new Date(datetime).toLocaleString('cs')}>
-  {prefix ? prefix : ''} {format(new Date(datetime), prefix !== null || suffix !== null ? 'en_num' : null, {relativeDate: rel})} {suffix ? suffix : ''}
+  {prefix ? prefix : ''}{format(new Date(datetime), prefix !== null || suffix !== null ? 'en_num' : null, {relativeDate: rel})}{suffix ? suffix : ''}
 </time>

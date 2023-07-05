@@ -24,45 +24,38 @@ async function openNotification(notification) {
 </script>
 
 {#if $notifications}
-<li class="nav-item" use:clickOutside on:click_outside={() => show = false}>
-  <button class="btn btn-link nav-link" on:click={() => show = !show}>
+<li class="nav-item dropdown">
+  <button class="btn btn-link nav-link dropdown-toggle" href="#" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Notifications">
     <i class="bi bi-bell"></i>
+    <span class="d-md-none ms-1">Notifications</span>
     {#if $notificationsCount > 0}
-      <span class="position-absolute top-0 start-100 translate-middle p-2 {$importantNotificationsCount >= 1 ? 'bg-danger' : 'bg-warning'} border border-light rounded-circle">
+      <span class="badge {$importantNotificationsCount >= 1 ? 'text-bg-danger' : 'text-bg-warning'} border border-light rounded-pill">
         {$notificationsCount}
         <span class="visually-hidden">New alerts</span>
       </span>
     {/if}
-  </button>
-</li>
+    </button>
 
-    {#if show}
-    <div style="position: absolute; width: 300px; right: 0px; z-index: 10;">
-				<ul class="list-group">
-					<li class="list-group-item">
-            <div class="d-flex">
-              <div>Notifications {#if $notificationsCount > 0}({$notificationsCount}){/if}</div>
+    <div class="dropdown-menu dropdown-menu-end shadow p-0 rounded dropdown-menu-custom">
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">
+          <div class="d-flex align-items-center">
+            <div>Notifications{#if $notificationsCount > 0}&nbsp;({$notificationsCount}){/if}</div>
 
             <div class="ms-auto">
-              {#if $pushNotifications.supported && !$pushNotifications.enabled}
-              <button class="btn p-0" title="Enable desktop notifications" on:click|preventDefault={enablePushNotifications}>
+              {#if !$pushNotifications.supported && !$pushNotifications.enabled}
+              <button class="btn text-body" title="Enable desktop notifications" on:click={enablePushNotifications}>
                 <span class="iconify" data-icon="ic:outline-notifications-active"></span>
               </button>
               {/if}
-
-              <button class="btn p-0" class:text-muted={$notificationsCount <= 0} on:click|preventDefault={notifications.markAllRead} title="Clear notifications">
+              <button class="btn text-body" class:text-muted={$notificationsCount <= 0} on:click={notifications.markAllRead} title="Clear all notifications">
                 <span class="iconify" data-icon="mdi:notification-clear-all"></span>
               </button>
             </div>
-            </div>
-					</li>
-					<div style="max-height: 300px; overflow-y: auto; font-size: 80% !important;">
-            {#if $notifications.length > 0}
+        </li>
+        {#if $notifications.length > 0}
               {#each $notifications.slice().sort((a, b) => ((b.important||0) && b.unread) - ((a.important||0) && a.unread) || b.timestamp - a.timestamp) as item (item.id)}
-              <li class='list-group-item p-1' class:list-group-item-light={!item.unread || !item.important}>
-                <div style="float: right">
-                  <button class:invisible={!item.unread} class="btn p-0" on:click|preventDefault={() => notifications.markRead(item.id)}>&times;</button>
-                </div>
+              <li class='list-group-item p-1 d-flex align-items-center justify-content-between' class:text-body-secondary={!item.unread || !item.important}>
                 <div>
                   <strong>{ item.actor }</strong>
                   {#if item.custom_text}
@@ -80,17 +73,28 @@ async function openNotification(notification) {
 
                     {#if item.target}on { item.target }{/if}
                   {/if}
-                  <span style="white-space:nowrap">
+                  <span>
                     (<TimeAgo datetime={item.timestamp} />)
                   </span>
+                </div>
+                <div>
+                  <button type="button" hidden={!item.unread} class="btn-close" aria-label="Close" on:click={() => notifications.markRead(item.id)}></button>
                 </div>
               </li>
               {/each}
             {:else}
             <span class="list-group-item p-1 text-center" v-else>There are no notifications!</span>
             {/if}
-					</div>
-				</ul>
+      </ul>
     </div>
-    {/if}
+</li>
 {/if}
+
+<style>
+  /* 768px - md (medium) bootstrap breakpoint; when the navbar collapses, this gets disabled */
+  @media(min-width: 768px) {
+    .dropdown-menu-custom {
+      min-width: 26rem;
+    }
+  }
+</style>
