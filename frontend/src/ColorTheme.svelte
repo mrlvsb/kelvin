@@ -39,10 +39,11 @@
 </script>
 
 <li class="nav-item dropdown">
-  <button class="btn btn-link nav-link dropdown-toggle" href="#" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+  <button class="btn btn-link nav-link dropdown-toggle" href="#" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Change theme">
     <i class="bi {icons[curTheme] === undefined ? "bi-circle-half" : icons[curTheme]}"></i>
+    <span class="d-md-none ms-1">Change theme</span>
   </button>
-  <ul class="dropdown-menu dropdown-menu-end">
+  <ul class="dropdown-menu dropdown-menu-end shadow">
     <li><button on:click={selectTheme} class="d-flex dropdown-item" class:active={curTheme == "auto"} data-theme="auto">
       <i class="me-1 bi bi-circle-half"></i>Auto<i class="opacity ms-auto bi bi-check2" hidden={curTheme != "auto"}></i>
     </button></li>
