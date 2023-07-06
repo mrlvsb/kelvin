@@ -4,6 +4,8 @@ import commonjs from '@rollup/plugin-commonjs';
 import livereload from 'rollup-plugin-livereload';
 import { terser } from 'rollup-plugin-terser';
 import postcss from 'rollup-plugin-postcss'
+import autoprefixer from 'autoprefixer';
+import sass from 'sass';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -55,11 +57,14 @@ export default {
 		commonjs(),
 
     postcss({
+      preprocessor: (content, id) => {
+        return sass.compile(id).toString();
+      },
       extract: true,
       minimize: production,
       sourceMap: production,
       plugins: [
-      //          require('autoprefixer'),
+        autoprefixer,
       ]
     }),
 

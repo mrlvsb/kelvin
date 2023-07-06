@@ -22,7 +22,7 @@
 
     {% for test in result.tests %}
     <div class="card mb-3 test-result {% if test.success%}border-success test-result-success{%else%}border-danger test-result-fail{%endif%}"{% if test.success%} hidden{% endif %}>
-        <div class="card-header {% if test.success%}bg-success{%else%}bg-danger{%endif%}">
+        <div class="card-header {% if test.success%}text-bg-success{%else%}text-bg-danger{%endif%}">
             <h5>
                 {% if test.title %}{{ test.title }}{% else %} {{ test.name }} {% endif %}
                 {% if test.title and test.title != test.name %} <span>({{ test.name }})</span>{% endif %}
@@ -38,7 +38,7 @@
 </ul>
 {% endif %}
 {% if test.command or test.message %}
-<pre style="color: #444; font-weight: bold">
+<pre style="filter: opacity(.7);">
 {% if test.command %}$ {{ test.command }}{% endif %}{% if test.message %}
 {{ test.message }}{%endif%}
 </pre>
@@ -46,7 +46,8 @@
 
             {% for path, v in test.files.items %}
             {% if v.diff and v.diff.size < max_inline_content_bytes or not max_inline_content_bytes %}
-              <div class="diff"
+              {# TODO make this dark when diff2html implements dark theme, same with the wrapper below #}
+              <div class="diff text-bg-light"
                 data-expected-url="{% url 'raw_result_content' submit.id test.name 'expected' path %}"
                 data-actual-url="{% url 'raw_result_content' submit.id test.name 'actual' path %}"
                 data-path="{{path}}"
@@ -54,7 +55,7 @@
               {{ v.diff.read }}
               </div>
             {% else %}
-              <div class="d2h-wrapper">
+              <div class="d2h-wrapper text-bg-light">
                 <div class="d2h-file-wrapper">
                   <div class="d2h-file-header">
                     <span class="d2h-file-name-wrapper">
@@ -147,7 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
         "lt"  : "<",
         "gt"  : ">"
       };
-
       const diffHtml = Diff2Html.html(el.innerHTML.replace(/&([^;]+);/gm, (m, entity) => entities[entity] || m).trim(), {
             drawFileList: true,
             matching: 'lines',

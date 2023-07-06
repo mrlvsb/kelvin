@@ -1,7 +1,5 @@
 <script>
 	import flatpickr from "flatpickr";
-	import Dropdown from './Dropdown.svelte'
-  import 'flatpickr/dist/flatpickr.min.css'
   export let from;
   export let to;
 	export let timeOffsetInWeek;
@@ -55,42 +53,33 @@ $: if(instanceTo) {
 
 
 </script>
-<style>
-  input {
-    background-color: #fff !important;
-  }
-  .dropdown-item {
-    cursor: pointer;
-  }
-</style>
+<div class="input-group input-group-sm col-md">
+  <button class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" type="button" aria-expanded="false"></button>
+  <ul class="dropdown-menu">
+    <button class="dropdown-item" on:click={() => from = new Date()}>Now</button>
+    {#each {length: 14} as _, i}
+      <button class="dropdown-item" on:click={() => from = weekDate(i)}>
+        Week {i + 1}
+        {#if weekStart(i) <= new Date() && new Date() <= weekStart(i + 1) }
+          <span><span class="iconify" data-icon="akar-icons:arrow-back"></span></span>
+        {/if}
+      </button>
+    {/each}
+  </ul>
+  <input bind:this={fromEl} class="form-control" bind:value={from} placeholder="Assigned">
+</div>
 
-<div class="row">
-  <div class="input-group input-group-sm col">
-    <Dropdown>
-      <span class="dropdown-item" on:click={() => from = new Date()}>Now</span>
-      {#each {length: 14} as _, i}
-        <span class="dropdown-item" on:click={() => from = weekDate(i)}>
-          Week {i + 1}
-          {#if weekStart(i) <= new Date() && new Date() <= weekStart(i + 1) }
-            <span><span class="iconify" data-icon="akar-icons:arrow-back"></span></span>
-          {/if}
-        </span>
-      {/each}
-    </Dropdown>
-    <input bind:this={fromEl} class="form-control" bind:value={from} placeholder="Assigned">
-  </div>
-
-  <div class="input-group input-group-sm col">
-    <Dropdown>
-      <span class="dropdown-item" on:click={() => addDeadline(30)}>+ 30 min</span>
-      <span class="dropdown-item" on:click={() => addDeadline(1*45)}>+ 1×45 min</span>
-      <span class="dropdown-item" on:click={() => addDeadline(2*45)}>+ 2×45 min</span>
-      <span class="dropdown-item" on:click={() => addDeadline(3*45)}>+ 3×45 min</span>
-      <span class="dropdown-item" on:click={() => addDeadline(1*60)}>+ 1×60 min</span>
-      <span class="dropdown-item" on:click={() => addDeadline(2*60)}>+ 2×60 min</span>
-      <span class="dropdown-item" on:click={() => addDeadline(3*60)}>+ 3×60 min</span>
-      <span class="dropdown-item" on:click={() => addDeadline(60*24*7)}>+ week</span>
-    </Dropdown>
-    <input bind:this={toEl} class="form-control" bind:value={to} placeholder="Deadline">
-  </div>
+<div class="input-group input-group-sm col-md">
+  <button class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" type="button" aria-expanded="false"></button>
+  <ul class="dropdown-menu">
+    <button class="dropdown-item" on:click={() => addDeadline(30)}>+ 30 min</button>
+    <button class="dropdown-item" on:click={() => addDeadline(1*45)}>+ 1×45 min</button>
+    <button class="dropdown-item" on:click={() => addDeadline(2*45)}>+ 2×45 min</button>
+    <button class="dropdown-item" on:click={() => addDeadline(3*45)}>+ 3×45 min</button>
+    <button class="dropdown-item" on:click={() => addDeadline(1*60)}>+ 1×60 min</button>
+    <button class="dropdown-item" on:click={() => addDeadline(2*60)}>+ 2×60 min</button>
+    <button class="dropdown-item" on:click={() => addDeadline(3*60)}>+ 3×60 min</button>
+    <button class="dropdown-item" on:click={() => addDeadline(60*24*7)}>+ week</button>
+  </ul>
+  <input bind:this={toEl} class="form-control" bind:value={to} placeholder="Deadline">
 </div>

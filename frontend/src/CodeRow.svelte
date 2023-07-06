@@ -6,19 +6,12 @@
   }
   
   tr td:first-of-type {
-    text-align: right;
-    color: #7e7e7e;
     user-select: none;
-    font-size: 87.5%;
-    padding-right: 15px;
-    vertical-align: top;
+    font-size: .87em;
     cursor: row-resize;
   }
   
   tr td:first-of-type span {
-    padding-left: 4px;
-    font-weight: bold;
-    color: black;
     visibility: hidden;
   }
   
@@ -39,10 +32,11 @@
   :global(.comment) {
     padding: 5px;
     word-break: break-word;
-    border: 2px solid #000000;
+    border: 2px solid var(--bs-body-color);
     border-radius: 5px;
     max-width: 980px;
     margin-bottom: 1px;
+    filter: opacity(.8);
   }
   :global(.comment p) {
     margin-bottom: 4px;
@@ -57,20 +51,8 @@
   :global(.comment p:last-of-type) {
     margin-bottom: 0;
   }
-  :global(.comment.teacher) {
-    background: #FFFF1ED9;
-  }
-  :global(.comment.teacher.comment-read) {
-    background: #FFFF1E49;
-  }
-  :global(.comment.student) {
-    background: #71F740;
-  }
-  :global(.comment.student.comment-read) {
-    background: #71F74050;
-  }
-  :global(.comment.automated) {
-    background: #7DB4E4;
+  :global(.comment.comment-read) {
+    filter: opacity(.5);
   }
 
   .selected {
@@ -116,8 +98,8 @@
 </script>
 
 <tr class="linecode" class:selected={selected} data-line="{lineNumber}">
-  <td>
-    <span on:click={() => dispatch('showCommentForm', showAddingForm ? -1 : lineNumber)} style="cursor: pointer">+</span>
+  <td class="text-end align-baseline me-2">
+    <span on:click={() => dispatch('showCommentForm', showAddingForm ? -1 : lineNumber)} style="cursor: pointer"><b>+</b></span>
   </td>
   <td>
     <pre>{@html line}</pre>
@@ -126,7 +108,7 @@
     {/each}
 
     {#if showAddingForm}
-      <div class="comment {$user.teacher ? 'teacher' : 'student'}">
+      <div class="comment {$user.teacher ? 'text-bg-warning' : 'text-bg-success'}">
         <CommentForm on:save={addNewComment} disabled={addingInProgress} />
       </div>
     {/if}

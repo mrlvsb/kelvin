@@ -13,6 +13,12 @@
     export let url = null;
     export let unread = null;
     export let notification_id = null;
+    
+    const colorMap = {
+      "automated": "text-bg-info",
+      "teacher": "text-bg-warning",
+      "student": "text-bg-success",
+    }
 
     const dispatch = createEventDispatcher();
 
@@ -37,7 +43,7 @@
 </script>
 
   <div style="display: flex; flex-direction: row;">
-    <div class="comment comment-{unread ? 'unread' : 'read'} {type}" on:dblclick={() => editing = can_edit}>
+    <div class="comment comment-{unread ? 'unread' : 'read'} {colorMap[type]}" on:dblclick={() => editing = can_edit}>
       <strong>{author}</strong>:
       {#if !editing}
         {#if type == 'automated'}
