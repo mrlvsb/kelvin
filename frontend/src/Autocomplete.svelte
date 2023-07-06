@@ -84,13 +84,12 @@
   }
 </script>
 <div class="form-control" use:clickOutside on:click_outside={() => focused = false}>
-  <input bind:value={value} required placeholder="Task directory" on:focus={() => focused = true} on:click={() => dispatch('click')} on:keyup={keyup}>
-
-  <div class="btn-group">
-    <span class="btn btn-sm btn-outline-dark">
+  <div class="input-group mb-1">
+    <input bind:value={value} class="form-control" required placeholder="Task directory" on:focus={() => focused = true} on:click={() => dispatch('click')} on:keyup={keyup}>
+    <span class="btn btn-sm btn-outline-secondary">
       <CopyToClipboard content={`${$user.username.toLowerCase()}@kelvin.cs.vsb.cz:/srv/kelvin/kelvin/tasks/${value}`} title='Copy path for scp/rsync to the clipboard'>path</CopyToClipboard>
     </span>
-    <span class="btn btn-sm btn-outline-dark">
+    <span class="btn btn-sm btn-outline-secondary">
       <CopyToClipboard content={`ssh -t ${$user.username.toLowerCase()}@kelvin.cs.vsb.cz 'cd /srv/kelvin/kelvin/tasks/${value} && exec bash'`} title='Copy ssh command to the clipboard'>ssh</CopyToClipboard>
     </span>
   </div>
