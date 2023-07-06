@@ -1,12 +1,11 @@
 import "bootstrap/dist/css/bootstrap.css";
 import "./global.css";
 import "bootstrap/js/dist/collapse";
+import './global.scss';
 
-import 'highlight.js/styles/github.css'
 import hljs from 'highlight.js/lib/core'
-import clike from 'highlight.js/lib/languages/c-like'
+import cpp from 'highlight.js/lib/languages/cpp.js'
 import c from 'highlight.js/lib/languages/c'
-import cpp from 'highlight.js/lib/languages/cpp'
 import java from 'highlight.js/lib/languages/java'
 import python from 'highlight.js/lib/languages/python'
 import xml from 'highlight.js/lib/languages/xml'
@@ -15,7 +14,7 @@ import shell from 'highlight.js/lib/languages/shell'
 import makefile from 'highlight.js/lib/languages/makefile'
 import x86asm from 'highlight.js/lib/languages/x86asm'
 
-hljs.registerLanguage('c-like', clike);
+hljs.registerLanguage('c-like', cpp);
 hljs.registerLanguage('c', c); 
 hljs.registerLanguage('cpp', cpp); 
 hljs.registerLanguage('java', java); 
@@ -27,7 +26,7 @@ hljs.registerLanguage('makefile', makefile);
 hljs.registerLanguage('assembler', x86asm); 
 hljs.registerLanguage('asm', x86asm); 
 hljs.registerLanguage('x86asm', x86asm); 
-hljs.initHighlightingOnLoad();
+hljs.highlightAll();
 
 import 'diff2html/bundles/css/diff2html.min.css'
 import * as Diff2Html from 'diff2html'

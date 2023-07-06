@@ -18,7 +18,7 @@ def cmd_run(cmd, out, show_cmd=None, env=None):
     if env:
         env = {**os.environ, **env}
 
-    out.write(f"<code style='color: #444; font-weight: bold'>$ {shlex_join(show_cmd)}</code>")
+    out.write(f"<code style='filter: opacity(.7);'>$ {shlex_join(show_cmd)}</code>")
 
     with open('/tmp/out', 'w+', errors='ignore') as gcc_out:
         p = subprocess.Popen(cmd, stdout=gcc_out, stderr=gcc_out, env=env)
@@ -78,7 +78,7 @@ with open("result.html", "w") as out:
             out.write(f"<span style='color: red'>Multiple executables have been built: {','.join(executables)}</span>")
             exit(1)
 
-        out.write(f"<code style='color: #444; font-weight: bold'>$ mv {executables[0]} {output}</code>")
+        out.write(f"<code style='filter: opacity(.7);'>$ mv {executables[0]} {output}</code>")
         os.rename(executables[0], output)
 
 

@@ -88,7 +88,7 @@
 
 <div class="card mb-3">
     <div class="card-header">
-        <ul class="nav nav-tabs card-header-tabs navbar-expand-lg">
+        <ul class="nav nav-tabs card-header-tabs navbar-expand-lg" role="tablist">
             <li class="nav-item">
                 <a class="nav-link active" data-toggle="tab" href="#assignment">Assignment</a>
             </li>
@@ -102,7 +102,7 @@
                 <a class="nav-link" data-toggle="tab" href="#src">
                   Source code
                   {% if comment_count and comment_count > 0 %}
-                    <span class="badge bg-dark">{{ comment_count }}</span>
+                    <span class="badge bg-secondary">{{ comment_count }}</span>
                   {% endif %}
                 </a>
             </li>

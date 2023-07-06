@@ -45,19 +45,13 @@
   </button>
   <ul class="dropdown-menu dropdown-menu-end shadow">
     <li><button on:click={selectTheme} class="d-flex dropdown-item" class:active={curTheme == "auto"} data-theme="auto">
-      <i class="me-1 bi bi-circle-half"></i>Auto<i class="opacity ms-auto bi bi-check2" hidden={curTheme != "auto"}></i>
+      <i class="me-1 bi bi-circle-half"></i>Auto<i class="opacity-75 ms-auto bi bi-check2" hidden={curTheme != "auto"}></i>
     </button></li>
     <li><button on:click={selectTheme} class="d-flex dropdown-item" class:active={curTheme == "light"} data-theme="light">
-      <i class="me-1 bi bi-sun"></i>Light mode<i class="opacity ms-auto bi bi-check2" hidden={curTheme != "light"}></i>
+      <i class="me-1 bi bi-sun"></i>Light mode<i class="opacity-75 ms-auto bi bi-check2" hidden={curTheme != "light"}></i>
     </button></li>
     <li><button on:click={selectTheme} class="d-flex dropdown-item" class:active={curTheme == "dark"} data-theme="dark">
-      <i class="me-1 bi bi-moon-stars"></i>Dark mode<i class="opacity ms-auto bi bi-check2" hidden={curTheme != "dark"}></i>
+      <i class="me-1 bi bi-moon-stars"></i>Dark mode<i class="opacity-75 ms-auto bi bi-check2" hidden={curTheme != "dark"}></i>
     </button></li>
   </ul>
 </li>
-
-<style>
-  .opacity {
-    opacity: 85%;
-  }
-</style>

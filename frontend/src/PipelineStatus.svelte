@@ -30,7 +30,7 @@ update();
 </style>
 
 {#if job_status == 'failed'}
-  <div class="text-danger main">Evaluation failed - please contact your teacher.</div>
+  <h2 class="text-danger text-center"><b>Evaluation failed - please contact your teacher.</b></h2>
 
   <pre>{message}</pre>
 {:else}
