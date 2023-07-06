@@ -121,11 +121,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
 .more-hover:hover .more-content {
   position: absolute;
   display: block;
-  background: white;
-  padding: 3px;
-  border: 1px solid #dee2e6;
   font-weight: normal;
-  z-index: 10;
 }
 
 </style>
@@ -196,7 +192,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
                     class:text-success={assignment.deadline > new Date()}>
                     { $showFullTaskNames ? assignment.short_name : `#${index+1}` }{#if assignment.max_points > 0}&nbsp;({ assignment.max_points }b){/if}
                   </a>
-                  <div class="more-content">
+                  <div class="more-content border shadow rounded bg-body p-1">
                     {assignment.name}
                     <a href="/task/edit/{assignment.task_id}" use:link title="Edit"><span class="iconify" data-icon="clarity:edit-solid"></span></a>
                     <div style="display: flex; align-items: center;">

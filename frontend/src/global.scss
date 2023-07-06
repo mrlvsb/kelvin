@@ -1,0 +1,12 @@
+@use "sass:meta";
+
+html[data-bs-theme="light"] {
+  @include meta.load-css("node_modules/highlight.js/styles/github.css");
+  @include meta.load-css('node_modules/flatpickr/dist/themes/light.css');
+  @include meta.load-css('node_modules/codemirror/lib/codemirror.css');
+}
+html[data-bs-theme="dark"] {
+  @include meta.load-css("node_modules/highlight.js/styles/github-dark.css");
+  @include meta.load-css('node_modules/flatpickr/dist/themes/dark.css');
+  @include meta.load-css('node_modules/codemirror/lib/codemirror.css');
+}

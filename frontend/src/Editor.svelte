@@ -2,7 +2,6 @@
   import {onDestroy} from 'svelte';
   import CodeMirror from 'codemirror';
   import {lintPipeline} from './PipelineValidation.js'
-  import 'codemirror/lib/codemirror.css';
   import 'codemirror/mode/clike/clike.js';
   import 'codemirror/mode/yaml/yaml.js';
   import 'codemirror/mode/python/python.js';
@@ -105,20 +104,20 @@
   });
 </script>
 <style>
-:global(.CodeMirror) {
-  border: 1px solid #ced4da;
-  border-radius: .25rem;
-  resize: vertical;
-}
-
-:global(.disabled > .CodeMirror) {
-  background: #eee;
-}
-
-:global(.disabled > .CodeMirror .CodeMirror-cursors) {
-  display: none;
-}
-</style>
+  :global(.CodeMirror) {
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    resize: vertical;
+  }
+  
+  :global(.disabled > .CodeMirror) {
+    background: #eee;
+  }
+  
+  :global(.disabled > .CodeMirror .CodeMirror-cursors) {
+    display: none;
+  }
+  </style>
 
 <div class:disabled={disabled}>
   <textarea class="form-control" bind:this={editorEl} bind:value={value}></textarea>

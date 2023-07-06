@@ -1,7 +1,6 @@
 <script>
 import {notifications, pushNotifications, importantNotificationsCount, notificationsCount} from './notifications.js'
 import TimeAgo from './TimeAgo.svelte'
-import {clickOutside} from './utils'
 import {localStorageStore} from './utils.js'
 
 let show = false;
@@ -26,7 +25,7 @@ async function openNotification(notification) {
 {#if $notifications}
 <li class="nav-item dropdown">
   <button class="btn btn-link nav-link dropdown-toggle" href="#" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Notifications">
-    <i class="bi bi-bell"></i>
+    <span class="iconify" data-icon="bi:bell"></span>
     <span class="d-md-none ms-1">Notifications</span>
     {#if $notificationsCount > 0}
       <span class="badge {$importantNotificationsCount >= 1 ? 'text-bg-danger' : 'text-bg-warning'} border border-light rounded-pill">

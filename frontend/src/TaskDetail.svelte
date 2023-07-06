@@ -243,7 +243,7 @@
       <span on:click={() => file.opened = !file.opened}>
       {file.source.path}
       {#if file.source.comments && Object.keys(file.source.comments).length}
-        <span class="badge bg-dark" style="font-size: 60%;">{countComments(file.source.comments)}</span>
+        <span class="badge bg-secondary" style="font-size: .6em;">{countComments(file.source.comments)}</span>
       {/if}
       </span>{#if file.source.type == 'source' && file.source.content}<CopyToClipboard content={() => file.source.content} title='Copy the source code to the clipboard'><span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px"></span></CopyToClipboard>{/if}
     </h2>

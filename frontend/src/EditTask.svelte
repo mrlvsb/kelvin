@@ -8,7 +8,8 @@
   import {fetch} from './api.js'
   import {fs, currentPath, cwd, openedFiles} from './fs.js'
   import SyncLoader from './SyncLoader.svelte';
-  import Confirm from './Confirm.svelte'
+
+  import "bootstrap/js/dist/modal"
 
   export let params = {}
 
@@ -195,9 +196,12 @@
       errors = json['errors'];
     } else {
       errors = [];
-      push('/task/add/' + task.subject_abbr);
-      fs.setRoot([], undefined);
-      await prepareCreatingTask();
+      // waits until the modal closes like a good boy
+      document.querySelector("#deleteModal").addEventListener("hidden.bs.modal", async () => {
+        push('/task/add/' + task.subject_abbr);
+        fs.setRoot([], undefined);
+        await prepareCreatingTask();
+      });
     }
   }
 </script>
@@ -248,15 +252,25 @@ td:not(:nth-of-type(3)) {
           </button>
           <a class="btn btn-outline-info" href={taskLink} target=_blank><span class="iconify" data-icon="bx:bx-link-external"></span></a>
 
-          <Confirm themeColor="0" confirmTitle="Delete" cancelTitle="Cancel" let:confirm>
-            <button class="btn btn-outline-danger" on:click={confirm(deleteTask)} disabled={!task['can_delete']}>
-              <span class="iconify" data-icon="akar-icons:trash-can"></span>
-            </button>
-
-            <span slot="title">Delete task</span>
-            <span slot="description">
-              Do you really want to delete the task with path <strong>{savedPath}</strong>? <strong>Readme.md</strong> and all files will be <strong>DELETED!</strong></span>
-          </Confirm>
+          <button class="btn btn-outline-danger" disabled={!task['can_delete']} data-bs-toggle="modal" data-bs-target="#deleteModal">
+            <span class="iconify" data-icon="akar-icons:trash-can"></span>
+          </button>
+          <div class="modal fade" id="deleteModal" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="false" aria-labelledby="deleteModalLabel">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h1 class="modal-title fs-5" id="deleteModalLabel">Delete task</h1>
+                </div>
+                <div class="modal-body">
+                  Do you really want to delete the task with path <strong>{savedPath}</strong>? <strong>Readme.md</strong> and all files will be <strong>DELETED!</strong>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-danger" on:click={deleteTask} data-bs-dismiss="modal">Delete</button>
+                </div>
+              </div>
+            </div>
+          </div>
         {/if}
       </div>
 
@@ -267,25 +281,28 @@ td:not(:nth-of-type(3)) {
             <tr class:table-success={clazz.assigned}>
               <td>
                 { clazz.timeslot }
-                <span class="text-muted">({ clazz.code })</span>
+                <span class="opacity-50">({ clazz.code })</span>
               </td>
               <td>{ clazz.teacher }</td>
               <td>
-                <TimeRange timeOffsetInWeek={clazz.week_offset} bind:from={clazz.assigned} bind:to={clazz.deadline} semesterBeginDate={$semester.begin} />
-              </td>
-              <td style="width: 1%">
-                <div class="input-group" style="flex-wrap: nowrap">
-                  <input class="form-control form-control-sm" type="number" min=0 step=1 disabled={!clazz.assigned} bind:value={clazz.max_points} placeholder="Max points" style="max-width: 110px; width: 110px" />
-                  <button class="btn btn-sm btn-secondary" disabled={!clazz.assigned} on:click|preventDefault={() => assignPointsToAll(clazz.max_points)} title="Set points to all assigned classes">
-                    <span class="iconify" data-icon="mdi:content-duplicate"></span>
-                  </button>
+                <div class="row">
+                  <TimeRange timeOffsetInWeek={clazz.week_offset} bind:from={clazz.assigned} bind:to={clazz.deadline} semesterBeginDate={$semester.begin} />
+                  <div class="col-md">
+                    <div class="input-group">
+                      <input class="form-control form-control-sm" type="number" min=0 step=1 disabled={!clazz.assigned} bind:value={clazz.max_points} placeholder="Max points" />
+                      <button class="btn btn-sm btn-secondary" disabled={!clazz.assigned} on:click|preventDefault={() => assignPointsToAll(clazz.max_points)} title="Set points to all assigned classes">
+                        <span class="iconify" data-icon="mdi:content-duplicate"></span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </td>
               <td>
-                <button class="btn btn-sm p-0" on:click|preventDefault={() => assignSameToAll(clazz)} title="Set same assigned date, deadline and points to all visible classes">
+                <button class="btn btn-sm p-0" on:click={() => assignSameToAll(clazz)} title="Set same assigned date, deadline and points to all visible classes">
                   <span class="iconify" data-icon="mdi:content-duplicate"></span>
                 </button>
-                <button class="btn p-0" on:click|preventDefault={() => {clazz.assigned = null; clazz.deadline = null; clazz.max_points = null}}>&times;</button>
+                <button class="btn-close" on:click={() => {clazz.assigned = null; clazz.deadline = null; clazz.max_points = null}}
+                  aria-label="Unassign class" disabled={!(clazz.assigned || clazz.deadline)}></button>
               </td>
             {/each}
           </tbody>
