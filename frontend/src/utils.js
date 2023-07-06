@@ -42,3 +42,5 @@ export function localStorageStore(key, initialValue) {
   }
   return localStorageStores[key];
 }
+
+export const curTheme = writable("");

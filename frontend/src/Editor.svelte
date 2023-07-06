@@ -2,6 +2,8 @@
   import {onDestroy} from 'svelte';
   import CodeMirror from 'codemirror';
   import {lintPipeline} from './PipelineValidation.js'
+  import {curTheme} from "./utils.js"
+  import 'codemirror/lib/codemirror.css'
   import 'codemirror/mode/clike/clike.js';
   import 'codemirror/mode/yaml/yaml.js';
   import 'codemirror/mode/python/python.js';
@@ -36,6 +38,10 @@
     };
     return map[ext];
   }
+  
+  function getTheme(value) {
+    return value == "dark" ? "dracula" : "default";
+  }
 
   let editor, editorEl;
   $: if(editorEl && !editor) {
@@ -45,6 +51,7 @@
         gutter: false,
         gutters: ["CodeMirror-lint-markers"],
         spellcheck: true,
+        theme: getTheme($curTheme),
         inputStyle: "contenteditable",
         readOnly: disabled,
         tabSize: 2,
@@ -95,6 +102,7 @@
     editor.setOption('lint', filename == '/config.yml' ? lintPipeline : null)
     editor.setOption('spellcheck', filename != '/config.yml')
     editor.setOption('filename', filename);
+    editor.setOption("theme", getTheme($curTheme));
   }
 
   onDestroy(() => {
