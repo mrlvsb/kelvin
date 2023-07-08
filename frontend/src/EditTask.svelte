@@ -88,7 +88,7 @@
         .replace(/( |\/|\\)/g, '_')
         .split('')
         .map(c => {
-            const map = { 
+            const map = {
               'ě': 'e',
               'š': 's',
               'č': 'c',
@@ -139,7 +139,7 @@
       savedPath = json['path'];
       task['can_delete'] = json['can_delete'];
       fs.setEndpointUrl(json.files_uri);
-    
+
       await openedFiles.save();
 
       if(!task.id) {
@@ -212,6 +212,9 @@ td:not(:nth-of-type(3)) {
   width: 1%;
   white-space: nowrap;
 }
+.btn > a, .btn > a:visited, .btn > a:hover, .btn > a:active {
+  color: inherit;
+}
 </style>
 
 <svelte:window on:keydown={keydown} />
@@ -238,20 +241,27 @@ td:not(:nth-of-type(3)) {
       <div class="input-group mb-1">
         <AutoComplete bind:value={task.path} onChange={loadTask} on:click={() => syncPathWithTitle = false} />
         {#if taskLink}
-          <a class="btn btn-outline-info" href={task.moss_link} title="Plagiarism check" target="_blank">
-            <span class="iconify" data-icon="bx:bx-check-double"></span>
-          </a>
-          <a class="btn btn-outline-info" href="/task/show/{task.id}" title="Show all source codes" target="_blank">
-            <span class="iconify" data-icon="bx-bx-code-alt"></span>
-          </a>
-          <a class="btn btn-outline-info" href="/statistics/task/{task.id}" title="Show task stats" target="_blank">
-            <span class="iconify" data-icon="bx-bx-bar-chart-alt-2"></span>
-          </a>
+          <button class="btn btn-outline-info" title="Plagiarism check">
+            <a href={task.moss_link} target="_blank" class="text-decoration: none;">
+              <span class="iconify" data-icon="bx:bx-check-double"></span>
+            </a>
+          </button>
+          <button class="btn btn-outline-info" title="Show all source codes">
+            <a href="/task/show/{task.id}" target="_blank">
+              <span class="iconify" data-icon="bx-bx-code-alt"></span>
+            </a>
+          </button>
+          <button class="btn btn-outline-info" title="Show task stats">
+            <a href="/statistics/task/{task.id}" target="_blank">
+              <span class="iconify" data-icon="bx-bx-bar-chart-alt-2"></span>
+            </a>
+          </button>
           <button class="btn btn-outline-info" title="Duplicate this task" on:click={duplicateTask}>
             <span class="iconify" data-icon="ant-design:copy-outlined"></span>
           </button>
-          <a class="btn btn-outline-info" href={taskLink} target=_blank><span class="iconify" data-icon="bx:bx-link-external"></span></a>
-
+          <button class="btn btn-outline-info" title="Open task">
+            <a href={taskLink} target=_blank><span class="iconify" data-icon="bx:bx-link-external"></span></a>
+          </button>
           <button class="btn btn-outline-danger" disabled={!task['can_delete']} data-bs-toggle="modal" data-bs-target="#deleteModal">
             <span class="iconify" data-icon="akar-icons:trash-can"></span>
           </button>
