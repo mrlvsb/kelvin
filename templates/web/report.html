@@ -46,8 +46,7 @@
 
             {% for path, v in test.files.items %}
             {% if v.diff and v.diff.size < max_inline_content_bytes or not max_inline_content_bytes %}
-              {# TODO make this dark when diff2html implements dark theme, same with the wrapper below #}
-              <div class="diff text-bg-light"
+              <div class="code-diff diff"
                 data-expected-url="{% url 'raw_result_content' submit.id test.name 'expected' path %}"
                 data-actual-url="{% url 'raw_result_content' submit.id test.name 'actual' path %}"
                 data-path="{{path}}"
@@ -55,7 +54,7 @@
               {{ v.diff.read }}
               </div>
             {% else %}
-              <div class="d2h-wrapper text-bg-light">
+              <div class="code-diff d2h-wrapper">
                 <div class="d2h-file-wrapper">
                   <div class="d2h-file-header">
                     <span class="d2h-file-name-wrapper">

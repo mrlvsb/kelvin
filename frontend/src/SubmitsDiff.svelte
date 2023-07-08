@@ -49,8 +49,7 @@
             {/if}
         </li>
     {/each}
-    <!-- TODO implement dark mode once diff2html adds it -->
-    <div class="text-bg-light">
+    <div class="code-diff">
         {@html diffHtmlOutput}
     </div>
 </ul>
