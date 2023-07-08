@@ -15,7 +15,6 @@
           .then((result) => result.text())
           .then((diff) => {
               diffHtmlOutput = Diff2Html.html(diff, {
-                  drawFileList: true,
                   matching: 'lines',
                   outputFormat: 'side-by-side',
                   drawFileList: false
