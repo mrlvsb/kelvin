@@ -1,10 +1,11 @@
 <style>
   .form-control {
-    padding-bottom: 0; 
+    padding-bottom: 0;
   }
   input {
     width: 100%;
     padding-bottom: 0;
+    padding-top: 0;
     outline: 0;
     border: 0;
   }
@@ -24,16 +25,6 @@
   li:hover, li.highlight {
     background: #5bc0de;
     cursor: pointer;
-  }
-
-  .btn-group {
-    position: absolute;
-    right: 5px;
-    top: 5px;
-  }
-
-  .btn-group .btn {
-    font-family: monospace;
   }
 </style>
 
