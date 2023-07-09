@@ -113,6 +113,10 @@ def filter_files_by_filename(files):
     return [(path, f) for (path, f) in files if is_valid_path(path)]
 
 
+class TooManyFilesError(BaseException):
+    pass
+
+
 def upload_submit_files(submit: Submit, paths: List[str], files: List[str]):
     if len(paths) == 1 and get_extension(paths[0]) == ".zip":
         uploader = ZipUploader(files[0])
@@ -126,7 +130,7 @@ def upload_submit_files(submit: Submit, paths: List[str], files: List[str]):
 
         for (path, file) in files:
             if uploader.count >= MAX_UPLOAD_FILECOUNT:
-                raise Exception("Too many files uploaded")
+                raise TooManyFilesError()
             store_uploaded_file(submit, uploader, path, file)
     finally:
         uploader.close()

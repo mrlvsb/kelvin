@@ -41,7 +41,7 @@ from common.utils import is_teacher
 from notifications.signals import notify
 from notifications.models import Notification
 
-from .upload import upload_submit_files
+from .upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError, upload_submit_files
 from .utils import file_response
 
 mimedetector = magic.Magic(mime=True)
@@ -310,7 +310,13 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         else:
             paths = [f.name for f in solutions]
 
-        upload_submit_files(s, paths, solutions)
+        try:
+            upload_submit_files(s, paths, solutions)
+        except TooManyFilesError:
+            return HttpResponse(
+                f"You have uploaded too many files. The maximum allowed file count is {MAX_UPLOAD_FILECOUNT}.",
+                status=400
+            )
 
         # we need submit_id before putting the job to the queue
         s.save()
