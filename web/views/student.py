@@ -7,6 +7,8 @@ import io
 import shutil
 import hashlib
 from collections import namedtuple
+from pathlib import Path
+from zipfile import ZIP_DEFLATED, ZipFile
 
 import django_rq
 import rq
@@ -705,6 +707,17 @@ def tar_test_data(request, task_name):
         f.seek(0)
         return file_response(f, f"{task_name}.tar.gz", "application/tar")
 
+
+def zip_directory(directory: str) -> io.BytesIO:
+    zip_buffer = io.BytesIO()
+
+    src_path = Path(directory).expanduser().resolve(strict=True)
+    with ZipFile(zip_buffer, "w", ZIP_DEFLATED) as zf:
+        for file in src_path.rglob("*"):
+            zf.write(file, file.relative_to(src_path.parent))
+    return zip_buffer
+
+
 @login_required
 def task_asset(request, task_name, path):
     task = get_object_or_404(Task, code=task_name)
@@ -765,15 +778,17 @@ def task_asset(request, task_name, path):
                 resp['Content-Type'] = f"{mime};charset=utf-8"
             return resp
     except FileNotFoundError as e:
-        archive_ext = '.tar.gz'
-        if system_path.endswith(archive_ext):
-            directory = system_path[:-len(archive_ext)]
-            if os.path.isdir(directory):
-                with io.BytesIO() as f:
-                    with tarfile.open(fileobj=f, mode="w:gz") as tar:
-                        tar.add(directory, recursive=True, arcname='')
+        # Download directory as a .zip archive.
+        # .tar.gz is also allowed as an extension to keep backwards compatibility
+        archive_extensions = ['.tar.gz', '.zip']
+        for archive_ext in archive_extensions:
+            if system_path.endswith(archive_ext):
+                directory = system_path[:-len(archive_ext)]
+                if os.path.isdir(directory):
+                    name = f"{os.path.basename(directory)}.zip"
+                    f = zip_directory(directory)
                     f.seek(0)
-                    return file_response(f, os.path.basename(system_path), "application/tar")
+                    return file_response(f, name, "application/x-zip")
         raise Http404()
 
 
