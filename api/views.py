@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
@@ -43,24 +45,16 @@ def tasks_list(request):
     return JsonResponse({'tasks': result})
 
 @user_passes_test(is_teacher)
-def all_classess(request):
-    semesters = {}
+def all_classes(request):
     conds = {}
-
     if not request.user.is_superuser:
         conds['teacher_id'] = request.user.id
 
+    semesters = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     for cl in Class.objects.filter(**conds).select_related('teacher', 'subject', 'semester'):
         sem = str(cl.semester)
-        if sem not in semesters:
-            semesters[sem] = {}
+        semesters[sem][cl.subject.abbr][cl.teacher.username].append(cl.code)
 
-        if cl.subject.abbr not in semesters[sem]:
-            semesters[sem][cl.subject.abbr] = []
-        
-        if cl.teacher and cl.teacher.username not in semesters[sem][cl.subject.abbr]:
-            semesters[sem][cl.subject.abbr].append(cl.teacher.username)
-    
     return JsonResponse({'semesters': semesters})
 
 @user_passes_test(is_teacher)

@@ -1,11 +1,13 @@
 <script>
     import {fetch} from './api.js'
     import {user} from './global.js'
-    import {link, push} from 'svelte-spa-router'
+    import {push} from 'svelte-spa-router'
 
     let semesters = {};
+    let teachers = [];
     let allTeachers = [];
-
+    let classes = [];
+    let allClasses = [];
 
     export let semester;
     export let subject;
@@ -17,18 +19,31 @@
       const json = await res.json();
       semesters = json['semesters'];
 
-      allTeachers = new Set();
-      for(let s in semesters) {
-        for(let subj in semesters[s]) {
-          allTeachers = [...new Set([...allTeachers, ...semesters[s][subj]])];
+      let allTeachersSet = new Set();
+      let allClassesSet = new Set();
+      for (const semester in semesters) {
+        for (const subject in semesters[semester]) {
+          for (const teacher in semesters[semester][subject]) {
+            allTeachersSet.add(teacher);
+            for (const class_code of semesters[semester][subject][teacher]) {
+              allClassesSet.add(class_code);
+            }
+          }
         }
       }
+      allTeachers = [...allTeachersSet];
+      allClasses = [...allClassesSet];
+    }
+
+    function resetClass() {
+        clazz = undefined;
     }
 
     function fillTeacher() {
-      if(subject && semesters[semester][subject].indexOf($user.username) >= 0) {
+      if(subject && semesters[semester][subject].hasOwnProperty($user.username) >= 0) {
         teacher = $user.username;
       }
+      resetClass();
     }
 
     $: if(semesters) {
@@ -36,18 +51,18 @@
       const sem = semesters[semester];
       if(sem) {
         for(const subj in sem) {
-          if(sem[subj].indexOf($user.username) >= 0) {
+          if(sem[subj].hasOwnProperty($user.username) >= 0) {
             subjs.push(subj);
           }
         }
       }
-    } 
+    }
 
     $: {
         if(semesters && semesters[semester]) {
           if(!semesters[semester][subject]) {
             subject = null;
-          } else if(semesters[semester][subject].indexOf(teacher) < 0) {
+          } else if(semesters[semester][subject].hasOwnProperty(teacher) < 0) {
             teacher = null;
           }
         }
@@ -61,7 +76,23 @@
         push('/?' + params);
     }
 
-    $: teachers = semester && subject && semesters && semesters[semester] && semesters[semester][subject] ? semesters[semester][subject] : allTeachers;
+    $: {
+        if (semester && subject && semesters[semester]?.[subject]) {
+          teachers = Object.keys(semesters[semester][subject]);
+          if (teacher && semesters[semester]?.[subject]?.[teacher]) {
+            classes = semesters[semester][subject][teacher];
+          } else {
+            let filteredClasses = [];
+            for (const t in semesters[semester][subject]) {
+                filteredClasses.push(...semesters[semester][subject][t]);
+            }
+            classes = filteredClasses;
+          }
+        } else {
+          teachers = allTeachers;
+          classes = allClasses;
+        }
+    }
 
     function sorted(items, compare_fn) {
       items.sort(compare_fn);
@@ -85,7 +116,7 @@
 
 <div class="ms-auto">
   <div class="input-group">
-    <select class="form-select form-select-sm" bind:value={semester}>
+    <select class="form-select form-select-sm" bind:value={semester} on:change={resetClass}>
         <option value="">Semester</option>
         {#each sorted(Object.keys(semesters), compare_semester) as semester (semester)}
             <option>{semester}</option>
@@ -102,12 +133,18 @@
     </select>
 
     {#if $user.is_superuser}
-      <select class="form-select form-select-sm" bind:value={teacher}>
+      <select class="form-select form-select-sm" bind:value={teacher} on:change={resetClass}>
           <option value="">Teacher</option>
             {#each sorted(teachers) as teacher (teacher)}
                 <option>{teacher}</option>
             {/each}
       </select>
     {/if}
+    <select class="form-select form-select-sm" bind:value={clazz} disabled={!(semester && subject)}>
+      <option value="">Class</option>
+      {#each sorted(classes) as clazz (clazz)}
+        <option>{clazz}</option>
+      {/each}
+    </select>
   </div>
 </div>
