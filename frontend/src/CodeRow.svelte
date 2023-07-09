@@ -51,8 +51,42 @@
   :global(.comment p:last-of-type) {
     margin-bottom: 0;
   }
-  :global(.comment.comment-read) {
-    filter: opacity(.5);
+
+  /* Light style comments */
+  :global(html[data-bs-theme="light"] .comment.teacher) {
+    background: #FFFF1ED9;
+  }
+  :global(html[data-bs-theme="light"] .comment.teacher.comment-read) {
+      background: #FFFF1E49;
+  }
+  :global(html[data-bs-theme="light"] .comment.student) {
+      background: #71F740;
+  }
+  :global(html[data-bs-theme="light"] .comment.student.comment-read) {
+      background: #71F74050;
+  }
+  :global(html[data-bs-theme="light"] .comment.automated) {
+      background: #7DB4E4;
+  }
+
+  /* Dark style comments */
+  :global(html[data-bs-theme="dark"] .comment) {
+      color: #FFFFFF;
+  }
+  :global(html[data-bs-theme="dark"] .comment.teacher) {
+      background: #B3B32A;
+  }
+  :global(html[data-bs-theme="dark"] .comment.teacher.comment-read) {
+      background: #FFFF1E49;
+  }
+  :global(html[data-bs-theme="dark"] .comment.student) {
+      background: #2F8510;
+  }
+  :global(html[data-bs-theme="dark"] .comment.student.comment-read) {
+      background: #2A4A1E;
+  }
+  :global(html[data-bs-theme="dark"] .comment.automated) {
+      background: #083154;
   }
 
   .selected {
@@ -108,7 +142,7 @@
     {/each}
 
     {#if showAddingForm}
-      <div class="comment {$user.teacher ? 'text-bg-warning' : 'text-bg-success'}">
+      <div class="comment {$user.teacher ? 'teacher' : 'student'}">
         <CommentForm on:save={addNewComment} disabled={addingInProgress} />
       </div>
     {/if}
