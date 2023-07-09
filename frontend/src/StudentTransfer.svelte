@@ -88,7 +88,7 @@
 
 <select bind:value={teacher}>
     {#if subject}
-        {#each data.semesters[semester][subject] as item}
+        {#each Object.keys(data.semesters[semester][subject]) as item}
             <option value="{item}">{item}</option>
         {/each}
     {/if}
