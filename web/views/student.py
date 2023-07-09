@@ -114,7 +114,7 @@ def student_index(request):
     semesters = []
     for year, winter in Class.objects.filter(students__pk=request.user.id).values_list('semester__year', 'semester__winter').distinct().order_by('semester__begin', 'semester__winter'):
         semesters.append({
-            'label': f'{year} {"winter" if winter else "summer"}',
+            'label': f'{year}/{year + 1} {"winter" if winter else "summer"}',
             'value': f'{year}{"W" if winter else "S"}',
         })
 
