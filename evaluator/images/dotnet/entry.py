@@ -99,6 +99,8 @@ def build_dotnet_project(run_tests: bool) -> BuildResult:
     # workaround for https://github.com/dotnet/core/issues/7868
     env["XDG_DATA_HOME"] = "/tmp/dotnet-cli-home"
     env["DOTNET_NOLOGO"] = "1"
+    # workaround for https://github.com/dotnet/sdk/issues/31457
+    env["DOTNET_EnableWriteXorExecute"] = "0"
     cmd = ['dotnet']
     if run_tests:
         cmd += ['test', '-l', f'trx;LogFileName=../../{tests_path}']
