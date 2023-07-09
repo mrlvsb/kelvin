@@ -1,3 +1,4 @@
+import dataclasses
 import json
 import os
 import re
@@ -9,6 +10,7 @@ import hashlib
 from collections import namedtuple
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
+from typing import List
 
 import django_rq
 import rq
@@ -30,7 +32,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from common.models import Submit, Class, AssignedTask, Task, Comment, assignedtask_results, current_semester
 from common.evaluate import evaluate_submit
-from common.moss import moss_result
+from common.moss import PlagiarismMatch, moss_result
 from web.task_utils import load_readme
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES, MAX_INLINE_LINES
 from evaluator.testsets import TestSet
@@ -178,13 +180,43 @@ def pipeline_status(request, submit_id):
         'message': s.message if is_teacher(request.user) else '',
     })
 
+
+@dataclasses.dataclass
+class PlagiarismEntry:
+    link: str
+    lines: int
+    student_percent: int
+    other_percent: int
+    other_login: str
+
+
+def build_plagiarism_entries(login: str, matches: List[PlagiarismMatch]) -> List[PlagiarismEntry]:
+    matches = [m for m in matches if login in (m.first.login, m.second.login)]
+    matches = sorted(matches, key=lambda match: match.lines, reverse=True)
+
+    def build(match: PlagiarismMatch) -> PlagiarismEntry:
+        (student, other) = (match.first, match.second)
+        if login == match.second:
+            (student, other) = (other, student)
+        return PlagiarismEntry(
+            link=match.link,
+            lines=match.lines,
+            student_percent=student.percent,
+            other_percent=other.percent,
+            other_login=other.login
+        )
+
+    return [build(m) for m in matches]
+
+
 @login_required()
 def task_detail(request, assignment_id, submit_num=None, login=None):
     submits = Submit.objects.filter(
         assignment__pk=assignment_id,
     ).order_by('-id')
 
-    if is_teacher(request.user):
+    user_is_teacher = is_teacher(request.user)
+    if user_is_teacher:
         submits = submits.filter(student__username=login)
     else:
         submits = submits.filter(student__pk=request.user.id)
@@ -194,7 +226,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
     assignment = get_object_or_404(AssignedTask, id=assignment_id)
     testset = create_taskset(assignment.task, login if login else request.user.username)
     is_announce = False
-    if (assignment.assigned > datetime.now() or not assignment.clazz.students.filter(username=request.user.username)) and not is_teacher(request.user):
+    if (assignment.assigned > datetime.now() or not assignment.clazz.students.filter(username=request.user.username)) and not user_is_teacher:
         is_announce = True
         if not assignment.task.announce:
             raise Http404()
@@ -209,7 +241,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         'inputs': None if is_announce else testset,
         'max_inline_content_bytes': MAX_INLINE_CONTENT_BYTES,
         'has_pipeline': bool(testset.pipeline),
-        'upload': not is_teacher(request.user) or request.user.username == login,
+        'upload': not user_is_teacher or request.user.username == login,
     }
 
     current_submit = None
@@ -232,8 +264,8 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         data['comment_count'] = current_submit.comment_set.count()
 
         moss_res = moss_result(current_submit.assignment.task.id)
-        if moss_res and (is_teacher(request.user) or moss_res.opts.show_to_students):
-            svg = moss_res.to_svg(login=current_submit.student.username, anonymize=not is_teacher(request.user))
+        if moss_res and (user_is_teacher or moss_res.opts.show_to_students):
+            svg = moss_res.to_svg(login=current_submit.student.username, anonymize=not user_is_teacher)
             if svg:
                 data['has_pipeline'] = True
 
@@ -271,6 +303,9 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
                     </script>
                 """
                 data['results'].pipelines = [res] + data['results'].pipelines
+            if user_is_teacher:
+                plagiarisms = build_plagiarism_entries(login, moss_res.matches)
+                data["plagiarism_matches"] = plagiarisms
 
         submit_nums = sorted(submits.values_list('submit_num', flat=True))
         current_idx = submit_nums.index(current_submit.submit_num)
