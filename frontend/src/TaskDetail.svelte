@@ -138,10 +138,22 @@
       return;
     }
 
-    if(e.key === "ArrowLeft" && current_submit > 1) {
-      document.location.href = `../${current_submit-1}${document.location.hash}`;
-    } else if(e.key === "ArrowRight" && submits && current_submit < submits.length) {
-      document.location.href = `../${current_submit+1}${document.location.hash}`;
+    let target = null;
+    if (e.key === "ArrowLeft" && current_submit > 1) {
+      if (e.shiftKey) {
+        target = 1;
+      } else {
+        target = current_submit - 1;
+      }
+    } else if (e.key === "ArrowRight" && submits && current_submit < submits.length) {
+      if (e.shiftKey) {
+        target = submits.length;
+      } else {
+        target = current_submit + 1;
+      }
+    }
+    if (target !== null) {
+      document.location.href = `../${target}${document.location.hash}`;
     }
   }
 
