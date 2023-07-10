@@ -10,6 +10,21 @@
 
     let diffHtmlOutput = '';
 
+    function formatInfo(submit) {
+        let result = "(";
+        if (submit.points !== null) {
+            result += `${submit.points} point${submit.points !== 1 ? 's' : ''}`;
+        }
+        if (submit.comments > 0) {
+            if (submit.points != null) {
+                result += ', ';
+            }
+            result += `${submit.comments} comment${submit.comments !== 1 ? 's' : ''}`;
+        }
+
+        return `${result})`;
+    }
+
     $: if(a != b) {
         fetch(`../${a}-${b}.diff`)
           .then((result) => result.text())
@@ -44,8 +59,8 @@
                 {new Date(submit.submitted).toLocaleString('cs')}
             {/if}
 
-            {#if submit.points != null}
-                <span class="text-muted">({submit.points} points)</span>
+            {#if submit.points != null || submit.comments > 0}
+                <span class="text-muted">{formatInfo(submit)}</span>
             {/if}
         </li>
     {/each}
