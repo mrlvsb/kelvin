@@ -647,7 +647,7 @@ def submit_comments(request, assignment_id, login, submit_num):
             else:
                 max_lines = result[comment.source]['content'].count('\n')
                 line = 0 if comment.line > max_lines else comment.line
-                result[comment.source]['comments'].setdefault(comment.line - 1, []).append(dump_comment(comment))
+                result[comment.source]['comments'].setdefault(line - 1, []).append(dump_comment(comment))
         except KeyError as e:
             logging.exception(e)
 
