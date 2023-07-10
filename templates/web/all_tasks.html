@@ -1,29 +1,87 @@
 {% extends 'web/layout.html' %}
 
 {% block content %}
-{% for subj in subjects %}
-  <a href="{% url 'tasks' subj.abbr %}">{{ subj.abbr }}</a>
-{% endfor %}
 
-  <table class="table table-striped table-hover table-sm">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th class="text-right"></th>
-      </tr>
-    </thead>
+<table class="table table-hover table-sm table-borderless">
+  <thead>
+    <tr>
+      <th class="text-left" colspan="4">Filter by</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th class="text-left btn-group">
+        <button title="This button filters all the tasks by the given subject." id="toggle-button"
+          class="btn btn-primary w-100" style="padding: 5px 20px;">Subjects</button>
+      </th>
+      <th class="text-left btn-group">
+        <a title="This button filters all the tasks below that are homeworks, exercises, etc."
+          class="btn btn-primary w-100"
+          href="?filter=lessons{% if filter_type == 'lessons' %}&search={{ request.GET.search }}{% endif %}">Lessons</a>
+      </th>
+      <th class="text-left btn-group">
+        <a title="This button filters all the tasks below that are either tests or exams." class="btn btn-primary w-100"
+          href="?filter=tests{% if filter_type == 'tests' %}&search={{ request.GET.search }}{% endif %}">Tests</a>
+      </th>
+      <th class="text-left btn-group">
+        <a title="This button filters all the tasks below that are projects." class="btn btn-primary w-100"
+          href="?filter=projects{% if filter_type == 'projects' %}&search={{ request.GET.search }}{% endif %}">Projects</a>
+      </th>
+      <th>
+        <form method="get">
+          <div class="input-group mb-3">
+            <input type="text" name="search" class="form-control" placeholder="Search by name"
+              value="{{ request.GET.search }}">
+            <div class="input-group-append">
+              <button class="btn btn-outline-secondary btn-sm" type="submit">Search</button>
+            </div>
+          </div>
+        </form>
+      </th>
+    </tr>
+  </tbody>
+</table>
 
-    {% for task in tasks %}
-        <tr>
-            <td>
-              <a href="{% url  'teacher_task' task.id %}">
-                  {{ task.name }}
-              </a>
-            </td>
-          <td class="text-right">
-              <a class="btn btn-secondary btn-sm" href="{% url 'teacher_task_moss_check' task.id %}">MOSS check</a>
-            </td>
-        </tr>
-    {% endfor %}
-  </table>
+<div id="subjects-container" style="display: none;">
+  {% for subj in subjects %}
+  {% if subj.abbr %}
+  <span>
+    <a href="{% url 'tasks' subj.abbr %}" style="display: inline-block; width: 110px;">
+      <span style="color: rgb(77, 160, 207);">{{ subj.abbr }}</span>
+    </a>
+  </span>
+  {% endif %}
+  {% endfor %}
+</div>
+
+<table class="table table-striped table-hover table-sm">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th class="text-right"></th>
+    </tr>
+  </thead>
+
+  {% for task in tasks %}
+  <tr>
+    <td>
+      <a href="{% url 'teacher_task' task.id %}">
+        {{ task.name }}
+      </a>
+    </td>
+    <td class="text-right">
+      <a class="btn btn-secondary btn-sm" href="{% url 'teacher_task_moss_check' task.id %}">MOSS check</a>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+<script>
+  const toggleButton = document.getElementById('toggle-button');
+  const subjectsContainer = document.getElementById('subjects-container');
+
+  toggleButton.addEventListener('click', () => {
+    subjectsContainer.style.display = subjectsContainer.style.display === 'none' ? 'block' : 'none';
+  });
+</script>
 {% endblock %}
