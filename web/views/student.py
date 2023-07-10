@@ -478,6 +478,7 @@ def submit_comments(request, assignment_id, login, submit_num):
             'num': s.submit_num,
             'submitted': s.created_at,
             'points': s.assigned_points,
+            'comments': s.comment_set.count()
         })
 
     def get_comment_type(comment):
