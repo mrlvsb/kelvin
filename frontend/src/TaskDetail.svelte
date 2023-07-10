@@ -171,7 +171,20 @@
 
   function countComments(comments) {
       comments = comments || {};
-      return Object.values(comments).reduce((sum, line) => sum + line.length, 0);
+      const counts = {
+          user: 0,
+          automated: 0
+      };
+      for (const line of Object.values(comments)) {
+          for (const comment of Object.values(line)) {
+              if (comment.type === "automated") {
+                  counts.automated += 1;
+              } else {
+                  counts.user += 1;
+              }
+          }
+      }
+      return counts;
   }
 
   $: allOpen = files && files.reduce((sum, file) => sum + file.opened, 0) === files.length;
@@ -220,6 +233,9 @@
   .file-header span:hover {
       text-decoration: underline;
   }
+  .file-header span .badge:hover {
+      text-decoration: none;
+  }
 </style>
 
 {#if files === null}
@@ -251,11 +267,17 @@
   <SummaryComments {summaryComments} on:saveComment={evt => saveComment(evt.detail)} on:setNotification={setNotification} />
 
   {#each files as file}
-    <h2 class="file-header" title="Toggle file visibility">
+    <h2 class="file-header">
       <span on:click={() => file.opened = !file.opened}>
-      {file.source.path}
+      <span title="Toggle file visibility">{file.source.path}</span>
       {#if file.source.comments && Object.keys(file.source.comments).length}
-        <span class="badge bg-secondary" style="font-size: .6em;">{countComments(file.source.comments)}</span>
+        {@const comments = countComments(file.source.comments)}
+        {#if comments.user > 0 }
+          <span class="badge bg-secondary" title="Student/teacher comments" style="font-size: 60%;">{comments.user}</span>
+        {/if}
+        {#if comments.automated > 0 }
+          <span class="badge bg-primary" title="Automation comments" style="font-size: 60%;">{comments.automated}</span>
+        {/if}
       {/if}
       </span>{#if file.source.type == 'source' && file.source.content}<CopyToClipboard content={() => file.source.content} title='Copy the source code to the clipboard'><span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px"></span></CopyToClipboard>{/if}
     </h2>
