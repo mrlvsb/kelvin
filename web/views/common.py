@@ -49,4 +49,5 @@ def template_context(request):
         'is_teacher': is_teacher(request.user),
         'vapid_public_key': getattr(settings, 'WEBPUSH_SETTINGS', {}).get('VAPID_PUBLIC_KEY', ''),
         'webpush_save_url': reverse('save_webpush_info'),
+        'sentry_url': settings.SENTRY_URL
     }
