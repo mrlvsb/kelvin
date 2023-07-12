@@ -208,8 +208,10 @@ LOGGING = {
 MAX_INLINE_CONTENT_BYTES = 64565
 MAX_INLINE_LINES = 2000
 
+# DSN for a Sentry instance. If `None`, Sentry will not be included
+SENTRY_URL = None
+
 try:
     from .local_settings import *
 except ModuleNotFoundError:
     pass
-
