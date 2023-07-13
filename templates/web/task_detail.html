@@ -70,20 +70,19 @@
     </h6>
 
     {% if is_teacher %}
-    <a href="{% url 'submits' submit.student.username %}" class="text-decoration-none">Student submits</a>
+    <a href="{% url 'submits' submit.student.username %}">Student submits</a>
     <a href="{% url 'reevaluate' submit.id %}" title="Reevaluate"><span class="iconify" data-icon="fa-solid:sync"></span></a>
     {% endif %}
 
   {% if plagiarism_matches %}
     <div class="card p-2 my-2">
       <h5 title="Top 5 plagiarism matches for some checked submit of this student" class="card-title">Plagiarism check
-        (<a href="{% url 'teacher_task_moss_check' task.id %}" target="_blank"
-            class="text-decoration-none">full report</a>)
+        (<a href="{% url 'teacher_task_moss_check' task.id %}" target="_blank">full report</a>)
       </h5>
       <ul>
         {% for match in plagiarism_matches|slice:":5" %}
           <li>
-            <a href="{{ match.link }}" target="_blank" class="text-decoration-none">{{ match.other_login }}</a>:
+            <a href="{{ match.link }}" target="_blank">{{ match.other_login }}</a>:
             {{ match.lines }} line{% if match.lines > 1 %}s{% endif %} ({{ submit.student.username }}: {{ match.student_percent }} %,
             {{ match.other_login }}: {{ match.other_percent }} %)
           </li>
@@ -209,14 +208,14 @@
                     <div class="card-header">
                         <h5>
                           {{ path }}
-                          (<a href="{% url 'raw_test_content' task.code input.name path %}{% if submit %}?student={{submit.student}}{%endif%}" class="text-decoration-none">Raw content</a>)
+                          (<a href="{% url 'raw_test_content' task.code input.name path %}{% if submit %}?student={{submit.student}}{%endif%}">Raw content</a>)
                         </h5>
                     </div>
                     <div class="card-body">
                         {% if file.size < max_inline_content_bytes or not max_inline_content_bytes %}
                         <pre>{{ file.read }}</pre>
                         {% else %}
-                            Content too large, show <a href='{% url 'raw_test_content' task.code input.name path %}' class="text-decoration-none">raw content</a>.
+                            Content too large, show <a href='{% url 'raw_test_content' task.code input.name path %}'>raw content</a>.
                         {% endif %}
                     </div>
                 </div>

@@ -164,7 +164,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
 
       {#if showStudentsList}
         {#if clazz.summary }
-          <button class="p-0 btn btn-link text-decoration-none"
+          <button class="p-0 btn btn-link"
                     on:click={() => showSummary = !showSummary}>{showSummary ? "Skrýt" : "Zobrazit"} informace o cvičení</button>
           {#if showSummary }
             <Markdown content={clazz.summary} />
@@ -187,7 +187,6 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
                 {#each clazz.assignments as assignment, index}
                 <th class="more-hover">
                   <a href="{assignment.task_link}"
-                     class="text-decoration-none"
                     class:text-muted={assignment.assigned > new Date()}
                     class:text-success={assignment.deadline > new Date()}>
                     { $showFullTaskNames ? assignment.short_name : `#${index+1}` }{#if assignment.max_points > 0}&nbsp;({ assignment.max_points }b){/if}

@@ -3,14 +3,13 @@
 {% block content %}
   <h1>MOSS for {{ task.name }}
     {% if moss_url %}
-      (<a href="{{ moss_url }}" target="_blank" class="text-decoration-none">MOSS URL</a>)
+      (<a href="{{ moss_url }}" target="_blank">MOSS URL</a>)
     {% endif %}
   </h1>
   <div>
     <span>Linked tasks:</span>
     {% for task in linked_tasks %}
-      <a href="{% url 'teacher_task' task_id=task.id %}"
-         class="text-decoration-none">{{ task.name }} ({{ task.semesters }})</a>{% if not forloop.last %},{% endif %}
+      <a href="{% url 'teacher_task' task_id=task.id %}">{{ task.name }} ({{ task.semesters }})</a>{% if not forloop.last %},{% endif %}
     {% endfor %}
   </div>
   {% if started_at %}
