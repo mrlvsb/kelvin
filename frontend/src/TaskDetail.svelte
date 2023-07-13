@@ -166,7 +166,22 @@
     files = json['sources'].map((source) => new SourceFile(source));
     summaryComments = json['summary_comments'];
 
-    goToSelectedLines();
+    // Hide all files by default if there is more than one file
+    if (files.length > 1) {
+        for (const file of files) {
+            file.opened = false;
+        }
+    }
+
+    // But if some file is selected, show that file
+    const selectedFile = goToSelectedLines();
+    if (selectedFile !== null) {
+        for (const file of files) {
+            if (file.source.path === selectedFile) {
+                file.opened = true;
+            }
+        }
+    }
   }
 
   function countComments(comments) {
@@ -215,8 +230,11 @@
           const el = document.querySelector(`table[data-path="${CSS.escape(parts[0])}"] .linecode[data-line="${CSS.escape(selectedRows.from)}"]`);
           el.scrollIntoView();
         }, 0);
+
+        return parts[0];
       }
     }
+    return null;
   }
 
   window.addEventListener('hashchange', goToSelectedLines);  
