@@ -24,7 +24,7 @@ async function openNotification(notification) {
 
 {#if $notifications}
 <li class="nav-item dropdown">
-  <button class="btn btn-link nav-link dropdown-toggle" href="#" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Notifications">
+  <button class="btn nav-link dropdown-toggle" href="#" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Notifications">
     <span class="iconify" data-icon="bi:bell"></span>
     <span class="d-md-none ms-1">Notifications</span>
     {#if $notificationsCount > 0}

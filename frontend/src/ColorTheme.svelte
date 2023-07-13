@@ -46,8 +46,8 @@
 </script>
 
 <li class="nav-item dropdown">
-  <button class="btn btn-link nav-link dropdown-toggle" href="#" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Change theme">
-    <i class="bi {icons[workingTheme] === undefined ? "bi-circle-half" : icons[workingTheme]}"></i>
+  <button class="btn nav-link dropdown-toggle" href="#" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Change theme">
+    <i class="bi {icons[workingTheme] === undefined ? 'bi-circle-half' : icons[workingTheme]}"></i>
     <span class="d-md-none ms-1">Change theme</span>
   </button>
   <ul class="dropdown-menu dropdown-menu-end shadow">
