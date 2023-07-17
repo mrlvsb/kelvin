@@ -46,3 +46,15 @@ def user_from_inbus_person(person: inbus.dto.PersonSimple) -> django.contrib.aut
     user = django.contrib.auth.models.User(first_name=person.first_name, last_name=person.second_name, email=person.email)
 
     return user
+
+
+def user_from_login(login: str) -> django.contrib.auth.models.User:
+    """
+    A shotcut to calling `inbus_search_user` and `user_from_inbus_person`.
+    No need to further set anything.
+    """
+    person = inbus_search_user(login)
+    user = user_from_inbus_person(person)
+    user.username = login.upper()
+
+    return user
