@@ -110,6 +110,10 @@ class ConcreteActivity:
     teacherShortNames: str = '' # optimalizační předpočítávaný atribut z vazby na vyučující
 
 
+    def code(self):
+        return f'{self.educationTypeAbbrev}/{self.order:02d}'
+
+
 @serde.serde
 @dataclass
 class StudyRelation:
