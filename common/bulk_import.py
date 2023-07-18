@@ -1,12 +1,27 @@
 import datetime
 import re
+from common import inbus
+from common.utils import user_from_login
+import serde
+from dataclasses import dataclass
 from django.contrib.auth.models import User
 from common.models import Class, Semester, Subject
 from io import StringIO
 from lxml.html import parse
+from typing import List, Dict
 
 class ImportException(Exception):
     pass
+
+
+@serde.serde
+@dataclass
+class ImportResult:
+    login: str
+    firstname: str
+    lastname: str
+    created: bool
+
 
 class BulkImport:
     def is_allowed(self, clazz, no_lectures, no_exercises):
@@ -155,3 +170,65 @@ class BulkImport:
                 'classes': classess,
             }
 
+
+    def run_inbus(self, concrete_activities: List[inbus.dto.ConcreteActivity], subj: Dict[str, str], semester: Semester):
+        '''
+        `subj`: subject from selected subject in UI as dictionary with k:abbr, v: name
+        '''
+
+        subject_abbr = subj['abbr']
+        try:
+            subject = Subject.objects.get(abbr=subject_abbr)
+        except Subject.DoesNotExist:
+            raise ImportException(f"Subject {subject_abbr} does not exist. Please create it first.")
+
+        # Create classes in DB
+
+        class_in_db = {}
+        for ca in concrete_activities:
+            c = ca.code()
+            try:
+                class_in_db[c] = Class.objects.get(code=c, semester=semester, subject=subject)
+            except Class.DoesNotExist:
+                class_in_db[c] = Class()
+                class_in_db[c].code = c
+                day = ca.weekDayAbbrev.upper()
+                mapping = {'ÚT': 'UT', 'ČT': 'CT', 'PÁ': 'PA'}
+                class_in_db[c].day = mapping.get(day, day)
+                class_in_db[c].hour = ca.beginTime
+                class_in_db[c].year = datetime.datetime.now().year
+                class_in_db[c].winter = semester.winter # or ca.semesterTypeId == 1
+                class_in_db[c].time = ca.beginTime
+                class_in_db[c].subject = subject
+                class_in_db[c].semester = semester
+
+                # Teacher
+                # TODO: There may be more teachers for a class
+                try:
+                    teacher = User.objects.get(username=ca.teacherLogins.upper())
+                except User.DoesNotExist:
+                    teacher = user_from_login(ca.teacherLogins.upper())
+
+                class_in_db[c].teacher = teacher
+                class_in_db[c].save()
+
+
+            # Students
+            students_in_class = inbus.inbus.students_in_concrete_activity(ca.concreteActivityId)
+
+            for student in students_in_class:
+                login = student.login.upper()
+                firstname, lastname = student.firstName, student.secondName
+
+                created = False
+
+                user = None
+                try:
+                    user = User.objects.get(username=login)
+                except User.DoesNotExist:
+                    user = user_from_login(login)
+                    created = True
+
+                class_in_db[c].students.add(user)
+
+                yield ImportResult(login, firstname, lastname, created)
