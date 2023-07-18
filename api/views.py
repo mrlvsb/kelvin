@@ -25,7 +25,12 @@ import re
 import json
 import datetime
 import logging
+import serde
 import shutil
+import traceback
+
+from common.bulk_import import BulkImport, ImportException
+from common import inbus
 from pathlib import Path
 from shutil import copytree, ignore_patterns
 from django.utils.dateparse import parse_datetime
@@ -584,4 +589,37 @@ def semesters(request):
     # TODO: When upgrading, see: https://docs.djangoproject.com/en/4.2/ref/request-response/#httpresponse-objects
     # for a way to set content type.
     return HttpResponse(semesters_json,
+                        content_type="application/json")
+
+
+
+
+@user_passes_test(is_teacher)
+def import_activities(request):
+    res = {}
+    if request.method != 'POST':
+        return HttpResponseBadRequest()
+
+    post = json.loads(request.body.decode('utf-8'))
+    post = json.loads(request.body.decode('utf-8'))
+
+    semester_id = post['semester_id']
+    subject = post['subject']
+    activities_id = post['activities']
+
+    activities = [ inbus.inbus.concrete_activity(activity_id) for activity_id in activities_id ]
+    semester = Semester.objects.get(pk=semester_id)
+
+
+    try:
+        res['users'] = list(BulkImport().run_inbus(activities, subject, semester))
+        res['count'] = len(res['users'])
+    except (ImportException, UnicodeDecodeError) as e:
+        res['error'] = e
+    except:
+        res['error'] = traceback.format_exc()
+
+    # TODO: When upgrading, see: https://docs.djangoproject.com/en/4.2/ref/request-response/#httpresponse-objects
+    # for a way to set content type.
+    return HttpResponse(serde.json.to_json(res),
                         content_type="application/json")
