@@ -3,7 +3,7 @@ from collections import defaultdict
 from django.core import serializers
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, HttpResponseBadRequest
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.urls import reverse
 from common.models import Submit, Class, Task, AssignedTask, Semester, Subject, assignedtask_results, current_semester_conds, current_semester, submit_assignment_path
@@ -595,12 +595,9 @@ def semesters(request):
 
 
 @user_passes_test(is_teacher)
+@require_POST
 def import_activities(request):
     res = {}
-    if request.method != 'POST':
-        return HttpResponseBadRequest()
-
-    post = json.loads(request.body.decode('utf-8'))
     post = json.loads(request.body.decode('utf-8'))
 
     semester_id = post['semester_id']

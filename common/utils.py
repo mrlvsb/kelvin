@@ -56,5 +56,6 @@ def user_from_login(login: str) -> django.contrib.auth.models.User:
     person = inbus_search_user(login)
     user = user_from_inbus_person(person)
     user.username = login.upper()
+    user.save()
 
     return user
