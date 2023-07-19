@@ -44,8 +44,8 @@ def subject_versions(department_id: dto.DepartmentId = 386) -> List[dto.SubjectV
 
         for subject_version_json in subject_versions_json:
             subject_json = subject_version_json['subject']
-            subject_guarantee = serde.from_dict(dto.Person, subject_version_json['guarantee'])
-            subject_version_guarantee = serde.from_dict(dto.Person, subject_json['guarantee'])
+            subject_guarantee = serde.from_dict(dto.Person, subject_json['guarantee'])
+            subject_version_guarantee = serde.from_dict(dto.Person, subject_version_json['guarantee'])
             subject = dto.Subject(subjectId=subject_json['subjectId'], code=subject_json['code'], abbrev=subject_json['abbrev'],
                                 title=subject_json['title'], guarantee=subject_guarantee)
             subject_version =  dto.SubjectVersion(subjectVersionId=subject_version_json['subjectVersionId'], subject=subject,
