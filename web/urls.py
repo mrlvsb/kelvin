@@ -58,6 +58,5 @@ urlpatterns = [
 
     path('reevaluate/<int:submit_id>', teacher_view.reevaluate, name='reevaluate'),
 
-    path('import', teacher_view.bulk_import),
     path('api_token', common_view.api_token),
 ]
