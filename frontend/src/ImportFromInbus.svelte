@@ -182,16 +182,22 @@
 
 
 {#if result}
-    <table class="table table-sm table-hover table-striped">
-        <tbody>
-        {#each result.users as item}
-            <tr>
-                <td>{item.login}</td>
-                <td>{item.firstname}</td>
-                <td>{item.lastname}</td>
-                <td>{item.created}</td>
-            </tr>
-        {/each}
-        </tbody>
-    </table>
+    {#if result.error}
+        <div class="alert alert-danger" role="alert">
+            {result.error}
+        </div>
+    {:else}
+        <table class="table table-sm table-hover table-striped">
+            <tbody>
+            {#each result.users as item}
+                <tr>
+                    <td>{item.login}</td>
+                    <td>{item.firstname}</td>
+                    <td>{item.lastname}</td>
+                    <td>{item.created}</td>
+                </tr>
+            {/each}
+            </tbody>
+        </table>
+    {/if}
 {/if}
