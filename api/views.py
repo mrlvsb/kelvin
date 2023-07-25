@@ -29,7 +29,8 @@ import serde
 import shutil
 import traceback
 
-from common.bulk_import import BulkImport, ImportException
+import common.bulk_import
+from common.bulk_import import ImportException
 from common import inbus
 from pathlib import Path
 from shutil import copytree, ignore_patterns
@@ -607,9 +608,8 @@ def import_activities(request):
     activities = [ inbus.inbus.concrete_activity(activity_id) for activity_id in activities_id ]
     semester = Semester.objects.get(pk=semester_id)
 
-
     try:
-        res['users'] = list(BulkImport().run_inbus(activities, subject, semester))
+        res['users'] = list(common.bulk_import.run(activities, subject, semester))
         res['count'] = len(res['users'])
     except (ImportException, UnicodeDecodeError) as e:
         res['error'] = e

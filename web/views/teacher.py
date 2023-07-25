@@ -20,7 +20,6 @@ from django.urls import reverse
 from notifications.models import Notification
 from notifications.signals import notify
 
-from common.bulk_import import BulkImport, ImportException
 from common.evaluate import evaluate_submit, get_meta
 from common.models import AssignedTask, Class, Subject, Submit, Task, assignedtask_results
 from common.moss import PlagiarismMatch
@@ -300,26 +299,3 @@ def reevaluate(request, submit_id):
     submit.jobid = evaluate_submit(request, submit).id
     submit.save()
     return redirect(request.META.get('HTTP_REFERER', reverse('submits')) + "#result")
-
-
-@user_passes_test(is_teacher)
-def bulk_import(request):
-    res = {}
-    if request.method == 'POST':
-        create_lectures = request.POST.get('create_lectures', False) == 'on'
-
-        if 'file' in request.FILES:
-            try:
-                res['users'] = list(BulkImport().run(
-                    request.FILES['file'].read().decode('utf-8'),
-                    no_lectures=not create_lectures
-                ))
-                res['count'] = len(res['users'])
-            except (ImportException, UnicodeDecodeError) as e:
-                res['error'] = e
-            except:
-                res['error'] = traceback.format_exc()
-        else:
-            res['error'] = 'No file uploaded'
-
-    return render(request, 'web/teacher/import.html', res)
