@@ -10,7 +10,7 @@
     '/task/edit/:id': EditTask,
     '/task/add/:subject': EditTask,
     '/student_transfer': StudentTransfer,
-    '/import_inbus': ImportFromInbus,
+    '/import': ImportFromInbus,
     '/': ClassList,
   };
 </script>
