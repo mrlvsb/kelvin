@@ -84,7 +84,7 @@
             teacher={filter.teacher}
             clazz={filter.class} />
 
-        <a class="btn btn-sm p-1" href="/import" title="Bulk import students from EDISON">
+        <a class="btn btn-sm p-1" href="/#/import" title="Bulk import students from EDISON">
           <span class="iconify" data-icon="mdi:calendar-import"></span>
         </a>
 
