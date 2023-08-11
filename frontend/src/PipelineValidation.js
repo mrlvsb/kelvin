@@ -440,6 +440,10 @@ const rules = new DictRule({
             cmakeflags: new ValueRule(),
             makeflags: new ValueRule()
         }), 'Build program with CMake, make or collect all files and compile them directly with <strong>gcc</strong> or <strong>g++</strong>'],
+        cargo: [new DockerPipeRule({
+            cmd: [new ValueRule(), "Cargo command that should be executed. Default is `build`."],
+            args: [new ArrayRule(new ValueRule()), "Arguments for Cargo."],
+        }), 'Build a Rust crate with Cargo'],
         run: [new DockerPipeRule({
             commands: [new ArrayRule(
                 new UnionRule(
