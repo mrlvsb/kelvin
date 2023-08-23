@@ -18,7 +18,6 @@ pandas==1.5.3
 psycopg2
 pygraphviz==1.7
 pyserde==0.12.2
-python-ldap==3.4.0
 python-magic==0.4.27
 pyyaml==5.4
 readwise-django-rq-scheduler==1.2.1

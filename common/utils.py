@@ -5,7 +5,6 @@ import django.contrib.auth.models
 import re
 from functools import lru_cache
 
-LDAP_CONNECTION = None
 
 @lru_cache()
 def is_teacher(user):

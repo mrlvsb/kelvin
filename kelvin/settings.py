@@ -146,7 +146,6 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'api.backends.TokenBackend',
     'django_cas_ng.backends.CASBackend',
-    'web.vsbldapbackend.MyLDAPBackend'
 ]
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024
