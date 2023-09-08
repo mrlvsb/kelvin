@@ -97,13 +97,15 @@ class ConcreteActivity:
     weekDayAbbrev: str # zkratka dne v týdnu
     weekDayTitle: str # název dne v týdnu
     weekActivities: List[WeekActivity] # seznam výskytů aktivity v konkrétních týdnech výuky (využití při nepravidelné výuce), obsahuje: weekActivityId (Integer), weekNumber (Integer), date (Date)
-    roomFullcodes: str # optimalizační předpočítávaný atribut z vazby na místnosti
     roomIds: List[int] # seznam ID místností
     teacherIds: List[int] # seznam ID vyučujících (osob)
     studyGroupIds: List[int] # seznam ID studijních skupin (má význam při rozvrhování na studijní skupiny)
 
     # Default values are defined here, since INBUS API sometimes does not provide there values
     # and Python need default values at the end of the definition
+    roomFullcodes: str = '' # optimalizační předpočítávaný atribut z vazby na místnosti
+                            # Emptines may be caused by grouping of activities with other activities.
+                            # Typical situation is a lecture shed by different versions of a subject.
     studyGroupCodes: str = '' # optimalizační předpočítávaný atribut z vazby na studijní skupiny
     teacherFullNames: str = '' # optimalizační předpočítávaný atribut z vazby na vyučující
     teacherLogins: str = '' # optimalizační předpočítávaný atribut z vazby na vyučující
