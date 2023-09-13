@@ -196,7 +196,7 @@ def build_plagiarism_entries(login: str, matches: List[PlagiarismMatch]) -> List
 
     def build(match: PlagiarismMatch) -> PlagiarismEntry:
         (student, other) = (match.first, match.second)
-        if login == match.second:
+        if login == match.second.login:
             (student, other) = (other, student)
         return PlagiarismEntry(
             link=match.link,
