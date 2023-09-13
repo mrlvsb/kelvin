@@ -10,6 +10,8 @@ from io import StringIO
 from lxml.html import parse
 from typing import List, Dict
 
+from .inbus.dto import ConcreteActivity
+
 class ImportException(Exception):
     pass
 
@@ -23,7 +25,7 @@ class ImportResult:
     created: bool
 
 
-def run(concrete_activities: List[inbus.dto.ConcreteActivity], subj: Dict[str, str], semester: Semester):
+def run(concrete_activities: List[ConcreteActivity], subj: Dict[str, str], semester: Semester):
     '''
     `subj`: subject from selected subject in UI as dictionary with k:abbr, v: name
     '''
@@ -56,12 +58,18 @@ def run(concrete_activities: List[inbus.dto.ConcreteActivity], subj: Dict[str, s
 
             # Teacher
             # TODO: There may be more teachers for a class
-            try:
-                teacher = User.objects.get(username=ca.teacherLogins.upper())
-            except User.DoesNotExist:
-                teacher = user_from_login(ca.teacherLogins.upper())
+            if ca.teacherLogins.strip() != '':
+                try:
+                    teacher = User.objects.get(username=ca.teacherLogins.upper())
+                except User.DoesNotExist:
+                    teacher = user_from_login(ca.teacherLogins.upper())
+
+            else:
+                # TODO: We assign all activities without teacher to one special user :-)
+                teacher = User.objects.get(username='GAU01')
 
             class_in_db[c].teacher = teacher
+
             class_in_db[c].save()
 
 

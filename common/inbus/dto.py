@@ -113,7 +113,9 @@ class ConcreteActivity:
 
 
     def code(self):
-        return f'{self.educationTypeAbbrev}/{self.order:02d}'
+        if self.educationTypeAbbrev.startswith('P'):
+            return f'{self.educationTypeAbbrev}/{self.order:02d}'
+        return f'{self.educationTypeAbbrev}/{self.order:02d}/{self.subjectVersionCompleteCode}'
 
 
 @serde.serde
