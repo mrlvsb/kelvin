@@ -148,7 +148,7 @@
         </td>
 
         <td>
-            {ca.educationTypeAbbrev}, {ca.educationTypeTitle}
+            {ca.educationTypeAbbrev}/{ca.order}, {ca.subjectVersionCompleteCode}
         </td>
         <td>
             {ca.teacherFullNames}
