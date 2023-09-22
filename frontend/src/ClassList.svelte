@@ -88,9 +88,11 @@
           <span class="iconify" data-icon="mdi:calendar-import"></span>
         </a>
 
+        {#if $user.is_staff}
         <a class="btn btn-sm p-1" href="/admin/common/class/add/" title="Add class">
           <span class="iconify" data-icon="ant-design:plus-outlined"></span>
         </a>
+        {/if}
   </div>
 
   <div class="classes" class:loading>
