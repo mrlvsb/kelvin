@@ -195,6 +195,7 @@ def info(request):
         'name': request.user.get_full_name(),
         'teacher': is_teacher(request.user),
         'is_superuser': request.user.is_superuser,
+        'is_staff': request.user.is_staff,
     }
 
     semester = current_semester()
