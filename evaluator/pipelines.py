@@ -26,6 +26,11 @@ IMAGE_LIMITS = {
         'network': 'bridge',
         'memory': '512M',
         'fsize': '128M',
+    },
+    'kelvin/cargo': {
+        'network': 'bridge',
+        'memory': '512M',
+        'fsize': '128M',
     }
 }
 
