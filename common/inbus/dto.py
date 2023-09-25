@@ -113,6 +113,7 @@ class ConcreteActivity:
 
 
     def code(self):
+        #NOTE: Here, we assume that all lectures will be combined into one :-)
         if self.educationTypeAbbrev.startswith('P'):
             return f'{self.educationTypeAbbrev}/{self.order:02d}'
         return f'{self.educationTypeAbbrev}/{self.order:02d}/{self.subjectVersionCompleteCode}'
