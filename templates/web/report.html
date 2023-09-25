@@ -44,7 +44,7 @@
 </pre>
 {% endif %}
 
-            {% for path, v in test.files.items %}
+            {% for path, v in test.files_sorted %}
             {% if v.diff and v.diff.size < max_inline_content_bytes or not max_inline_content_bytes %}
               <div class="code-diff diff"
                 data-expected-url="{% url 'raw_result_content' submit.id test.name 'expected' path %}"
@@ -73,6 +73,7 @@
                         <a href="{% url 'raw_result_content' submit.id test.name 'expected' path %}">expected output</a>
                       </span>
                       {% endif %}
+                    </span>
                   </div>
                   <div class="d2h-file-diff">
                     <div class="d2h-code-wrapper">
