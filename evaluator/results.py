@@ -33,6 +33,10 @@ class TestResult:
             'stderr': 'err'
         }
 
+    @property
+    def files_sorted(self):
+        return sorted(self.files.items(), key=lambda k: k[0])
+
     def discover_files(self):
         aliases = {v: k for k, v in self.aliases.items()}
 
