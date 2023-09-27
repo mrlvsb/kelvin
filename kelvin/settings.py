@@ -25,7 +25,7 @@ SECRET_KEY = '***REMOVED***'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS=['127.0.0.1', 'localhost', 'web']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'web']
 
 # Application definition
 
@@ -82,7 +82,7 @@ FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
 
 WSGI_APPLICATION = 'kelvin.wsgi.application'
 
-DJANGO_NOTIFICATIONS_CONFIG = { 'USE_JSONFIELD': True}
+DJANGO_NOTIFICATIONS_CONFIG = {'USE_JSONFIELD': True}
 
 # Database
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
@@ -185,7 +185,7 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
         },
-	'mail_admins': {
+        'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
         },
@@ -209,6 +209,13 @@ MAX_INLINE_LINES = 2000
 
 # DSN for a Sentry instance. If `None`, Sentry will not be included
 SENTRY_URL = None
+
+# Placeholder to ensure Kelvin runs locally without any configuration
+# Prefer configuring Inbus credentials in local_settings.py imported at
+# the end of this script
+INBUS_CLIENT_ID = 'placeholder'
+INBUS_CLIENT_SECRET = 'placeholder'
+
 
 try:
     from .local_settings import *
