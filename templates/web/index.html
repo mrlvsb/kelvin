@@ -28,7 +28,7 @@
     <div class="card-header"><h5 class="mb-0">{{ node.class }}</h5></div>
     <div class="card-body">
         {% if node.summary %}
-          <button class="btn btn-outline-info mb-1" data-toggle="collapse" data-target="#summary-{{ forloop.counter0 }}">
+          <button class="btn btn-outline-info mb-1" data-bs-toggle="collapse" data-bs-target="#summary-{{ forloop.counter0 }}">
             Class notes
           </button>
           <div id="summary-{{ forloop.counter0 }}" class="collapse">
