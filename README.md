@@ -22,6 +22,6 @@ $ cp .env.example .env
 $ docker-compose up
 $ docker-compose exec web ./manage.py migrate
 $ docker-compose exec web ./manage.py createsuperuser
-$ ./sync_from_prod.sh
-$ ./evaluator/images/build.py # rerun if pipeline images changes
+$ ./evaluator/images/build.py  # Rerun if pipeline images changes
+$ ./sync_from_prod.sh  # Optional, you can populate the db yourself
 ```
