@@ -69,6 +69,11 @@ with open("result.html", "w") as out:
         compile_cmd = ["g++" if use_cpp else "gcc", *sources, "-o", output, *shlex.split(flags), *shlex.split(ldflags)]
         returncode = cmd_run(compile_cmd, out, show_cmd=compile_cmd, env=env)
 
+        if returncode == 0:
+            out.write("<span style='color: green'>Compilation Succeeded</span><br>")
+        else:
+            out.write("<span style='color: red'>Compilation Failed</span><br>")
+
     if output and not os.path.exists(output):
         executables = [f for f in os.listdir() if os.access(f, os.X_OK) and not os.path.isdir(f)]
         if len(executables) == 0:
