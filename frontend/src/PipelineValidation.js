@@ -467,7 +467,7 @@ const rules = new DictRule({
             files: [new ArrayRule(new ValueRule()), 'List of analyzed files.'],
         }), 'C/C++ static analysis comments in source code'],
         'tests': [new DockerPipeRule({
-            executable: new ValueRule(),
+            executable: new UnionRule(new ValueRule(), new ArrayRule()),
         }), 'Run input/output/files tests on compiled program.'],
         'auto_grader': [new PipeRule({
           propose: [new EnumRule(['true', 'false']), 'Only propose points without assigning.'],

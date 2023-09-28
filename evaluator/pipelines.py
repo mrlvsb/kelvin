@@ -220,7 +220,7 @@ def text_compare(expected, actual):
 class TestsPipe:
     def __init__(self, executable='./main', limits=None, timeout=5, before=None, **kwargs):
         super().__init__(**kwargs)
-        self.executable = executable
+        self.executable = [executable] if isinstance(executable, str) else executable
         self.limits = limits
         self.timeout = timeout
         self.before = [] if not before else before
@@ -254,7 +254,7 @@ class TestsPipe:
                 result.copy_result_file('stdin', actual=test.stdin.file.path)
 
             # run process in the sandbox
-            cmd = [self.executable] + test.args
+            cmd = self.executable + test.args
 
             with tempfile.NamedTemporaryFile() as stdout_name, tempfile.NamedTemporaryFile() as stderr_name:
                 docker_cmd = ['docker', 'exec', '-i', container, 'timeout', str(self.timeout)] + cmd
