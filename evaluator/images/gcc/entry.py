@@ -62,7 +62,7 @@ with open("result.html", "w") as out:
                     sources.append(os.path.join(root, f))
 
         if not sources:
-            out.write("<span style='color: red'>Missing source files! please upload .c or .cpp files!</span>")
+            out.write("<div style='color: red'>Missing source files! please upload .c or .cpp files!</div>")
             exit(1)
 
         use_cpp = any(f.endswith('.cpp') for f in sources)
@@ -70,17 +70,17 @@ with open("result.html", "w") as out:
         returncode = cmd_run(compile_cmd, out, show_cmd=compile_cmd, env=env)
 
         if returncode == 0:
-            out.write("<span style='color: green'>Compilation Succeeded</span><br>")
+            out.write("<div style='color: green'>Compilation Succeeded</div>")
         else:
-            out.write("<span style='color: red'>Compilation Failed</span><br>")
+            out.write("<div style='color: red'>Compilation Failed</div>")
 
     if output and not os.path.exists(output):
         executables = [f for f in os.listdir() if os.access(f, os.X_OK) and not os.path.isdir(f)]
         if len(executables) == 0:
-            out.write("<span style='color: red'>No executable has been built.</span>")
+            out.write("<div style='color: red'>No executable has been built.</div>")
             exit(1)
         elif len(executables) > 1:
-            out.write(f"<span style='color: red'>Multiple executables have been built: {','.join(executables)}</span>")
+            out.write(f"<div style='color: red'>Multiple executables have been built: {','.join(executables)}</div>")
             exit(1)
 
         out.write(f"<code style='filter: opacity(.7);'>$ mv {executables[0]} {output}</code>")
