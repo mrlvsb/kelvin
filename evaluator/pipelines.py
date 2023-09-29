@@ -198,9 +198,9 @@ def text_compare(expected, actual):
             "diff",
             "-a",
             "-u",
-            "-i",
-            "-w",
-            '-B',
+            # "-i",
+            # "-w",
+            # '-B',
             actual,
             expected,
         ]
