@@ -66,13 +66,16 @@ with open("result.html", "w") as f:
 
         if not job.get('hide', False):
             f.write(f"<code style='filter: opacity(.7);'>$ {html.escape(job.get('cmd_show', job['cmd']))}</code><br>")
+
         if job.get('asciinema', False):
-            cmd = ['asciinema', 'rec', '-c', f"timeout {job.get('timeout', DEFAULT_TIMEOUT)} {job['cmd']}", '/tmp/out.cast']
+            cast_filepath = "/tmp/out.cast"
+            cmd = ['asciinema', 'rec', '-c', f"timeout {job.get('timeout', DEFAULT_TIMEOUT)} {job['cmd']}", cast_filepath]
             p = subprocess.Popen(cmd, env={**os.environ, 'TERM': 'xterm', 'HOME': '/tmp'})
             p.wait()
 
-            with open("/tmp/out.cast", "rb") as record:
+            with open(cast_filepath, "rb") as record:
                 f.write(f"<asciinema-player preload src='data:application/json;base64,{base64.b64encode(record.read()).decode('utf-8')}'></asciinema-player>")
+            os.unlink(cast_filepath)
         else:
             with open('/tmp/out', 'w+', errors='ignore') as out:
                 timedout = False
