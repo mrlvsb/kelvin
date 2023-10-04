@@ -36,7 +36,6 @@ from pathlib import Path
 from shutil import copytree, ignore_patterns
 from django.utils.dateparse import parse_datetime
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -51,19 +50,28 @@ def tasks_list(request):
         })
     return JsonResponse({'tasks': result})
 
+
 @user_passes_test(is_teacher)
 def all_classes(request):
+    # https://stackoverflow.com/questions/13844158/sort-week-day-texts
+    # {'MO': 0, 'TU': 1, ...}
+    day_mapper = {name:val for val, name in enumerate(Class.Day)}
     conds = {}
 
     if not request.user.is_superuser:
         conds['teacher_id'] = request.user.id
 
     semesters = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
-    for cl in Class.objects.filter(**conds).select_related('teacher', 'subject', 'semester'):
+    classes = Class.objects.filter(**conds).select_related('teacher', 'subject', 'semester')
+
+    classes = sorted(classes, key=lambda klass: (day_mapper[klass.day], klass.time))
+
+    for cl in classes:
         sem = str(cl.semester)
         semesters[sem][cl.subject.abbr][cl.teacher.username].append(cl.code)
 
     return JsonResponse({'semesters': semesters})
+
 
 @user_passes_test(is_teacher)
 def class_detail_list(request):
