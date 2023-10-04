@@ -142,7 +142,8 @@
     {/if}
     <select class="form-select form-select-sm" bind:value={clazz} disabled={!(semester && subject)}>
       <option value="">Class</option>
-      {#each sorted(classes) as clazz (clazz)}
+      <!-- `classes` are sorted serverside -->
+      {#each classes as clazz (clazz)}
         <option>{clazz}</option>
       {/each}
     </select>
