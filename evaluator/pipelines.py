@@ -182,6 +182,36 @@ class RequiredFilesPipe:
         }
 
 
+def with_nl_message(diff: str):
+    split = diff.split('\n')
+
+    try:
+        idx = split.index('\\ No newline at end of file')
+    except ValueError:
+        return diff
+
+    begin_char = '-' if split[idx-1][0] == '-' else '+'
+
+    split[idx] = f'{begin_char}<No newline at end of file>'
+
+    while not split[idx].startswith('@@ ') and not split[idx].endswith(' @@'):
+        idx -= 1
+
+    line = split[idx]
+    diff_line = line.split(' ')
+
+    line_number_idx = 1 if begin_char == '-' else 2
+    line_numbers = diff_line[line_number_idx].split(',')
+    if len(line_numbers) == 1:
+        line_numbers.append('2')
+    else:
+        line_numbers[1] = str(int(line_numbers[1])+1)
+    diff_line[line_number_idx] = ','.join(line_numbers)
+    split[idx] = ' '.join(diff_line)
+
+    return '\n'.join(split)
+
+
 def text_compare(expected, actual):
     def to_file(input):
         if isinstance(input, io.StringIO):
@@ -212,7 +242,9 @@ def text_compare(expected, actual):
             success = p.returncode == 0
 
             out.seek(0)
-            return success, None, out.read().decode('utf-8')
+            diff = out.read().decode('utf-8')
+            diff = with_nl_message(diff)
+            return success, None, diff
     except UnicodeDecodeError as e:
         return False, str(e), None
 
