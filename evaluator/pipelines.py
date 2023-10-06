@@ -182,6 +182,14 @@ class RequiredFilesPipe:
         }
 
 
+# A hack which enables us to display a message if one of the files contains
+# a newline at eof whilst the other does not
+# This behaviour is accomplished by manually modifying the diff
+# with_nl_message modifies the 'No newline at end of file' text by prefixing it
+# with a + or - (depending on which file is missing the newline), and removing
+# the leading backslash character
+# Both of those transformations are necessary for diff2html to render our diff correctly
+# Lastly, the function WILL NOT WORK without the '-u'/'--unified' flag
 def with_nl_message(diff: str):
     split = diff.split('\n')
 
@@ -191,23 +199,7 @@ def with_nl_message(diff: str):
         return diff
 
     begin_char = '-' if split[idx-1][0] == '-' else '+'
-
     split[idx] = f'{begin_char}<No newline at end of file>'
-
-    while not split[idx].startswith('@@ ') and not split[idx].endswith(' @@'):
-        idx -= 1
-
-    line = split[idx]
-    diff_line = line.split(' ')
-
-    line_number_idx = 1 if begin_char == '-' else 2
-    line_numbers = diff_line[line_number_idx].split(',')
-    if len(line_numbers) == 1:
-        line_numbers.append('2')
-    else:
-        line_numbers[1] = str(int(line_numbers[1])+1)
-    diff_line[line_number_idx] = ','.join(line_numbers)
-    split[idx] = ' '.join(diff_line)
 
     return '\n'.join(split)
 
