@@ -98,14 +98,22 @@
 
               $(document).ready(function () {
                   $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
-                      var enabled = $("#this-semester").is(":checked");
-                      if (!enabled) return true;
+                      var filterMode = $("#filter-mode").val();
 
                       var firstSemester = data[1].match(semesterRegex)[1];
                       var secondSemester = data[4].match(semesterRegex)[1];
 
                       var thisSemester = "{{ semester }}";
-                      return firstSemester === thisSemester || secondSemester === thisSemester;
+                      var firstMatches = firstSemester === thisSemester;
+                      var secondMatches = secondSemester === thisSemester;
+
+                      if (filterMode === "both") {
+                          return firstMatches && secondMatches;
+                      } else if (filterMode === "one") {
+                          return firstMatches || secondMatches;
+                      } else {
+                          return true;
+                      }
                   });
 
                   var table = $(".moss-table").DataTable({
@@ -123,15 +131,19 @@
                       }]
                   });
 
-                  $("#this-semester").change(function () {
+                  $("#filter-mode").change(function () {
                       table.draw();
                   });
               });
           </script>
 
-          <div style="display: flex; justify-content: end;">
-            <input type="checkbox" checked="checked" id="this-semester"/>
-            <span style="padding-left: 5px;">Show only this semester</span>
+          <div style="display: flex; justify-content: end; margin-bottom: 5px;">
+            <span style="padding-right: 5px;">Filter mode:</span>
+            <select id="filter-mode">
+              <option value="one" selected="selected">At least one side from this semester</option>
+              <option value="both">Both sides from this semester</option>
+              <option value="all">All</option>
+            </select>
           </div>
           <table class="table table-sm table-hover table-striped moss-table">
             <thead>
