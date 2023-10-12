@@ -433,6 +433,9 @@ const rules = new DictRule({
         dotnet: [new DockerPipeRule({
             unittests: [new ValueRule(), 'Run unit tests. By default <strong>false</strong>'],
         })],
+        java: [new DockerPipeRule({
+            unittests: [new ValueRule(), 'Run unit tests. By default <strong>false</strong>'],
+        })],
         gcc: [new DockerPipeRule({
             flags: [new ValueRule(), 'Flags for the gcc/g++ compiler.'],
             output: [new ValueRule(), 'Built executable name <strong>-o main</strong>'],
