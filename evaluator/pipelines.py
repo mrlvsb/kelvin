@@ -31,7 +31,12 @@ IMAGE_LIMITS = {
         'network': 'bridge',
         'memory': '512M',
         'fsize': '128M',
-    }
+    },
+    'kelvin/java': {
+        'network': 'bridge',
+        'memory': '512M',
+        'fsize': '128M',
+    },
 }
 
 def create_docker_cmd(evaluation, image, additional_args=None, cmd=None, limits=None, env=None):
