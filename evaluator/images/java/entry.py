@@ -165,7 +165,17 @@ result = build_java_project(run_tests)
 
 with open("result.html", "w") as out:
     stdout = bleach.clean(result.output.strip()).replace("\n", "<br />")
-    out.write(f'<pre>{stdout}</pre>')
+    stdout = f"<pre><code>{stdout}</code></pre>"
+    if result.success:
+        out.write(f"""<details>
+<summary>Stdout</summary>
+
+{stdout}
+
+</details>
+""")
+    else:
+        out.write(stdout)
 
 with open('piperesult.json', 'w') as out:
     json.dump({"comments": result.comments, "tests": result.tests}, out, indent=4, sort_keys=True)
