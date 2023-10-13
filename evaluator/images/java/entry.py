@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3
+#!/usr/bin/python3
 import dataclasses
 import os
 import subprocess
@@ -30,11 +30,11 @@ class BuildResult:
 
 def parse_tests_report(path):
     try:
+        tests = []
         for path in glob.glob(os.path.join(path, "*.xml")):
             tree = ET.parse(path)
             os.unlink(path)
 
-            tests = []
             for testcase in tree.findall('.//testcase'):
                 success = True
                 message = ""
@@ -83,11 +83,6 @@ def get_executable_class_names(directory: Path) -> List[str]:
 
 
 def build_java_project(run_tests: bool) -> BuildResult:
-    output_dir = "output"
-    paths = os.listdir(os.getcwd())
-    pom_xml = [p for p in paths if Path(p).suffix == "pom.xml"]
-    
-    
     # build or build+run tests
     tests_path = "target/surefire-reports"
     env = os.environ.copy()
