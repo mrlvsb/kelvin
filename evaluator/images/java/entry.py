@@ -164,7 +164,7 @@ run_tests = os.getenv("PIPE_UNITTESTS", False)
 result = build_java_project(run_tests)
 
 with open("result.html", "w") as out:
-    stdout = bleach.clean(result.output.strip()).replace("\n", "<br />")
+    stdout = bleach.clean(result.output.strip())
     stdout = f"<pre><code>{stdout}</code></pre>"
     if result.success:
         out.write(f"""<details>
