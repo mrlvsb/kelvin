@@ -83,8 +83,6 @@ def build_dotnet_project(run_tests: bool) -> BuildResult:
     sln = [p for p in paths if Path(p).suffix == ".sln"]
     csproj = [p for p in paths if Path(p).suffix == ".csproj"]
 
-    if sln and csproj:
-        return BuildResult.fail("Both .sln and .csproj file was found in the root directory.")
     if not sln and not csproj:
         return BuildResult.fail("No .sln or .csproj file was found in the root directory.")
     if len(sln) > 1:
