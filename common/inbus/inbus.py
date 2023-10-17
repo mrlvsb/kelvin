@@ -33,32 +33,37 @@ def subject_versions(department_id: dto.DepartmentId = 386) -> List[dto.SubjectV
     Get list of all subjects and their versions by department.
     Here `386` is Department of Computer Science.
     """
-    results_per_page = 20
-    subject_versions = []
-    offset = 0
-    while True:
-        url = urllib.parse.urljoin(config.INBUS_SERVICE_EDISON_URL, 'edu/subjectVersions')
-        subject_versions_resp = utils.inbus_request(url, {'departmentId': department_id, 'offset': offset, 'limit': results_per_page})
+    subject_versions = cache.get('subject_versions')
 
-        subject_versions_json = subject_versions_resp.json()
+    if not subject_versions:
+        results_per_page = 20
+        subject_versions = []
+        offset = 0
+        while True:
+            url = urllib.parse.urljoin(config.INBUS_SERVICE_EDISON_URL, 'edu/subjectVersions')
+            subject_versions_resp = utils.inbus_request(url, {'departmentId': department_id, 'offset': offset, 'limit': results_per_page})
 
-        for subject_version_json in subject_versions_json:
-            subject_json = subject_version_json['subject']
-            subject_guarantee = serde.from_dict(dto.Person, subject_json['guarantee'])
-            subject_version_guarantee = serde.from_dict(dto.Person, subject_version_json['guarantee'])
-            subject = dto.Subject(subjectId=subject_json['subjectId'], code=subject_json['code'], abbrev=subject_json['abbrev'],
-                                title=subject_json['title'], guarantee=subject_guarantee)
-            subject_version =  dto.SubjectVersion(subjectVersionId=subject_version_json['subjectVersionId'], subject=subject,
-                                                subjectVersionCompleteCode=subject_version_json['subjectVersionCompleteCode'], guarantee=subject_version_guarantee)
+            subject_versions_json = subject_versions_resp.json()
 
-            subject_versions.append(subject_version)
+            for subject_version_json in subject_versions_json:
+                subject_json = subject_version_json['subject']
+                subject_guarantee = serde.from_dict(dto.Person, subject_json['guarantee'])
+                subject_version_guarantee = serde.from_dict(dto.Person, subject_version_json['guarantee'])
+                subject = dto.Subject(subjectId=subject_json['subjectId'], code=subject_json['code'], abbrev=subject_json['abbrev'],
+                                    title=subject_json['title'], guarantee=subject_guarantee)
+                subject_version =  dto.SubjectVersion(subjectVersionId=subject_version_json['subjectVersionId'], subject=subject,
+                                                    subjectVersionCompleteCode=subject_version_json['subjectVersionCompleteCode'], guarantee=subject_version_guarantee)
 
-        results = len(subject_versions_json)
+                subject_versions.append(subject_version)
 
-        offset += results
+            results = len(subject_versions_json)
 
-        if results == 0:
-            break
+            offset += results
+
+            if results == 0:
+                break
+
+        cache.set('subject_versions', subject_versions, 60 * 60)
 
     return subject_versions
 
