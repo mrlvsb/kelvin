@@ -3,35 +3,37 @@
 TABLE_OUTPUT=""
 BINARY=${1:-./main}
 
+execute_test () {
+  ${BINARY} $2 < $1/stdin > $1/real_stdout 2> $1/real_stderr
+  local CODE=$?
+  local CODEMESSAGE=""
+  if [ ${CODE} != $3 ]
+  then
+    local CODEMESSAGE=" (return code \u001b[1m$3\u001b[0m expected, \u001b[1m${CODE}\u001b[0m given)"
+  fi
+  if ( [ ! -f $1/stdout ] || cmp --silent -- $1/stdout $1/real_stdout ) && ( [ ! -f $1/stderr ] || cmp --silent -- $1/stderr $1/real_stderr ) && [ ! "${CODEMESSAGE}" ]
+  then
+    TABLE_OUTPUT="${TABLE_OUTPUT}$1:\t\u001b[32;1mSUCCESS\u001b[0m\n"
+  else
+    TABLE_OUTPUT="${TABLE_OUTPUT}$1:\t\u001b[31;1mFAILED\u001b[0m${CODEMESSAGE}\n"
+    if [ -f $1/stdout ]
+    then
+      git diff --no-index $1/real_stdout $1/stdout > $1/stdout.diff
+    fi
+    if [ -f $1/stderr ]
+    then
+      git diff --no-index $1/real_stderr $1/stderr > $1/stderr.diff
+    fi
+    RESULT="ERROR"
+  fi
+}
+
 if [ -f ${BINARY} ]
 then
   RESULT=""
-  for dir in */
-  do
-    ARGS=""
-    if [ -f ${dir}args ]
-    then
-      ARGS=$(cat ${dir}args)
-    fi
-    ${BINARY} ${ARGS} < ${dir}stdin > ${dir}real_stdout 2> ${dir}real_stderr
-    if ( [ ! -f ${dir}stdout ] || cmp --silent -- ${dir}stdout ${dir}real_stdout ) && ( [ ! -f ${dir}stderr ] || cmp --silent -- ${dir}stderr ${dir}real_stderr )
-    then
-      TABLE_OUTPUT="${TABLE_OUTPUT}${dir}:\t\u001b[32;1mSUCCESS\u001b[0m\n"
-    else
-      TABLE_OUTPUT="${TABLE_OUTPUT}${dir}:\t\u001b[31;1mFAILED\u001b[0m\n"
-      if [ -f ${dir}stdout ]
-      then
-        git diff --no-index ${dir}real_stdout ${dir}stdout > ${dir}stdout.diff
-      fi
-      if [ -f ${dir}stderr ]
-      then
-        git diff --no-index ${dir}real_stderr ${dir}stderr > ${dir}stderr.diff
-      fi
-      RESULT="ERROR"
-    fi
-  done
 
-  echo -e "${TABLE_OUTPUT}" | column -t
+  # --kelvin-generate--
+  echo -e "${TABLE_OUTPUT}" | column -ts $'\t'
 
   if [ ${RESULT} ]
   then
