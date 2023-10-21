@@ -35,7 +35,7 @@ from common.evaluate import evaluate_submit
 from common.moss import PlagiarismMatch, moss_result
 from web.task_utils import load_readme
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES, MAX_INLINE_LINES
-from evaluator.testsets import TestSet
+from evaluator.testsets import File, TestSet
 from common.evaluate import get_meta
 from evaluator.results import EvaluationResult, PipeResult
 from common.utils import is_teacher
@@ -728,6 +728,14 @@ def check_is_task_accessible(request, task):
 
 @login_required
 def tar_test_data(request, task_name):
+    def include_tests_script(tar):
+        script_name = "run-tests.sh"
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", script_name)
+        file = File(path)
+        info = tarfile.TarInfo(script_name)
+        info.size = file.size()
+        tar.addfile(info, fileobj=file.open('rb'))
+
     task = get_object_or_404(Task, code=task_name)
     check_is_task_accessible(request, task)
 
@@ -740,11 +748,18 @@ def tar_test_data(request, task_name):
     with io.BytesIO() as f:
         with tarfile.open(fileobj=f, mode="w:gz") as tar:
             for test in tests:
+                if len(test.args) > 0:
+                    args = " ".join(test.args)
+                    file = io.BytesIO(bytes(args, "utf-8"))
+                    info = tarfile.TarInfo(os.path.join(test.name, "args"))
+                    info.size = len(args)
+                    tar.addfile(info, fileobj=file)
                 for file_path in test.files:
                     test_file = test.files[file_path]
                     info = tarfile.TarInfo(os.path.join(test.name, file_path))
                     info.size = test_file.size()
                     tar.addfile(info, fileobj=test_file.open('rb'))
+            include_tests_script(tar)
 
         f.seek(0)
         return file_response(f, f"{task_name}.tar.gz", "application/tar")
