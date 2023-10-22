@@ -2,9 +2,13 @@
 import {csrfToken} from './api.js'
 import uppie from 'uppie'
 import {localStorageStore} from './utils.js'
+import Modal from './Modal.svelte';
 
 export let cooldown = 0;
 
+let showUploadQuestion = false;
+let filesQuestion = [];
+let uploadFormData = null;
 let dropping = false;
 let dragLeaveTimer = null;
 let progress = null;
@@ -38,12 +42,25 @@ uppie()(window, {name: 'solution'}, async (event, formData, files) => {
 	if(files.length) {
 		formData.append('paths', files.join('\n'));
 		if(remainingMS <= 0) {
-			upload(formData);
+			uploadFormData = formData;
+			filesQuestion = files;
+			showUploadQuestion = true;
 		} else {
 			queued = formData;
 		}
 	}
 });	
+
+function acceptUpload() {
+	showUploadQuestion = false;
+	upload(uploadFormData);
+}
+
+function declineUpload() {
+	showUploadQuestion = false;
+	uploadFormData = null;
+	filesQuestion = [];
+}
 
 function dragstop() {
 	if(dragLeaveTimer) {
@@ -181,3 +198,14 @@ update();
 		<span><span class="iconify" data-icon="ic:baseline-file-upload" data-inline="false"></span></span>
 	{/if}
 </div>
+
+<Modal open={showUploadQuestion} onClosed={(proceed) => proceed ? acceptUpload() : declineUpload()} title="Submit source code">
+	<p>
+		<strong>Do you really want to submit these files?</strong>
+	</p>
+	<ul>
+		{#each filesQuestion as file}
+			<li>{file}</li>
+		{/each}
+	</ul>
+</Modal>
