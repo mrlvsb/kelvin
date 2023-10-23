@@ -726,12 +726,17 @@ def check_is_task_accessible(request, task):
         if not assigned_tasks:
             raise PermissionDenied()
 
+
+ASSETS_DIR = Path(__file__).absolute().parent / "assets"
+
+
 @login_required
 def tar_test_data(request, task_name):
     def include_tests_script(tar, generated_content):
         script_name = "run-tests.sh"
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", script_name)
-        contents = io.BytesIO(bytes(File(path).open('r').read().replace("# --kelvin-generate--", generated_content), "utf-8"))
+        with File(ASSETS_DIR / script_name).open('r') as f:
+            contents = io.BytesIO(
+                bytes(f.read().replace("# --kelvin-generate--", generated_content), "utf-8"))
         info = tarfile.TarInfo(script_name)
         info.size = len(contents.getvalue())
         # Owner: rwx, group: rwx, other: r
