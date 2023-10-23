@@ -2,6 +2,7 @@
 
 TABLE_OUTPUT=""
 BINARY=${1:-./main}
+BINARY=$(realpath "${BINARY}")
 
 execute_test () {
   ${BINARY} $2 < $1/stdin > $1/real_stdout 2> $1/real_stderr
