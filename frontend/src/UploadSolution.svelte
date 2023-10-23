@@ -6,7 +6,6 @@
 
     export let cooldown = 0;
 
-    let showUploadQuestion = false;
     let filesQuestion = [];
     let uploadFormData = null;
     let dropping = false;
@@ -44,7 +43,6 @@
             if (remainingMS <= 0) {
                 uploadFormData = formData;
                 filesQuestion = files;
-                showUploadQuestion = true;
             } else {
                 queued = formData;
             }
@@ -52,12 +50,11 @@
     });
 
     function acceptUpload() {
-        showUploadQuestion = false;
         upload(uploadFormData);
+        clearFormData();
     }
 
-    function declineUpload() {
-        showUploadQuestion = false;
+    function clearFormData() {
         uploadFormData = null;
         filesQuestion = [];
     }
@@ -211,7 +208,7 @@
   {/if}
 </div>
 
-<Modal open={showUploadQuestion} onClosed={(proceed) => proceed ? acceptUpload() : declineUpload()}
+<Modal open={uploadFormData !== null} onClosed={(proceed) => proceed ? acceptUpload() : clearFormData()}
        title="Submit source code">
   <p>
     <strong>Do you really want to submit these files?</strong>
