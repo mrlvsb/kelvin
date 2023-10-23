@@ -1,7 +1,9 @@
 <script>
+    import {onMount} from 'svelte';
     import {csrfToken} from './api.js'
     import uppie from 'uppie'
     import {localStorageStore} from './utils.js'
+    import Toast from 'bootstrap/js/dist/toast';
     import Modal from './Modal.svelte';
 
     export let cooldown = 0;
@@ -13,6 +15,8 @@
     let progress = null;
     let error = false;
     let lastSubmitDate = localStorageStore('KELVIN_LAST_SUBMIT_DATE', 0);
+    let submittedToast = localStorageStore('KELVIN_SUBMITTED_TOAST', false);
+    let toast = null;
     let remainingMS = -1;
     let queued = null;
 
@@ -27,6 +31,7 @@
         xhr.addEventListener('loadend', () => {
             if (xhr.status == 200 && xhr.responseURL) {
                 $lastSubmitDate = new Date();
+                $submittedToast = true;
                 document.location.href = xhr.responseURL + '#result';
             } else {
                 error = true;
@@ -101,6 +106,7 @@
     const btn = document.getElementById('upload-choose');
     btn.onchange = function () {
         $lastSubmitDate = new Date();
+        $submittedToast = true;
         this.form.submit();
     };
     const btnText = btn.nextElementSibling;
@@ -140,6 +146,13 @@
     function uploadFileRest() {
         return Math.max(0, filesQuestion.length - MAXIMUM_FILE_SHOWN);
     }
+
+    onMount(async () => {
+      if ($submittedToast) {
+        $submittedToast = false;
+        new Toast(toast).show();
+      }
+    });
 
     update();
 </script>
@@ -222,3 +235,14 @@
     <span>and {uploadFileRest()} other file(s).</span>
   {/if}
 </Modal>
+
+<div class="position-fixed top-0 end-0 mt-5 me-3">
+  <div class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true" bind:this={toast}>
+    <div class="d-flex">
+      <div class="toast-body">
+        The files have been submitted successfully.
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close">
+    </div>
+  </div>
+</div>
