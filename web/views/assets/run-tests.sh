@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Usage: ./run-tests.sh <path-to-binary>
+# Example: ./run-tests.sh ./main
+
 TABLE_OUTPUT=""
 BINARY=${1:-./main}
 BINARY=$(realpath "${BINARY}")
