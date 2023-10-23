@@ -734,6 +734,9 @@ def tar_test_data(request, task_name):
         contents = io.BytesIO(bytes(File(path).open('r').read().replace("# --kelvin-generate--", generated_content), "utf-8"))
         info = tarfile.TarInfo(script_name)
         info.size = len(contents.getvalue())
+        # Owner: rwx, group: rwx, other: r
+        info.mode = 0o774
+
         tar.addfile(info, fileobj=contents)
 
     task = get_object_or_404(Task, code=task_name)
