@@ -38,7 +38,7 @@
     }
 
     uppie()(window, {name: 'solution'}, async (event, formData, files) => {
-        if (files.length) {
+        if (files.length && uploadFormData === null) {
             formData.append('paths', files.join('\n'));
             if (remainingMS <= 0) {
                 uploadFormData = formData;
@@ -82,7 +82,7 @@
             return false;
         }
 
-        if (hasFiles() && !dropping) {
+        if (uploadFormData === null && hasFiles() && !dropping) {
             dropping = true;
         }
     }
