@@ -60,7 +60,7 @@
 
       for (let i = 0; i < clazz.students.length; i++) {
           const student = clazz.students[i];
-          if (!isNaN(clazz.assignments[assignment_index].students[student.username].assigned_points)) {
+          if (!isNaN(parseFloat(clazz.assignments[assignment_index].students[student.username].assigned_points))) {
               assignmentPoints += Math.max(0, clazz.assignments[assignment_index].students[student.username].assigned_points);
               gradedStudents += 1;
           }
