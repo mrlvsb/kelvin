@@ -6,8 +6,6 @@
 TABLE_OUTPUT=""
 BINARY=${1:-./main}
 SCRIPT_PATH=$(dirname $(realpath $0))
-command -v git &> /dev/null
-HAS_GIT=$?
 
 execute_test () {
   local TEST_PATH="${SCRIPT_PATH}/$1"
@@ -23,16 +21,13 @@ execute_test () {
     TABLE_OUTPUT="${TABLE_OUTPUT}$1:\t`tput bold setaf 2`SUCCESS`tput sgr0`\n"
   else
     TABLE_OUTPUT="${TABLE_OUTPUT}$1:\t`tput bold setaf 1`FAILED`tput sgr0`${CODEMESSAGE}\n"
-    if [ ${HAS_GIT} -eq 0 ]
+    if [ -f ${TEST_PATH}/stdout ]
     then
-      if [ -f ${TEST_PATH}/stdout ]
-      then
-        git diff --no-index ${TEST_PATH}/real_stdout ${TEST_PATH}/stdout > ${TEST_PATH}/stdout.diff
-      fi
-      if [ -f ${TEST_PATH}/stderr ]
-      then
-        git diff --no-index ${TEST_PATH}/real_stderr ${TEST_PATH}/stderr > ${TEST_PATH}/stderr.diff
-      fi
+      diff ${TEST_PATH}/real_stdout ${TEST_PATH}/stdout > ${TEST_PATH}/stdout.diff
+    fi
+    if [ -f ${TEST_PATH}/stderr ]
+    then
+      diff ${TEST_PATH}/real_stderr ${TEST_PATH}/stderr > ${TEST_PATH}/stderr.diff
     fi
     RESULT="ERROR"
   fi
@@ -48,13 +43,7 @@ then
 
   if [ ${RESULT} ]
   then
-    if [ ${HAS_GIT} -eq 0 ]
-    then
-      echo "You can find the program's outputs stored as \"real_stdout\" and output differences as \"stdout.diff\" in tests directories."
-    else
-      echo "You can find the program's outputs stored as \"real_stdout\" in tests directories."
-      echo "If you want to include output differences, please install Git."
-    fi
+    echo "You can find the program's outputs stored as \"real_stdout\" and output differences as \"stdout.diff\" in tests directories."
   fi
 else
   echo -e "`tput bold setaf 1`ERROR:`tput sgr0` Binary not found."
