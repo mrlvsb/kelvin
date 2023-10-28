@@ -5,28 +5,34 @@
 
 TABLE_OUTPUT=""
 BINARY=${1:-./main}
-BINARY=$(realpath "${BINARY}")
+SCRIPT_PATH=$(dirname $(realpath $0))
+command -v git &> /dev/null
+HAS_GIT=$?
 
 execute_test () {
-  ${BINARY} $2 < $1/stdin > $1/real_stdout 2> $1/real_stderr
+  local TEST_PATH="${SCRIPT_PATH}/$1"
+  ${BINARY} $2 < ${TEST_PATH}/stdin > ${TEST_PATH}/real_stdout 2> ${TEST_PATH}/real_stderr
   local CODE=$?
   local CODEMESSAGE=""
   if [ ${CODE} != $3 ]
   then
-    local CODEMESSAGE=" (return code \u001b[1m$3\u001b[0m expected, \u001b[1m${CODE}\u001b[0m given)"
+    local CODEMESSAGE=" (return code `tput bold`$3`tput sgr0` expected, `tput bold`${CODE}`tput setgr0` given)"
   fi
-  if ( [ ! -f $1/stdout ] || cmp --silent -- $1/stdout $1/real_stdout ) && ( [ ! -f $1/stderr ] || cmp --silent -- $1/stderr $1/real_stderr ) && [ ! "${CODEMESSAGE}" ]
+  if ( [ ! -f ${TEST_PATH}/stdout ] || cmp --silent -- ${TEST_PATH}/stdout ${TEST_PATH}/real_stdout ) && ( [ ! -f ${TEST_PATH}/stderr ] || cmp --silent -- ${TEST_PATH}/stderr ${TEST_PATH}/real_stderr ) && [ ! "${CODEMESSAGE}" ]
   then
-    TABLE_OUTPUT="${TABLE_OUTPUT}$1:\t\u001b[32;1mSUCCESS\u001b[0m\n"
+    TABLE_OUTPUT="${TABLE_OUTPUT}$1:\t`tput bold setaf 2`SUCCESS`tput sgr0`\n"
   else
-    TABLE_OUTPUT="${TABLE_OUTPUT}$1:\t\u001b[31;1mFAILED\u001b[0m${CODEMESSAGE}\n"
-    if [ -f $1/stdout ]
+    TABLE_OUTPUT="${TABLE_OUTPUT}$1:\t`tput bold setaf 1`FAILED`tput sgr0`${CODEMESSAGE}\n"
+    if [ ${HAS_GIT} -eq 0 ]
     then
-      git diff --no-index $1/real_stdout $1/stdout > $1/stdout.diff
-    fi
-    if [ -f $1/stderr ]
-    then
-      git diff --no-index $1/real_stderr $1/stderr > $1/stderr.diff
+      if [ -f ${TEST_PATH}/stdout ]
+      then
+        git diff --no-index ${TEST_PATH}/real_stdout ${TEST_PATH}/stdout > ${TEST_PATH}/stdout.diff
+      fi
+      if [ -f ${TEST_PATH}/stderr ]
+      then
+        git diff --no-index ${TEST_PATH}/real_stderr ${TEST_PATH}/stderr > ${TEST_PATH}/stderr.diff
+      fi
     fi
     RESULT="ERROR"
   fi
@@ -34,6 +40,7 @@ execute_test () {
 
 if [ -f ${BINARY} ]
 then
+  BINARY=$(realpath "${BINARY}")
   RESULT=""
 
   # --kelvin-generate--
@@ -41,8 +48,14 @@ then
 
   if [ ${RESULT} ]
   then
-    echo "You can find the program's outputs stored as \"real_stdout\" and output differences as \"stdout.diff\" in tests directories."
+    if [ ${HAS_GIT} -eq 0 ]
+    then
+      echo "You can find the program's outputs stored as \"real_stdout\" and output differences as \"stdout.diff\" in tests directories."
+    else
+      echo "You can find the program's outputs stored as \"real_stdout\" in tests directories."
+      echo "If you want to include output differences, please install Git."
+    fi
   fi
 else
-  echo -e "\u001b[31;1mERROR:\u001b[0m Binary not found."
+  echo -e "`tput bold setaf 1`ERROR:`tput sgr0` Binary not found."
 fi
