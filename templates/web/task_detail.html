@@ -67,6 +67,7 @@
         {{ submit.created_at|timeuntil:submit.assignment.deadline }} after deadline
     </span>
     {% endif %}
+    {% if submit.ip_address %}(from {{ submit.ip_address }}){% endif %}
     </h6>
 
     {% if is_teacher %}

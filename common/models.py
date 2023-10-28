@@ -226,6 +226,7 @@ class Submit(models.Model):
     assigned_points = models.FloatField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     jobid = models.CharField(max_length=64, null=True)
+    ip_address = models.CharField(max_length=45, null=True)
 
     def path_parts(self):
         return [
