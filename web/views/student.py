@@ -332,11 +332,17 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         data["pipeline_result_icon"] = result_icon
 
     if request.method == 'POST':
+        def get_request_ip(request):
+            x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+            if x_forwarded_for:
+                x_forwarded_for = x_forwarded_for.split(",")[0].strip()
+            return x_forwarded_for
         s = Submit()
         s.student = request.user
         s.assignment = assignment
         s.submit_num = Submit.objects.filter(assignment__id=s.assignment.id,
                                              student__id=request.user.id).count() + 1
+        s.ip_address = get_request_ip(request)
 
         solutions = request.FILES.getlist('solution')
         tmp = request.POST.get('paths', None)
