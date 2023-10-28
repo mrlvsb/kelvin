@@ -9,6 +9,13 @@ html[data-bs-theme="dark"] {
   @include meta.load-css('node_modules/flatpickr/dist/themes/dark.css');
   @include meta.load-css('node_modules/codemirror/theme/dracula.css');
 
+  .comment code {
+    display: inline-block;
+    background-color: var(--bs-card-bg);
+    border: var(--bs-card-border-width) solid var(--bs-card-border-color);
+    border-radius: var(--bs-card-border-radius);
+  }
+
   .code-diff {
     .d2h-ins {
       background-color: #748a74;
