@@ -6,7 +6,7 @@
     <div class="row">
         <form class="mb-1 col-sm-3 offset-sm-9 p-0">
             <select name="semester" class="form-select form-select-sm" onchange="this.value != '' && this.form.submit()">
-                <option value=''>Semester</option>
+                <option value='' disabled>Semester</option>
                 {% for s in semesters %}
                     <option value="{{ s.value }}"{% if selected_semester == s.value %} selected{% endif %}>
                         {{ s.label }}
@@ -83,7 +83,7 @@
                 </tr>
                 {% endfor %}
                 <tr>
-                <td colspan="3">Celkem</td>
+                <td colspan="3">Total</td>
                 <td class="text-end">{{ node.earned_points|floatformat:2 }}</td>
                 <td class="text-end">{{ node.max_points|floatformat:2 }}</td>
                 </tr>
