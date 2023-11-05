@@ -4,6 +4,10 @@
   export let to;
 	export let timeOffsetInWeek;
 	export let semesterBeginDate;
+  export let onFromDuplicateClick = undefined;
+  export let fromDuplicateDisabled = false;
+  export let onToDuplicateClick = undefined;
+  export let toDuplicateDisabled = false;
 
   let fromEl, toEl;
   let instanceFrom, instanceTo
@@ -67,6 +71,11 @@ $: if(instanceTo) {
     {/each}
   </ul>
   <input bind:this={fromEl} class="form-control" bind:value={from} placeholder="Assigned">
+  {#if typeof onFromDuplicateClick === 'function'}
+    <button class="btn btn-sm btn-secondary" title="Set assigned date to all visible classes" disabled={fromDuplicateDisabled} on:click|preventDefault={() => onFromDuplicateClick(from)}>
+      <span class="iconify" data-icon="mdi:content-duplicate"></span>
+    </button>
+  {/if}
 </div>
 
 <div class="input-group input-group-sm col-md">
@@ -82,4 +91,9 @@ $: if(instanceTo) {
     <button class="dropdown-item" on:click={() => addDeadline(60*24*7)}>+ week</button>
   </ul>
   <input bind:this={toEl} class="form-control" bind:value={to} placeholder="Deadline">
+  {#if typeof onToDuplicateClick === 'function'}
+    <button class="btn btn-sm btn-secondary" title="Set deadline to all assigned classes" disabled={toDuplicateDisabled} on:click|preventDefault={() => onToDuplicateClick(to)}>
+      <span class="iconify" data-icon="mdi:content-duplicate"></span>
+    </button>
+  {/if}
 </div>
