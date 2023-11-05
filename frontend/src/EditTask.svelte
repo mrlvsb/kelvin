@@ -156,6 +156,22 @@
     }
   }
 
+  function assignAssignedDateToAll(assigned) {
+    task.classes = task.classes.map(cl => {
+      if(isClassVisible(cl))
+        cl.assigned = assigned;
+      return cl;
+    });
+  }
+
+  function assignDeadlineToAll(deadline) {
+    task.classes = task.classes.map(cl => {
+      if(cl.assigned)
+        cl.deadline = deadline;
+      return cl;
+    });
+  }
+
   function assignPointsToAll(max_pts) {
     task.classes = task.classes.map(cl => {
       if(cl.assigned) {
@@ -296,7 +312,7 @@ td:not(:nth-of-type(3)) {
               <td>{ clazz.teacher }</td>
               <td>
                 <div class="row">
-                  <TimeRange timeOffsetInWeek={clazz.week_offset} bind:from={clazz.assigned} bind:to={clazz.deadline} semesterBeginDate={$semester.begin} />
+                  <TimeRange timeOffsetInWeek={clazz.week_offset} bind:from={clazz.assigned} bind:to={clazz.deadline} semesterBeginDate={$semester.begin} onFromDuplicateClick={assignAssignedDateToAll} fromDuplicateDisabled={!clazz.assigned} onToDuplicateClick={assignDeadlineToAll} toDuplicateDisabled={!clazz.assigned} />
                   <div class="col-md">
                     <div class="input-group">
                       <input class="form-control form-control-sm" type="number" min=0 step=1 disabled={!clazz.assigned} bind:value={clazz.max_points} placeholder="Max points" />
