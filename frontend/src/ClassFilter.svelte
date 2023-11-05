@@ -117,14 +117,14 @@
 <div class="ms-auto">
   <div class="input-group">
     <select class="form-select form-select-sm" bind:value={semester} on:change={resetClass}>
-        <option value="">Semester</option>
+        <option value="" disabled>Semester</option>
         {#each sorted(Object.keys(semesters), compare_semester) as semester (semester)}
             <option>{semester}</option>
         {/each}
     </select>
 
     <select class="form-select form-select-sm" bind:value={subject} on:change={fillTeacher} disabled={!semester}>
-        <option value="">Subject</option>
+        <option value="" disabled>Subject</option>
         {#if semesters && semesters[semester]}
             {#each sorted(Object.keys(semesters[semester])) as subj (subj)}
                 <option>{subj}</option>
@@ -134,14 +134,14 @@
 
     {#if $user.is_superuser}
       <select class="form-select form-select-sm" bind:value={teacher} on:change={resetClass}>
-          <option value="">Teacher</option>
+          <option value="" disabled>Teacher</option>
             {#each sorted(teachers) as teacher (teacher)}
                 <option>{teacher}</option>
             {/each}
       </select>
     {/if}
     <select class="form-select form-select-sm" bind:value={clazz} disabled={!(semester && subject)}>
-      <option value="">Class</option>
+      <option value="" disabled>Class</option>
       <!-- `classes` are sorted serverside -->
       {#each classes as clazz (clazz)}
         <option>{clazz}</option>
