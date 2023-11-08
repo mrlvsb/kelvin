@@ -117,7 +117,7 @@
 <div class="ms-auto">
   <div class="input-group">
     <select class="form-select form-select-sm" bind:value={semester} on:change={resetClass}>
-        <option value="" disabled>Semester</option>
+        <option value="">Semester</option>
         {#each sorted(Object.keys(semesters), compare_semester) as semester (semester)}
             <option>{semester}</option>
         {/each}
