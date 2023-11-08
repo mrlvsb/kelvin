@@ -166,7 +166,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
       {#if showStudentsList}
         {#if clazz.summary }
           <button class="p-0 btn btn-link"
-                    on:click={() => showSummary = !showSummary}>{showSummary ? "Skrýt" : "Zobrazit"} informace o cvičení</button>
+                    on:click={() => showSummary = !showSummary}>{showSummary ? "Hide" : "Show"} exercise summary</button>
           {#if showSummary }
             <Markdown content={clazz.summary} />
           {/if}
@@ -228,7 +228,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
                   </div>
                 </th>
                 {/each}
-                <th>Celkem ({clazz.assignments.reduce((sum, task)=>sum + task.max_points, 0)} b)</th>
+                <th>Total ({clazz.assignments.reduce((sum, task)=>sum + task.max_points, 0)} pts)</th>
               </tr>
             </thead>
 

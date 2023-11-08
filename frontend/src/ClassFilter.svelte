@@ -124,7 +124,7 @@
     </select>
 
     <select class="form-select form-select-sm" bind:value={subject} on:change={fillTeacher} disabled={!semester}>
-        <option value="" disabled>Subject</option>
+        <option value="">Subject</option>
         {#if semesters && semesters[semester]}
             {#each sorted(Object.keys(semesters[semester])) as subj (subj)}
                 <option>{subj}</option>
@@ -134,14 +134,14 @@
 
     {#if $user.is_superuser}
       <select class="form-select form-select-sm" bind:value={teacher} on:change={resetClass}>
-          <option value="" disabled>Teacher</option>
+          <option value="">Teacher</option>
             {#each sorted(teachers) as teacher (teacher)}
                 <option>{teacher}</option>
             {/each}
       </select>
     {/if}
     <select class="form-select form-select-sm" bind:value={clazz} disabled={!(semester && subject)}>
-      <option value="" disabled>Class</option>
+      <option value="">Class</option>
       <!-- `classes` are sorted serverside -->
       {#each classes as clazz (clazz)}
         <option>{clazz}</option>
