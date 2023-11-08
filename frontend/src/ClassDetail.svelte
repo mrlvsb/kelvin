@@ -166,7 +166,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
       {#if showStudentsList}
         {#if clazz.summary }
           <button class="p-0 btn btn-link"
-                    on:click={() => showSummary = !showSummary}>{showSummary ? "Hide" : "Show"} exercise summary</button>
+                    on:click={() => showSummary = !showSummary}>{showSummary ? "Hide" : "Show"} class summary</button>
           {#if showSummary }
             <Markdown content={clazz.summary} />
           {/if}
