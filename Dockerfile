@@ -6,6 +6,7 @@ ENV PYTHONUNBUFFERED=1
 RUN apt-get update && apt-get install -y libsasl2-dev libgraphviz-dev graphviz pandoc
 
 COPY requirements.txt /kelvin/requirements.txt
+RUN pip install --upgrade pip
 RUN pip install -r /kelvin/requirements.txt
 
 RUN apt-get update \
