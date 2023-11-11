@@ -1,48 +1,46 @@
 import dataclasses
+import hashlib
+import io
 import json
+import logging
 import os
 import re
+import shutil
+import subprocess
 import tarfile
 import tempfile
-import io
-import shutil
-import hashlib
 from collections import namedtuple
 from pathlib import Path
-from zipfile import ZIP_DEFLATED, ZipFile
 from typing import List
+from zipfile import ZIP_DEFLATED, ZipFile
 
 import django_rq
-import rq
-import subprocess
 import magic
-import logging
-
+import rq
 from django.conf import settings
-from django.contrib.auth.models import User
-from django.core import signing
-from django.utils import timezone as datetime
-from django.shortcuts import render, redirect, get_object_or_404, resolve_url
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, JsonResponse, FileResponse
-from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import login_required
-from django.urls import reverse
+from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
+from django.core import signing
+from django.core.exceptions import PermissionDenied
+from django.http import FileResponse, Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render, resolve_url
+from django.urls import reverse
+from django.utils import timezone as datetime
 from django.views.decorators.csrf import csrf_exempt
-
-from common.models import Submit, Class, AssignedTask, Task, Comment, assignedtask_results, current_semester
-from common.evaluate import evaluate_submit
-from common.moss import PlagiarismMatch, moss_result
-from web.task_utils import load_readme
-from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES, MAX_INLINE_LINES
-from evaluator.testsets import File, TestSet
-from common.evaluate import get_meta
-from evaluator.results import EvaluationResult, PipeResult
-from common.utils import is_teacher
-
-from notifications.signals import notify
 from notifications.models import Notification
+from notifications.signals import notify
 
+from common.evaluate import evaluate_submit, get_meta
+from common.models import AssignedTask, Class, Comment, Submit, Task, assignedtask_results, \
+    current_semester
+from common.moss import PlagiarismMatch, moss_result
+from common.utils import is_teacher
+from evaluator.results import EvaluationResult, PipeResult
+from evaluator.testsets import TestSet
+from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES, MAX_INLINE_LINES
+from web.task_utils import load_readme
+from .test_script import render_test_script
 from .upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError, upload_submit_files
 from .utils import file_response
 
@@ -727,22 +725,16 @@ def check_is_task_accessible(request, task):
             raise PermissionDenied()
 
 
-ASSETS_DIR = Path(__file__).absolute().parent / "assets"
-
-
 @login_required
 def tar_test_data(request, task_name):
-    def include_tests_script(tar, generated_content):
-        script_name = "run-tests.sh"
-        with File(ASSETS_DIR / script_name).open('r') as f:
-            contents = io.BytesIO(
-                bytes(f.read().replace("# --kelvin-generate--", generated_content), "utf-8"))
-        info = tarfile.TarInfo(script_name)
-        info.size = len(contents.getvalue())
+    def include_tests_script(tar, tests: TestSet):
+        test_script = render_test_script(tests)
+        info = tarfile.TarInfo("run-tests.py")
+        info.size = len(test_script.getvalue())
         # Owner: rwx, group: rwx, other: r
         info.mode = 0o774
 
-        tar.addfile(info, fileobj=contents)
+        tar.addfile(info, fileobj=test_script)
 
     task = get_object_or_404(Task, code=task_name)
     check_is_task_accessible(request, task)
@@ -755,15 +747,13 @@ def tar_test_data(request, task_name):
 
     with io.BytesIO() as f:
         with tarfile.open(fileobj=f, mode="w:gz") as tar:
-            script_calls = ""
             for test in tests:
-                script_calls += "execute_test '{}' $'{}' '{}'\n  ".format(test.name, " ".join(test.args).replace("'", "\\'"), test.exit_code)
                 for file_path in test.files:
                     test_file = test.files[file_path]
                     info = tarfile.TarInfo(os.path.join(test.name, file_path))
                     info.size = test_file.size()
                     tar.addfile(info, fileobj=test_file.open('rb'))
-            include_tests_script(tar, script_calls)
+            include_tests_script(tar, tests)
 
         f.seek(0)
         return file_response(f, f"{task_name}.tar.gz", "application/tar")
