@@ -312,7 +312,7 @@ td:not(:nth-of-type(3)) {
               <td>{ clazz.teacher }</td>
               <td>
                 <div class="row">
-                  <TimeRange timeOffsetInWeek={clazz.week_offset} bind:from={clazz.assigned} bind:to={clazz.deadline} semesterBeginDate={$semester.begin} onFromDuplicateClick={assignAssignedDateToAll} onToDuplicateClick={assignDeadlineToAll} />
+                  <TimeRange timeOffsetInWeek={clazz.week_offset} bind:from={clazz.assigned} bind:to={clazz.deadline} semesterBeginDate={$semester.begin} onFromDuplicateClick={setAssignedDateToVisible} onToDuplicateClick={setDeadlineToAssigned} />
                   <div class="col-md">
                     <div class="input-group">
                       <input class="form-control form-control-sm" type="number" min=0 step=1 disabled={!clazz.assigned} bind:value={clazz.max_points} placeholder="Max points" />
