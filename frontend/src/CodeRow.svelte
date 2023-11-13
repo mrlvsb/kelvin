@@ -71,22 +71,23 @@
 
   /* Dark style comments */
   :global(html[data-bs-theme="dark"] .comment) {
-      color: #FFFFFF;
+      --bs-code-color: #0021FF;
+      color: #000000;
   }
   :global(html[data-bs-theme="dark"] .comment.teacher) {
-      background: #B3B32A;
+      background: #FFFF2E;
   }
   :global(html[data-bs-theme="dark"] .comment.teacher.comment-read) {
-      background: #FFFF1E49;
+      background: #C0C035;
   }
   :global(html[data-bs-theme="dark"] .comment.student) {
-      background: #2F8510;
+      background: #4EFF0E;
   }
   :global(html[data-bs-theme="dark"] .comment.student.comment-read) {
-      background: #2A4A1E;
+      background: #66EC36;
   }
   :global(html[data-bs-theme="dark"] .comment.automated) {
-      background: #083154;
+      background: #1B96FF;
   }
 
   .selected {
