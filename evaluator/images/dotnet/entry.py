@@ -76,15 +76,28 @@ def get_executable_project_names(directory: Path) -> List[str]:
             pass
     return names
 
-
+def find_nested_sln(path):
+    for i in os.scandir(path):
+        if i.is_file():
+            if Path(i.path).suffix == ".sln":
+                 return i.path
+        elif i.is_dir():
+            tmp = find_nested_sln(i.path)
+            if tmp != None:
+               return tmp
+    return None
+    
 def build_dotnet_project(run_tests: bool) -> BuildResult:
     output_dir = "output"
     paths = os.listdir(os.getcwd())
     sln = [p for p in paths if Path(p).suffix == ".sln"]
     csproj = [p for p in paths if Path(p).suffix == ".csproj"]
-
+    nested_sln_path = None
+    
     if not sln and not csproj:
-        return BuildResult.fail("No .sln or .csproj file was found in the root directory.")
+        nested_sln_path = find_nested_sln(os.getcwd())
+        if nested_sln_path == None
+            return BuildResult.fail("No .sln or .csproj file was found in the root directory.")
     if len(sln) > 1:
         return BuildResult.fail("Multiple .sln files were found")
     if len(csproj) > 1:
@@ -101,9 +114,15 @@ def build_dotnet_project(run_tests: bool) -> BuildResult:
     env["DOTNET_EnableWriteXorExecute"] = "0"
     cmd = ['dotnet']
     if run_tests:
-        cmd += ['test', '-l', f'trx;LogFileName=../../{tests_path}']
+        cmd += ['test']
+        if nested_sln_path:
+            cmd += ["\"" + nested_sln_path + "\""]
+        cmd += ['-l', f'trx;LogFileName=../../{tests_path}']
     else:
-        cmd += ['publish', '--use-current-runtime', '--self-contained', '-o', output_dir]
+        cmd += ['publish']
+        if nested_sln_path:
+            cmd += ["\"" + nested_sln_path + "\""]
+        cmd += ['--use-current-runtime', '--self-contained', '-o', output_dir]
     process = subprocess.run(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     # find an executable file in the output directory and create a symlink for the following tasks
