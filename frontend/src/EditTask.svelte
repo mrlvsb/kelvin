@@ -156,7 +156,7 @@
     }
   }
 
-  function assignAssignedDateToAll(assigned) {
+  function setAssignedDateToVisible(assigned) {
     task.classes = task.classes.map(cl => {
       if(isClassVisible(cl))
         cl.assigned = assigned;
@@ -164,7 +164,7 @@
     });
   }
 
-  function assignDeadlineToAll(deadline) {
+  function setDeadlineToAssigned(deadline) {
     task.classes = task.classes.map(cl => {
       if(cl.assigned)
         cl.deadline = deadline;
