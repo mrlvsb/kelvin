@@ -96,7 +96,7 @@ def build_dotnet_project(run_tests: bool) -> BuildResult:
     
     if not sln and not csproj:
         nested_sln_path = find_nested_sln(os.getcwd())
-        if nested_sln_path == None
+        if nested_sln_path is None:
             return BuildResult.fail("No .sln or .csproj file was found in the root directory.")
     if len(sln) > 1:
         return BuildResult.fail("Multiple .sln files were found")
