@@ -8,14 +8,14 @@
   import {fetch} from './api.js'
   import {fs, currentPath, cwd, openedFiles} from './fs.js'
   import SyncLoader from './SyncLoader.svelte';
-
-  import "bootstrap/js/dist/modal"
+  import Modal from './Modal.svelte';
 
   export let params = {}
 
   let task = null;
   let syncPathWithTitle = params.subject;
   let taskLink = null;
+  let deleteModal = false;
 
   let syncing = false;
   let errors = [];
@@ -202,22 +202,22 @@
       await loadTask(json.id);
   }
 
-  async function deleteTask() {
-    const res = await fetch(`/api/tasks/${task.id}`, {
-      method: 'DELETE',
-    })
+  async function deleteTask(proceed) {
+    deleteModal = false;
+    if (proceed) {
+      const res = await fetch(`/api/tasks/${task.id}`, {
+        method: 'DELETE',
+      })
 
-    const json = await res.json();
-    if(json['errors']) {
-      errors = json['errors'];
-    } else {
-      errors = [];
-      // waits until the modal closes like a good boy
-      document.querySelector("#deleteModal").addEventListener("hidden.bs.modal", async () => {
+      const json = await res.json();
+      if(json['errors']) {
+        errors = json['errors'];
+      } else {
+        errors = [];
         push('/task/add/' + task.subject_abbr);
         fs.setRoot([], undefined);
         await prepareCreatingTask();
-      });
+      }
     }
   }
 </script>
@@ -278,25 +278,12 @@ td:not(:nth-of-type(3)) {
           <button class="btn btn-outline-info" title="Open task">
             <a href={taskLink} target=_blank><span class="iconify" data-icon="bx:bx-link-external"></span></a>
           </button>
-          <button class="btn btn-outline-danger" disabled={!task['can_delete']} data-bs-toggle="modal" data-bs-target="#deleteModal">
+          <button class="btn btn-outline-danger" disabled={!task['can_delete']} on:click={() => deleteModal = true}>
             <span class="iconify" data-icon="akar-icons:trash-can"></span>
           </button>
-          <div class="modal fade" id="deleteModal" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="false" aria-labelledby="deleteModalLabel">
-            <div class="modal-dialog modal-dialog-centered">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h1 class="modal-title fs-5" id="deleteModalLabel">Delete task</h1>
-                </div>
-                <div class="modal-body">
-                  Do you really want to delete the task with path <strong>{savedPath}</strong>? <strong>Readme.md</strong> and all files will be <strong>DELETED!</strong>
-                </div>
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                  <button type="button" class="btn btn-danger" on:click={deleteTask} data-bs-dismiss="modal">Delete</button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <Modal open={deleteModal} onClosed={deleteTask} proceedButtonLabel="Delete" title="Delete task">
+            Do you really want to delete the task with path <strong>{savedPath}</strong>? <strong>Readme.md</strong> and all files will be <strong>DELETED!</strong>
+          </Modal> 
         {/if}
       </div>
 
