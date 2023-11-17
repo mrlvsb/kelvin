@@ -13,6 +13,7 @@ import bash from 'highlight.js/lib/languages/bash'
 import shell from 'highlight.js/lib/languages/shell'
 import makefile from 'highlight.js/lib/languages/makefile'
 import x86asm from 'highlight.js/lib/languages/x86asm'
+import rust from 'highlight.js/lib/languages/rust'
 
 hljs.registerLanguage('c-like', cpp);
 hljs.registerLanguage('c', c); 
@@ -25,7 +26,8 @@ hljs.registerLanguage('shell-session', shell);
 hljs.registerLanguage('makefile', makefile); 
 hljs.registerLanguage('assembler', x86asm); 
 hljs.registerLanguage('asm', x86asm); 
-hljs.registerLanguage('x86asm', x86asm); 
+hljs.registerLanguage('x86asm', x86asm);
+hljs.registerLanguage('rust', rust);
 hljs.highlightAll();
 
 import 'diff2html/bundles/css/diff2html.min.css'
