@@ -6,6 +6,7 @@ import './global.scss';
 import hljs from 'highlight.js/lib/core'
 import cpp from 'highlight.js/lib/languages/cpp.js'
 import c from 'highlight.js/lib/languages/c'
+import csharp from 'highlight.js/lib/languages/csharp'
 import java from 'highlight.js/lib/languages/java'
 import python from 'highlight.js/lib/languages/python'
 import xml from 'highlight.js/lib/languages/xml'
@@ -18,6 +19,7 @@ import rust from 'highlight.js/lib/languages/rust'
 hljs.registerLanguage('c-like', cpp);
 hljs.registerLanguage('c', c); 
 hljs.registerLanguage('cpp', cpp); 
+hljs.registerLanguage('csharp', csharp);
 hljs.registerLanguage('java', java); 
 hljs.registerLanguage('python', python); 
 hljs.registerLanguage('xml', xml); 
