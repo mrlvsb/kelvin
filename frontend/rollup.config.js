@@ -2,7 +2,7 @@ import svelte from 'rollup-plugin-svelte';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import livereload from 'rollup-plugin-livereload';
-import { terser } from 'rollup-plugin-terser';
+import { terser } from '@rollup/plugin-terser';
 import postcss from 'rollup-plugin-postcss'
 import autoprefixer from 'autoprefixer';
 import sass from 'sass';
@@ -40,9 +40,7 @@ export default {
 	},
 	plugins: [
 		svelte({
-			// enable run-time checks when not in production
-			dev: !production,
-      emitCss: true,
+            emitCss: true,
 		}),
 
 		// If you have external dependencies installed from
@@ -56,17 +54,17 @@ export default {
 		}),
 		commonjs(),
 
-    postcss({
-      preprocessor: (content, id) => {
-        return sass.compile(id).toString();
-      },
-      extract: true,
-      minimize: production,
-      sourceMap: production,
-      plugins: [
-        autoprefixer,
-      ]
-    }),
+        postcss({
+            preprocessor: (content, id) => {
+                return sass.compile(id).toString();
+            },
+            extract: true,
+            minimize: production,
+            sourceMap: production,
+            plugins: [
+                autoprefixer,
+            ]
+        }),
 
 		// In dev mode, call `npm run start` once
 		// the bundle has been generated
