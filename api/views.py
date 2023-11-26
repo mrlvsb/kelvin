@@ -13,7 +13,7 @@ import django_rq
 from common.evaluate import evaluate_submit
 from django.http import JsonResponse
 from django.contrib.auth.decorators import user_passes_test
-from common.utils import is_teacher, points_to_color, inbus_search_user, user_from_inbus_person
+from common.utils import is_teacher, points_to_color, inbus_search_user, user_from_inbus_person, is_staff
 from common.models import Task, Class, current_semester_conds
 from evaluator.testsets import TestSet 
 from common.models import current_semester, Subject
@@ -192,7 +192,24 @@ def subjects_all(request) -> JsonResponse:
     resp = {'subjects': subjects_dicts}
 
     return JsonResponse(resp)
+    
+@user_passes_test(is_staff)
 
+def remove_student_from_class(request, class_id):
+    clazz = get_object_or_404(Class, id=class_id)
+    data = json.loads(request.body.decode('utf-8'))
+    username = data['username']
+    student_id = username.strip().upper()
+
+    user = User.objects.get(username__iexact=student_id)
+    clazz.students.remove(user.id)
+
+    return JsonResponse({
+        'success': True,
+        'username': user.username,
+        'firstname': user.first_name,
+        'lastname': user.last_name
+    })
 
 @login_required
 def info(request):

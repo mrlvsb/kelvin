@@ -10,6 +10,9 @@ from functools import lru_cache
 def is_teacher(user):
     return user.groups.filter(name='teachers').exists()
 
+def is_staff(user):
+    return user.is_staff
+    
 def points_to_color(points, max_points):
     ratio = max(0, min(1, points / max_points))
     green = int(ratio * 200)
