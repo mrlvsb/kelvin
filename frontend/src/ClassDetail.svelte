@@ -95,12 +95,6 @@ Total points: ${assignmentPoints.toFixed(2)}/${totalMaximumPoints}
 Average points: ${average}`;
   }
 
-  let showFullTaskNames = localStorageStore(
-    "classDetail/showFullTaskNames",
-    false,
-  );
-  let showSummary = false;
-
   function removeStudent(clazz, student) {
     let username = student.username;
     let class_id = clazz.id;
@@ -115,6 +109,12 @@ Average points: ${average}`;
   function toggleColumn() {
     showColumn = !showColumn;
   }
+
+  let showFullTaskNames = localStorageStore(
+    "classDetail/showFullTaskNames",
+    false,
+  );
+  let showSummary = false;
 </script>
 
 <div class="card mb-2" style="position: initial">
@@ -176,8 +176,8 @@ Average points: ${average}`;
           <div style="overflow: auto">
             <table class="table table-sm table-hover table-striped">
               <thead>
-                <tr>
-                  <th title="Remove student from class">
+                <tr
+                  ><th title="Remove student from class">
                     <button
                       class="p-0 btn btn-link Remove-text"
                       on:click={toggleColumn}
@@ -189,144 +189,154 @@ Average points: ${average}`;
                         class="iconify"
                         data-icon="ri:delete-bin-line"
                       ></span>
-                    </button>
-                  </th>
-                  <th>
-                    Login<span class="d-none d-md-inline"
-                      ><!--
+                      <th>
+                        Login<span class="d-none d-md-inline"
+                          ><!--
                   --><CopyToClipboard
-                        content={clazz.students
-                          .map((s) => s.username)
-                          .join("\n")}
-                        title="Copy logins to clipboard"
-                      >
-                        <span class="iconify" data-icon="clarity:clipboard-line"
-                        ></span>
-                      </CopyToClipboard><!--
-                  --><CopyToClipboard
-                        content={clazz.students
-                          .map((s) => s.username + "@vsb.cz")
-                          .join("\n")}
-                        title="Copy emails to clipboard"
-                      >
-                        <span
-                          class="iconify"
-                          data-icon="ic:round-alternate-email"
-                        ></span>
-                      </CopyToClipboard></span
-                    >
-                  </th>
-                  <th>Student</th>
-                  {#each clazz.assignments as assignment, index}
-                    <th class="more-hover">
-                      <a
-                        href={assignment.task_link}
-                        class:text-muted={assignment.assigned > new Date()}
-                        class:text-success={assignment.deadline > new Date()}
-                      >
-                        {$showFullTaskNames
-                          ? assignment.short_name
-                          : `#${
-                              index + 1
-                            }`}{#if assignment.max_points > 0}&nbsp;({assignment.max_points}b){/if}
-                      </a>
-                      <div
-                        class="more-content border shadow rounded bg-body p-1"
-                      >
-                        {assignment.name}
-                        <a
-                          href="/task/edit/{assignment.task_id}"
-                          use:link
-                          title="Edit"
-                          ><span class="iconify" data-icon="clarity:edit-solid"
-                          ></span></a
-                        >
-                        <div style="display: flex; align-items: center;">
-                          <a
-                            href={assignment.moss_link}
-                            title="Plagiarism check"
-                            ><span
+                            content={clazz.students
+                              .map((s) => s.username)
+                              .join("\n")}
+                            title="Copy logins to clipboard"
+                          >
+                            <span
                               class="iconify"
-                              data-icon="bx:bx-check-double"
-                            ></span></a
-                          >
-                          <a
-                            href={assignment.sources_link}
-                            title="Download all source codes"
-                            ><span
-                              class="iconify"
-                              data-icon="fe:download"
-                              data-inline="false"
-                            ></span></a
-                          >
-                          <a
-                            href={assignment.csv_link}
-                            title="Download CSV with results"
-                            ><span class="iconify" data-icon="la:file-csv-solid"
-                            ></span></a
-                          >
-                          <a
-                            href="/assignment/show/{assignment.assignment_id}"
-                            title="Show all source codes"
-                            ><span class="iconify" data-icon="bx-bx-code-alt"
-                            ></span></a
-                          >
-                          <button
-                            class="btn btn-link p-0"
-                            class:spin={reevaluateLoading}
-                            title="Reevaluate latest submits"
-                            on:click={() => reevaluateAssignment(assignment)}
-                          >
-                            <span class="iconify" data-icon="bx:bx-refresh"
+                              data-icon="clarity:clipboard-line"
                             ></span>
-                          </button>
-                          <a
-                            href="/statistics/assignment/{assignment.assignment_id}"
-                            title="Show assignment stats"
-                            ><span
-                              class="iconify"
-                              data-icon="bx-bx-bar-chart-alt-2"
-                            ></span></a
+                          </CopyToClipboard><!--
+                  --><CopyToClipboard
+                            content={clazz.students
+                              .map((s) => s.username + "@vsb.cz")
+                              .join("\n")}
+                            title="Copy emails to clipboard"
                           >
-                        </div>
-                        <dl>
-                          <dt>Assigned</dt>
-                          <dd>
-                            {assignment.assigned.toLocaleString(
-                              "cs",
-                            )}{#if assignment.assigned > new Date()}, <TimeAgo
-                                datetime={assignment.assigned}
-                              />{/if}
-                          </dd>
+                            <span
+                              class="iconify"
+                              data-icon="ic:round-alternate-email"
+                            ></span>
+                          </CopyToClipboard></span
+                        >
+                      </th>
+                      <th>Student</th>
+                      {#each clazz.assignments as assignment, index}
+                        <th class="more-hover">
+                          <a
+                            href={assignment.task_link}
+                            class:text-muted={assignment.assigned > new Date()}
+                            class:text-success={assignment.deadline >
+                              new Date()}
+                          >
+                            {$showFullTaskNames
+                              ? assignment.short_name
+                              : `#${
+                                  index + 1
+                                }`}{#if assignment.max_points > 0}&nbsp;({assignment.max_points}b){/if}
+                          </a>
+                          <div
+                            class="more-content border shadow rounded bg-body p-1"
+                          >
+                            {assignment.name}
+                            <a
+                              href="/task/edit/{assignment.task_id}"
+                              use:link
+                              title="Edit"
+                              ><span
+                                class="iconify"
+                                data-icon="clarity:edit-solid"
+                              ></span></a
+                            >
+                            <div style="display: flex; align-items: center;">
+                              <a
+                                href={assignment.moss_link}
+                                title="Plagiarism check"
+                                ><span
+                                  class="iconify"
+                                  data-icon="bx:bx-check-double"
+                                ></span></a
+                              >
+                              <a
+                                href={assignment.sources_link}
+                                title="Download all source codes"
+                                ><span
+                                  class="iconify"
+                                  data-icon="fe:download"
+                                  data-inline="false"
+                                ></span></a
+                              >
+                              <a
+                                href={assignment.csv_link}
+                                title="Download CSV with results"
+                                ><span
+                                  class="iconify"
+                                  data-icon="la:file-csv-solid"
+                                ></span></a
+                              >
+                              <a
+                                href="/assignment/show/{assignment.assignment_id}"
+                                title="Show all source codes"
+                                ><span
+                                  class="iconify"
+                                  data-icon="bx-bx-code-alt"
+                                ></span></a
+                              >
+                              <button
+                                class="btn btn-link p-0"
+                                class:spin={reevaluateLoading}
+                                title="Reevaluate latest submits"
+                                on:click={() =>
+                                  reevaluateAssignment(assignment)}
+                              >
+                                <span class="iconify" data-icon="bx:bx-refresh"
+                                ></span>
+                              </button>
+                              <a
+                                href="/statistics/assignment/{assignment.assignment_id}"
+                                title="Show assignment stats"
+                                ><span
+                                  class="iconify"
+                                  data-icon="bx-bx-bar-chart-alt-2"
+                                ></span></a
+                              >
+                            </div>
+                            <dl>
+                              <dt>Assigned</dt>
+                              <dd>
+                                {assignment.assigned.toLocaleString(
+                                  "cs",
+                                )}{#if assignment.assigned > new Date()}, <TimeAgo
+                                    datetime={assignment.assigned}
+                                  />{/if}
+                              </dd>
 
-                          {#if assignment.deadline}
-                            <dt>Deadline</dt>
-                            <dd>
-                              {assignment.deadline.toLocaleString(
-                                "cs",
-                              )}{#if assignment.deadline > new Date()}, <TimeAgo
-                                  datetime={assignment.deadline}
-                                />{/if}
-                            </dd>
-                          {/if}
+                              {#if assignment.deadline}
+                                <dt>Deadline</dt>
+                                <dd>
+                                  {assignment.deadline.toLocaleString(
+                                    "cs",
+                                  )}{#if assignment.deadline > new Date()}, <TimeAgo
+                                      datetime={assignment.deadline}
+                                    />{/if}
+                                </dd>
+                              {/if}
 
-                          {#if assignment.max_points}
-                            <dt>Max points</dt>
-                            <dd>
-                              {assignment.max_points}
-                            </dd>
-                          {/if}
-                        </dl>
-                      </div>
-                    </th>
-                  {/each}
-                  <th
-                    >Total ({clazz.assignments.reduce(
-                      (sum, task) => sum + task.max_points,
-                      0,
-                    )} pts)</th
-                  >
-                </tr>
+                              {#if assignment.max_points}
+                                <dt>Max points</dt>
+                                <dd>
+                                  {assignment.max_points}
+                                </dd>
+                              {/if}
+                            </dl>
+                          </div>
+                        </th>
+                      {/each}
+                      <th
+                        >Total ({clazz.assignments.reduce(
+                          (sum, task) => sum + task.max_points,
+                          0,
+                        )} pts)</th
+                      >
+                    </button></th
+                  ></tr
+                >
               </thead>
 
               <tbody>
