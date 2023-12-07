@@ -26,7 +26,7 @@
 {% if submit %}
     <h6>
 
-    Submit 
+    Submit
 
     {% if submit.submit_num > 1 %}
     <a href="{% url 'task_detail' login=submit.student.username assignment_id=submit.assignment.id submit_num=1 %}#src" title="First submit"><span class="iconify" data-icon="fluent:arrow-previous-12-filled"></span></a>
@@ -40,7 +40,7 @@
       <span class="iconify" data-icon="fa-solid:chevron-left"></span>
     {% endif %}
 
-    {{ submit.submit_num }} / 
+    {{ submit.submit_num }} /
 
     {% if late_submit %}
     <strong class="text-danger">{{ total_submits }}</strong>
@@ -140,7 +140,7 @@
               {% if submit and submit.assignment.max_points is not None %}
                 <li class="nav-item ms-auto">
                   {% include 'web/teacher/form_assign_points.html' %}
-                  
+
                 <li>
               {% endif %}
             {% else %}
@@ -160,7 +160,7 @@
                                    onchange="this.form.submit()">
                             <span class="btn btn-sm btn-primary" onclick="document.getElementById('upload-choose').click()">Upload</span>
                             <span class="morehover" style="position: relative">
-                              <span class="iconify" data-icon="bx:bx-help-circle"></span>  
+                              <span class="iconify" data-icon="bx:bx-help-circle"></span>
                               <div class="morehover-content" style="position: absolute; right: 0px; top: 15px; background: white; padding: 4px; display: none">
                                 <strong>Drag all your files and folders from file manager to this window.</strong><br>
                                 <video src="{% static 'upload.webm' %}" width="800px" autoplay muted loop />
@@ -181,7 +181,7 @@
                 {{ text|safe }}
                 {% if inputs.required_files %}
                 <h2>Required files</h2>
-                
+
                 <ul>
                 {% for file in inputs.required_files %}
                   <li>{{ file }}</li>
@@ -240,6 +240,32 @@
             {% endif %}
         </div>
     </div>
-</div>   
+</div>
+
+<script>
+  (function() {
+    const tabControl = document.querySelector('.nav-tabs');
+    if (!tabControl) return;
+
+    const tabLinks = tabControl.querySelectorAll('a');
+    if (!tabLinks) return;
+
+    const keyTabMap = {};
+    tabLinks.forEach((tab, index) => {
+      if (index < 9)
+        keyTabMap[`Digit${index + 1}`] = tab.href;
+      else if (index === 9)
+        keyTabMap.Digit0 = tab.href;
+    });
+
+    window.addEventListener('keydown', e => {
+        if (e.target.tagName === 'INPUT' || e.target.isContentEditable) return;
+
+        if (e.code in keyTabMap) {
+            window.location.href = keyTabMap[e.code];
+        }
+    });
+  })();
+</script>
 
 {% endblock %}
