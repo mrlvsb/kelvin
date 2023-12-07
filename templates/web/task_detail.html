@@ -204,21 +204,7 @@
                 {% endif %}
 
                 {% for path, file in input.sorted_files %}
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h5>
-                          {{ path }}
-                          (<a href="{% url 'raw_test_content' task.code input.name path %}{% if submit %}?student={{submit.student}}{%endif%}">Raw content</a>)
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        {% if file.size < max_inline_content_bytes or not max_inline_content_bytes %}
-                        <pre>{{ file.read }}</pre>
-                        {% else %}
-                            Content too large, show <a href='{% url 'raw_test_content' task.code input.name path %}'>raw content</a>.
-                        {% endif %}
-                    </div>
-                </div>
+                <kelvin-test-file url="{% url 'raw_test_content' task.code input.name path %}" path="{{ path }}"></kelvin-test-file>
                 {% endfor %}
 
                 {% endfor %}
