@@ -204,7 +204,7 @@
                 {% endif %}
 
                 {% for path, file in input.sorted_files %}
-                <kelvin-test-file url="{% url 'raw_test_content' task.code input.name path %}" path="{{ path }}"></kelvin-test-file>
+                <kelvin-test-file url="{% url 'raw_test_content' task.code input.name path %}{% if submit %}?student={{ submit.student }}{% endif %}" path="{{ path }}" max-bytes="{{ max_inline_content_bytes }}"></kelvin-test-file>
                 {% endfor %}
 
                 {% endfor %}
