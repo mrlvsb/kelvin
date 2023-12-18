@@ -47,6 +47,7 @@ class ClassAdmin(admin.ModelAdmin):
     list_filter = (ByClassTeacherFilter, 'subject')
     list_display = admin.ModelAdmin.list_display + ('teacher_name',)
     search_fields = ['subject__abbr']
+    save_as = True
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "teacher":
