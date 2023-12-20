@@ -28,6 +28,7 @@
   {% else %}
     <form method="post" class="float-end">
       {% csrf_token %}
+      <input name="submit-limit" type="number" placeholder="Submit limit" title="Maximum amount of submits sent to MOSS, to avoid timing out" />
       <button class="btn btn-sm btn-primary">Send to MOSS</button>
     </form>
 

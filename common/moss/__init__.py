@@ -15,7 +15,7 @@ import networkx as nx
 from django.conf import settings
 from django.core.cache import caches
 from django.db.models import DurationField, ExpressionWrapper, F
-from django.db.models.functions import Now
+from django.db.models.functions import ExtractHour, Now
 from django.shortcuts import resolve_url
 from django.urls import reverse
 from networkx.drawing.nx_agraph import write_dot
@@ -180,8 +180,8 @@ def get_linked_tasks(task_id: int) -> List[Task]:
     if task.plagiarism_key is not None and task.plagiarism_key.strip() != "":
         tasks = (
             Task.objects
-                .filter(subject__id=task.subject.id, plagiarism_key=task.plagiarism_key)
-                .order_by("-id")
+            .filter(subject__id=task.subject.id, plagiarism_key=task.plagiarism_key)
+            .order_by("-id")
         )
     return list(tasks)
 
@@ -196,14 +196,19 @@ def get_relevant_submits(task_id: int) -> List[Submit]:
 
     submits = (
         Submit.objects.filter(assignment__task__in=tasks)
-        .annotate(year=F("assignment__clazz__semester__year"))
-        .order_by("-year", "-submit_num")
+        .annotate(
+            year=F("assignment__clazz__semester__year"),
+            hour=ExtractHour("assignment__assigned")
+        )
+        # Order from the newest year (semester), from the earliest hour, and from the latest
+        # submit of the student
+        .order_by("-year", "hour", "-submit_num")
     )
     return list(submits.all())
 
 
 @django_rq.job("default", timeout=60 * 15)
-def moss_check_task(task_id: int, notify_teacher: bool):
+def moss_check_task(task_id: int, notify_teacher: bool, submit_limit: Optional[int]):
     start_timestamp = datetime.datetime.now()
 
     log_stream = StringIO()
@@ -254,12 +259,14 @@ def moss_check_task(task_id: int, notify_teacher: bool):
                 except IOError as e:
                     logger.error(
                         f"Cannot add submit {submit.id} by {submit.student.username} to MOSS: {e}")
+                if submit_limit is not None and len(processed) >= submit_limit:
+                    break
 
         detected_lang = max(counters, key=counters.get)
         if counters[detected_lang] > 0:
             moss_client.options["l"] = detected_lang
 
-        logger.info(f"Sending files to Moss: {moss_client.files}")
+        logger.info(f"Sending {len(processed)} submit(s), {len(moss_client.files)} file(s) to Moss")
         url = moss_client.send()
         logger.info(f"Moss returned: {url}")
         with tempfile.NamedTemporaryFile() as out:
@@ -318,10 +325,11 @@ def moss_check_task(task_id: int, notify_teacher: bool):
         moss_notify_teacher(task_id)
 
 
-def enqueue_moss_check(task_id: int, notify=False):
+def enqueue_moss_check(task_id: int, notify: bool = False, submit_limit: Optional[int] = None):
     cache = caches["default"]
     moss_delete_result_from_cache(task_id)
-    job = django_rq.enqueue(moss_check_task, task_id, notify, job_timeout=60 * 60)
+    job = django_rq.enqueue(moss_check_task, task_id=task_id, notify_teacher=notify,
+                            submit_limit=submit_limit, job_timeout=60 * 60)
     cache.set(moss_job_cache_key(task_id), job.id, timeout=60 * 60 * 8)
 
 

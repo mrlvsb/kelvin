@@ -92,7 +92,9 @@ def task_moss_check(request, task_id):
         })
 
     if request.method == "POST":
-        enqueue_moss_check(task_id)
+        submit_limit = request.POST.get("submit-limit")
+        submit_limit = None if not submit_limit else int(submit_limit)
+        enqueue_moss_check(task_id, submit_limit=submit_limit)
         return redirect(request.path_info)
 
     opts = moss_task_get_opts(task_id)
