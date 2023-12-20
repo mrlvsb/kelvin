@@ -266,7 +266,8 @@ def moss_check_task(task_id: int, notify_teacher: bool, submit_limit: Optional[i
         if counters[detected_lang] > 0:
             moss_client.options["l"] = detected_lang
 
-        logger.info(f"Sending {len(processed)} submit(s), {len(moss_client.files)} file(s) to Moss")
+        file_bytes = sum(os.path.getsize(file_path) for (file_path, _) in moss_client.files)
+        logger.info(f"Sending {len(processed)} submit(s), {len(moss_client.files)} file(s), {file_bytes} bytes to Moss")
         url = moss_client.send()
         logger.info(f"Moss returned: {url}")
         with tempfile.NamedTemporaryFile() as out:
