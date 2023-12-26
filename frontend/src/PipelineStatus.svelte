@@ -35,7 +35,7 @@ update();
   <pre>{message}</pre>
 {:else}
   <div class="main">
-    Please wait for the result.<br>
+    Wait for the result or close the browser (your submit won't be lost).<br>
     {job_status}
     <div class="d-flex justify-content-center">
         <SyncLoader />
