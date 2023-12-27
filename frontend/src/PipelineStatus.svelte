@@ -35,7 +35,8 @@ update();
   <pre>{message}</pre>
 {:else}
   <div class="main">
-    Wait for the result or close the browser (your submit won't be lost).<br>
+    Your submit is being processed, please wait.<br />
+    Your submit has been uploaded to Kelvin, it won't be lost if you close the browser.<br />
     {job_status}
     <div class="d-flex justify-content-center">
         <SyncLoader />
