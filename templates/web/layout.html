@@ -52,11 +52,14 @@
                 <li class="nav-item"><a class="nav-link" href="{% url 'submits' %}">Submits</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'tasks' %}">Tasks</a></li>
                 {% endif %}
-                {% if is_teacher and user.is_staff %}
+                {% if is_teacher %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'student_index' %}">Student view</a></li>
+                {% if user.is_staff %}
                 {% comment %}
                 https://stackoverflow.com/questions/694477/getting-django-admin-url-for-an-objects
                 {% endcomment %}
                 <li class="nav-item"><a class="nav-link" href="{% url 'admin:index' %}">Admin</a></li>
+                {% endif %}
                 {% endif %}
               </ul>
               <ul class="navbar-nav">
