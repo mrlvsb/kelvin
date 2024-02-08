@@ -48,19 +48,21 @@
 
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
               <ul class="navbar-nav me-auto">
+                {% url 'student_index' as student_index_url %}
+
                 {% if is_teacher %}
-                <li class="nav-item"><a class="nav-link" href="{% url 'submits' %}">Submits</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'tasks' %}">Tasks</a></li>
-                {% endif %}
-                {% if is_teacher %}
-                <li class="nav-item"><a class="nav-link" href="{% url 'student_index' %}">Student view</a></li>
-                {% if user.is_staff %}
-                {% comment %}
-                https://stackoverflow.com/questions/694477/getting-django-admin-url-for-an-objects
-                {% endcomment %}
-                <li class="nav-item"><a class="nav-link" href="{% url 'admin:index' %}">Admin</a></li>
-                {% endif %}
-                {% endif %}
+                  <li class="nav-item"><a class="nav-link" href="{% url 'submits' %}">Submits</a></li>
+                  <li class="nav-item"><a class="nav-link" href="{% url 'tasks' %}">Tasks</a></li>
+                  {% if request.path != student_index_url %}
+                    <li class="nav-item"><a class="nav-link" href="{% url 'student_index' %}">Student view</a></li>
+                  {% endif %}
+                  {% if user.is_staff %}
+                    {% comment %}
+                    https://stackoverflow.com/questions/694477/getting-django-admin-url-for-an-objects
+                    {% endcomment %}
+                    <li class="nav-item"><a class="nav-link" href="{% url 'admin:index' %}">Admin</a></li>
+                  {% endif %}
+                {%  endif %}
               </ul>
               <ul class="navbar-nav">
                 {% if user.is_authenticated %}
