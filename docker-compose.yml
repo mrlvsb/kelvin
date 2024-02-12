@@ -87,6 +87,14 @@ services:
     working_dir: /kelvin/frontend
     command: sh -c "npm install && npm run dev"
 
+  frontend-vue-ts:
+    image: node
+    container_name: kelvin_frontend_vue_ts_build
+    volumes:
+      - ./:/kelvin
+    working_dir: /kelvin/frontend-vue-ts
+    command: sh -c "npm install && npm run build --emptyOutDir"
+
   redis:
     image: redis
     container_name: kelvin_redis

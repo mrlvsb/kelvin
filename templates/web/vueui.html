@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <title>Title</title>
+</head>
+<body>
+
+</body>
+</html>
+
+
+
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <!--<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">-->
+        {% if sentry_url %}
+          <script
+              src="https://browser.sentry-cdn.com/5.25.0/bundle.tracing.min.js"
+              integrity="sha384-MxPEqyePOMqaz3prq1TexMEXtfnxqvet9uhebPAm5SI4Pz3Ga9HwbmE5FY2Bah20"
+              crossorigin="anonymous"></script>
+          <script>
+              Sentry.init({
+                  dsn: "{{ sentry_url }}"
+              });
+          </script>
+          <style>
+          .sentry-error-embed .form-field:nth-of-type(1), .sentry-error-embed .form-field:nth-of-type(2) {
+            display: none;
+          }
+          </style>
+        {% endif %}
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script src="https://cdn.jsdelivr.net/npm/asciinema-player@2.6.1/resources/public/js/asciinema-player.min.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciinema-player@2.6.1/resources/public/css/asciinema-player.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+        <meta name="csrf-token" content="{{ csrf_token }}">
+
+        {% load static %}
+
+        <meta name="django-webpush-vapid-key" content="{{ vapid_public_key }}">
+        <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon/apple-touch-icon.png' %}">
+        <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}">
+        <link rel="manifest" href="{% static 'favicon/site.webmanifest' %}">
+
+        <!-- Svelte stuff -->
+        <script src="{% static 'frontend.js' %}"></script>
+        <link rel="stylesheet" href="{% static 'frontend.css' %}">
+
+        <!-- Vue stuff -->
+        <script type="module" crossorigin src="{%  static 'vuets/vuets.js' %}"></script>
+        <link rel="stylesheet" crossorigin href="{%  static 'vuets/vuets.css' %}">
+
+        <title>{% block title %}Kelvin{% endblock %}</title>
+    </head>
+    <body>
+        {# when updating colabsibility, make sure to update the visibility for icon descriptions, User text and #}
+        {# size of Notification dropdown #}
+        <nav class="navbar navbar-expand-md mb-2">
+          <div class="container-fluid">
+            <a class="navbar-brand" href="/">Kelvin</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+              <ul class="navbar-nav me-auto">
+                {% if is_teacher %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'submits' %}">Submits</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'tasks' %}">Tasks</a></li>
+                {% endif %}
+                {% if is_teacher and user.is_staff %}
+                {% comment %}
+                https://stackoverflow.com/questions/694477/getting-django-admin-url-for-an-objects
+                {% endcomment %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'admin:index' %}">Admin</a></li>
+                {% endif %}
+              </ul>
+              <ul class="navbar-nav">
+                {% if user.is_authenticated %}
+                <span class="ml-auto navbar-text">
+                  <span class="d-md-none">Logged as: </span><span class="text-body-emphasis">{{ user.get_full_name }} ({{ user.username }})</span>
+                </span>
+
+                <kelvin-notifications></kelvin-notifications>
+
+                <kelvin-color-theme></kelvin-color-theme>
+
+                <li class="nav-item"><a class="nav-link text-primary-emphasis" href="/accounts/logout/?next=/">Logout</a></li>
+              {% endif %}
+              </ul>
+            </div>
+          </div>
+        </nav>
+
+        <div class="content container-md">
+            {% block content %}{% endblock %}
+        </div>
+
+        {% block fullcontent %}<div id="classlist"></div>{% endblock %}
+    </body>
+</html>

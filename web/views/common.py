@@ -12,11 +12,19 @@ from .student import student_index, ui
 from common.utils import is_teacher
 from api.backends import hash_token
 
+
 @login_required()
 def index(request):
     if is_teacher(request.user):
         return ui(request)
     return student_index(request)
+
+
+@login_required()
+def vue_index(request):
+    if is_teacher(request.user):
+        return render(request, 'web/vueui.html')
+
 
 @login_required()
 def api_token(request):

@@ -11,6 +11,8 @@ urlpatterns = [
     path('', common_view.index, name='index'),
     path('student-view', student_view.student_index, name='student_index'),
 
+    path('vueindex', common_view.vue_index, name='vue_index'),
+
     path('find-task/<int:task_id>/<str:login>/', student_view.find_task_detail, name='find_task_detail'),
     path('task/<int:assignment_id>/<str:login>/', student_view.task_detail, name='task_detail'),
     path('task/<int:assignment_id>/<str:login>/<int:submit_num>/', student_view.task_detail, name='task_detail'),

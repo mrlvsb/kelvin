@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kelvin Vue.js</title>
+
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script src="https://cdn.jsdelivr.net/npm/asciinema-player@2.6.1/resources/public/js/asciinema-player.min.js"></script>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciinema-player@2.6.1/resources/public/css/asciinema-player.css">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+      <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png">
+      <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon/favicon-32x32.png">
+      <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon/favicon-16x16.png">
+
+  </head>
+  <body>
+
+    <nav class="navbar navbar-expand-md mb-2">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/">Kelvin</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item"><a class="nav-link" href="/submits">Submits</a></li>
+            <li class="nav-item"><a class="nav-link" href="/tasks">Tasks</a></li>
+            <li class="nav-item"><a class="nav-link" href="/student-view">Student view</a></li>
+            <li class="nav-item"><a class="nav-link" href="/admin/">Admin</a></li>
+          </ul>
+          <ul class="navbar-nav">
+            <span class="ml-auto navbar-text">
+              <span class="d-md-none">Logged as: </span><span class="text-body-emphasis">Jan Gaura (GAU01)</span>
+            </span>
+            <li class="nav-item"><a class="nav-link text-primary-emphasis" href="/accounts/logout/?next=/">Logout</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+<!---->
+    <div class="content container-md"></div>
+
+    <div id="app"></div>
+
+    <script type="module" src="/src/main.ts"></script>
+<!---->
+  </body>
+</html>
