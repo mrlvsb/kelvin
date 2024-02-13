@@ -47,12 +47,14 @@ def user_from_inbus_person(person: inbus.dto.PersonSimple) -> django.contrib.aut
     return user
 
 
-def user_from_login(login: str) -> django.contrib.auth.models.User:
+def user_from_login(login: str) -> Optional[django.contrib.auth.models.User]:
     """
     A shotcut to calling `inbus_search_user` and `user_from_inbus_person`.
     No need to further set anything.
     """
     person = inbus_search_user(login)
+    if not person:
+        return None
     user = user_from_inbus_person(person)
     user.username = login.upper()
     user.save()

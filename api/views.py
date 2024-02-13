@@ -618,10 +618,10 @@ def import_activities(request):
     semester = Semester.objects.get(pk=semester_id)
 
     try:
-        res['users'] = list(common.bulk_import.run(activities, subject, semester))
+        res['users'] = list(common.bulk_import.run(activities, subject, semester, request.user))
         res['count'] = len(res['users'])
     except (ImportException, UnicodeDecodeError) as e:
-        res['error'] = e
+        res['error'] = ''.join(traceback.TracebackException.from_exception(e).format())
     except:
         res['error'] = traceback.format_exc()
 
