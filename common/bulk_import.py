@@ -8,9 +8,11 @@ from django.contrib.auth.models import User
 from common.models import Class, Semester, Subject
 from io import StringIO
 from lxml.html import parse
-from typing import List, Dict
+from typing import List, Dict, Generator
+import traceback
 
 from .inbus.dto import ConcreteActivity
+
 
 class ImportException(Exception):
     pass
@@ -25,10 +27,10 @@ class ImportResult:
     created: bool
 
 
-def run(concrete_activities: List[ConcreteActivity], subj: Dict[str, str], semester: Semester):
-    '''
+def run(concrete_activities: List[ConcreteActivity], subj: Dict[str, str], semester: Semester, user: User) -> Generator[ImportResult, None, None]:
+    """
     `subj`: subject from selected subject in UI as dictionary with k:abbr, v: name
-    '''
+    """
 
     subject_abbr = subj['abbr']
     try:
@@ -58,12 +60,16 @@ def run(concrete_activities: List[ConcreteActivity], subj: Dict[str, str], semes
 
             # Teacher
             # TODO: There may be more teachers for a class
-            if ca.teacherLogins.strip() != '':
+            if len(ca.teacherIds) > 1:
+                # if there are more than 1 teacher, assign class to the one, who's importing
+                teacher = User.objects.get(username=user.username.upper())
+            elif len(ca.teacherIds) == 1:
                 try:
                     teacher = User.objects.get(username=ca.teacherLogins.upper())
                 except User.DoesNotExist:
                     teacher = user_from_login(ca.teacherLogins.upper())
-
+                    if not teacher:
+                        raise ImportException(f"Cannot create user {ca.teacherLogins.upper()}.\n\nTraceback\n\n{traceback.format_exc()}")
             else:
                 # TODO: We assign all activities without teacher to one special user :-)
                 teacher = User.objects.get(username='GAU01')
@@ -71,7 +77,6 @@ def run(concrete_activities: List[ConcreteActivity], subj: Dict[str, str], semes
             class_in_db[c].teacher = teacher
 
             class_in_db[c].save()
-
 
         # Students
         students_in_class = inbus.inbus.students_in_concrete_activity(ca.concreteActivityId)
