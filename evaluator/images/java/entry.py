@@ -7,7 +7,7 @@ import re
 import glob
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 import xml.etree.ElementTree as ET
 
 import bleach
@@ -17,8 +17,8 @@ import bleach
 class BuildResult:
     success: bool
     output: str
-    comments: Optional[Dict[str, List[str]]] = dataclasses.field(default_factory=dict)
-    tests: Optional[List[dict]] = dataclasses.field(default_factory=list)
+    comments: Optional[dict[str, list[str]]] = dataclasses.field(default_factory=dict)
+    tests: Optional[list[dict]] = dataclasses.field(default_factory=list)
 
     @staticmethod
     def fail(error: str) -> "BuildResult":
@@ -55,7 +55,7 @@ def parse_tests_report(path):
         return []
 
 
-def get_executable_class_names(directory: Path) -> List[str]:
+def get_executable_class_names(directory: Path) -> list[str]:
     def find_java_files(directory):
         for root, dirs, files in os.walk(directory):
             for file in files:

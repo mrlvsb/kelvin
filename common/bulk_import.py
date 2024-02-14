@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 from common.models import Class, Semester, Subject
 from io import StringIO
 from lxml.html import parse
-from typing import List, Dict, Generator
+from typing import Generator
 import traceback
 
 from .inbus.dto import ConcreteActivity
@@ -27,7 +27,7 @@ class ImportResult:
     created: bool
 
 
-def run(concrete_activities: List[ConcreteActivity], subj: Dict[str, str], semester: Semester, user: User) -> Generator[ImportResult, None, None]:
+def run(concrete_activities: list[ConcreteActivity], subj: dict[str, str], semester: Semester, user: User) -> Generator[ImportResult, None, None]:
     """
     `subj`: subject from selected subject in UI as dictionary with k:abbr, v: name
     """

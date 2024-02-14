@@ -5,7 +5,7 @@ import json
 import os
 import subprocess
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Tuple, TypedDict
+from typing import Any, Optional, TypedDict
 
 import bleach
 
@@ -31,7 +31,7 @@ class BuildResult:
     success: bool
     stdout: str
     stderr: str
-    comments: Dict[str, List[Comment]] = dataclasses.field(default_factory=dict)
+    comments: dict[str, list[Comment]] = dataclasses.field(default_factory=dict)
 
     @staticmethod
     def fail(stdout: str, stderr="") -> "BuildResult":
@@ -61,12 +61,12 @@ class BinaryArtifact:
 class CargoOutput:
     stdout: str
     stderr: str
-    comments: Dict[str, List[Comment]]
-    binary_artifacts: List[BinaryArtifact]
+    comments: dict[str, list[Comment]]
+    binary_artifacts: list[BinaryArtifact]
 
 
 # Returns (file, line)
-def get_location_from_cargo_msg(message) -> Optional[Tuple[str, int]]:
+def get_location_from_cargo_msg(message) -> Optional[tuple[str, int]]:
     spans = message.get("spans")
     if spans is None or len(spans) < 1:
         return None
@@ -84,7 +84,7 @@ def parse_cargo_output(cargo_stdout: str) -> CargoOutput:
     """
     stdout = ""
     stderr = ""
-    comments: Dict[str, List[Comment]] = defaultdict(list)
+    comments: dict[str, list[Comment]] = defaultdict(list)
     artifacts = []
 
     for line in cargo_stdout.splitlines(keepends=False):
@@ -121,7 +121,7 @@ def parse_cargo_output(cargo_stdout: str) -> CargoOutput:
     return CargoOutput(stdout=stdout, stderr=stderr, comments=comments, binary_artifacts=artifacts)
 
 
-def run_cargo(command: str, args: List[str]) -> BuildResult:
+def run_cargo(command: str, args: list[str]) -> BuildResult:
     paths = os.listdir(os.getcwd())
     manifest_found = "Cargo.toml" in paths
     rs_files = [p for p in paths if p.endswith(".rs")]

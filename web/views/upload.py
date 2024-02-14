@@ -2,7 +2,6 @@ import os
 import re
 import zipfile
 from os.path import basename, dirname
-from typing import List
 
 import magic
 from django.core.exceptions import SuspiciousOperation
@@ -117,7 +116,7 @@ class TooManyFilesError(BaseException):
     pass
 
 
-def upload_submit_files(submit: Submit, paths: List[str], files: List[str]):
+def upload_submit_files(submit: Submit, paths: list[str], files: list[str]):
     if len(paths) == 1 and get_extension(paths[0]) == ".zip":
         uploader = ZipUploader(files[0])
     else:

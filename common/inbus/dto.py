@@ -1,11 +1,11 @@
 from dataclasses import dataclass
-from typing import NewType, List
+from typing import NewType
 
 import serde
 
 DepartmentId = NewType('DepartmentId', int)
 SubjectVersionId = NewType('SubjectVersionId', int)
-SubjectVersionSchedule = NewType('SubjectVersionSchedule', List['ConcreteActivity'])
+SubjectVersionSchedule = NewType('SubjectVersionSchedule', list['ConcreteActivity'])
 ConcreteActivityId = NewType('ConcreteActivityId', int)
 
 
@@ -96,10 +96,10 @@ class ConcreteActivity:
     weekDayId: int # ID dne v týdnu
     weekDayAbbrev: str # zkratka dne v týdnu
     weekDayTitle: str # název dne v týdnu
-    weekActivities: List[WeekActivity] # seznam výskytů aktivity v konkrétních týdnech výuky (využití při nepravidelné výuce), obsahuje: weekActivityId (Integer), weekNumber (Integer), date (Date)
-    roomIds: List[int] # seznam ID místností
-    teacherIds: List[int] # seznam ID vyučujících (osob)
-    studyGroupIds: List[int] # seznam ID studijních skupin (má význam při rozvrhování na studijní skupiny)
+    weekActivities: list[WeekActivity] # seznam výskytů aktivity v konkrétních týdnech výuky (využití při nepravidelné výuce), obsahuje: weekActivityId (Integer), weekNumber (Integer), date (Date)
+    roomIds: list[int] # seznam ID místností
+    teacherIds: list[int] # seznam ID vyučujících (osob)
+    studyGroupIds: list[int] # seznam ID studijních skupin (má význam při rozvrhování na studijní skupiny)
 
     # Default values are defined here, since INBUS API sometimes does not provide there values
     # and Python need default values at the end of the definition

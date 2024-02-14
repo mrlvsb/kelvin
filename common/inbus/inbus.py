@@ -1,7 +1,7 @@
 import urllib.parse
 
 from django.core.cache import cache
-from typing import Dict, List, Optional
+from typing import Optional
 
 import serde
 
@@ -28,7 +28,7 @@ def person_by_login(login: str) -> Optional[dto.PersonSimple]:
     return person_simple
 
 
-def subject_versions(department_id: dto.DepartmentId = 386) -> List[dto.SubjectVersion]:
+def subject_versions(department_id: dto.DepartmentId = 386) -> list[dto.SubjectVersion]:
     """
     Get list of all subjects and their versions by department.
     Here `386` is Department of Computer Science.
@@ -87,7 +87,7 @@ def concrete_activity(concrete_activity_id: dto.ConcreteActivityId) -> dto.Concr
     return concrete_activity
 
 
-def students_in_concrete_activity(concrete_activity_id: dto.ConcreteActivityId) -> List[dto.StudyRelation]:
+def students_in_concrete_activity(concrete_activity_id: dto.ConcreteActivityId) -> list[dto.StudyRelation]:
     url = urllib.parse.urljoin(config.INBUS_SERVICE_EDISON_URL, f'schedule/{concrete_activity_id}/studyRelations')
     study_relation_resp = utils.inbus_request(url, {})
     study_relation_json = study_relation_resp.json()

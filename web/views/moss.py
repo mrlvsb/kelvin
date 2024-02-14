@@ -1,7 +1,6 @@
 import dataclasses
 import logging
 import mimetypes
-from typing import List
 
 import django_rq
 import rq
@@ -32,7 +31,7 @@ class LinkedTask:
     semesters: str
 
 
-def get_linked_task_data(task_id: int) -> List[LinkedTask]:
+def get_linked_task_data(task_id: int) -> list[LinkedTask]:
     tasks = get_linked_tasks(task_id)
     linked_tasks = []
     for task in tasks:

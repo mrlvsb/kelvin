@@ -8,7 +8,6 @@ import tarfile
 import tempfile
 import traceback
 from collections import OrderedDict
-from typing import Dict, List, Tuple
 
 import django.http
 
@@ -46,14 +45,13 @@ def teacher_task(request, task_id):
     })
 
 
-def enrich_matches(matches: List[PlagiarismMatch], teacher: User, task: Task) -> List[
-    Dict[str, str]]:
+def enrich_matches(matches: list[PlagiarismMatch], teacher: User, task: Task) -> list[dict[str, str]]:
     """
     Converts PlagiarismMatches to dictionaries and adds additional information
     used by the frontend to them.
     """
 
-    def get_class_and_link(assignment_id: int, login: str) -> Tuple[str, str]:
+    def get_class_and_link(assignment_id: int, login: str) -> tuple[str, str]:
         assignment = AssignedTask.objects.get(pk=assignment_id)
         clazz = assignment.clazz
         code = clazz.code

@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 from io import StringIO
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 import django_rq
 import mosspy
@@ -174,7 +174,7 @@ def get_match_local_dir(task: Task, match: PlagiarismMatch) -> Path:
     return directory / id
 
 
-def get_linked_tasks(task_id: int) -> List[Task]:
+def get_linked_tasks(task_id: int) -> list[Task]:
     task = Task.objects.get(pk=task_id)
     tasks = [task]
     if task.plagiarism_key is not None and task.plagiarism_key.strip() != "":
@@ -186,7 +186,7 @@ def get_linked_tasks(task_id: int) -> List[Task]:
     return list(tasks)
 
 
-def get_relevant_submits(task_id: int) -> List[Submit]:
+def get_relevant_submits(task_id: int) -> list[Submit]:
     """
     Find all submits that should be checked for plagiarism for this given task.
     It will return both submits of the task with the given `task_id` and also from other
@@ -376,7 +376,7 @@ class MossResult:
     def __init__(self,
                  success: bool,
                  url: str,
-                 matches: List[PlagiarismMatch],
+                 matches: list[PlagiarismMatch],
                  opts: MossTaskOptions,
                  started_at: datetime.datetime,
                  finished_at: datetime.datetime,

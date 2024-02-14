@@ -1,13 +1,13 @@
 import requests
 
-from typing import Dict, Optional
+from typing import Optional
 
 from django.core.cache import caches
 
 from . import auth
 
 
-def set_token_to_cache(token: Dict) -> None:
+def set_token_to_cache(token: dict) -> None:
     """
     Sets INBUS token to cache.
     We set its timeout to one hour less than epecified by API provider.
@@ -17,7 +17,7 @@ def set_token_to_cache(token: Dict) -> None:
     cache.set("inbus_token", token, timeout=timeout) # one hour less than provided
 
 
-def inbus_token() -> Dict:
+def inbus_token() -> dict:
     """
     Returns current INBUS token.
     Either it's one that is cached or new one returned by authentication to INBUS.
@@ -31,7 +31,7 @@ def inbus_token() -> Dict:
     return token
 
 
-def request_new_token() -> Dict:
+def request_new_token() -> dict:
     token = auth.authenticate()
     return token
 
@@ -47,7 +47,7 @@ def is_response_ok_or_new_token_(response: requests.Response) -> bool:
         return False
 
 
-def inbus_request(url, params: Dict = None) -> Optional[requests.Response]:
+def inbus_request(url, params: dict = None) -> Optional[requests.Response]:
     if params is None:
         params={}
     token = inbus_token()
