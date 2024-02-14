@@ -65,7 +65,7 @@ class ReplaceHtmlElement extends HTMLElement {
 
 customElements.define('kelvin-terminal-output', class extends ReplaceHtmlElement {
 	onConnect() {
-		const res = (new (AnsiUp.default)()).ansi_to_html(this.innerText);
+		const res = new AnsiUp().ansi_to_html(this.innerText);
 		this.innerHTML = '<pre>' + res + '</pre>';
 	}
 });
