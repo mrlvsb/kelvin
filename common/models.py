@@ -1,5 +1,6 @@
 import os
 import re
+import hashlib
 import logging
 
 from django.utils import timezone
@@ -270,6 +271,12 @@ class Submit(models.Model):
             'assignment_id': self.assignment.id,
             'submit_num': self.submit_num
         }) + '#src'
+
+    @property
+    def ip_address_hash(self) -> str:
+        if self.ip_address:
+            return hashlib.sha256(self.ip_address.encode()).hexdigest()[0:7]
+        return None
 
 class Comment(models.Model):
     submit = models.ForeignKey(Submit, on_delete=models.CASCADE)
