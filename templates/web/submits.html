@@ -15,6 +15,7 @@
         <th>Student</th>
         <th>Time from Submit</th>
         <th>IP Address</th>
+        <th>IP Address Hash</th>
         <th>Reevaluate</th>
     </thead>
     {% for submit in submits %}
@@ -24,6 +25,7 @@
         <td><a href="{% url 'submits' submit.student.username %}">{{ submit.student.username }} - {{ submit.student.get_full_name }}</a></td>
         <td title="{{ submit.created_at }}">{{ submit.created_at | timesince }}</td>
         <td>{{ submit.ip_address|default_if_none:"-" }}</td>
+        <td>{{ submit.ip_address_hash|default_if_none:"-" }}</td>
         <td><a href="{% url 'reevaluate' submit.id %}">reevaluate</a></td>
     </tr>
 
