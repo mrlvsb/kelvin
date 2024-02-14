@@ -275,9 +275,9 @@ def moss_check_task(task_id: int, notify_teacher: bool, submit_limit: Optional[i
 
             with open(out.name) as f:
                 regex = r'<TR>' \
-                        '<TD><A HREF="(?P<link>[^"]+)">(?P<first_id>[^/]+)/(?P<first_path>.*?) \((?P<first_percent>\d+)%\)</A>' \
-                        '\s*<TD><A HREF="[^"]+">(?P<second_id>[^/]+)/(?P<second_path>.*?) \((?P<second_percent>\d+)%\)</A>' \
-                        '\s*<TD[^>]+>(?P<lines>\d+)'
+                        r'<TD><A HREF="(?P<link>[^"]+)">(?P<first_id>[^/]+)/(?P<first_path>.*?) \((?P<first_percent>\d+)%\)</A>' \
+                        r'\s*<TD><A HREF="[^"]+">(?P<second_id>[^/]+)/(?P<second_path>.*?) \((?P<second_percent>\d+)%\)</A>' \
+                        r'\s*<TD[^>]+>(?P<lines>\d+)'
 
                 for moss_client in re.finditer(regex, f.read()):
                     d = moss_client.groupdict()
