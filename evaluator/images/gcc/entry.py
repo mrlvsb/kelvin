@@ -44,6 +44,7 @@ with open("result.html", "w") as out:
         'LDFLAGS': ldflags,
         'CLICOLOR_FORCE': '1',
         'PATH': f'/wrapper:{os.getenv("PATH")}',
+        'CMAKE_EXPORT_COMPILE_COMMANDS': "ON"
     }
 
     if 'cmakelists.txt' in [f.lower() for f in os.listdir('.')]:
