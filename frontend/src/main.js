@@ -4,7 +4,7 @@ import "bootstrap/js/dist/collapse";
 import './global.scss';
 
 import hljs from 'highlight.js/lib/core'
-import cpp from 'highlight.js/lib/languages/cpp.js'
+import cpp from 'highlight.js/lib/languages/cpp'
 import c from 'highlight.js/lib/languages/c'
 import csharp from 'highlight.js/lib/languages/csharp'
 import java from 'highlight.js/lib/languages/java'
