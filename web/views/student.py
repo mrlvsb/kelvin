@@ -342,7 +342,9 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         s.assignment = assignment
         s.submit_num = Submit.objects.filter(assignment__id=s.assignment.id,
                                              student__id=request.user.id).count() + 1
-        s.ip_address = get_request_ip(request)
+        s.ip_address_hash = get_request_ip(request)
+        if s.ip_address_hash:
+            s.ip_address_hash = hashlib.sha256(s.ip_address_hash.encode()).hexdigest()
 
         solutions = request.FILES.getlist('solution')
         tmp = request.POST.get('paths', None)
