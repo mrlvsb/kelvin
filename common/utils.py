@@ -1,5 +1,4 @@
 from datetime import timedelta
-from typing import Optional
 from .inbus import inbus
 import django.contrib.auth.models
 import re
@@ -32,7 +31,7 @@ def parse_time_interval(text):
     return timedelta(**parsed)
 
 
-def inbus_search_user(login: str) -> Optional[inbus.dto.PersonSimple]:
+def inbus_search_user(login: str) -> inbus.dto.PersonSimple | None:
     return inbus.search_user(login)
 
 
@@ -47,7 +46,7 @@ def user_from_inbus_person(person: inbus.dto.PersonSimple) -> django.contrib.aut
     return user
 
 
-def user_from_login(login: str) -> Optional[django.contrib.auth.models.User]:
+def user_from_login(login: str) -> django.contrib.auth.models.User | None:
     """
     A shotcut to calling `inbus_search_user` and `user_from_inbus_person`.
     No need to further set anything.

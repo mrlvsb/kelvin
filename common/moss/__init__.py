@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 from io import StringIO
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 import django_rq
 import mosspy
@@ -208,7 +208,7 @@ def get_relevant_submits(task_id: int) -> List[Submit]:
 
 
 @django_rq.job("default", timeout=60 * 15)
-def moss_check_task(task_id: int, notify_teacher: bool, submit_limit: Optional[int]):
+def moss_check_task(task_id: int, notify_teacher: bool, submit_limit: int | None):
     start_timestamp = datetime.datetime.now()
 
     log_stream = StringIO()
@@ -326,7 +326,7 @@ def moss_check_task(task_id: int, notify_teacher: bool, submit_limit: Optional[i
         moss_notify_teacher(task_id)
 
 
-def enqueue_moss_check(task_id: int, notify: bool = False, submit_limit: Optional[int] = None):
+def enqueue_moss_check(task_id: int, notify: bool = False, submit_limit: int | None = None):
     cache = caches["default"]
     moss_delete_result_from_cache(task_id)
     job = django_rq.enqueue(moss_check_task, task_id=task_id, notify_teacher=notify,
@@ -454,10 +454,10 @@ def moss_task_get_opts(task_id: int) -> MossTaskOptions:
 
 def moss_result(
     task_id: int,
-    percent: Optional[int] = None,
-    lines: Optional[int] = None,
+    percent: int | None = None,
+    lines: int | None = None,
     filtered: bool = True
-) -> Optional[MossResult]:
+) -> MossResult | None:
     """
     If `filtered` is True, matches will be filtered according to saved or passed filter options.
     """

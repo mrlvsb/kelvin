@@ -1,6 +1,6 @@
 import requests
 
-from typing import Dict, Optional
+from typing import Dict
 
 from django.core.cache import caches
 
@@ -47,7 +47,7 @@ def is_response_ok_or_new_token_(response: requests.Response) -> bool:
         return False
 
 
-def inbus_request(url, params: Dict = None) -> Optional[requests.Response]:
+def inbus_request(url, params: Dict = None) -> requests.Response | None:
     if params is None:
         params={}
     token = inbus_token()

@@ -5,7 +5,7 @@ import json
 import os
 import subprocess
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Tuple, TypedDict
+from typing import Any, Dict, List, Tuple, TypedDict
 
 import bleach
 
@@ -42,7 +42,7 @@ class BuildResult:
         )
 
 
-def get_param(name: str, default: Any, parse_json: bool = False) -> Optional[Any]:
+def get_param(name: str, default: Any, parse_json: bool = False) -> Any | None:
     value = os.getenv(f"PIPE_{name.upper()}")
     if value is None:
         return default
@@ -66,7 +66,7 @@ class CargoOutput:
 
 
 # Returns (file, line)
-def get_location_from_cargo_msg(message) -> Optional[Tuple[str, int]]:
+def get_location_from_cargo_msg(message) -> Tuple[str, int] | None:
     spans = message.get("spans")
     if spans is None or len(spans) < 1:
         return None
