@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='submit',
-            name='ip_address',
-            field=models.CharField(max_length=45, null=True),
+            name='ip_address_hash',
+            field=models.CharField(max_length=64, null=True),
         ),
     ]
