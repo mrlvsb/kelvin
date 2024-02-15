@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 # Usage: python3 run-tests.py <path-to-binary>
 # Example: python3 run-tests.py ./main
@@ -84,14 +84,14 @@ def calculate_diff(workdir: Path, name: str, expected: Path, actual: Path, inden
 def run_test(
     binary: str,
     name: str,
-    title: Optional[str] = None,
-    args: Optional[List[str]] = None,
-    stdin: Optional[str] = None,
-    stdout: Optional[str] = None,
-    stderr: Optional[str] = None,
+    title: str | None = None,
+    args: List[str] | None = None,
+    stdin: str | None = None,
+    stdout: str | None = None,
+    stderr: str | None = None,
     exit_code: int = 0,
-    files_in: Optional[List[str]] = None,
-    files_out: Optional[List[str]] = None
+    files_in: List[str] | None = None,
+    files_out: List[str] | None = None
 ):
     workdir = get_test_workdir(name)
     shutil.rmtree(workdir, ignore_errors=True)

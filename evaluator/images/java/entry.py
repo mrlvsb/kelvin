@@ -7,7 +7,7 @@ import re
 import glob
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 import xml.etree.ElementTree as ET
 
 import bleach
@@ -17,8 +17,8 @@ import bleach
 class BuildResult:
     success: bool
     output: str
-    comments: Optional[Dict[str, List[str]]] = dataclasses.field(default_factory=dict)
-    tests: Optional[List[dict]] = dataclasses.field(default_factory=list)
+    comments: Dict[str, List[str]] | None = dataclasses.field(default_factory=dict)
+    tests: List[dict] | None = dataclasses.field(default_factory=list)
 
     @staticmethod
     def fail(error: str) -> "BuildResult":

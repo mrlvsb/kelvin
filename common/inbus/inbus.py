@@ -1,7 +1,7 @@
 import urllib.parse
 
 from django.core.cache import cache
-from typing import Dict, List, Optional
+from typing import List
 
 import serde
 
@@ -10,7 +10,7 @@ from . import config, dto, utils
 
 # Actual INBUS API calls
 
-def person_by_login(login: str) -> Optional[dto.PersonSimple]:
+def person_by_login(login: str) -> dto.PersonSimple | None:
     url = urllib.parse.urljoin(config.INBUS_SERVICE_IDM_URL, f'person/login/{login}')
 
     person_resp = utils.inbus_request(url, {})
@@ -99,7 +99,7 @@ def students_in_concrete_activity(concrete_activity_id: dto.ConcreteActivityId) 
 
 # Kelvin's interface
 
-def search_user(login: str) -> Optional[dto.PersonSimple]:
+def search_user(login: str) -> dto.PersonSimple | None:
     person_inbus = person_by_login(login)
 
     return person_inbus
