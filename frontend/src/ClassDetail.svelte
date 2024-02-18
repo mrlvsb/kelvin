@@ -8,6 +8,7 @@
   import AddStudentsToClass from './AddStudentsToClass.svelte'
   import Markdown from './Markdown.svelte'
   import AssignmentPoints from './AssignmentPoints.svelte'
+  import RemoveStudentFromClass from './RemoveStudentFromClass.svelte'
 
   export let clazz;
   export let showStudentsList = clazz['students'].length < 50; 
@@ -76,6 +77,11 @@
 Total points: ${assignmentPoints.toFixed(2)}/${totalMaximumPoints}
 Average points: ${average}`;
   }
+
+    let showColumn = false;
+    function toggleColumn() {
+      showColumn = !showColumn;
+    }
 
   let showFullTaskNames = localStorageStore('classDetail/showFullTaskNames', false);
   let showSummary = false;
@@ -175,6 +181,11 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
           <table class="table table-sm table-hover table-striped">
             <thead>
               <tr>
+                <th title="Remove student from class">
+                  <button class="p-0 btn btn-link Remove-text" on:click={toggleColumn} title="Remove from class">
+                    {showColumn ? "Remove" : ""}
+                    <span style="color:black;" class="iconify" data-icon="ri:delete-bin-line"></span>
+                  </button>
                 <th>
                   Login<span class="d-none d-md-inline"><!--
                   --><CopyToClipboard content={clazz.students.map(s => s.username).join('\n')} title='Copy logins to clipboard'>
@@ -235,6 +246,15 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
             <tbody>
             {#each clazz.students as student}
             <tr>
+              <td id="bin">
+                <div></div>
+                {#if showColumn}
+                  <RemoveStudentFromClass
+                    class_id={clazz.id}
+                    student_id={student.username}
+                  />
+                {/if}
+              </td>
               <td>{ student.username }</td>
               <td>{ student.last_name } { student.first_name }</td>
               {#each clazz.assignments.map(i => i.students[student.username]) as result, i}

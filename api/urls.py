@@ -19,6 +19,7 @@ urlpatterns = [
     path('transfer_students', views.transfer_students),
     path('semesters', views.semesters),
     path('import/activities', views.import_activities),
+    path('classes/<int:class_id>/remove_students', views.remove_student_from_class),
 
     path('inbus/subject_versions', inbus_views.subject_versions),
     path('inbus/schedule/subject/version/<int:subject_version_id>', inbus_views.schedule_subject_by_version_id),
