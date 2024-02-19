@@ -87,13 +87,13 @@ def run(concrete_activities: List[ConcreteActivity], subj: Dict[str, str], semes
 
             created = False
 
-            user = None
+            student_user = None
             try:
-                user = User.objects.get(username=login)
+                student_user = User.objects.get(username=login)
             except User.DoesNotExist:
-                user = user_from_login(login)
+                student_user = user_from_login(login)
                 created = True
 
-            class_in_db[c].students.add(user)
+            class_in_db[c].students.add(student_user)
 
             yield ImportResult(login, firstname, lastname, created)
