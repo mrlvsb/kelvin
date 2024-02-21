@@ -63,7 +63,7 @@
                     {% endcomment %}
                     <td>
                         {{ task.assigned|date:"d.m.Y, H:i" }}
-                        {% if task.assigned_show_remaining %} (<span class="text-muted">{{ task.assigned|timeuntil }} left)</span>{% endif %}
+                        {% if task.assigned_show_remaining %} <span class="text-muted">({{ task.assigned|timeuntil }} left)</span>{% endif %}
                     </td>
                     <td>
                         {% if task.deadline %}
