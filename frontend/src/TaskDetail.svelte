@@ -9,6 +9,7 @@
   import {fetch} from './api.js'
   import { user } from "./global"
   import { notifications } from './notifications.js'
+  import { hideComments } from './stores.js'
 
   export let url;
   let files = null;
@@ -261,6 +262,15 @@
     <SyncLoader />
   </div>
 {:else}
+  <div class="d-inline me-2">Hide comments:</div>
+  <div class="form-check form-check-inline">
+    <input class="form-check-input" type="checkbox" bind:checked={$hideComments.automated} id="hideAutomatedComments">
+    <label class="form-check-label" for="hideAutomatedComments">Automated</label>
+  </div>
+  <div class="form-check form-check-inline">
+    <input class="form-check-input" type="checkbox" bind:checked={$hideComments.student_teacher} id="hideUserComments">
+    <label class="form-check-label" for="hideUserComments">Student/Teacher</label>
+  </div>
   <div class="float-end">
     {#if files.length > 1}
       <button class="btn btn-link p-0" on:click={toggleOpen} title="Expand or collapse all files">
@@ -277,6 +287,7 @@
     <a href="kelvin:{document.location.href.split('#')[0]}download" title="Open on your PC"><span class="iconify" data-icon="fa-solid:external-link-alt"></span></a>
     <a href="download" download title="Download"><span class="iconify" data-icon="fa-solid:download"></span></a>
   </div>
+  <br/>
 
   {#if showDiff}
     <SubmitsDiff {submits} {current_submit} {deadline} />
