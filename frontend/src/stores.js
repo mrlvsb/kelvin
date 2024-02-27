@@ -1,6 +1,8 @@
 import { writable } from 'svelte/store'
 
-export const hideComments = writable({
-    automated: false,
-    student_teacher: false,
-})
+export const HideCommentsState = {
+    NONE: "none",
+    AUTOMATED: "automated",
+    ALL: "all",
+}
+export const hideComments = writable(HideCommentsState.NONE)

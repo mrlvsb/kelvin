@@ -9,7 +9,7 @@
   import {fetch} from './api.js'
   import { user } from "./global"
   import { notifications } from './notifications.js'
-  import { hideComments } from './stores.js'
+  import { hideComments, HideCommentsState } from './stores.js'
 
   export let url;
   let files = null;
@@ -18,7 +18,29 @@
   let current_submit = null;
   let deadline = null;
   let showDiff = false;
-  let showComments = true;
+
+  const commentsButton = {
+    [HideCommentsState.NONE]: { title: "Click to hide automated comments", icon: "fa-solid:comment" },
+    [HideCommentsState.AUTOMATED]: { title: "Click to hide all comments", icon: "fa-solid:comment-medical" },
+    [HideCommentsState.ALL]: { title: "Click to show all comments", icon: "fa-solid:comment-slash" },
+  }
+  let commentsUI = commentsButton[$hideComments];
+
+  function changeCommentState() {
+    switch ($hideComments) {
+      case HideCommentsState.NONE:
+        $hideComments = HideCommentsState.AUTOMATED;
+        break;
+      case HideCommentsState.AUTOMATED:
+        $hideComments = HideCommentsState.ALL;
+        break;
+      case HideCommentsState.ALL:
+        $hideComments = HideCommentsState.NONE;
+        break;
+    }
+    commentsUI = commentsButton[$hideComments];
+  }
+
 
   class SourceFile {
       constructor(source) {
@@ -262,15 +284,6 @@
     <SyncLoader />
   </div>
 {:else}
-  <div class="d-inline me-2">Hide comments:</div>
-  <div class="form-check form-check-inline">
-    <input class="form-check-input" type="checkbox" bind:checked={$hideComments.automated} id="hideAutomatedComments">
-    <label class="form-check-label" for="hideAutomatedComments">Automated</label>
-  </div>
-  <div class="form-check form-check-inline">
-    <input class="form-check-input" type="checkbox" bind:checked={$hideComments.student_teacher} id="hideUserComments">
-    <label class="form-check-label" for="hideUserComments">Student/Teacher</label>
-  </div>
   <div class="float-end">
     {#if files.length > 1}
       <button class="btn btn-link p-0" on:click={toggleOpen} title="Expand or collapse all files">
@@ -282,12 +295,17 @@
       </button>
     {/if}
 
-    <button class="btn p-0 btn-link" title="Toggle comments" on:click={() => showComments = !showComments}><span class="iconify" data-icon="fa-solid:comment"></span></button>
+    <button class="btn p-0 btn-link" title={commentsUI.title} on:click={changeCommentState}>
+      <!-- because iconify-icon web component is not used in kelvin, this destroys everything in the div component if the icon changes
+      it doesn't work without it because the span gets translated to svg and the key block ignores that -->
+      {#key commentsUI.icon}
+        <div><span class="iconify" data-icon={commentsUI.icon}></span></div>
+      {/key}
+    </button>
     <button class="btn p-0 btn-link" title="Diff vs previous version(s)" on:click={() => showDiff = !showDiff}><span class="iconify" data-icon="fa-solid:history"></span></button>
     <a href="kelvin:{document.location.href.split('#')[0]}download" title="Open on your PC"><span class="iconify" data-icon="fa-solid:external-link-alt"></span></a>
     <a href="download" download title="Download"><span class="iconify" data-icon="fa-solid:download"></span></a>
   </div>
-  <br/>
 
   {#if showDiff}
     <SubmitsDiff {submits} {current_submit} {deadline} />
@@ -320,7 +338,7 @@
           <SubmitSource
           path={file.source.path}
           code={file.source.content}
-          comments={showComments ? file.source.comments : []}
+          comments={file.source.comments}
           selectedRows={selectedRows && selectedRows.path === file.source.path ? selectedRows : null}
           on:setNotification={setNotification}
           on:saveComment={evt => saveComment({...evt.detail, source: file.source.path})} />

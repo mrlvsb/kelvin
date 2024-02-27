@@ -3,7 +3,7 @@
     import { createEventDispatcher } from 'svelte';
     import { user } from './global';
     import { safeMarkdown } from './markdown.js'
-    import { hideComments } from './stores';
+    import { HideCommentsState, hideComments } from './stores';
 
     export let author;
     export let author_id = null;
@@ -36,8 +36,8 @@
       })
     }
 </script>
-{#if !(($hideComments.automated && type == "automated") ||
-       ($hideComments.student_teacher && (type == "teacher" || type == "student")))}
+{#if !(($hideComments == HideCommentsState.AUTOMATED && type == "automated") ||
+        $hideComments == HideCommentsState.ALL)}
   <div style="display: flex; flex-direction: row;">
     <div class="comment comment-{unread ? 'unread' : 'read'} {type}" on:dblclick={() => editing = can_edit}>
       <strong>{author}</strong>:
