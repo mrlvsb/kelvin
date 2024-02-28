@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import List
+from typing import Optional, List
 
 # Usage: python3 run-tests.py <path-to-binary>
 # Example: python3 run-tests.py ./main
