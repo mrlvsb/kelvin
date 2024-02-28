@@ -4,7 +4,7 @@ from common import inbus
 from common.utils import user_from_login
 import serde
 from dataclasses import dataclass
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from common.models import Class, Semester, Subject
 from io import StringIO
 from lxml.html import parse
@@ -73,6 +73,10 @@ def run(concrete_activities: List[ConcreteActivity], subj: Dict[str, str], semes
             else:
                 # TODO: We assign all activities without teacher to one special user :-)
                 teacher = User.objects.get(username='GAU01')
+
+            if not teacher.groups.filter(name='teachers').exists():
+                teachers_group = Group.objects.get_by_natural_key('teachers')
+                teacher.groups.add(teachers_group)
 
             class_in_db[c].teacher = teacher
 
