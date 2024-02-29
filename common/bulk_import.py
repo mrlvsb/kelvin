@@ -1,7 +1,7 @@
 import datetime
 import re
 from common import inbus
-from common.utils import user_from_login
+from common.utils import is_teacher, user_from_login
 import serde
 from dataclasses import dataclass
 from django.contrib.auth.models import User, Group
@@ -74,7 +74,7 @@ def run(concrete_activities: List[ConcreteActivity], subj: Dict[str, str], semes
                 # TODO: We assign all activities without teacher to one special user :-)
                 teacher = User.objects.get(username='GAU01')
 
-            if not teacher.groups.filter(name='teachers').exists():
+            if not is_teacher(teacher):
                 teachers_group = Group.objects.get_by_natural_key('teachers')
                 teacher.groups.add(teachers_group)
 
