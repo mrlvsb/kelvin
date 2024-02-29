@@ -9,6 +9,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from web.task_utils import load_readme, process_markdown 
+import common.utils
 
 
 class BaseByTeacherFilter(admin.SimpleListFilter):
@@ -125,7 +126,7 @@ class MyUserAdmin(UserAdmin):
     list_filter = UserAdmin.list_filter + (IsTeacherFilter,)
 
     def is_teacher(self, obj):
-        return obj.groups.filter(name='teachers').exists()
+        return common.utils.is_teacher(obj)
 
 class TaskAdmin(admin.ModelAdmin):
     list_filter = ('subject', )
