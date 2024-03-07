@@ -1,29 +1,20 @@
 from collections import defaultdict
 
 from django.core import serializers
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import get_object_or_404
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.urls import reverse
 from common.models import Submit, Class, Task, AssignedTask, Semester, Subject, assignedtask_results, current_semester_conds, current_semester, submit_assignment_path
-from .models import UserToken
-from django.db import transaction
-import django_rq
 from common.evaluate import evaluate_submit
 from django.http import JsonResponse
 from django.contrib.auth.decorators import user_passes_test
 from common.utils import is_teacher, points_to_color, inbus_search_user, user_from_inbus_person
-from common.models import Task, Class, current_semester_conds
-from evaluator.testsets import TestSet 
-from common.models import current_semester, Subject
-from web.task_utils import load_readme
 from django.contrib.auth.decorators import login_required
-from django.db import IntegrityError
 import os
 import re
 import json
-import datetime
 import logging
 import serde
 import shutil
@@ -122,7 +113,6 @@ def class_detail_list(request):
                 if 'assigned_points' in score and score['assigned_points'] is not None and int(assignment.max_points or 0) > 0:
                     score['color'] = points_to_color(score['assigned_points'], assignment.max_points)
 
-
                 if 'accepted_submit_num' in score:
                     score['link'] = reverse('task_detail', kwargs={
                         'login': score['student'],
@@ -150,8 +140,8 @@ def class_detail_list(request):
             'students': students,
         })
 
-
     days = ['PO', 'UT', 'ST', 'CT', 'PA', 'SO', 'NE']
+
     def sort_fn(c):
         timeslot = c['timeslot']
         try:
@@ -163,9 +153,10 @@ def class_detail_list(request):
     result.sort(key=sort_fn)
     return JsonResponse({'classes': result})
 
+
 @user_passes_test(is_teacher)
 def subject_list(request, subject_abbr):
-    subject = get_object_or_404(Subject, abbr=subject_abbr)
+    get_object_or_404(Subject, abbr=subject_abbr)  # The result is not needed, the call is to provide 404 error
 
     classes = []
     for clazz in Class.objects.filter(subject__abbr=subject_abbr, **current_semester_conds()):
@@ -176,7 +167,6 @@ def subject_list(request, subject_abbr):
             'code': clazz.code,
             'week_offset': clazz.week_offset,
         })
-
 
     return JsonResponse({'classes': classes})
 
@@ -216,6 +206,7 @@ def info(request):
 
     return JsonResponse(res)
 
+
 @user_passes_test(is_teacher)
 def add_student_to_class(request, class_id):
     clazz = get_object_or_404(Class, id=class_id)
@@ -247,6 +238,7 @@ def add_student_to_class(request, class_id):
         'success': not errors,
         'not_found': errors,
     })
+
 
 @user_passes_test(is_teacher)
 def task_detail(request, task_id=None):   
@@ -358,14 +350,14 @@ def task_detail(request, task_id=None):
     if request.method == 'DELETE':
         if AssignedTask.objects.filter(task_id=task_id).count():
             return JsonResponse({
-                'errors': ['Cannot delete task - there are assigned classess']
+                'errors': ['Cannot delete task - there are assigned classes']
             })
 
         tasks_in_path = [str(p.parent) for p in Path(task.dir()).rglob('.taskid')]
         if len(tasks_in_path) != 1:
             if not tasks_in_path:
                 return JsonResponse({
-                    'errors': [f'Cannot delete task, maybe you didn\'t save the task first?']
+                    'errors': ["Cannot delete task, maybe you didn't save the task first?"]
                 }) 
 
             return JsonResponse({
@@ -469,7 +461,8 @@ def task_detail(request, task_id=None):
 
     result['can_delete'] = assigned_count == 0
     return JsonResponse(result)
- 
+
+
 @user_passes_test(is_teacher)
 def duplicate_task(request, task_id):
     template = get_object_or_404(Task, pk=task_id)
@@ -494,6 +487,7 @@ def duplicate_task(request, task_id):
         'id': copied_task.id,
     })
 
+
 @user_passes_test(is_teacher)
 def reevaluate_task(request, task_id):
     for submit in Submit.objects.filter(assignment__task_id=task_id):
@@ -501,6 +495,7 @@ def reevaluate_task(request, task_id):
         submit.save()
 
     return JsonResponse({})
+
 
 @user_passes_test(is_teacher)
 def search(request):
@@ -556,6 +551,7 @@ def search(request):
         'results': results,
     })
 
+
 @user_passes_test(is_teacher)
 def transfer_students(request):
     if request.method != 'POST':
@@ -602,8 +598,6 @@ def semesters(request):
                         content_type="application/json")
 
 
-
-
 @user_passes_test(is_teacher)
 @require_POST
 def import_activities(request):
@@ -622,7 +616,7 @@ def import_activities(request):
         res['count'] = len(res['users'])
     except (ImportException, UnicodeDecodeError) as e:
         res['error'] = ''.join(traceback.TracebackException.from_exception(e).format())
-    except:
+    except BaseException:
         res['error'] = traceback.format_exc()
 
     # TODO: When upgrading, see: https://docs.djangoproject.com/en/4.2/ref/request-response/#httpresponse-objects
