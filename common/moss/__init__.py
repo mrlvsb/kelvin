@@ -21,7 +21,7 @@ from django.urls import reverse
 from networkx.drawing.nx_agraph import write_dot
 from notifications.signals import notify
 
-from common.models import AssignedTask, Class, Submit, Task
+from common.models import AssignedTask, Class, Submit, Task, SourcePath
 from kelvin.settings import BASE_DIR
 
 MAX_FILE_SIZE = 128 * 1024
@@ -54,7 +54,7 @@ def check_file_size(path: str) -> bool:
     return 0 < os.path.getsize(path) <= MAX_FILE_SIZE
 
 
-def is_source_valid(logger, source) -> bool:
+def is_source_valid(logger, source: SourcePath) -> bool:
     if not is_ext_allowed(source.virt):
         logger.warning(f"Skipping file {source.virt} because of extension")
         return False
