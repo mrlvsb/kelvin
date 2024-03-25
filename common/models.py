@@ -2,6 +2,8 @@ import os
 import re
 import logging
 
+from typing import List
+
 from django.utils import timezone
 
 from django.db import models
@@ -248,7 +250,7 @@ class Submit(models.Model):
     def pipeline_path(self):
         return re.sub(r'^submits/', 'submit_results/', str(self.dir()))
 
-    def all_sources(self):
+    def all_sources(self) -> List[SourcePath]:
         sources = []
         offset = len(self.dir()) + 1
         for root, dirs, files in os.walk(self.dir()):
