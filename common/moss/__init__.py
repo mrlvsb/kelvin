@@ -67,7 +67,8 @@ def is_source_valid(logger, source) -> bool:
 def add_file(logger, moss: mosspy.Moss, file_path: str, name: str, counters):
     logger.info(f"Adding file {name} from {file_path}")
     ext = name.split('.')[-1].lower()
-    counters[ALLOWED_EXTENSIONS[ext]] += 1
+    if ext in ALLOWED_EXTENSIONS:
+        counters[ALLOWED_EXTENSIONS[ext]] += 1
     moss.addFile(file_path, name)
 
 
