@@ -15,13 +15,15 @@ from kelvin.settings import BASE_DIR
 from .utils import is_teacher
 from jinja2 import Environment, FileSystemLoader
 
+
 def current_semester_conds(prefix=''):
     return {
         f'{prefix}semester__begin__lte': timezone.now(),
         f'{prefix}semester__end__gte': timezone.now()
     }
 
-def current_semester():
+
+def current_semester() -> "Semester":
     semester = Semester.objects.filter(
             begin__lte=timezone.now(),
             end__gte=timezone.now()
@@ -36,6 +38,7 @@ def current_semester():
 class ClassManager(models.Manager):
     def current_semester(self):
         return self.filter(**current_semester_conds())
+
 
 class Semester(models.Model):
     begin = models.DateField()
@@ -218,6 +221,7 @@ def submit_assignment_path(assignment):
         assignment.clazz.code.replace('/', '')
     ]
 
+
 class Submit(models.Model):
     assignment = models.ForeignKey(AssignedTask, on_delete=models.CASCADE)
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -274,7 +278,7 @@ class Submit(models.Model):
         }) + '#src'
 
     @property
-    def ip_address_hash_short(self) -> str:
+    def ip_address_hash_short(self) -> str | None:
         if self.ip_address_hash and len(self.ip_address_hash) >= 7:
             return self.ip_address_hash[0:7]
         return None
