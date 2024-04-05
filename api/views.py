@@ -35,7 +35,7 @@ def tasks_list(request):
     result = []
     for task in Task.objects.all():
         result.append({
-            'id': task.id,
+            'id': task.pk,
             'title': task.name,
             'path': task.code,
         })
@@ -46,7 +46,7 @@ def tasks_list(request):
 def all_classes(request):
     # https://stackoverflow.com/questions/13844158/sort-week-day-texts
     # {'MO': 0, 'TU': 1, ...}
-    day_mapper = {name:val for val, name in enumerate(Class.Day)}
+    day_mapper = {name: val for val, name in enumerate(Class.Day)}
     conds = {}
 
     if not request.user.is_superuser:
@@ -129,12 +129,12 @@ def class_detail_list(request):
             assignments.append(assignment_data)
 
         result.append({
-            'id': clazz.id,
+            'id': clazz.pk,
             'teacher_username': clazz.teacher.username,
             'timeslot': clazz.timeslot,
             'code': clazz.code,
             'subject_abbr': clazz.subject.abbr,
-            'csv_link': reverse('download_csv_per_class', kwargs={'class_id': clazz.id}),
+            'csv_link': reverse('download_csv_per_class', kwargs={'class_id': clazz.pk}),
             'assignments': assignments,
             'summary': clazz.summary(request.user.username, show_output=True),
             'students': students,
@@ -161,7 +161,7 @@ def subject_list(request, subject_abbr):
     classes = []
     for clazz in Class.objects.filter(subject__abbr=subject_abbr, **current_semester_conds()):
         classes.append({
-            'id': clazz.id,
+            'id': clazz.pk,
             'teacher': clazz.teacher.username if clazz.teacher else None,
             'timeslot': clazz.timeslot,
             'code': clazz.code,
@@ -303,7 +303,7 @@ def task_detail(request, task_id=None):
                 except FileNotFoundError as e:
                     logger.warn(e)
 
-                for assignment in AssignedTask.objects.filter(task_id=task.id):
+                for assignment in AssignedTask.objects.filter(task_id=task.pk):
                     try:
                         os.renames(
                             os.path.join("submits", *submit_assignment_path(assignment), task.code),
@@ -328,19 +328,19 @@ def task_detail(request, task_id=None):
         taskid_path = os.path.join(task.dir(), '.taskid')
         if not os.path.exists(taskid_path):
             with open(taskid_path, "w") as f:
-                f.write(str(task.id))
+                f.write(str(task.pk))
 
         for cl in data['classes']:
             if cl.get('assigned', None):
-                AssignedTask.objects.update_or_create(task_id=task.id, clazz_id=cl['id'], defaults={
+                AssignedTask.objects.update_or_create(task_id=task.pk, clazz_id=cl['id'], defaults={
                     'assigned': parse_datetime(cl['assigned']),
                     'deadline': parse_datetime(cl['deadline']) if cl.get('deadline', None) else None,
                     'max_points': cl.get('max_points', None),
                 })
             else:
-                submits = Submit.objects.filter(assignment__task_id=task.id, assignment__clazz_id=cl['id']).count()
+                submits = Submit.objects.filter(assignment__task_id=task.pk, assignment__clazz_id=cl['id']).count()
                 if submits == 0:
-                    AssignedTask.objects.filter(task__id=task.id, clazz_id=cl['id']).delete()
+                    AssignedTask.objects.filter(task__id=task.pk, clazz_id=cl['id']).delete()
                 else:
                     clazz = Class.objects.get(id=cl['id'])
                     errors.append(f"Could not deassign from class {str(clazz)}, because it already contains {submits} submits")
@@ -384,7 +384,7 @@ def task_detail(request, task_id=None):
 
 
     result = {
-        'id': task.id,
+        'id': task.pk,
         'subject_abbr': task.subject.abbr, 
         'path': task.code,
         'classes': [],
@@ -394,8 +394,8 @@ def task_detail(request, task_id=None):
             'path': '_'
         })).rstrip('_'),
         'errors': errors,
-        'task_link': reverse('teacher_task', kwargs=dict(task_id=task.id)),
-        'moss_link': reverse('teacher_task_moss_check', kwargs=dict(task_id=task.id)),
+        'task_link': reverse('teacher_task', kwargs=dict(task_id=task.pk)),
+        'moss_link': reverse('teacher_task_moss_check', kwargs=dict(task_id=task.pk)),
         'plagiarism_key': task.plagiarism_key
     }
 
@@ -442,17 +442,17 @@ def task_detail(request, task_id=None):
     assigned_count = 0
     for clazz in classes:
         item = {
-            'id': clazz.id,
+            'id': clazz.pk,
             'code': clazz.code,
             'timeslot': clazz.timeslot,
             'week_offset': clazz.week_offset,
             'teacher': clazz.teacher.username,
         }
 
-        assigned = AssignedTask.objects.filter(task_id=task.id, clazz_id=clazz.id).first()
+        assigned = AssignedTask.objects.filter(task_id=task.pk, clazz_id=clazz.pk).first()
         if assigned:
             assigned_count += 1
-            item['assignment_id'] = assigned.id
+            item['assignment_id'] = assigned.pk
             item['assigned'] = assigned.assigned
             item['deadline'] = assigned.deadline
             item['max_points'] = assigned.max_points
@@ -479,12 +479,12 @@ def duplicate_task(request, task_id):
     copytree(template.dir(), new_path, ignore=ignore_patterns('.taskid'))
 
     copied_task = template
-    copied_task.id = None
+    copied_task.pk = None
     copied_task.code = Task.path_to_code(new_path)
     copied_task.save()
 
     return JsonResponse({
-        'id': copied_task.id,
+        'id': copied_task.pk,
     })
 
 
@@ -516,13 +516,13 @@ def search(request):
         elif isinstance(o, Task):
             detail = {
                 'text': f'Task {o.name} ({o.code})',
-                'url': f'/teacher/task/{o.id}',
+                'url': f'/teacher/task/{o.pk}',
                 **kwargs
             }
 
             edit = {
                 'text': f'Edit task {o.name} ({o.code})',
-                'url': f'/#/task/edit/{o.id}',
+                'url': f'/#/task/edit/{o.pk}',
                 **kwargs
             }
 
@@ -537,14 +537,14 @@ def search(request):
 
     conds = {}
     if not request.user.is_superuser:
-        conds['assignedtask__clazz__teacher_id'] = request.user.id
-    for task in Task.objects.filter(assignedtask__clazz__semester_id=semester.id, **conds):
+        conds['assignedtask__clazz__teacher_id'] = request.user.pk
+    for task in Task.objects.filter(assignedtask__clazz__semester_id=semester.pk, **conds):
         results += serialize(task)
 
     conds = {}
     if not request.user.is_superuser:
         conds['students__teacher_id'] = request.user.id
-    for student in User.objects.filter(students__semester_id=semester.id, **conds).distinct('id'):
+    for student in User.objects.filter(students__semester_id=semester.pk, **conds).distinct('pk'):
         results += serialize(student)
 
     return JsonResponse({
@@ -568,12 +568,12 @@ def transfer_students(request):
     # transfer all tasks
     transfers = []
     for assignment in post['assignments']:
-        for submit in Submit.objects.filter(assignment_id=assignment['src_assignment_id'], student_id=student.id):
+        for submit in Submit.objects.filter(assignment_id=assignment['src_assignment_id'], student_id=student.pk):
             prev_dir = submit.dir()
             submit.assignment_id = assignment['dst_assignment_id']
 
             transfers.append({
-                'submit_id': submit.id,
+                'submit_id': submit.pk,
                 'before': prev_dir,
                 'after': submit.dir(),
             })
