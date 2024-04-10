@@ -24,7 +24,7 @@ class BaseByTeacherFilter(admin.SimpleListFilter):
 
     def lookups(self, request, model_admin):
         teachers = User.objects.filter(groups__name='teachers')
-        items = ( (t.id, t.username) for t in teachers )
+        items = ( (t.pk, t.username) for t in teachers )
 
         return items
 

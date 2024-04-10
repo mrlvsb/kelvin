@@ -1,13 +1,10 @@
 import datetime
-import re
-from common import inbus
+from .inbus import inbus
 from common.utils import is_teacher, user_from_login
 import serde
 from dataclasses import dataclass
 from django.contrib.auth.models import User, Group
 from common.models import Class, Semester, Subject
-from io import StringIO
-from lxml.html import parse
 from typing import List, Dict, Generator
 import traceback
 
@@ -83,7 +80,7 @@ def run(concrete_activities: List[ConcreteActivity], subj: Dict[str, str], semes
             class_in_db[c].save()
 
         # Students
-        students_in_class = inbus.inbus.students_in_concrete_activity(ca.concreteActivityId)
+        students_in_class = inbus.students_in_concrete_activity(ca.concreteActivityId)
 
         for student in students_in_class:
             login = student.login.upper()
