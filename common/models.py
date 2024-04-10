@@ -265,7 +265,7 @@ class Submit(models.Model):
         return sources
 
     def __str__(self):
-        return f"#{self.id} {self.student.username} {self.assignment.task.name} (task_id={self.assignment.task_id}) #{self.submit_num}"
+        return f"#{self.pk} {self.student.username} {self.assignment.task.name} (task_id={self.assignment.task_id}) #{self.submit_num}"
 
     def notification_str(self):
         return f"{self.assignment.task.name} #{self.submit_num}"
@@ -292,7 +292,7 @@ class Comment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"comment #{self.id}"
+        return f"comment #{self.pk}"
 
     def notification_str(self):
         return "comment"
@@ -342,12 +342,12 @@ def assignedtask_results(assignment, students=None, **kwargs):
                 student_submit_stats['max_points'] = submit.max_points
                 student_submit_stats['assigned_points'] = submit.assigned_points
                 student_submit_stats['accepted_submit_num'] = submit.submit_num
-                student_submit_stats['accepted_submit_id'] = submit.id
+                student_submit_stats['accepted_submit_id'] = submit.pk
 
         if submit.assigned_points is not None:
             student_submit_stats['submits_with_assigned_pts'] += 1
             student_submit_stats['assigned_points'] = submit.assigned_points
             student_submit_stats['accepted_submit_num'] = submit.submit_num
-            student_submit_stats['accepted_submit_id'] = submit.id
+            student_submit_stats['accepted_submit_id'] = submit.pk
 
     return sorted(results.values(), key=lambda s: s['student'])
