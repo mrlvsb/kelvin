@@ -2,14 +2,14 @@
 import html
 import subprocess
 import os
-import re
 import shlex
 import json
-from collections import defaultdict
+
 
 # TODO: replace with shlex.join on python3.8
 def shlex_join(split_command):
     return ' '.join(shlex.quote(arg) for arg in split_command)
+
 
 def cmd_run(cmd, out, show_cmd=None, env=None):
     if not show_cmd:

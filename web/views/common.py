@@ -1,9 +1,6 @@
-import hashlib
-
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.utils.crypto import get_random_string
-from django.contrib.auth.hashers import make_password
 from django.conf import settings
 from django.urls import reverse
 from api.models import UserToken
@@ -11,6 +8,7 @@ from api.models import UserToken
 from .student import student_index, ui
 from common.utils import is_teacher
 from api.backends import hash_token
+
 
 @login_required()
 def index(request):

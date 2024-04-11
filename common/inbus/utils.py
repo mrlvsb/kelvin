@@ -49,12 +49,12 @@ def is_response_ok_or_new_token_(response: requests.Response) -> bool:
 
 def inbus_request(url, params: Dict = None) -> requests.Response | None:
     if params is None:
-        params={}
+        params = {}
     token = inbus_token()
     headers = {
         "Authorization": f"Bearer {token['access_token']}",
-        "Accept" : "application/json",
-        "Accept-Language" : "cz"
+        "Accept": "application/json",
+        "Accept-Language": "cz"
         }
 
     try:

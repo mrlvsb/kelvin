@@ -6,7 +6,6 @@ import os
 import shutil
 import tarfile
 import tempfile
-import traceback
 from collections import OrderedDict
 from typing import Dict, List, Tuple
 

@@ -9,7 +9,6 @@ import logging
 from common.utils import points_to_color
 from .results import TestResult
 from . import testsets
-from kelvin.settings import BASE_DIR
 
 from .utils import parse_human_size, copyfile
 
@@ -38,6 +37,7 @@ IMAGE_LIMITS = {
         'fsize': '128M',
     },
 }
+
 
 def create_docker_cmd(evaluation, image, additional_args=None, cmd=None, limits=None, env=None):
     if not limits:
