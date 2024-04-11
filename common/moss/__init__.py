@@ -221,7 +221,7 @@ def moss_check_task(task_id: int, notify_teacher: bool, submit_limit: int | None
     logger.addHandler(log_handler)
     logger.setLevel(logging.INFO)
 
-    logger.info(f"Plagiarism checking started")
+    logger.info("Plagiarism checking started")
     counters = {lang: 0 for lang in ALLOWED_EXTENSIONS.values()}
 
     url = None

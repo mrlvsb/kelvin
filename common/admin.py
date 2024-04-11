@@ -1,14 +1,8 @@
-import os
-
 from django.contrib import admin
-import common.models as models
-from django.contrib.auth.models import User, Group
 from django.contrib.auth.admin import UserAdmin
-from django.db.models import TextField
-from django import forms
-from django.core.exceptions import ValidationError
+from django.contrib.auth.models import User
 
-from web.task_utils import load_readme, process_markdown 
+import common.models as models
 import common.utils
 
 

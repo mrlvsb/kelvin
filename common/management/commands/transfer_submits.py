@@ -1,10 +1,9 @@
-import os
-import re
 import shutil
 
 from django.core.management.base import BaseCommand
 
 from common.models import AssignedTask, Class, Submit
+
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
@@ -39,4 +38,3 @@ class Command(BaseCommand):
                 submit.save()
 
             print(submit, c, new_assigned_task, submits)
-       

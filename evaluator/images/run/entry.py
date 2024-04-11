@@ -4,7 +4,6 @@ import json
 import subprocess
 import html
 import base64
-from io import StringIO
 import glob
 import magic
 
@@ -18,7 +17,8 @@ SUPPORTED_IMAGES = [
     'image/svg+xml',
 ]
 
-DEFAULT_TIMEOUT=5
+DEFAULT_TIMEOUT = 5
+
 
 def display(patterns, out, delete=False):
     for pattern in patterns:
