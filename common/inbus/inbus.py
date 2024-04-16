@@ -57,7 +57,7 @@ def subject_versions(department_id: dto.DepartmentId = dto.DepartmentId(386)) ->
 
                 subject_versions.append(subject_version)
 
-            results: int = len(subject_versions_json)
+            results = len(subject_versions_json)
 
             offset += results
 
