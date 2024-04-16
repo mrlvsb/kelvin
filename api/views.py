@@ -22,7 +22,7 @@ import traceback
 
 import common.bulk_import
 from common.bulk_import import ImportException
-from common import inbus
+from common.inbus import inbus
 from pathlib import Path
 from shutil import copytree, ignore_patterns
 from django.utils.dateparse import parse_datetime
@@ -608,7 +608,8 @@ def import_activities(request):
     subject = post['subject']
     activities_id = post['activities']
 
-    activities = [ inbus.inbus.concrete_activity(activity_id) for activity_id in activities_id ]
+    activities = [inbus.concrete_activity(activity_id) for activity_id in activities_id]
+    activities = [concrete_activity for concrete_activity in activities if concrete_activity is not None]
     semester = Semester.objects.get(pk=semester_id)
 
     try:

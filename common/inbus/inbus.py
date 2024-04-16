@@ -21,42 +21,50 @@ def person_by_login(login: str) -> dto.PersonSimple | None:
     if 'login' not in person_json:
         return None
 
-    person_simple = dto.PersonSimple(login=person_json["login"].upper(), first_name=person_json.get('firstName', ''), second_name=person_json.get('secondName', ''),
+    person_simple = dto.PersonSimple(login=person_json["login"].upper(), first_name=person_json.get('firstName', ''),
+                                     second_name=person_json.get('secondName', ''),
                                      full_name=person_json.get('fullName', ''), email=person_json.get('email', ''))
 
     return person_simple
 
 
-def subject_versions(department_id: dto.DepartmentId = 386) -> List[dto.SubjectVersion]:
+def subject_versions(department_id: dto.DepartmentId = dto.DepartmentId(386)) -> List[dto.SubjectVersion]:
     """
     Get list of all subjects and their versions by department.
     Here `386` is Department of Computer Science.
     """
-    results_per_page = 20
+    results_per_page: int = 20
     subject_versions = []
-    offset = 0
+    offset: int = 0
     while True:
         url = urllib.parse.urljoin(config.INBUS_SERVICE_EDISON_URL, 'edu/subjectVersions')
         subject_versions_resp = utils.inbus_request(url, {'departmentId': department_id, 'offset': offset, 'limit': results_per_page})
 
-        subject_versions_json = subject_versions_resp.json()
+        if subject_versions_resp:
+            subject_versions_json = subject_versions_resp.json()
 
-        for subject_version_json in subject_versions_json:
-            subject_json = subject_version_json['subject']
-            subject_guarantee = serde.from_dict(dto.Person, subject_json['guarantee'])
-            subject_version_guarantee = serde.from_dict(dto.Person, subject_version_json['guarantee'])
-            subject = dto.Subject(subjectId=subject_json['subjectId'], code=subject_json['code'], abbrev=subject_json['abbrev'],
-                                  title=subject_json['title'], guarantee=subject_guarantee)
-            subject_version = dto.SubjectVersion(subjectVersionId=subject_version_json['subjectVersionId'], subject=subject,
-                                                 subjectVersionCompleteCode=subject_version_json['subjectVersionCompleteCode'], guarantee=subject_version_guarantee)
+            for subject_version_json in subject_versions_json:
+                subject_json = subject_version_json['subject']
+                subject_guarantee = serde.from_dict(dto.Person, subject_json['guarantee'])
+                subject_version_guarantee = serde.from_dict(dto.Person, subject_version_json['guarantee'])
+                subject = dto.Subject(subjectId=subject_json['subjectId'], code=subject_json['code'],
+                                      abbrev=subject_json['abbrev'], title=subject_json['title'],
+                                      guarantee=subject_guarantee)
+                subject_version = dto.SubjectVersion(subjectVersionId=subject_version_json['subjectVersionId'],
+                                                     subject=subject,
+                                                     subjectVersionCompleteCode=subject_version_json['subjectVersionCompleteCode'],
+                                                     guarantee=subject_version_guarantee)
 
-            subject_versions.append(subject_version)
+                subject_versions.append(subject_version)
 
-        results = len(subject_versions_json)
+            results: int = len(subject_versions_json)
 
-        offset += results
+            offset += results
 
-        if results == 0:
+            if results == 0:
+                break
+
+        else:
             break
 
     return subject_versions
@@ -69,29 +77,39 @@ def schedule_subject_by_version_id(subject_version_id: dto.SubjectVersionId) -> 
     url = urllib.parse.urljoin(config.INBUS_SERVICE_EDISON_URL, 'schedule')
     concrete_activities_resp = utils.inbus_request(url, {'subjectVersionId': subject_version_id, 'semesterId': 129})
 
-    concrete_activities_json = concrete_activities_resp.json()
+    concrete_activities = []
 
-    concrete_activities = [ serde.from_dict(dto.ConcreteActivity, concrete_activity_dict) for concrete_activity_dict in concrete_activities_json ]
+    if concrete_activities_resp:
+        concrete_activities_json = concrete_activities_resp.json()
 
-    return concrete_activities
+        concrete_activities = [ serde.from_dict(dto.ConcreteActivity, concrete_activity_dict) for concrete_activity_dict in concrete_activities_json ]
+
+    return dto.SubjectVersionSchedule(concrete_activities)
 
 
-def concrete_activity(concrete_activity_id: dto.ConcreteActivityId) -> dto.ConcreteActivity:
+def concrete_activity(concrete_activity_id: dto.ConcreteActivityId) -> dto.ConcreteActivity | None:
     url = urllib.parse.urljoin(config.INBUS_SERVICE_EDISON_URL, f'schedule/{concrete_activity_id}')
     concrete_activity_resp = utils.inbus_request(url, {})
-    concrete_activity_json = concrete_activity_resp.json()
 
-    concrete_activity = serde.from_dict(dto.ConcreteActivity, concrete_activity_json)
+    if concrete_activity_resp:
+        concrete_activity_json = concrete_activity_resp.json()
 
-    return concrete_activity
+        concrete_activity: dto.ConcreteActivity = serde.from_dict(dto.ConcreteActivity, concrete_activity_json)
+        return concrete_activity
+    else:
+        return None
 
 
 def students_in_concrete_activity(concrete_activity_id: dto.ConcreteActivityId) -> List[dto.StudyRelation]:
     url = urllib.parse.urljoin(config.INBUS_SERVICE_EDISON_URL, f'schedule/{concrete_activity_id}/studyRelations')
     study_relation_resp = utils.inbus_request(url, {})
-    study_relation_json = study_relation_resp.json()
 
-    study_relations = [ serde.from_dict(dto.StudyRelation, study_relation) for study_relation in study_relation_json ]
+    study_relations: List[dto.StudyRelation] = []
+
+    if study_relation_resp:
+        study_relation_json = study_relation_resp.json()
+
+        study_relations = [serde.from_dict(dto.StudyRelation, study_relation) for study_relation in study_relation_json]
 
     return study_relations
 
