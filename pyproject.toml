@@ -14,7 +14,7 @@ dependencies = [
     "django-redis-cache==2.1.1",
     "django-rq==2.3.2",
     "django-webpush==0.3.2",
-    "django==3.1.14",
+    "django==3.2.25",
     "imageio==2.6.1",
     "Jinja2==2.11.3",
     "lxml==5.1.0",
