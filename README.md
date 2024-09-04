@@ -25,3 +25,11 @@ $ docker-compose exec web ./manage.py createsuperuser
 $ ./evaluator/images/build.py  # Rerun if pipeline images change
 $ ./sync_from_prod.sh  # Optional, you can populate the db yourself
 ```
+
+## Development
+- To lint & reformat Python code, use `ruff check` and `ruff format`:
+    ```bash
+    $ pip install ruff
+    $ ruff check
+    $ ruff format
+    ```
