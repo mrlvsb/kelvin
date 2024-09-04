@@ -8,7 +8,7 @@ import json
 
 # TODO: replace with shlex.join on python3.8
 def shlex_join(split_command):
-    return ' '.join(shlex.quote(arg) for arg in split_command)
+    return " ".join(shlex.quote(arg) for arg in split_command)
 
 
 def cmd_run(cmd, out, show_cmd=None, env=None):
@@ -20,7 +20,7 @@ def cmd_run(cmd, out, show_cmd=None, env=None):
 
     out.write(f"<code style='filter: opacity(.7);'>$ {shlex_join(show_cmd)}</code>")
 
-    with open('/tmp/out', 'w+', errors='ignore') as gcc_out:
+    with open("/tmp/out", "w+", errors="ignore") as gcc_out:
         p = subprocess.Popen(cmd, stdout=gcc_out, stderr=gcc_out, env=env)
         p.wait()
 
@@ -28,46 +28,56 @@ def cmd_run(cmd, out, show_cmd=None, env=None):
         out.write(f"<kelvin-terminal-output>{html.escape(gcc_out.read())}</kelvin-terminal-output>")
         return p.returncode
 
-output = os.getenv('PIPE_OUTPUT', 'main')
-flags = os.getenv('PIPE_FLAGS', '')
-ldflags = os.getenv('PIPE_LDFLAGS', '')
-cmakeflags = os.getenv('PIPE_CMAKEFLAGS', "[]")
-makeflags = os.getenv('PIPE_MAKEFLAGS', "[]")
+
+output = os.getenv("PIPE_OUTPUT", "main")
+flags = os.getenv("PIPE_FLAGS", "")
+ldflags = os.getenv("PIPE_LDFLAGS", "")
+cmakeflags = os.getenv("PIPE_CMAKEFLAGS", "[]")
+makeflags = os.getenv("PIPE_MAKEFLAGS", "[]")
 
 
 with open("result.html", "w") as out:
     env = {
-        'CC': 'gcc',
-        'CXX': 'g++',
-        'CFLAGS': flags,
-        'CXXFLAGS': flags,
-        'LDFLAGS': ldflags,
-        'CLICOLOR_FORCE': '1',
-        'PATH': f'/wrapper:{os.getenv("PATH")}',
-        'CMAKE_EXPORT_COMPILE_COMMANDS': "ON"
+        "CC": "gcc",
+        "CXX": "g++",
+        "CFLAGS": flags,
+        "CXXFLAGS": flags,
+        "LDFLAGS": ldflags,
+        "CLICOLOR_FORCE": "1",
+        "PATH": f'/wrapper:{os.getenv("PATH")}',
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
     }
 
-    if 'cmakelists.txt' in [f.lower() for f in os.listdir('.')]:
+    if "cmakelists.txt" in [f.lower() for f in os.listdir(".")]:
         cmakeflags = json.loads(cmakeflags)
-        cmd_run(['cmake', *cmakeflags, '.'], out, env=env)
+        cmd_run(["cmake", *cmakeflags, "."], out, env=env)
 
     # The file list needs to be queried again
-    if 'makefile' in [f.lower() for f in os.listdir('.')]:
+    if "makefile" in [f.lower() for f in os.listdir(".")]:
         makeflags = json.loads(makeflags)
-        returncode = cmd_run(['make', *makeflags], out, env=env)
+        returncode = cmd_run(["make", *makeflags], out, env=env)
     else:
         sources = []
-        for root, dirs, files in os.walk('.'):
+        for root, dirs, files in os.walk("."):
             for f in files:
-                if f.split('.')[-1] in ['c', 'cpp']:
+                if f.split(".")[-1] in ["c", "cpp"]:
                     sources.append(os.path.join(root, f))
 
         if not sources:
-            out.write("<div style='color: red'>Missing source files! please upload .c or .cpp files!</div>")
+            out.write(
+                "<div style='color: red'>Missing source files! please upload .c or .cpp files!</div>"
+            )
             exit(1)
 
-        use_cpp = any(f.endswith('.cpp') for f in sources)
-        compile_cmd = ["g++" if use_cpp else "gcc", *sources, "-o", output, *shlex.split(flags), *shlex.split(ldflags)]
+        use_cpp = any(f.endswith(".cpp") for f in sources)
+        compile_cmd = [
+            "g++" if use_cpp else "gcc",
+            *sources,
+            "-o",
+            output,
+            *shlex.split(flags),
+            *shlex.split(ldflags),
+        ]
         returncode = cmd_run(compile_cmd, out, show_cmd=compile_cmd, env=env)
 
         if returncode == 0:
@@ -81,7 +91,9 @@ with open("result.html", "w") as out:
             out.write("<div style='color: red'>No executable has been built.</div>")
             exit(1)
         elif len(executables) > 1:
-            out.write(f"<div style='color: red'>Multiple executables have been built: {','.join(executables)}</div>")
+            out.write(
+                f"<div style='color: red'>Multiple executables have been built: {','.join(executables)}</div>"
+            )
             exit(1)
 
         out.write(f"<code style='filter: opacity(.7);'>$ mv {executables[0]} {output}</code>")

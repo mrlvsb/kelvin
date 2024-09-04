@@ -16,13 +16,14 @@ def index(request):
         return ui(request)
     return student_index(request)
 
+
 @login_required()
 def api_token(request):
     data = {
         "base_url": f"{request.scheme}://{request.META.get('HTTP_HOST', 'localhost:8000')}",
         "doc_token": "YOUR_TOKEN",
     }
-    if request.method == 'POST':
+    if request.method == "POST":
         token_plaintext = get_random_string(32)
         token_secure = hash_token(token_plaintext)
 
@@ -36,16 +37,16 @@ def api_token(request):
             token.token = token_secure
             token.save()
 
-        data['token_plaintext'] = token_plaintext
-        data['doc_token'] = token_plaintext
+        data["token_plaintext"] = token_plaintext
+        data["doc_token"] = token_plaintext
 
-    return render(request, 'web/common/api_token.html', data)
+    return render(request, "web/common/api_token.html", data)
 
 
 def template_context(request):
     return {
-        'is_teacher': is_teacher(request.user),
-        'vapid_public_key': getattr(settings, 'WEBPUSH_SETTINGS', {}).get('VAPID_PUBLIC_KEY', ''),
-        'webpush_save_url': reverse('save_webpush_info'),
-        'sentry_url': settings.SENTRY_URL
+        "is_teacher": is_teacher(request.user),
+        "vapid_public_key": getattr(settings, "WEBPUSH_SETTINGS", {}).get("VAPID_PUBLIC_KEY", ""),
+        "webpush_save_url": reverse("save_webpush_info"),
+        "sentry_url": settings.SENTRY_URL,
     }

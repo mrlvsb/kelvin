@@ -14,7 +14,7 @@ def set_token_to_cache(token: Dict) -> None:
     """
     cache = caches["default"]
     timeout = token["expires_in"] - 3600 if token["expires_in"] > 3600 else token["expires_in"]
-    cache.set("inbus_token", token, timeout=timeout) # one hour less than provided
+    cache.set("inbus_token", token, timeout=timeout)  # one hour less than provided
 
 
 def inbus_token() -> Dict:
@@ -54,8 +54,8 @@ def inbus_request(url, params: Dict | None = None) -> requests.Response | None:
     headers = {
         "Authorization": f"Bearer {token['access_token']}",
         "Accept": "application/json",
-        "Accept-Language": "cz"
-        }
+        "Accept-Language": "cz",
+    }
 
     try:
         response = requests.get(url, headers=headers, params=params)

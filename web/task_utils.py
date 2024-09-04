@@ -23,6 +23,7 @@ class Readme:
     def __str__(self):
         return self.content
 
+
 def load_readme(task_code, vars=None):
     try:
         task_dir = os.path.join(BASE_DIR, "tasks", task_code)
@@ -33,31 +34,34 @@ def load_readme(task_code, vars=None):
         with open(os.path.join(task_dir, readmes[0])) as f:
             if not vars:
                 vars = {}
-            
+
             template = Environment(loader=FileSystemLoader(task_dir)).from_string(f.read())
             return process_markdown(task_code, template.render(**vars))
     except FileNotFoundError:
         pass
 
+
 def process_markdown(task_code, markdown):
     h = hashlib.md5()
-    h.update(markdown.encode('utf-8'))
-    key = 'markdown_' + h.hexdigest()
+    h.update(markdown.encode("utf-8"))
+    key = "markdown_" + h.hexdigest()
 
-    out = caches['default'].get(key)
+    out = caches["default"].get(key)
     if out:
         return out
 
     meta = {}
-    meta_match = re.match(r'^\s*---\s*(.*?)\n---\s*\n', markdown, re.DOTALL)
+    meta_match = re.match(r"^\s*---\s*(.*?)\n---\s*\n", markdown, re.DOTALL)
     if meta_match:
         for line in meta_match.group(1).splitlines():
-            k, v = map(str.strip, line.split(':', 1))
+            k, v = map(str.strip, line.split(":", 1))
             meta[k] = v
 
-    p = subprocess.Popen(["pandoc", "--no-highlight"], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-    out = p.communicate(input=markdown.encode('utf-8'))
-    out = out[0].decode('utf-8')
+    p = subprocess.Popen(
+        ["pandoc", "--no-highlight"], stdout=subprocess.PIPE, stdin=subprocess.PIPE
+    )
+    out = p.communicate(input=markdown.encode("utf-8"))
+    out = out[0].decode("utf-8")
 
     try:
         root = html.fromstring(out)
@@ -66,45 +70,45 @@ def process_markdown(task_code, markdown):
             root = html.fromstring("<p></p>")
         else:
             raise e
-    header = root.cssselect('h1')
+    header = root.cssselect("h1")
     name = ""
     announce = ""
     if header:
         name = str(header[0].text)
 
-        if header[0].getparent().tag == 'body':
+        if header[0].getparent().tag == "body":
             root = lxml.etree.Element("p")
         else:
             header[0].getparent().remove(header[0])
 
     rules = [
-        ('a', 'href'),
-        ('img', 'src'),
-        ('video', 'src'),
-        ('source', 'src'),
-        ('asciinema-player', 'src'),
+        ("a", "href"),
+        ("img", "src"),
+        ("video", "src"),
+        ("source", "src"),
+        ("asciinema-player", "src"),
     ]
 
     for tag, attr in rules:
         for el in root.iter(tag):
             dst = el.attrib.get(attr, None)
-            if not dst or dst.startswith('http'):
+            if not dst or dst.startswith("http"):
                 continue
 
-            parts = dst.split('#', 1)
+            parts = dst.split("#", 1)
             if parts[0]:
-                el.attrib[attr] = reverse('task_asset', args=[task_code, parts[0]])
+                el.attrib[attr] = reverse("task_asset", args=[task_code, parts[0]])
             else:
-                el.attrib[attr] = ''
+                el.attrib[attr] = ""
 
             if len(parts) == 2:
-                el.attrib[attr] += f'#{parts[1]}'
+                el.attrib[attr] += f"#{parts[1]}"
 
-    tag = root.cssselect('.announce')
+    tag = root.cssselect(".announce")
     if tag:
-        announce = html.tostring(tag[0], pretty_print=True).decode('utf-8')
+        announce = html.tostring(tag[0], pretty_print=True).decode("utf-8")
 
-    content = html.tostring(root, pretty_print=True).decode('utf-8')
+    content = html.tostring(root, pretty_print=True).decode("utf-8")
     task_readme = Readme(name, announce, content, meta)
-    caches['default'].set(key, task_readme)
+    caches["default"].set(key, task_readme)
     return task_readme

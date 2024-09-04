@@ -17,5 +17,6 @@ class TestUtils(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.assertEqual(parse_human_size("1.5Z"), 1.5 * 1024 * 1024)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

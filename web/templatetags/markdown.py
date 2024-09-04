@@ -4,6 +4,7 @@ from web.task_utils import process_markdown
 
 register = template.Library()
 
+
 @register.filter()
 @stringfilter
 def markdown(value, task_code):

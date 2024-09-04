@@ -30,26 +30,31 @@ class BuildResult:
 
 def parse_tests_report(path):
     try:
-        ns={'ns': 'http://microsoft.com/schemas/VisualStudio/TeamTest/2010'}
+        ns = {"ns": "http://microsoft.com/schemas/VisualStudio/TeamTest/2010"}
         tree = ET.parse(path)
         os.unlink(path)
 
         tests = []
-        for node in tree.findall('ns:Results/ns:UnitTestResult', namespaces=ns):
+        for node in tree.findall("ns:Results/ns:UnitTestResult", namespaces=ns):
             text = []
 
-            for sel in ['./ns:Output/ns:ErrorInfo/ns:Message', './ns:Output/ns:ErrorInfo/ns:StackTrace']:
+            for sel in [
+                "./ns:Output/ns:ErrorInfo/ns:Message",
+                "./ns:Output/ns:ErrorInfo/ns:StackTrace",
+            ]:
                 el = node.find(sel, namespaces=ns)
                 if el is not None:
                     text.append(el.text)
 
-            success = node.attrib['outcome'] == 'Passed'
+            success = node.attrib["outcome"] == "Passed"
 
-            tests.append({
-                'name': node.attrib['testName'],
-                'success': success,
-                'message': "\n".join(text).strip(),
-            })
+            tests.append(
+                {
+                    "name": node.attrib["testName"],
+                    "success": success,
+                    "message": "\n".join(text).strip(),
+                }
+            )
 
         return tests
     except FileNotFoundError:
@@ -76,24 +81,26 @@ def get_executable_project_names(directory: Path) -> List[str]:
             pass
     return names
 
+
 def find_nested_sln(path):
     for i in os.scandir(path):
         if i.is_file():
             if Path(i.path).suffix == ".sln":
-                 return i.path
+                return i.path
         elif i.is_dir():
             tmp = find_nested_sln(i.path)
             if tmp is not None:
-               return tmp
+                return tmp
     return None
-    
+
+
 def build_dotnet_project(run_tests: bool) -> BuildResult:
     output_dir = "output"
     paths = os.listdir(os.getcwd())
     sln = [p for p in paths if Path(p).suffix == ".sln"]
     csproj = [p for p in paths if Path(p).suffix == ".csproj"]
     nested_sln_path = None
-    
+
     if not sln and not csproj:
         nested_sln_path = find_nested_sln(os.getcwd())
         if nested_sln_path is None:
@@ -112,17 +119,17 @@ def build_dotnet_project(run_tests: bool) -> BuildResult:
     env["DOTNET_NOLOGO"] = "1"
     # workaround for https://github.com/dotnet/sdk/issues/31457
     env["DOTNET_EnableWriteXorExecute"] = "0"
-    cmd = ['dotnet']
+    cmd = ["dotnet"]
     if run_tests:
-        cmd += ['test']
+        cmd += ["test"]
         if nested_sln_path:
-            cmd += ["\"" + nested_sln_path + "\""]
-        cmd += ['-l', f'trx;LogFileName=../../{tests_path}']
+            cmd += ['"' + nested_sln_path + '"']
+        cmd += ["-l", f"trx;LogFileName=../../{tests_path}"]
     else:
-        cmd += ['publish']
+        cmd += ["publish"]
         if nested_sln_path:
-            cmd += ["\"" + nested_sln_path + "\""]
-        cmd += ['--use-current-runtime', '--self-contained', '-o', output_dir]
+            cmd += ['"' + nested_sln_path + '"']
+        cmd += ["--use-current-runtime", "--self-contained", "-o", output_dir]
     process = subprocess.run(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     # find an executable file in the output directory and create a symlink for the following tasks
@@ -141,10 +148,13 @@ def build_dotnet_project(run_tests: bool) -> BuildResult:
     comments = defaultdict(list)
     for line in process.stdout.decode().splitlines():
         # /work/Program.cs(82,32): warning CS8600: Converting null literal or possible null value to non-nullable type. [/work/Du1.csproj]
-        match = re.match(r'^/work/(?P<path>[^(]+)\((?P<line>[0-9]+),[0-9]+\): [^ ]+ (?P<source>[^ :])+:\s*(?P<text>.*?)\s\[.*?\]$', line)
+        match = re.match(
+            r"^/work/(?P<path>[^(]+)\((?P<line>[0-9]+),[0-9]+\): [^ ]+ (?P<source>[^ :])+:\s*(?P<text>.*?)\s\[.*?\]$",
+            line,
+        )
         if match:
             comment = match.groupdict()
-            comments[comment['path']].append(comment)  
+            comments[comment["path"]].append(comment)
 
     tests = []
     if run_tests:
@@ -163,9 +173,9 @@ result = build_dotnet_project(run_tests)
 
 with open("result.html", "w") as out:
     stdout = bleach.clean(result.output.strip()).replace("\n", "<br />")
-    out.write(f'<pre>{stdout}</pre>')
+    out.write(f"<pre>{stdout}</pre>")
 
-with open('piperesult.json', 'w') as out:
+with open("piperesult.json", "w") as out:
     json.dump({"comments": result.comments, "tests": result.tests}, out, indent=4, sort_keys=True)
 
 

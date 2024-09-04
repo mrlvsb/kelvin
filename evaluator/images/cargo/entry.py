@@ -35,11 +35,7 @@ class BuildResult:
 
     @staticmethod
     def fail(stdout: str, stderr="") -> "BuildResult":
-        return BuildResult(
-            success=False,
-            stdout=stdout,
-            stderr=stderr
-        )
+        return BuildResult(success=False, stdout=stdout, stderr=stderr)
 
 
 def get_param(name: str, default: Any, parse_json: bool = False) -> Any | None:
@@ -102,11 +98,7 @@ def parse_cargo_output(cargo_stdout: str) -> CargoOutput:
                 text = msg.get("message")
                 if location is not None and text is not None:
                     (file, line) = location
-                    comments[file].append({
-                        "line": line,
-                        "text": text,
-                        "source": "cargo"
-                    })
+                    comments[file].append({"line": line, "text": text, "source": "cargo"})
             elif reason == "compiler-artifact":
                 target = message.get("target", {})
                 name = target.get("name")
@@ -128,7 +120,8 @@ def run_cargo(command: str, args: List[str]) -> BuildResult:
     if not manifest_found:
         if len(rs_files) != 1:
             return BuildResult.fail(
-                "No `Cargo.toml` found. Either upload a whole crate (`Cargo.toml` + `src`) or a single .rs file.")
+                "No `Cargo.toml` found. Either upload a whole crate (`Cargo.toml` + `src`) or a single .rs file."
+            )
         # Synthesize a Cargo project
         with open("Cargo.toml", "w") as f:
             f.write(f"""
@@ -143,9 +136,7 @@ path = "{rs_files[0]}"
 """)
 
     cmdline = ["cargo", command, "--message-format", "json", *args]
-    result = subprocess.run(cmdline,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    result = subprocess.run(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout = result.stdout.decode()
     stderr = result.stderr.decode()
 
@@ -155,8 +146,10 @@ path = "{rs_files[0]}"
 
     if result.returncode != 0:
         public_cmdline = ["cargo", command, *args]
-        return BuildResult.fail(f"`{' '.join(public_cmdline)}` has exited with code {result.returncode}\n{stdout}",
-                                stderr=stderr)
+        return BuildResult.fail(
+            f"`{' '.join(public_cmdline)}` has exited with code {result.returncode}\n{stdout}",
+            stderr=stderr,
+        )
 
     artifacts = output.binary_artifacts
     if len(artifacts) > 1:

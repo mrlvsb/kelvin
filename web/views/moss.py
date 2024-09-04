@@ -14,11 +14,17 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 from notifications.models import Notification
 
 from common.models import Semester, Submit, Task, current_semester
-from common.moss import PlagiarismMatch, enqueue_moss_check, get_linked_tasks, \
-    get_match_local_dir, \
-    moss_delete_job_from_cache, \
-    moss_job_cache_key, \
-    moss_result, moss_task_get_opts, moss_task_set_opts
+from common.moss import (
+    PlagiarismMatch,
+    enqueue_moss_check,
+    get_linked_tasks,
+    get_match_local_dir,
+    moss_delete_job_from_cache,
+    moss_job_cache_key,
+    moss_result,
+    moss_task_get_opts,
+    moss_task_set_opts,
+)
 from common.moss.local_result import download_moss_result
 from common.utils import is_teacher
 from web.views.teacher import enrich_matches
@@ -37,15 +43,14 @@ def get_linked_task_data(task_id: int) -> List[LinkedTask]:
     linked_tasks = []
     for task in tasks:
         semesters = (
-            Semester.objects.filter(pk__in=task.assignedtask_set.values('clazz__semester'))
-            .distinct().all()
+            Semester.objects.filter(pk__in=task.assignedtask_set.values("clazz__semester"))
+            .distinct()
+            .all()
         )
-        semesters = ", ".join(str(s) for s in sorted(semesters, key=lambda s: (s.year, 0 if s.winter else 1)))
-        linked_tasks.append(LinkedTask(
-            id=task.id,
-            name=task.name,
-            semesters=semesters
-        ))
+        semesters = ", ".join(
+            str(s) for s in sorted(semesters, key=lambda s: (s.year, 0 if s.winter else 1))
+        )
+        linked_tasks.append(LinkedTask(id=task.id, name=task.name, semesters=semesters))
 
     return linked_tasks
 
@@ -69,8 +74,9 @@ def task_moss_check(request, task_id):
     if job_id:
         refresh = False
         try:
-            job = django_rq.jobs.get_job_class().fetch(job_id,
-                                                       connection=django_rq.queues.get_connection())
+            job = django_rq.jobs.get_job_class().fetch(
+                job_id, connection=django_rq.queues.get_connection()
+            )
             status = job.get_status()
             if status == "started":
                 refresh = True
@@ -84,12 +90,11 @@ def task_moss_check(request, task_id):
             moss_delete_job_from_cache(task_id)
             logging.exception(e)
             status = "unknown"
-        return render(request, "web/moss.html", {
-            "status": status,
-            "task": task,
-            "refresh": refresh,
-            "linked_tasks": linked_tasks
-        })
+        return render(
+            request,
+            "web/moss.html",
+            {"status": status, "task": task, "refresh": refresh, "linked_tasks": linked_tasks},
+        )
 
     if request.method == "POST":
         submit_limit = request.POST.get("submit-limit")
@@ -107,32 +112,35 @@ def task_moss_check(request, task_id):
 
     res = moss_result(task_id, percent=opts.percent, lines=opts.lines)
     if not res:
-        return render(request, "web/moss.html", {
-            "task": task,
-            "has_result": False,
-            "linked_tasks": linked_tasks
-        })
+        return render(
+            request,
+            "web/moss.html",
+            {"task": task, "has_result": False, "linked_tasks": linked_tasks},
+        )
     else:
         newer_submit_count = Submit.objects.filter(
-            assignment__task_id=task.id,
-            created_at__gt=res.started_at
+            assignment__task_id=task.id, created_at__gt=res.started_at
         ).count()
         matches = enrich_matches(res.matches, request.user, task)
-        return render(request, "web/moss.html", {
-            "has_result": True,
-            "success": res.success,
-            "log": res.log,
-            "matches": matches,
-            "graph": res.to_svg(anonymize=False),
-            "opts": res.opts,
-            "started_at": res.started_at,
-            "finished_at": res.finished_at,
-            "moss_url": res.url,
-            "newer_submit_count": newer_submit_count,
-            "task": task,
-            "semester": str(current_semester()),
-            "linked_tasks": linked_tasks
-        })
+        return render(
+            request,
+            "web/moss.html",
+            {
+                "has_result": True,
+                "success": res.success,
+                "log": res.log,
+                "matches": matches,
+                "graph": res.to_svg(anonymize=False),
+                "opts": res.opts,
+                "started_at": res.started_at,
+                "finished_at": res.finished_at,
+                "moss_url": res.url,
+                "newer_submit_count": newer_submit_count,
+                "task": task,
+                "semester": str(current_semester()),
+                "linked_tasks": linked_tasks,
+            },
+        )
 
 
 @user_passes_test(is_teacher)

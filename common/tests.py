@@ -2,6 +2,7 @@ from django.test import TestCase
 from common.utils import parse_time_interval
 from datetime import timedelta
 
+
 class ParseIntervalTestCase(TestCase):
     def test_minutes(self):
         self.assertEqual(parse_time_interval("30 minute"), timedelta(minutes=30))

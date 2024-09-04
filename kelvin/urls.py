@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 
-#import notifications.urls
+# import notifications.urls
 
 if settings.CAS_ENABLE:
     from django_cas_ng import views as auth_views
@@ -26,15 +26,15 @@ else:
     from django.contrib.auth import views as auth_views
 
 urlpatterns = [
-    path('', include('web.urls')),
-    path('admin/', admin.site.urls),
-    path('accounts/logout/', auth_views.LogoutView.as_view(), name='cas_ng_logout'),
-    path('accounts/login/', auth_views.LoginView.as_view(), name='cas_ng_login'),
-    path('api/', include('api.urls')),
-    path('django-rq/', include('django_rq.urls')),
-    path('survey/', include('survey.urls')),
-    path('webpush/', include('webpush.urls')),
-    path('django-rq/', include('django_rq.urls'))
+    path("", include("web.urls")),
+    path("admin/", admin.site.urls),
+    path("accounts/logout/", auth_views.LogoutView.as_view(), name="cas_ng_logout"),
+    path("accounts/login/", auth_views.LoginView.as_view(), name="cas_ng_login"),
+    path("api/", include("api.urls")),
+    path("django-rq/", include("django_rq.urls")),
+    path("survey/", include("survey.urls")),
+    path("webpush/", include("webpush.urls")),
+    path("django-rq/", include("django_rq.urls")),
 ]
 
 if settings.DEBUG:
@@ -43,6 +43,11 @@ if settings.DEBUG:
     from django.shortcuts import redirect
 
     def su(request, login):
-        login_fn(request, User.objects.get(username=login.upper()), backend='django.contrib.auth.backends.ModelBackend')
-        return redirect('/')
-    urlpatterns.append(path('su/<str:login>', su))
+        login_fn(
+            request,
+            User.objects.get(username=login.upper()),
+            backend="django.contrib.auth.backends.ModelBackend",
+        )
+        return redirect("/")
+
+    urlpatterns.append(path("su/<str:login>", su))

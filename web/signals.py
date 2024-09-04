@@ -13,34 +13,34 @@ def send_webpush_notification(sender, instance, created, **kwargs):
         return
 
     notification = instance
-    
+
     def fmt(obj):
         if obj:
-            if hasattr(obj, 'notification_str'):
+            if hasattr(obj, "notification_str"):
                 return obj.notification_str()
             return str(obj)
         return ""
 
-    msg = (f"{fmt(notification.actor)} {notification.verb} {fmt(notification.action_object)} {fmt(notification.target)}".strip())
+    msg = f"{fmt(notification.actor)} {notification.verb} {fmt(notification.action_object)} {fmt(notification.target)}".strip()
     body = msg
 
     if isinstance(notification.action_object, Comment):
         body = notification.action_object.text
 
     url = None
-    if hasattr(notification.action_object, 'notification_url'):
+    if hasattr(notification.action_object, "notification_url"):
         url = notification.action_object.notification_url()
 
     payload = {
         "head": msg,
         "body": body,
         "data": {
-            'notification_id': notification.id,
+            "notification_id": notification.id,
         },
     }
 
     if url:
-        payload['data']['url'] = url
+        payload["data"]["url"] = url
 
     try:
         send_user_notification(user=notification.recipient, payload=payload)
