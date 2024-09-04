@@ -15,9 +15,11 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: |
+          sudo apt-get install libgraphviz-dev
           python -m pip install --upgrade pip
           pip install uv==0.4.4
-          uv pip sync --system
+          # Use the legacy lockfile to battle test it
+          uv pip sync --system requirements.txt
       # Update output format to enable automatic inline annotations.
       - name: Lint Python code
         run: ruff check --output-format=github
