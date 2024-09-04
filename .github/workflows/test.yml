@@ -1,4 +1,4 @@
-name: Ruff
+name: Test Python
 on:
   push:
     branches:
