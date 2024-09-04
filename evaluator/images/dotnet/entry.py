@@ -72,7 +72,7 @@ def get_executable_project_names(directory: Path) -> List[str]:
             if output_type == "Exe":
                 name = Path(proj_path).stem
                 names.append(name)
-        except:
+        except BaseException:
             pass
     return names
 
@@ -83,7 +83,7 @@ def find_nested_sln(path):
                  return i.path
         elif i.is_dir():
             tmp = find_nested_sln(i.path)
-            if tmp != None:
+            if tmp is not None:
                return tmp
     return None
     

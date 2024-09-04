@@ -4,5 +4,5 @@ class WebConfig(AppConfig):
     name = 'web'
 
     def ready(self):
-        import web.signals
+        import web.signals  # noqa: F401
 

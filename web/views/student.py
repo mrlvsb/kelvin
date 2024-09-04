@@ -131,7 +131,7 @@ def get(submit):
     results = []
     try:
         results = EvaluationResult(submit.pipeline_path())
-    except json.JSONDecodeError as e:
+    except json.JSONDecodeError:
         # TODO: show error
         pass
 
@@ -836,7 +836,7 @@ def task_asset(request, task_name, path):
             if mime:
                 resp['Content-Type'] = f"{mime};charset=utf-8"
             return resp
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         # Download directory as a .zip archive.
         # .tar.gz is also allowed as an extension to keep backwards compatibility
         archive_extensions = ['.tar.gz', '.zip']

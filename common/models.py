@@ -143,7 +143,7 @@ class Class(models.Model):
             days = ['po', 'ut', 'st', 'ct', 'pa', 'so', 'ne']
             self.day = days.index(fix(self.day.lower()))
             return self.day * 60 * 60 * 24 + self.time.hour * 60 * 60 + self.time.minute * 60
-        except ValueError as e:
+        except ValueError:
             return 0
 
     def summary(self, login, show_output=False):

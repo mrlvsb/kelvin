@@ -132,7 +132,7 @@ def show(request, survey_file):
             "form": form,
             "survey": conf,
         })
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         raise Http404()
     except SurveyError as e:
         if not is_teacher(request.user):
