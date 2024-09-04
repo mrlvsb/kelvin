@@ -160,7 +160,7 @@ class DockerPipe:
             with open(path) as f:
                 result['html'] = f.read()
             os.unlink(path)
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             pass
 
         for f in ['stdout', 'stderr']:

@@ -218,6 +218,6 @@ INBUS_CLIENT_SECRET = 'placeholder'
 
 
 try:
-    from .local_settings import *
+    from .local_settings import *  # noqa: F403
 except ModuleNotFoundError:
     pass

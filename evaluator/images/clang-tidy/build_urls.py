@@ -12,7 +12,7 @@ def get(url):
     try:
         with open(cache_file) as f:
             return f.read()
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         logging.info("Downloading %s", url)
         try:
             with urllib.request.urlopen(url) as f:
