@@ -19,4 +19,4 @@ jobs:
           pip install ruff==0.6.3
       # Update output format to enable automatic inline annotations.
       - name: Lint Python code
-        run: ruff check --output-format=github api common survey web
+        run: ruff check --output-format=github
