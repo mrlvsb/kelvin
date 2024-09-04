@@ -6,6 +6,9 @@ include = [
     "survey/**/*.py",
     "web/**/*.py"
 ]
+exclude = [
+    "**/migrations/**"
+]
 
 line-length = 100
 indent-width = 4
