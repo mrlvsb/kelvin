@@ -1,0 +1,13 @@
+include = [
+    "api/**/*.py",
+    "common/**/*.py",
+    "evaluator/**/*.py",
+    "kelvin/**/*.py",
+    "survey/**/*.py",
+    "web/**/*.py"
+]
+
+line-length = 100
+indent-width = 4
+
+target-version = "py312"
