@@ -24,12 +24,17 @@ class ImportResult:
     created: bool
 
 
-def run(concrete_activities: List[ConcreteActivity], subj: Dict[str, str], semester: Semester, user: User) -> Generator[ImportResult, None, None]:
+def run(
+    concrete_activities: List[ConcreteActivity],
+    subj: Dict[str, str],
+    semester: Semester,
+    user: User,
+) -> Generator[ImportResult, None, None]:
     """
     `subj`: subject from selected subject in UI as dictionary with k:abbr, v: name
     """
 
-    subject_abbr = subj['abbr']
+    subject_abbr = subj["abbr"]
     try:
         subject = Subject.objects.get(abbr=subject_abbr)
     except Subject.DoesNotExist:
@@ -46,11 +51,11 @@ def run(concrete_activities: List[ConcreteActivity], subj: Dict[str, str], semes
             class_in_db[c] = Class()
             class_in_db[c].code = c
             day = ca.weekDayAbbrev.upper()
-            mapping = {'ÚT': 'UT', 'ČT': 'CT', 'PÁ': 'PA'}
+            mapping = {"ÚT": "UT", "ČT": "CT", "PÁ": "PA"}
             class_in_db[c].day = mapping.get(day, day)
             class_in_db[c].hour = ca.beginTime
             class_in_db[c].year = datetime.datetime.now().year
-            class_in_db[c].winter = semester.winter # or ca.semesterTypeId == 1
+            class_in_db[c].winter = semester.winter  # or ca.semesterTypeId == 1
             class_in_db[c].time = ca.beginTime
             class_in_db[c].subject = subject
             class_in_db[c].semester = semester
@@ -66,13 +71,15 @@ def run(concrete_activities: List[ConcreteActivity], subj: Dict[str, str], semes
                 except User.DoesNotExist:
                     teacher = user_from_login(ca.teacherLogins.upper())
                     if not teacher:
-                        raise ImportException(f"Cannot create user {ca.teacherLogins.upper()}.\n\nTraceback\n\n{traceback.format_exc()}")
+                        raise ImportException(
+                            f"Cannot create user {ca.teacherLogins.upper()}.\n\nTraceback\n\n{traceback.format_exc()}"
+                        )
             else:
                 # TODO: We assign all activities without teacher to one special user :-)
-                teacher = User.objects.get(username='GAU01')
+                teacher = User.objects.get(username="GAU01")
 
             if not is_teacher(teacher):
-                teachers_group = Group.objects.get_by_natural_key('teachers')
+                teachers_group = Group.objects.get_by_natural_key("teachers")
                 teacher.groups.add(teachers_group)
 
             class_in_db[c].teacher = teacher

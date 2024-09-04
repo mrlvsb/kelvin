@@ -23,10 +23,14 @@ def render_test_script(tests: TestSet) -> io.BytesIO:
         stdin = "stdin" if test.stdin is not None else None
         stdout = "stdout" if test.stdout is not None else None
         stderr = "stderr" if test.stderr is not None else None
-        files_in = [path for (path, file) in test.files.items() if
-                    file.input and path not in known_streams]
-        files_out = [path for (path, file) in test.files.items() if
-                     not file.input and path not in known_streams]
+        files_in = [
+            path for (path, file) in test.files.items() if file.input and path not in known_streams
+        ]
+        files_out = [
+            path
+            for (path, file) in test.files.items()
+            if not file.input and path not in known_streams
+        ]
 
         data = dict(
             name=name,
@@ -37,7 +41,7 @@ def render_test_script(tests: TestSet) -> io.BytesIO:
             stdout=stdout,
             stderr=stderr,
             files_in=files_in,
-            files_out=files_out
+            files_out=files_out,
         )
         content += f"tests.append({repr(data)})\n"
 

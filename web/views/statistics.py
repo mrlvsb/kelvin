@@ -21,17 +21,11 @@ from common.utils import is_teacher
 
 
 def get_task_submits(task: Task) -> List[Submit]:
-    return list(Submit.objects
-                .filter(assignment__task_id=task.id)
-                .order_by('created_at')
-                .all())
+    return list(Submit.objects.filter(assignment__task_id=task.id).order_by("created_at").all())
 
 
 def get_assignment_submits(assignment: AssignedTask) -> List[Submit]:
-    return list(Submit.objects
-                .filter(assignment_id=assignment.id)
-                .order_by('created_at')
-                .all())
+    return list(Submit.objects.filter(assignment_id=assignment.id).order_by("created_at").all())
 
 
 def get_students(submits: List[Submit]) -> Set[User]:
@@ -54,8 +48,7 @@ def get_student_points(submits: List[Submit]):
 
 def draw_deadline_line(plot, deadline):
     line_args = dict(line_dash="dashed", line_color="red", line_width=2)
-    vline = Span(location=deadline, dimension="height",
-                 **line_args)
+    vline = Span(location=deadline, dimension="height", **line_args)
     plot.renderers.extend([vline])
     plot.line([], [], **line_args)
 
@@ -79,25 +72,36 @@ def create_submit_chart_html(submits: List[Submit], assignments: List[AssignedTa
             return "no points assigned"
         return f"{points}/{main_assignment.max_points}"
 
-    frame = pd.DataFrame({
-        "date": [normalize_date(submit.created_at) for submit in submits],
-        "student": [submit.student.username for submit in submits],
-        "submit_num": [submit.submit_num for submit in submits],
-        "submit_url": [reverse("task_detail", kwargs=dict(
-            assignment_id=submit.assignment.id,
-            login=submit.student.username,
-            submit_num=submit.submit_num
-        ))
-                       for submit in submits],
-        "points": [format_points(submit) for submit in submits],
-    })
+    frame = pd.DataFrame(
+        {
+            "date": [normalize_date(submit.created_at) for submit in submits],
+            "student": [submit.student.username for submit in submits],
+            "submit_num": [submit.submit_num for submit in submits],
+            "submit_url": [
+                reverse(
+                    "task_detail",
+                    kwargs=dict(
+                        assignment_id=submit.assignment.id,
+                        login=submit.student.username,
+                        submit_num=submit.submit_num,
+                    ),
+                )
+                for submit in submits
+            ],
+            "points": [format_points(submit) for submit in submits],
+        }
+    )
     frame["count"] = 1
     frame["cumsum"] = frame["count"].cumsum()
 
     source = ColumnDataSource(data=frame)
 
-    plot = figure(plot_width=1200, plot_height=400, x_axis_type="datetime",
-                  tools="pan,wheel_zoom,box_zoom,save,reset,tap")
+    plot = figure(
+        plot_width=1200,
+        plot_height=400,
+        x_axis_type="datetime",
+        tools="pan,wheel_zoom,box_zoom,save,reset,tap",
+    )
     plot.line("date", "cumsum", source=source)
 
     students = sorted(set(frame["student"]))
@@ -113,10 +117,10 @@ def create_submit_chart_html(submits: List[Submit], assignments: List[AssignedTa
         tooltips=[
             ("submit", "@student #@submit_num"),
             ("points", "@points"),
-            ("date", "@date{%d. %m. %Y %H:%M:%S}")
+            ("date", "@date{%d. %m. %Y %H:%M:%S}"),
         ],
-        formatters={'@date': 'datetime'},
-        renderers=[points]
+        formatters={"@date": "datetime"},
+        renderers=[points],
     )
     plot.add_tools(hover)
 
@@ -135,8 +139,15 @@ def create_point_chart_html(student_points):
     plot.yaxis.axis_label = "# students"
 
     hist, edges = np.histogram(points, bins=50)
-    plot.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
-              fill_color="navy", line_color="white", alpha=0.5)
+    plot.quad(
+        top=hist,
+        bottom=0,
+        left=edges[:-1],
+        right=edges[1:],
+        fill_color="navy",
+        line_color="white",
+        alpha=0.5,
+    )
     return file_html(plot, CDN, "Point distribution")
 
 
@@ -150,14 +161,18 @@ def render_statistics(request, task, submits, assignments):
     if len(students) > 0:
         graded_str = f"{len(student_points)}/{len(students)} ({(len(student_points) / len(students)) * 100:.2f} %)"
 
-    return render(request, 'web/teacher/statistics.html', {
-        'task': task,
-        'submits': submits,
-        'graded': graded_str,
-        'average_points': average_points,
-        'submit_plot': create_submit_chart_html(submits, assignments=assignments),
-        'point_plot': create_point_chart_html(student_points)
-    })
+    return render(
+        request,
+        "web/teacher/statistics.html",
+        {
+            "task": task,
+            "submits": submits,
+            "graded": graded_str,
+            "average_points": average_points,
+            "submit_plot": create_submit_chart_html(submits, assignments=assignments),
+            "point_plot": create_point_chart_html(student_points),
+        },
+    )
 
 
 @user_passes_test(is_teacher)

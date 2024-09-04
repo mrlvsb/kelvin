@@ -11,15 +11,14 @@ from common.utils import is_teacher
 
 @user_passes_test(is_teacher)
 def subject_versions(request):
-    subject_versions = cache.get('subject_versions')
+    subject_versions = cache.get("subject_versions")
     if not subject_versions:
         subject_versions = inbus.subject_versions()
-        cache.set('subject_versions', subject_versions, 60*60)
+        cache.set("subject_versions", subject_versions, 60 * 60)
 
     # TODO: When upgrading, see: https://docs.djangoproject.com/en/4.2/ref/request-response/#httpresponse-objects
     # for a way to set content type.
-    return HttpResponse(serde.json.to_json(subject_versions),
-                        content_type="application/json")
+    return HttpResponse(serde.json.to_json(subject_versions), content_type="application/json")
 
 
 @user_passes_test(is_teacher)
@@ -28,8 +27,7 @@ def schedule_subject_by_version_id(request, subject_version_id: dto.SubjectVersi
 
     # TODO: When upgrading, see: https://docs.djangoproject.com/en/4.2/ref/request-response/#httpresponse-objects
     # for a way to set content type.
-    return HttpResponse(serde.json.to_json(schedule_subject),
-                        content_type="application/json")
+    return HttpResponse(serde.json.to_json(schedule_subject), content_type="application/json")
 
 
 @user_passes_test(is_teacher)
@@ -38,5 +36,4 @@ def students_in_concrete_activity(request, concrete_activity_id: dto.ConcreteAct
 
     # TODO: When upgrading, see: https://docs.djangoproject.com/en/4.2/ref/request-response/#httpresponse-objects
     # for a way to set content type.
-    return HttpResponse(serde.json.to_json(study_relations),
-                        content_type="application/json")
+    return HttpResponse(serde.json.to_json(study_relations), content_type="application/json")

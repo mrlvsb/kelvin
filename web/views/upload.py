@@ -13,9 +13,9 @@ from common.models import Submit
 mimedetector = magic.Magic(mime=True)
 
 SUBMIT_DROPPED_MIMES = [
-    'application/x-object',
-    'application/x-pie-executable',
-    'application/x-sharedlib'
+    "application/x-object",
+    "application/x-pie-executable",
+    "application/x-sharedlib",
 ]
 
 
@@ -80,7 +80,7 @@ class FileUploader(Uploader):
 
 
 def store_uploaded_file(submit: Submit, uploader: Uploader, path: str, file):
-    if path[0] == '/' or '..' in path.split('/'):
+    if path[0] == "/" or ".." in path.split("/"):
         raise SuspiciousOperation()
 
     target_path = uploader.upload_file(path, file, submit)
@@ -90,7 +90,9 @@ def store_uploaded_file(submit: Submit, uploader: Uploader, path: str, file):
         os.unlink(target_path)
 
 
-IGNORED_FILEPATH_REGEX = re.compile(r"(__pycache__/)|(CMakeFiles/)|(\.git/)|(\.vscode/)|(\.cmake/)|(\.pyc$)|(bin/)|(obj/)")
+IGNORED_FILEPATH_REGEX = re.compile(
+    r"(__pycache__/)|(CMakeFiles/)|(\.git/)|(\.vscode/)|(\.cmake/)|(\.pyc$)|(bin/)|(obj/)"
+)
 MAX_UPLOAD_FILECOUNT = 200
 
 
@@ -98,7 +100,7 @@ def filter_files_by_filename(files):
     ignored_prefixes = set()
 
     # All files have to be traversed first, the correct order cannot be determined easily
-    for (path, _) in files:
+    for path, _ in files:
         # This directory looks like a virtualenv, ignore it
         if basename(path) == "pyvenv.cfg":
             ignored_prefixes.add(dirname(path))
@@ -128,7 +130,7 @@ def upload_submit_files(submit: Submit, paths: List[str], files: List[str]):
         files = [(os.path.normpath(path), f) for (path, f) in files]
         files = filter_files_by_filename(files)
 
-        for (path, file) in files:
+        for path, file in files:
             if uploader.count >= MAX_UPLOAD_FILECOUNT:
                 raise TooManyFilesError()
             store_uploaded_file(submit, uploader, path, file)

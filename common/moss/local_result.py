@@ -40,7 +40,7 @@ def get_link_and_name(url: str, root_url: str) -> (str, str):
     is_absolute = url.startswith("/") or url.startswith("http")
     if is_absolute:
         return (url, name)
-    url_dir = root_url[:root_url.rfind("/")]
+    url_dir = root_url[: root_url.rfind("/")]
     return (f"{url_dir}/{name}", name)
 
 
@@ -51,7 +51,7 @@ def normalize_document(page: bs4.BeautifulSoup):
 
     def normalize_link(link: str) -> str:
         if "moss" in link:
-            return link[link.rfind("/") + 1:]
+            return link[link.rfind("/") + 1 :]
         return link
 
     # Remove MOSS links
@@ -81,8 +81,9 @@ def download_recursively(
 
         logger.info(f"Examining HTML page {root_url}/{name}")
 
-        links = [t["src"] for t in
-                 page.find_all(lambda tag: "src" in tag.attrs or "SRC" in tag.attrs)]
+        links = [
+            t["src"] for t in page.find_all(lambda tag: "src" in tag.attrs or "SRC" in tag.attrs)
+        ]
         for link in links:
             (link_url, link_name) = get_link_and_name(link, root_url)
             download_recursively(link_url, root_url, directory, downloaded, name=link_name)

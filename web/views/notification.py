@@ -6,16 +6,15 @@ from django.views.decorators.csrf import csrf_exempt
 from common.models import Comment
 from django.core.cache import caches
 
-CACHE_KEY = 'notification:{}'
+CACHE_KEY = "notification:{}"
 
-cache = caches['default']
-
+cache = caches["default"]
 
 
 @login_required
 @csrf_exempt
 def mark_as_read(request, notification_id=None):
-    if request.method == 'POST':
+    if request.method == "POST":
         notifications = request.user.notifications.unread()
 
         if notification_id:
@@ -30,10 +29,10 @@ def mark_as_read(request, notification_id=None):
         raise SuspiciousOperation()
     return all_notifications(request)
 
+
 @login_required
 def all_notifications(request):
     all_list = []
-
 
     def to_json(notification):
         key = CACHE_KEY.format(notification.id)
@@ -41,33 +40,31 @@ def all_notifications(request):
         if result:
             return result
         struct = model_to_dict(notification)
-        if struct.get('data'):
-            struct = {**struct, **struct['data']}
-            del struct['data']
+        if struct.get("data"):
+            struct = {**struct, **struct["data"]}
+            del struct["data"]
 
-        for obj_type in ['actor', 'target', 'action_object']:
+        for obj_type in ["actor", "target", "action_object"]:
             obj = getattr(notification, obj_type)
             if obj:
-                if hasattr(obj, 'notification_str'):
+                if hasattr(obj, "notification_str"):
                     struct[obj_type] = obj.notification_str()
                 else:
                     struct[obj_type] = str(obj)
-                if hasattr(obj, 'notification_url'):
+                if hasattr(obj, "notification_url"):
                     struct[f"{obj_type}_url"] = obj.notification_url()
 
         if isinstance(notification.action_object, Comment):
             comment = notification.action_object
-            struct['description'] = comment.text
+            struct["description"] = comment.text
             if comment.source and comment.line > 0:
-                struct['action_object_url'] += f';{comment.source}:{comment.line}'
+                struct["action_object_url"] += f";{comment.source}:{comment.line}"
 
-        cache.set(key, struct, timeout=60*60*24)
+        cache.set(key, struct, timeout=60 * 60 * 24)
         return struct
 
     for notification in request.user.notifications.filter(unread=True):
         all_list.append(to_json(notification))
 
-    data = {
-        'notifications': all_list
-    }
+    data = {"notifications": all_list}
     return JsonResponse(data)

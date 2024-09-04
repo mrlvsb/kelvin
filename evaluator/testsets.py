@@ -15,11 +15,11 @@ class File:
     def __init__(self, path):
         self.path = path
 
-    def open(self, mode='r'):
+    def open(self, mode="r"):
         if isinstance(self.path, io.BytesIO):
-            if 'b' in mode:
+            if "b" in mode:
                 return io.BytesIO(self.path.getvalue())
-            return io.StringIO(self.path.getvalue().decode('utf-8'))
+            return io.StringIO(self.path.getvalue().decode("utf-8"))
         return open(self.path, mode)
 
     def size(self):
@@ -27,7 +27,7 @@ class File:
             return len(self.path.getvalue())
         return os.stat(self.path).st_size
 
-    def read(self, mode='r'):
+    def read(self, mode="r"):
         with self.open(mode) as f:
             return f.read()
 
@@ -45,21 +45,21 @@ class Test:
 
     @property
     def stdin(self):
-        if 'stdin' not in self.files:
+        if "stdin" not in self.files:
             return None
-        return self.files['stdin']
+        return self.files["stdin"]
 
     @property
     def stdout(self):
-        if 'stdout' not in self.files:
+        if "stdout" not in self.files:
             return None
-        return self.files['stdout']
+        return self.files["stdout"]
 
     @property
     def stderr(self):
-        if 'stderr' not in self.files:
+        if "stderr" not in self.files:
             return None
-        return self.files['stderr']
+        return self.files["stderr"]
 
     @property
     def escaped_args(self):
@@ -74,14 +74,14 @@ class Test:
             name = item[0]
             f = item[1]
 
-            if name == 'stdin':
-                return 0, 'stdin'
+            if name == "stdin":
+                return 0, "stdin"
 
             if f.input:
                 return 1, name
 
-            if name == 'stdout':
-                return 2, 'stdout'
+            if name == "stdout":
+                return 2, "stdout"
 
             return 3, name
 
@@ -104,10 +104,10 @@ class TestFile:
         self.file = file
         self.input = input
 
-    def open(self, mode='r'):
+    def open(self, mode="r"):
         return self.file.open(mode)
 
-    def read(self, mode='r'):
+    def read(self, mode="r"):
         return self.file.read(mode)
 
     def size(self):
@@ -119,10 +119,11 @@ class TestFile:
     def path(self):
         return self.file.path
 
+
 def parse_bool(value):
-    if value in [True, 1, 'yes', 'on', 'enable', 'enabled']:
+    if value in [True, 1, "yes", "on", "enable", "enabled"]:
         return True
-    if value in [False, 0, 'no', 'off', 'disable', 'disabled']:
+    if value in [False, 0, "no", "off", "disable", "disabled"]:
         return False
     raise ValueError(f"Could not convert {value} to bool")
 
@@ -134,7 +135,7 @@ class TestSet:
         self.tests_dict = {}
         self.File = File
         self.warnings = []
-        self.queue = 'evaluator'
+        self.queue = "evaluator"
         self.timeout = 180
         try:
             self.files_cache = os.listdir(self.task_path)
@@ -144,11 +145,11 @@ class TestSet:
         self.pipeline = []
 
         self.script = None
-        if os.path.exists(os.path.join(self.task_path, 'script.py')):
+        if os.path.exists(os.path.join(self.task_path, "script.py")):
             try:
                 self.script = Script(self.task_path, self.meta, self.add_warning)
             except Exception as e:
-                self.add_warning(f'script.py: {e}\n{traceback.format_exc()}')
+                self.add_warning(f"script.py: {e}\n{traceback.format_exc()}")
 
         self.load_tests()
 
@@ -159,7 +160,7 @@ class TestSet:
     def required_files(self):
         files = []
         for pipe in self.pipeline:
-            if pipe.type == 'required_files':
+            if pipe.type == "required_files":
                 files += pipe.files
         return files
 
@@ -172,53 +173,60 @@ class TestSet:
 
     def discover_tests(self):
         for f in self.files_cache:
-            name = f.split('.')[0]
+            name = f.split(".")[0]
             path = os.path.join(self.task_path, f)
 
-            n = f[len(name) + 1:]
-            if n in ['in', 'out', 'err']:
-                self.create_test(name).files['std' + n] = TestFile(File(path), n == 'in')
+            n = f[len(name) + 1 :]
+            if n in ["in", "out", "err"]:
+                self.create_test(name).files["std" + n] = TestFile(File(path), n == "in")
 
-            parts = n.split('.', 1)
-            if parts[0] == 'file_in':
-                self.create_test(name).files[parts[1]] = TestFile(File(os.path.join(self.task_path, f)), True)
-            elif parts[0] == 'file_out':
-                self.create_test(name).files[parts[1]] = TestFile(File(os.path.join(self.task_path, f)), False)
+            parts = n.split(".", 1)
+            if parts[0] == "file_in":
+                self.create_test(name).files[parts[1]] = TestFile(
+                    File(os.path.join(self.task_path, f)), True
+                )
+            elif parts[0] == "file_out":
+                self.create_test(name).files[parts[1]] = TestFile(
+                    File(os.path.join(self.task_path, f)), False
+                )
 
     def add_warning(self, message):
         self.warnings.append(message)
 
     def parse_conf_pipeline(self, conf):
         if not isinstance(conf, list):
-            self.add_warning('pipeline is not a list')
+            self.add_warning("pipeline is not a list")
         else:
             from . import pipelines
+
             counter = 1
             for item in conf:
                 try:
-                    pipe_type = item['type']
-                    class_name = "".join([p.title() for p in re.split('_|-', item['type'])])
+                    pipe_type = item["type"]
+                    class_name = "".join([p.title() for p in re.split("_|-", item["type"])])
                     pipecls = getattr(pipelines, f"{class_name}Pipe", None)
                     if not pipecls and self.script:
                         pipecls = getattr(self.script.module, f"{class_name}Pipe", None)
 
-                    args = {k: v for k, v in item.items() if k not in ['type', 'title', 'fail_on_error']}
+                    args = {
+                        k: v for k, v in item.items() if k not in ["type", "title", "fail_on_error"]
+                    }
                     if pipecls:
                         pipe = pipecls(**args)
                     else:
-                        pipe = pipelines.DockerPipe(f'kelvin/{pipe_type}', **args)
+                        pipe = pipelines.DockerPipe(f"kelvin/{pipe_type}", **args)
 
                     pipe.type = pipe_type
-                    pipe.title = item.get('title', item['type'])
-                    pipe.fail_on_error = item.get('fail_on_error', True)
+                    pipe.title = item.get("title", item["type"])
+                    pipe.fail_on_error = item.get("fail_on_error", True)
 
-                    if not getattr(pipe, 'enabled', None):
+                    if not getattr(pipe, "enabled", None):
                         pipe.enabled = True
-                    if 'enabled' in item:
-                        if item['enabled'] == 'announce':
-                            pipe.enabled = 'announce'
+                    if "enabled" in item:
+                        if item["enabled"] == "announce":
+                            pipe.enabled = "announce"
                         else:
-                            pipe.enabled = parse_bool(item['enabled'])
+                            pipe.enabled = parse_bool(item["enabled"])
 
                     pipe.id = f"{counter:03}_{item['type']}"
                     counter += 1
@@ -228,17 +236,17 @@ class TestSet:
                     self.add_warning(f'pipe {item["type"]}: {e}\n{traceback.format_exc()}')
 
     def parse_conf_tests(self, conf):
-        allowed_keys = ['name', 'title', 'exit_code', 'args', 'files']
+        allowed_keys = ["name", "title", "exit_code", "args", "files"]
 
         for pos, test_conf in enumerate(conf):
-            t = self.create_test(test_conf.get('name', f'test {len(self.tests_dict)}'))
-            t.title = test_conf.get('title', t.name)
-            t.exit_code = test_conf.get('exit_code', 0)
-            t.args = [str(s) for s in test_conf.get('args', [])]
+            t = self.create_test(test_conf.get("name", f"test {len(self.tests_dict)}"))
+            t.title = test_conf.get("title", t.name)
+            t.exit_code = test_conf.get("exit_code", 0)
+            t.args = [str(s) for s in test_conf.get("args", [])]
             t.pos = pos
-            files = test_conf.get('files', [])
+            files = test_conf.get("files", [])
             for f in files:
-                t.files[f['path']] = TestFile(File(os.path.join(self.task_path, f['expected'])))
+                t.files[f["path"]] = TestFile(File(os.path.join(self.task_path, f["expected"])))
 
             for k, v in test_conf.items():
                 if k not in allowed_keys:
@@ -262,7 +270,7 @@ class TestSet:
                 pass
 
         def load_config_yaml():
-            with open(os.path.join(self.task_path, 'config.yml')) as f:
+            with open(os.path.join(self.task_path, "config.yml")) as f:
                 conf = yaml.load(f.read(), Loader=yaml.SafeLoader)
                 if conf:
                     for key, value in conf.items():
@@ -273,7 +281,7 @@ class TestSet:
                             fn(value)
 
         def load_tests_yaml():
-            with open(os.path.join(self.task_path, 'tests.yml')) as f:
+            with open(os.path.join(self.task_path, "tests.yml")) as f:
                 tests = yaml.load(f.read(), Loader=yaml.SafeLoader)
                 if tests:
                     self.parse_conf_tests(tests)
@@ -289,7 +297,7 @@ class TestSet:
             task_relpath = os.path.relpath(self.task_path, os.path.join(BASE_DIR, "tasks"))
             vars = {}
             if self.script:
-                vars = self.script.call('readme_vars', self)
+                vars = self.script.call("readme_vars", self)
             return load_readme(task_relpath, vars)
         except Exception as e:
-            self.add_warning(f'script.py: {e}\n{traceback.format_exc()}')
+            self.add_warning(f"script.py: {e}\n{traceback.format_exc()}")

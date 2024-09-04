@@ -37,16 +37,21 @@ def teacher_task(request, task_id):
 
     testset = TestSet(task_dir, get_meta(request.user.username))
 
-    return render(request, 'web/task_detail.html', {
-        'task': task,
-        'text': testset.load_readme(),
-        'inputs': testset,
-        'max_inline_content_bytes': MAX_INLINE_CONTENT_BYTES,
-    })
+    return render(
+        request,
+        "web/task_detail.html",
+        {
+            "task": task,
+            "text": testset.load_readme(),
+            "inputs": testset,
+            "max_inline_content_bytes": MAX_INLINE_CONTENT_BYTES,
+        },
+    )
 
 
-def enrich_matches(matches: List[PlagiarismMatch], teacher: User, task: Task) -> List[
-    Dict[str, str]]:
+def enrich_matches(
+    matches: List[PlagiarismMatch], teacher: User, task: Task
+) -> List[Dict[str, str]]:
     """
     Converts PlagiarismMatches to dictionaries and adds additional information
     used by the frontend to them.
@@ -67,9 +72,7 @@ def enrich_matches(matches: List[PlagiarismMatch], teacher: User, task: Task) ->
     for match in matches:
         match_data = dataclasses.asdict(match)
         match_data["teaching"] = match.first.login in students or match.second.login in students
-        match_data["first_fullname"] = User.objects.get(
-            username=match.first.login
-        ).get_full_name()
+        match_data["first_fullname"] = User.objects.get(username=match.first.login).get_full_name()
 
         (first_class, first_link) = get_class_and_link(match.first.assignment_id, match.first.login)
         match_data["first_class"] = first_class
@@ -78,7 +81,9 @@ def enrich_matches(matches: List[PlagiarismMatch], teacher: User, task: Task) ->
             username=match.second.login
         ).get_full_name()
 
-        (second_class, second_link) = get_class_and_link(match.second.assignment_id, match.second.login)
+        (second_class, second_link) = get_class_and_link(
+            match.second.assignment_id, match.second.login
+        )
         match_data["second_class"] = second_class
         match_data["second_link"] = second_link
         match_items.append(match_data)
@@ -90,23 +95,29 @@ def submits(request, student_username=None):
     filters = {}
     student_full_name = None
     if student_username:
-        filters['student__username'] = student_username
+        filters["student__username"] = student_username
         student_full_name = get_object_or_404(User, username=student_username).get_full_name()
 
-    submits = Submit.objects.filter(**filters).order_by('-id').select_related('student',
-                                                                              'assignment',
-                                                                              'assignment__task')[
-              :100]
-    return render(request, "web/submits.html", {
-        'submits': submits,
-        'student_username': student_username,
-        'student_full_name': student_full_name
-    })
+    submits = (
+        Submit.objects.filter(**filters)
+        .order_by("-id")
+        .select_related("student", "assignment", "assignment__task")[:100]
+    )
+    return render(
+        request,
+        "web/submits.html",
+        {
+            "submits": submits,
+            "student_username": student_username,
+            "student_full_name": student_full_name,
+        },
+    )
 
 
 def get_last_submits(assignment_id):
-    submits = Submit.objects.filter(assignment_id=assignment_id).order_by('-submit_num',
-                                                                          'student_id')
+    submits = Submit.objects.filter(assignment_id=assignment_id).order_by(
+        "-submit_num", "student_id"
+    )
 
     result = []
     processed = set()
@@ -137,16 +148,16 @@ def get_assignment_submits(assignment: AssignedTask):
     results = []
     for result in assignedtask_results(assignment):
         submit = None
-        if result['submits']:
-            if 'accepted_submit_num' in result:
+        if result["submits"]:
+            if "accepted_submit_num" in result:
                 submit = Submit.objects.get(
                     assignment_id=assignment.id,
-                    student__username=result['student'],
-                    submit_num=result['accepted_submit_num'],
+                    student__username=result["student"],
+                    submit_num=result["accepted_submit_num"],
                 )
                 score = EvaluationResult(submit.pipeline_path()).test_score()
-                result['passed_tests'] = score[0]
-                result['total_tests'] = score[1]
+                result["passed_tests"] = score[0]
+                result["total_tests"] = score[1]
 
         results.append((submit, result))
     return results
@@ -157,21 +168,31 @@ def show_assignment_submits(request, assignment_id):
     assignment = get_object_or_404(AssignedTask, pk=assignment_id)
     results = get_assignment_submits(assignment)
 
-    return render(request, 'web/submits_show_source.html', {
-        'students': results,
-    })
+    return render(
+        request,
+        "web/submits_show_source.html",
+        {
+            "students": results,
+        },
+    )
 
 
 @user_passes_test(is_teacher)
 def show_task_submits(request, task_id: int):
     assignments = AssignedTask.objects.filter(task_id=task_id)
-    results = list(itertools.chain.from_iterable(
-        get_assignment_submits(assignment) for assignment in assignments
-    ))
+    results = list(
+        itertools.chain.from_iterable(
+            get_assignment_submits(assignment) for assignment in assignments
+        )
+    )
 
-    return render(request, 'web/submits_show_source.html', {
-        'students': results,
-    })
+    return render(
+        request,
+        "web/submits_show_source.html",
+        {
+            "students": results,
+        },
+    )
 
 
 @user_passes_test(is_teacher)
@@ -179,14 +200,14 @@ def submit_assign_points(request, submit_id):
     submit = get_object_or_404(Submit, pk=submit_id)
 
     points = None
-    if request.POST['assigned_points'] != '':
-        points = float(request.POST['assigned_points'])
+    if request.POST["assigned_points"] != "":
+        points = float(request.POST["assigned_points"])
 
     if submit.assigned_points != points:
         notify.send(
             sender=request.user,
             recipient=[submit.student],
-            verb='assigned points to',
+            verb="assigned points to",
             action_object=submit,
             important=True,
         )
@@ -197,29 +218,30 @@ def submit_assign_points(request, submit_id):
     Notification.objects.filter(
         action_object_object_id=submit.id,
         action_object_content_type=ContentType.objects.get_for_model(Submit),
-        verb='submitted',
+        verb="submitted",
     ).update(unread=False)
 
-    return redirect(request.META.get('HTTP_REFERER', '/'))
+    return redirect(request.META.get("HTTP_REFERER", "/"))
 
 
 def build_score_csv(assignments, filename: str) -> django.http.HttpResponse:
     result = OrderedDict()
 
-    header = ['LOGIN']
+    header = ["LOGIN"]
     for assignment in assignments:
         header.append(assignment.task.name)
 
         for record in assignedtask_results(assignment):
-            login = record['student']
+            login = record["student"]
             if login not in result:
-                result[login] = {'LOGIN': login}
+                result[login] = {"LOGIN": login}
 
-            result[login][assignment.task.name] = record[
-                'assigned_points'] if 'assigned_points' in record else 0
+            result[login][assignment.task.name] = (
+                record["assigned_points"] if "assigned_points" in record else 0
+            )
 
     with io.StringIO() as out:
-        w = csv.DictWriter(out, fieldnames=header, delimiter=';')
+        w = csv.DictWriter(out, fieldnames=header, delimiter=";")
         w.writeheader()
 
         for login, row in result.items():
@@ -228,14 +250,16 @@ def build_score_csv(assignments, filename: str) -> django.http.HttpResponse:
         return file_response(out.getvalue(), filename, "text/csv")
 
 
-def build_score_for_assignment_without_header_and_zero_scores_csv(assignment: AssignedTask, filename: str) -> django.http.HttpResponse:
-    result = (record for record in assignedtask_results(assignment) if 'assigned_points' in record)
+def build_score_for_assignment_without_header_and_zero_scores_csv(
+    assignment: AssignedTask, filename: str
+) -> django.http.HttpResponse:
+    result = (record for record in assignedtask_results(assignment) if "assigned_points" in record)
 
     with io.StringIO() as out:
-        w = csv.writer(out, delimiter=';')
+        w = csv.writer(out, delimiter=";")
 
         for result in result:
-            w.writerow([result['student'], result['assigned_points']])
+            w.writerow([result["student"], result["assigned_points"]])
 
         return file_response(out.getvalue(), filename, "text/csv")
 
@@ -246,7 +270,7 @@ def build_edison_task_score_csv(student_points, filename: str) -> django.http.Ht
     Edison requires delimiter set to `;`.
     """
     with io.StringIO() as out:
-        w = csv.writer(out, delimiter=';')
+        w = csv.writer(out, delimiter=";")
         for student, points in student_points.items():
             w.writerow([student.username, points])
 
@@ -257,7 +281,9 @@ def build_edison_task_score_csv(student_points, filename: str) -> django.http.Ht
 def download_csv_per_assignment(request, assignment_id: int):
     assigned_task = AssignedTask.objects.get(pk=assignment_id)
     csv_filename = f"{assigned_task.task.sanitized_name()}_{assigned_task.clazz.day}{assigned_task.clazz.time:%H%M}.csv"
-    return build_score_for_assignment_without_header_and_zero_scores_csv(assigned_task, csv_filename)
+    return build_score_for_assignment_without_header_and_zero_scores_csv(
+        assigned_task, csv_filename
+    )
 
 
 @user_passes_test(is_teacher)
@@ -275,16 +301,21 @@ def download_csv_per_task(request, task_id: int):
 @user_passes_test(is_teacher)
 def download_csv_per_class(request, class_id: int):
     clazz = Class.objects.get(pk=class_id)
-    return build_score_csv(clazz.assignedtask_set.all(),
-                           f"{clazz.subject.abbr}_{clazz.day}{clazz.time:%H%M}.csv")
+    return build_score_csv(
+        clazz.assignedtask_set.all(), f"{clazz.subject.abbr}_{clazz.day}{clazz.time:%H%M}.csv"
+    )
 
 
 @user_passes_test(is_teacher)
 def all_tasks(request, **kwargs):
-    return render(request, 'web/all_tasks.html', {
-        'tasks': Task.objects.filter(**kwargs).order_by('-id'),
-        'subjects': Subject.objects.all(),
-    })
+    return render(
+        request,
+        "web/all_tasks.html",
+        {
+            "tasks": Task.objects.filter(**kwargs).order_by("-id"),
+            "subjects": Subject.objects.all(),
+        },
+    )
 
 
 @user_passes_test(is_teacher)
@@ -297,4 +328,4 @@ def reevaluate(request, submit_id):
     submit.points = submit.max_points = None
     submit.jobid = evaluate_submit(request, submit).id
     submit.save()
-    return redirect(request.META.get('HTTP_REFERER', reverse('submits')) + "#result")
+    return redirect(request.META.get("HTTP_REFERER", reverse("submits")) + "#result")

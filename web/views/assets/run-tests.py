@@ -71,7 +71,8 @@ def calculate_diff(workdir: Path, name: str, expected: Path, actual: Path, inden
     expected_lines = read_file(expected).splitlines(keepends=True)
     actual_lines = read_file(actual).splitlines(keepends=True)
     diff = "".join(
-        unified_diff(expected_lines, actual_lines, fromfile=str(expected), tofile=str(actual)))
+        unified_diff(expected_lines, actual_lines, fromfile=str(expected), tofile=str(actual))
+    )
     with open(diff_path, "w") as diff_file:
         diff_file.write(diff)
 
@@ -91,7 +92,7 @@ def run_test(
     stderr: str | None = None,
     exit_code: int = 0,
     files_in: List[str] | None = None,
-    files_out: List[str] | None = None
+    files_out: List[str] | None = None,
 ):
     workdir = get_test_workdir(name)
     shutil.rmtree(workdir, ignore_errors=True)
@@ -106,14 +107,11 @@ def run_test(
     with open(actual_stdout, "wb") as stdout_file:
         with open(actual_stderr, "wb") as stderr_file:
             command = [binary] + args
-            stdin_file = open(resolve_path(name, stdin),
-                              "rb") if stdin is not None else subprocess.DEVNULL
+            stdin_file = (
+                open(resolve_path(name, stdin), "rb") if stdin is not None else subprocess.DEVNULL
+            )
             result = subprocess.run(
-                command,
-                stdin=stdin_file,
-                stdout=stdout_file,
-                stderr=stderr_file,
-                cwd=workdir
+                command, stdin=stdin_file, stdout=stdout_file, stderr=stderr_file, cwd=workdir
             )
 
     if stderr is None and os.path.getsize(actual_stderr) == 0:
@@ -171,16 +169,27 @@ for test in tests:
         for failure in failures:
             if isinstance(failure, WrongExitCode):
                 print(
-                    f"{indent}- Wrong exit code, expected {failure.expected}, actual {failure.actual}")
+                    f"{indent}- Wrong exit code, expected {failure.expected}, actual {failure.actual}"
+                )
             elif isinstance(failure, OutputFileMissing):
                 print(f"{indent}- Missing output file `{failure.name}`")
             elif isinstance(failure, OutputFileMismatch):
-                diff = calculate_diff(workdir, failure.name, expected=failure.expected,
-                                      actual=failure.actual, indent=indent + "  ")
+                diff = calculate_diff(
+                    workdir,
+                    failure.name,
+                    expected=failure.expected,
+                    actual=failure.actual,
+                    indent=indent + "  ",
+                )
                 print(f"{indent}- Output file `{failure.name}` has wrong contents. {diff}")
             elif isinstance(failure, StreamMismatch):
-                diff = calculate_diff(workdir, failure.stream, expected=failure.expected,
-                                      actual=failure.actual, indent=indent + "  ")
+                diff = calculate_diff(
+                    workdir,
+                    failure.stream,
+                    expected=failure.expected,
+                    actual=failure.actual,
+                    indent=indent + "  ",
+                )
                 print(f"{indent}- `{failure.stream}` has wrong contents. {diff}")
 
 total_tests = len(tests)
