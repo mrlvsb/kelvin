@@ -1,11 +1,27 @@
+# Deploys the current branch to Kelvin using a webhook.
+# The authorization token and the URL of the webhook are configured through
+# GHA environment secrets `ENV_DEPLOY_TOKEN` and `ENV_DEPLOY_URL`, respectively.
 name: Deploy
-concurrency: deploy
 on:
-  workflow_dispatch:
   push:
-    branches: [ master ]
+    branches:
+      - master
 jobs:
-  deploy:
+  # Determine into which environment should this branch be deployed
+  # master => "production"
+  # other branch => "kelvin2"
+  setup:
     runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.production.outputs.environment }}
     steps:
-      - run: 'curl --fail --silent --show-error -H"Authorization: Bearer ${{ secrets.DEPLOY_TOKEN }}" ${{ secrets.DEPLOY_URL }}'
+      - id: production
+        run: echo "environment=${{ github.ref_name == 'master' && 'production' || 'kelvin2' }}" >> $GITHUB_OUTPUT
+  deploy:
+    needs: setup
+    runs-on: ubuntu-latest
+    concurrency: ${{ needs.setup.outputs.environment }}
+    environment: ${{ needs.setup.outputs.environment }}
+    steps:
+      - run: echo "Deploying to environment ${{ needs.setup.outputs.environment }}"
+      - run: 'curl --fail --silent --show-error -H"Authorization: Bearer ${{ secrets.ENV_DEPLOY_TOKEN }}" ${{ secrets.ENV_DEPLOY_URL }}'
