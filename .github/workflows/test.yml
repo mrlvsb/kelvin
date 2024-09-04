@@ -20,3 +20,5 @@ jobs:
       # Update output format to enable automatic inline annotations.
       - name: Lint Python code
         run: ruff check --output-format=github
+      - name: Check Python formatting
+        run: ruff format --check
