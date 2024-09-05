@@ -172,7 +172,7 @@ CACHES = {
         "LOCATION": redis_connection,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        }
+        },
     }
 }
 
@@ -191,12 +191,7 @@ RQ_QUEUES = {
 }
 
 # For django-tasks-scheduler
-SCHEDULER_QUEUES = {
-    "default": {
-        "HOST": redis_host,
-        "PORT": redis_port
-    }
-}
+SCHEDULER_QUEUES = {"default": {"HOST": redis_host, "PORT": redis_port}}
 
 LOGGING = {
     "version": 1,

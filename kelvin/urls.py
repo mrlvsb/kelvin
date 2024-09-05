@@ -35,7 +35,7 @@ urlpatterns = [
     path("survey/", include("survey.urls")),
     path("webpush/", include("webpush.urls")),
     # For django-tasks-scheduler
-    path('scheduler/', include('scheduler.urls')),
+    path("scheduler/", include("scheduler.urls")),
 ]
 
 if settings.DEBUG:
