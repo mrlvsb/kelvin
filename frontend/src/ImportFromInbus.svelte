@@ -7,7 +7,6 @@
     let semester = null;
     let busy = false;
 
-    let semesters_data = null;
     let semesters = null;
     let subjects_inbus = null;
     let subjects_inbus_filtered = null;
@@ -59,17 +58,15 @@
     }
 
 
-    function parseSemesters() {
-        semesters = semesters_data.map(sm => ({'pk': sm.pk, 'year': sm.fields.year, 'winter': sm.fields.winter, 'display': new String(sm.fields.year) + (sm.fields.winter ? 'W' : 'S')}));
+    function parseSemesters(semesters_data) {
+        semesters = semesters_data.map(sm => ({'pk': sm.pk, 'year': sm.year, 'winter': sm.winter, 'display': new String(sm.year) + (sm.winter ? 'W' : 'S')}));
     }
-
 
     async function loadSemesters() {
         const res = await fetch('/api/semesters')
-        semesters_data = await res.json();
-        parseSemesters();
+        const semesters_data = await res.json();
+        parseSemesters(semesters_data["semesters"]);
     }
-
 
     async function loadScheduleForSubjectVersionId() {
         let res = await fetch(`/api/inbus/schedule/subject/version/${subject_inbus_selected.subjectVersionId}`);

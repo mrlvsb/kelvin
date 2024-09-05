@@ -1,6 +1,5 @@
 from collections import defaultdict
 
-from django.core import serializers
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
@@ -676,12 +675,15 @@ def transfer_students(request):
 @user_passes_test(is_teacher)
 def semesters(request):
     semesters = Semester.objects.all()
-
-    semesters_json = serializers.serialize("json", semesters)
-
-    # TODO: When upgrading, see: https://docs.djangoproject.com/en/4.2/ref/request-response/#httpresponse-objects
-    # for a way to set content type.
-    return HttpResponse(semesters_json, content_type="application/json")
+    semesters = [
+        {
+            "pk": semester.pk,
+            "year": semester.year,
+            "winter": semester.winter,
+        }
+        for semester in semesters
+    ]
+    return JsonResponse({"semesters": semesters})
 
 
 @user_passes_test(is_teacher)
