@@ -101,9 +101,9 @@ django-notifications-hq==1.7.0 \
 django-redis-cache==2.1.1 \
     --hash=sha256:06d4e48545243883f88dc9263dda6c8a0012cb7d0cee2d8758d8917eca92cece \
     --hash=sha256:b19ee6654cc2f2c89078c99255e07e19dc2dba8792351d76ba7ea899d465fbb0
-django-rq==2.3.2 \
-    --hash=sha256:ee9aefba814ae00b6d6a566ed0cd2a0a090e0e42d90bb9c4f1c70d3cacb47a52 \
-    --hash=sha256:f0bd7ac3b8b4b4abb161646e80a8751c81664beaa810e92fdbcf9fb3e7d72727
+django-rq==2.10.2 \
+    --hash=sha256:d1690b6a409934a0ea23c208ccb00d69477899f8edc61106ce5395c19dcdfb1e \
+    --hash=sha256:5fe340e071c141a23ea0859df73c48b0a3df33a851835b2a8f8c4fca7a8b1849
 django-webpush==0.3.2 \
     --hash=sha256:ce2c281677d1d2f802b53e7e30fc46cf82a07e2b4b565f22ba3e0c1d5b04a87e \
     --hash=sha256:bd370104bd9a29685a64dbf6f7550e091cdd54f46b745a4c84d9afb3a62cae73
@@ -233,9 +233,9 @@ requests==2.32.0 \
 requests-oauthlib==1.3.1 \
     --hash=sha256:75beac4a47881eeb94d5ea5d6ad31ef88856affe2332b9aafb52c6452ccf0d7a \
     --hash=sha256:2577c501a2fb8d05a304c09d090d6e47c306fef15809d102b327cf8364bddab5
-rq==1.9.0 \
-    --hash=sha256:bdfef943de838955e474cfd0e25b9b8c53ed4b9c361fe4bb11cf56d17a87acc5 \
-    --hash=sha256:7af1e9706dbe6f1eac16dffacd8271ec27c1369950941f14dab6bb08a62979d7
+rq==1.14.1 \
+    --hash=sha256:5fb86038922ddd76eb2d9aa0adeec6dcf64f159dbbe730b26358b1417120dd44 \
+    --hash=sha256:37e003db1da205e08db6cc4653b7c6ccfd9292000954240308abfce2ebde43ba
 rq-scheduler==0.11.0 \
     --hash=sha256:db79bb56cdbc4f7ffdd8bd659e389e91aa0db9c1abf002dc46f5dd6f0dbd2910 \
     --hash=sha256:da94e9b6badf112995ff38fe16192e4f4c43c412b3c9614684ed8c8f7ca517d2
