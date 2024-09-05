@@ -379,6 +379,7 @@ dependencies = [
     { name = "requests-oauthlib" },
     { name = "rq" },
     { name = "rq-scheduler" },
+    { name = "setuptools" },
     { name = "six" },
     { name = "typing-extensions" },
     { name = "unidecode" },
@@ -421,6 +422,7 @@ requires-dist = [
     { name = "requests-oauthlib", specifier = "==1.3.1" },
     { name = "rq", specifier = "==1.9.0" },
     { name = "rq-scheduler", specifier = "==0.11.0" },
+    { name = "setuptools", specifier = "==69.1.0" },
     { name = "six", specifier = "==1.16.0" },
     { name = "typing-extensions", specifier = "==4.11.0" },
     { name = "unidecode", specifier = "==1.3.6" },
@@ -798,6 +800,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/b4/73/ca9c2f9237a430ca423b6dca83b77e9a428afeb7aec80596e86c369123fe/ruff-0.6.3-py3-none-win32.whl", hash = "sha256:7a62d3b5b0d7f9143d94893f8ba43aa5a5c51a0ffc4a401aa97a81ed76930521", size = 7962163 },
     { url = "https://files.pythonhosted.org/packages/55/ce/061c605b1dfb52748d59bc0c7a8507546c178801156415773d18febfd71d/ruff-0.6.3-py3-none-win_amd64.whl", hash = "sha256:746af39356fee2b89aada06c7376e1aa274a23493d7016059c3a72e3b296befb", size = 8800901 },
     { url = "https://files.pythonhosted.org/packages/63/28/ae4ffe7d3b6134ca6d31ebef07447ef70097c4a9e8fbbc519b374c5c1559/ruff-0.6.3-py3-none-win_arm64.whl", hash = "sha256:14a9528a8b70ccc7a847637c29e56fd1f9183a9db743bbc5b8e0c4ad60592a82", size = 8229171 },
+]
+
+[[package]]
+name = "setuptools"
+version = "69.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c9/3d/74c56f1c9efd7353807f8f5fa22adccdba99dc72f34311c30a69627a0fad/setuptools-69.1.0.tar.gz", hash = "sha256:850894c4195f09c4ed30dba56213bf7c3f21d86ed6bdaafb5df5972593bfc401", size = 2219972 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bb/0a/203797141ec9727344c7649f6d5f6cf71b89a6c28f8f55d4f18de7a1d352/setuptools-69.1.0-py3-none-any.whl", hash = "sha256:c054629b81b946d63a9c6e732bc8b2513a7c3ea645f11d0139a2191d735c60c6", size = 819310 },
 ]
 
 [[package]]
