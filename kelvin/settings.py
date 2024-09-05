@@ -89,6 +89,9 @@ DJANGO_NOTIFICATIONS_CONFIG = {"USE_JSONFIELD": True}
 # Database
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
 
+# Default type for primary keys
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
