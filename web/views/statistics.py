@@ -3,7 +3,6 @@ from typing import List, Set
 
 import numpy as np
 import pandas as pd
-import pytz
 from bokeh.embed import file_html
 from bokeh.models import ColumnDataSource, HoverTool, OpenURL, Span, TapTool
 from bokeh.palettes import Category20_20 as CategoricalPalette
@@ -58,7 +57,7 @@ def normalize_date(date: datetime.datetime) -> datetime.datetime:
     Move the datetime to local time zone and then forcefully treat it as UTC (remove timezone
     information) to make Bokeh render it correctly.
     """
-    return timezone.localtime(date).replace(tzinfo=pytz.UTC)
+    return timezone.localtime(date).replace(tzinfo=timezone.utc)
 
 
 def create_submit_chart_html(submits: List[Submit], assignments: List[AssignedTask]) -> str:
