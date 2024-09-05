@@ -198,29 +198,29 @@ wheels = [
 
 [[package]]
 name = "django"
-version = "3.1.14"
+version = "3.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asgiref" },
     { name = "pytz" },
     { name = "sqlparse" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7a/59/b774fbaf743e675e9a808406a39814effb723c7c0b1d4a5b3b2e794ce077/Django-3.1.14.tar.gz", hash = "sha256:72a4a5a136a214c39cf016ccdd6b69e2aa08c7479c66d93f3a9b5e4bb9d8a347", size = 9659386 }
+sdist = { url = "https://files.pythonhosted.org/packages/0e/4d/5137309d6c83bcbd2966c604fdc633e22ce6fef1292b44c38ae22b4ad90d/Django-3.2.tar.gz", hash = "sha256:21f0f9643722675976004eb683c55d33c05486f94506672df3d6a141546f389d", size = 9819119 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6b/2e/b031dc0789840ebc108d4654c134e86a9f6593ce9c58ce39328c142b24b8/Django-3.1.14-py3-none-any.whl", hash = "sha256:0fabc786489af16ad87a8c170ba9d42bfd23f7b699bd5ef05675864e8d012859", size = 7835424 },
+    { url = "https://files.pythonhosted.org/packages/a8/9b/fe94c509e514f6c227308e81076506eb9d67f2bfb8061ce5cdfbde0432e3/Django-3.2-py3-none-any.whl", hash = "sha256:0604e84c4fb698a5e53e5857b5aea945b2f19a18f25f10b8748dbdf935788927", size = 7881999 },
 ]
 
 [[package]]
 name = "django-cas-ng"
-version = "4.2.1"
+version = "4.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "python-cas" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/51/be/20eff28034044d4b2d634ad2e977dff0a21fe540045ab664f2d516307fbc/django-cas-ng-4.2.1.tar.gz", hash = "sha256:4b0a4a19b8ae664cc7120ea05c39ee51596f9313786f044247a3c83cb4e42aaf", size = 17022 }
+sdist = { url = "https://files.pythonhosted.org/packages/62/b4/adc47b8307977956387e000983e651fe73c735f5b1aa8463947dedbedef1/django-cas-ng-4.3.0.tar.gz", hash = "sha256:6fcc9f52b9fb8765369e1a78e6abc1e7d4ed71fe01e604a304a3d1376a9dea19", size = 18311 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a8/82/5a5d6048b5395f3212bb8231c62e07817e6ae89443dfe36d976f61704e46/django_cas_ng-4.2.1-py2.py3-none-any.whl", hash = "sha256:4036b2553cfa6c47357c852450f67cc50c7e4a30f49cd99dda97549474f500c7", size = 28345 },
+    { url = "https://files.pythonhosted.org/packages/3e/5c/9609ca54ae2a90a3c7acfaec9841247b937ca06099bcb6bd95e7aefae50e/django_cas_ng-4.3.0-py2.py3-none-any.whl", hash = "sha256:d15a3a7934732fd8f602a449fc0e59631972d74d9bd8b98710d165e1cea1f5fc", size = 26903 },
 ]
 
 [[package]]
@@ -237,7 +237,7 @@ wheels = [
 
 [[package]]
 name = "django-notifications-hq"
-version = "1.6.0"
+version = "1.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
@@ -246,9 +246,9 @@ dependencies = [
     { name = "pytz" },
     { name = "swapper" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/12/b9/dd3525a3af44dea70a67f614056750daf4f506a32b1c8af41a2dd335b244/django-notifications-hq-1.6.0.tar.gz", hash = "sha256:debeb71b7076b08487b40bf07664d1cc43b9977c4480bbc969b30236dda7a461", size = 24801 }
+sdist = { url = "https://files.pythonhosted.org/packages/27/9f/7d71e83b3de139aa7710732412cec6014613cd30c41d20d9e9b1b0de6c76/django-notifications-hq-1.7.0.tar.gz", hash = "sha256:1ff90fbddb0a9dba3fdc57758e799b755c8844f673cd92e9ffaa64cedd33d5f5", size = 28025 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/20/7d/d476afd08965aceb4c5f503c15fb72fce98d8b6ec2b324ff61b86e87db7a/django_notifications_hq-1.6.0-py2.py3-none-any.whl", hash = "sha256:dfc6f8bd4034ceae91143bc3802ddfb6e276eaec90e63dd23e2584c052561576", size = 24656 },
+    { url = "https://files.pythonhosted.org/packages/08/26/207075a81cd8b58191aeadf0a336d11a6c47cc0454e66ab1661d92835e96/django_notifications_hq-1.7.0-py2.py3-none-any.whl", hash = "sha256:5540a99681c0e73399726d662ab74f23c45ba385036431ecd75ffc962f02c793", size = 25447 },
 ]
 
 [[package]]
@@ -396,9 +396,9 @@ requires-dist = [
     { name = "beautifulsoup4", specifier = "==4.11.1" },
     { name = "bokeh", specifier = "==2.3.2" },
     { name = "cssselect", specifier = "==1.1.0" },
-    { name = "django", specifier = "==3.1.14" },
-    { name = "django-cas-ng", specifier = "==4.2.1" },
-    { name = "django-notifications-hq", specifier = "==1.6.0" },
+    { name = "django", specifier = "==3.2" },
+    { name = "django-cas-ng", specifier = "==4.3.0" },
+    { name = "django-notifications-hq", specifier = "==1.7.0" },
     { name = "django-redis-cache", specifier = "==2.1.1" },
     { name = "django-rq", specifier = "==2.3.2" },
     { name = "django-webpush", specifier = "==0.3.2" },
