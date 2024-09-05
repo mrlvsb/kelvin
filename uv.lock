@@ -266,16 +266,16 @@ wheels = [
 
 [[package]]
 name = "django-rq"
-version = "2.3.2"
+version = "2.10.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "redis" },
     { name = "rq" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e9/15/03f42c1741b7c3871a7fef433987734a92241539f8a3c7d15b1036cd0e2f/django-rq-2.3.2.tar.gz", hash = "sha256:ee9aefba814ae00b6d6a566ed0cd2a0a090e0e42d90bb9c4f1c70d3cacb47a52", size = 41038 }
+sdist = { url = "https://files.pythonhosted.org/packages/bd/3d/852dda92fb5a60a462a1d805b4198957e7e1ed5344783dc6b21da89fd156/django-rq-2.10.2.tar.gz", hash = "sha256:d1690b6a409934a0ea23c208ccb00d69477899f8edc61106ce5395c19dcdfb1e", size = 49744 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/79/9e/3d9c528927f4e2b5130644259f843320074329c139dac5148d2ff72d29ad/django_rq-2.3.2-py2.py3-none-any.whl", hash = "sha256:f0bd7ac3b8b4b4abb161646e80a8751c81664beaa810e92fdbcf9fb3e7d72727", size = 45678 },
+    { url = "https://files.pythonhosted.org/packages/e7/49/b6a3b20cdf3238e02b56fece067ab7388c57e4d17bd3a21ed3cb069b872b/django_rq-2.10.2-py2.py3-none-any.whl", hash = "sha256:5fe340e071c141a23ea0859df73c48b0a3df33a851835b2a8f8c4fca7a8b1849", size = 56504 },
 ]
 
 [[package]]
@@ -377,8 +377,6 @@ dependencies = [
     { name = "redis" },
     { name = "requests" },
     { name = "requests-oauthlib" },
-    { name = "rq" },
-    { name = "rq-scheduler" },
     { name = "setuptools" },
     { name = "six" },
     { name = "typing-extensions" },
@@ -400,7 +398,7 @@ requires-dist = [
     { name = "django-cas-ng", specifier = "==4.3.0" },
     { name = "django-notifications-hq", specifier = "==1.7.0" },
     { name = "django-redis-cache", specifier = "==2.1.1" },
-    { name = "django-rq", specifier = "==2.3.2" },
+    { name = "django-rq", specifier = "==2.10.2" },
     { name = "django-webpush", specifier = "==0.3.2" },
     { name = "imageio", specifier = "==2.6.1" },
     { name = "jinja2", specifier = "==2.11.3" },
@@ -420,8 +418,6 @@ requires-dist = [
     { name = "redis", specifier = "==3.5.3" },
     { name = "requests", specifier = "==2.32.0" },
     { name = "requests-oauthlib", specifier = "==1.3.1" },
-    { name = "rq", specifier = "==1.9.0" },
-    { name = "rq-scheduler", specifier = "==0.11.0" },
     { name = "setuptools", specifier = "==69.1.0" },
     { name = "six", specifier = "==1.16.0" },
     { name = "typing-extensions", specifier = "==4.11.0" },
@@ -752,15 +748,15 @@ wheels = [
 
 [[package]]
 name = "rq"
-version = "1.9.0"
+version = "1.14.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
     { name = "redis" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e9/20/97f8e3e0b73382d4708880f27683b0d93c0426360ff1ece2c02591e1f265/rq-1.9.0.tar.gz", hash = "sha256:bdfef943de838955e474cfd0e25b9b8c53ed4b9c361fe4bb11cf56d17a87acc5", size = 59190 }
+sdist = { url = "https://files.pythonhosted.org/packages/e9/3e/e212dda427f763fa35ddfa45392b2b5ff99c5956733160c19d50c9e3379f/rq-1.14.1.tar.gz", hash = "sha256:5fb86038922ddd76eb2d9aa0adeec6dcf64f159dbbe730b26358b1417120dd44", size = 78411 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3c/98/7a4fd325996fb9679f98054304505a54c7551965a819f5f438a75b831ab8/rq-1.9.0-py2.py3-none-any.whl", hash = "sha256:7af1e9706dbe6f1eac16dffacd8271ec27c1369950941f14dab6bb08a62979d7", size = 66422 },
+    { url = "https://files.pythonhosted.org/packages/74/7f/2e44ef5bb1607f55d2aac60d19fe1f02c1638aa4dbd0d498f84c04603a14/rq-1.14.1-py2.py3-none-any.whl", hash = "sha256:37e003db1da205e08db6cc4653b7c6ccfd9292000954240308abfce2ebde43ba", size = 92362 },
 ]
 
 [[package]]
