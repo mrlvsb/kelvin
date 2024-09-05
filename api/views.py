@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from django.shortcuts import get_object_or_404
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponseBadRequest
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -710,6 +710,4 @@ def import_activities(request):
     except BaseException:
         res["error"] = traceback.format_exc()
 
-    # TODO: When upgrading, see: https://docs.djangoproject.com/en/4.2/ref/request-response/#httpresponse-objects
-    # for a way to set content type.
-    return HttpResponse(serde.json.to_json(res), content_type="application/json")
+    return JsonResponse(serde.to_dict(res))
