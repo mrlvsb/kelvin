@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.forms",
     "django_rq",
+    # Used for configuring cron-like jobs
+    # from django-tasks-scheduler
     "scheduler",
     "django_cas_ng",
     "notifications",
@@ -174,6 +176,8 @@ CACHES = {
     }
 }
 
+# For django_rq
+# "default" means that it reuses the Redis cache from CACHES["default"]
 RQ_QUEUES = {
     "default": {
         "USE_REDIS_CACHE": "default",
@@ -184,6 +188,14 @@ RQ_QUEUES = {
     "evaluator": {
         "USE_REDIS_CACHE": "default",
     },
+}
+
+# For django-tasks-scheduler
+SCHEDULER_QUEUES = {
+    "default": {
+        "HOST": redis_host,
+        "PORT": redis_port
+    }
 }
 
 LOGGING = {
