@@ -160,12 +160,17 @@ CAS_SERVER_URL = "https://www.sso.vsb.cz/"
 CAS_CREATE_USER = False
 CAS_FORCE_CHANGE_USERNAME_CASE = "upper"
 
+redis_host = os.getenv("REDIS_HOST", "127.0.0.1")
+redis_port = os.getenv("REDIS_EXPOSE_PORT", 6379)
+redis_connection = f"redis://{redis_host}:{redis_port}/0"
+
 CACHES = {
     "default": {
-        "BACKEND": "redis_cache.RedisCache",
-        "LOCATION": [
-            f"{os.getenv('REDIS_HOST', '127.0.0.1')}:{os.getenv('REDIS_EXPOSE_PORT', 6379)}"
-        ],
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": redis_connection,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
     }
 }
 
