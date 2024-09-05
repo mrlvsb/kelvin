@@ -133,15 +133,15 @@ wheels = [
 
 [[package]]
 name = "croniter"
-version = "2.0.1"
+version = "2.0.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "python-dateutil" },
     { name = "pytz" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/13/5e/659de55a2c07a314ec1ec3b32acbb8839246d6ead49e4cb3743425f63fb6/croniter-2.0.1.tar.gz", hash = "sha256:d199b2ec3ea5e82988d1f72022433c5f9302b3b3ea9e6bfd6a1518f6ea5e700a", size = 42599 }
+sdist = { url = "https://files.pythonhosted.org/packages/3d/70/240ea4efb2e03b513d820e8da48b784258cbc88770b4b061931cf0269cf8/croniter-2.0.7.tar.gz", hash = "sha256:1041b912b4b1e03751a0993531becf77851ae6e8b334c9c76ffeffb8f055f53f", size = 49655 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/27/86/c1ce37af79385a106aacdd40b6e25ff25b2d888f2e64a05ee4e5b05f5768/croniter-2.0.1-py2.py3-none-any.whl", hash = "sha256:4cb064ce2d8f695b3b078be36ff50115cf8ac306c10a7e8653ee2a5b534673d7", size = 19787 },
+    { url = "https://files.pythonhosted.org/packages/99/1b/62e5ef33bb8cd599004b85f1ae648aaaf329ec396a8e210906e3f04df66a/croniter-2.0.7-py2.py3-none-any.whl", hash = "sha256:f15e80828d23920c4bb7f4d9340b932c9dcabecafc7775703c8b36d1253ed526", size = 21201 },
 ]
 
 [[package]]
@@ -291,6 +291,21 @@ wheels = [
 ]
 
 [[package]]
+name = "django-tasks-scheduler"
+version = "1.3.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "croniter" },
+    { name = "django" },
+    { name = "rq" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a7/ec/5d03ec496180d961d96b9256cd7ff82c583a7d0b32110d2139869b988da5/django_tasks_scheduler-1.3.4.tar.gz", hash = "sha256:569697c96124a866d3ae44132a31c632f5a00f21c6e6bd7fed9d38378c5b576d", size = 45451 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/81/24/da68d8a329a8df373c16feaf3584b4ca99926217075def555045fa3f0147/django_tasks_scheduler-1.3.4-py3-none-any.whl", hash = "sha256:7730b49c4d05ec3afe61da477d9611123246ecb5642d9a9eb9b01ba6e05406a3", size = 72303 },
+]
+
+[[package]]
 name = "django-webpush"
 version = "0.3.2"
 source = { registry = "https://pypi.org/simple" }
@@ -370,6 +385,7 @@ dependencies = [
     { name = "django-notifications-hq" },
     { name = "django-redis" },
     { name = "django-rq" },
+    { name = "django-tasks-scheduler" },
     { name = "django-webpush" },
     { name = "imageio" },
     { name = "jinja2" },
@@ -385,7 +401,6 @@ dependencies = [
     { name = "pyserde" },
     { name = "python-magic" },
     { name = "pyyaml" },
-    { name = "readwise-django-rq-scheduler" },
     { name = "requests" },
     { name = "requests-oauthlib" },
     { name = "setuptools" },
@@ -410,6 +425,7 @@ requires-dist = [
     { name = "django-notifications-hq", specifier = "==1.7.0" },
     { name = "django-redis", specifier = ">=5.4.0" },
     { name = "django-rq", specifier = "==2.10.2" },
+    { name = "django-tasks-scheduler", specifier = "==1.3.4" },
     { name = "django-webpush", specifier = "==0.3.2" },
     { name = "imageio", specifier = "==2.6.1" },
     { name = "jinja2", specifier = "==2.11.3" },
@@ -425,7 +441,6 @@ requires-dist = [
     { name = "pyserde", specifier = "==0.13.1" },
     { name = "python-magic", specifier = "==0.4.27" },
     { name = "pyyaml", specifier = "==6.0.1" },
-    { name = "readwise-django-rq-scheduler", specifier = "==1.2.1" },
     { name = "requests", specifier = "==2.32.0" },
     { name = "requests-oauthlib", specifier = "==1.3.1" },
     { name = "setuptools", specifier = "==69.1.0" },
@@ -703,23 +718,6 @@ wheels = [
 ]
 
 [[package]]
-name = "readwise-django-rq-scheduler"
-version = "1.2.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "croniter" },
-    { name = "django" },
-    { name = "django-model-utils" },
-    { name = "django-rq" },
-    { name = "pytz" },
-    { name = "rq-scheduler" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/fa/24/79416d5cdb6390f7cc114cccd09552f47ff5e5fae814f222a248d3bc5402/readwise-django-rq-scheduler-1.2.1.tar.gz", hash = "sha256:7ac77a766f3c3cf7f1e67e8e4f7a9ca95958002aa01e9d5fb41e7cebb6da57a0", size = 8600 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b2/2e/373519b881c8b0c0864abb03a5e19e8a2ad1e6cb063184c1f259ad7151d7/readwise_django_rq_scheduler-1.2.1-py2.py3-none-any.whl", hash = "sha256:933c779ebba8abf24fbc17b99418f31c0767e67831fc013c0944b56e82c15dfc", size = 13032 },
-]
-
-[[package]]
 name = "redis"
 version = "4.1.3"
 source = { registry = "https://pypi.org/simple" }
@@ -762,29 +760,15 @@ wheels = [
 
 [[package]]
 name = "rq"
-version = "1.14.1"
+version = "1.16.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
     { name = "redis" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e9/3e/e212dda427f763fa35ddfa45392b2b5ff99c5956733160c19d50c9e3379f/rq-1.14.1.tar.gz", hash = "sha256:5fb86038922ddd76eb2d9aa0adeec6dcf64f159dbbe730b26358b1417120dd44", size = 78411 }
+sdist = { url = "https://files.pythonhosted.org/packages/c5/1d/a020e8f3559293635dd6283d037bfc15f866136498da3db1e5416c65773d/rq-1.16.2.tar.gz", hash = "sha256:5c5b9ad5fbaf792b8fada25cc7627f4d206a9a4455aced371d4f501cc3f13b34", size = 629881 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/74/7f/2e44ef5bb1607f55d2aac60d19fe1f02c1638aa4dbd0d498f84c04603a14/rq-1.14.1-py2.py3-none-any.whl", hash = "sha256:37e003db1da205e08db6cc4653b7c6ccfd9292000954240308abfce2ebde43ba", size = 92362 },
-]
-
-[[package]]
-name = "rq-scheduler"
-version = "0.11.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "croniter" },
-    { name = "python-dateutil" },
-    { name = "rq" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/3b/84/fadfaa60d7d3923a27248ef39217c7fa9f6a369f31f1b38f4aa5d658610f/rq-scheduler-0.11.0.tar.gz", hash = "sha256:db79bb56cdbc4f7ffdd8bd659e389e91aa0db9c1abf002dc46f5dd6f0dbd2910", size = 12550 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/44/b1/e36da6d642bf3b5e0e2ca964ee9a23c9925265469adf0f9639a43281d360/rq_scheduler-0.11.0-py2.py3-none-any.whl", hash = "sha256:da94e9b6badf112995ff38fe16192e4f4c43c412b3c9614684ed8c8f7ca517d2", size = 12517 },
+    { url = "https://files.pythonhosted.org/packages/46/35/db396caf7cfe71a9e661cea520b276f1472df25015e7cb9143c65a1dca6d/rq-1.16.2-py3-none-any.whl", hash = "sha256:52e619f6cb469b00e04da74305045d244b75fecb2ecaa4f26422add57d3c5f09", size = 90911 },
 ]
 
 [[package]]

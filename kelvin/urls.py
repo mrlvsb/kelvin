@@ -34,6 +34,8 @@ urlpatterns = [
     path("django-rq/", include("django_rq.urls")),
     path("survey/", include("survey.urls")),
     path("webpush/", include("webpush.urls")),
+    # For django-tasks-scheduler
+    path('scheduler/', include('scheduler.urls')),
 ]
 
 if settings.DEBUG:

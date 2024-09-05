@@ -52,9 +52,9 @@ click==8.1.7 \
 colorama==0.4.6 ; platform_system == 'Windows' \
     --hash=sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44 \
     --hash=sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6
-croniter==2.0.1 \
-    --hash=sha256:d199b2ec3ea5e82988d1f72022433c5f9302b3b3ea9e6bfd6a1518f6ea5e700a \
-    --hash=sha256:4cb064ce2d8f695b3b078be36ff50115cf8ac306c10a7e8653ee2a5b534673d7
+croniter==2.0.7 \
+    --hash=sha256:1041b912b4b1e03751a0993531becf77851ae6e8b334c9c76ffeffb8f055f53f \
+    --hash=sha256:f15e80828d23920c4bb7f4d9340b932c9dcabecafc7775703c8b36d1253ed526
 cryptography==42.0.2 \
     --hash=sha256:e0ec52ba3c7f1b7d813cd52649a5b3ef1fc0d433219dc8c93827c57eab6cf888 \
     --hash=sha256:701171f825dcab90969596ce2af253143b93b08f1a716d4b2a9d2db5084ef7be \
@@ -107,6 +107,9 @@ django-redis==5.4.0 \
 django-rq==2.10.2 \
     --hash=sha256:d1690b6a409934a0ea23c208ccb00d69477899f8edc61106ce5395c19dcdfb1e \
     --hash=sha256:5fe340e071c141a23ea0859df73c48b0a3df33a851835b2a8f8c4fca7a8b1849
+django-tasks-scheduler==1.3.4 \
+    --hash=sha256:569697c96124a866d3ae44132a31c632f5a00f21c6e6bd7fed9d38378c5b576d \
+    --hash=sha256:7730b49c4d05ec3afe61da477d9611123246ecb5642d9a9eb9b01ba6e05406a3
 django-webpush==0.3.2 \
     --hash=sha256:ce2c281677d1d2f802b53e7e30fc46cf82a07e2b4b565f22ba3e0c1d5b04a87e \
     --hash=sha256:bd370104bd9a29685a64dbf6f7550e091cdd54f46b745a4c84d9afb3a62cae73
@@ -224,9 +227,6 @@ pyyaml==6.0.1 \
     --hash=sha256:8d4e9c88387b0f5c7d5f281e55304de64cf7f9c0021a3525bd3b1c542da3b0e4 \
     --hash=sha256:d483d2cdf104e7c9fa60c544d92981f12ad66a457afae824d146093b8c294c54 \
     --hash=sha256:0d3304d8c0adc42be59c5f8a4d9e3d7379e6955ad754aa9d6ab7a398b59dd1df
-readwise-django-rq-scheduler==1.2.1 \
-    --hash=sha256:7ac77a766f3c3cf7f1e67e8e4f7a9ca95958002aa01e9d5fb41e7cebb6da57a0 \
-    --hash=sha256:933c779ebba8abf24fbc17b99418f31c0767e67831fc013c0944b56e82c15dfc
 redis==4.1.3 \
     --hash=sha256:f2715caad9f0e8c6ff8df46d3c4c9022a3929001f530f66b62747554d3067068 \
     --hash=sha256:267e89e476eb684517584e8988f1e5d755f483a368c133020c4c40e8b676bc5d
@@ -236,12 +236,9 @@ requests==2.32.0 \
 requests-oauthlib==1.3.1 \
     --hash=sha256:75beac4a47881eeb94d5ea5d6ad31ef88856affe2332b9aafb52c6452ccf0d7a \
     --hash=sha256:2577c501a2fb8d05a304c09d090d6e47c306fef15809d102b327cf8364bddab5
-rq==1.14.1 \
-    --hash=sha256:5fb86038922ddd76eb2d9aa0adeec6dcf64f159dbbe730b26358b1417120dd44 \
-    --hash=sha256:37e003db1da205e08db6cc4653b7c6ccfd9292000954240308abfce2ebde43ba
-rq-scheduler==0.11.0 \
-    --hash=sha256:db79bb56cdbc4f7ffdd8bd659e389e91aa0db9c1abf002dc46f5dd6f0dbd2910 \
-    --hash=sha256:da94e9b6badf112995ff38fe16192e4f4c43c412b3c9614684ed8c8f7ca517d2
+rq==1.16.2 \
+    --hash=sha256:5c5b9ad5fbaf792b8fada25cc7627f4d206a9a4455aced371d4f501cc3f13b34 \
+    --hash=sha256:52e619f6cb469b00e04da74305045d244b75fecb2ecaa4f26422add57d3c5f09
 ruff==0.6.3 \
     --hash=sha256:183b99e9edd1ef63be34a3b51fee0a9f4ab95add123dbf89a71f7b1f0c991983 \
     --hash=sha256:97f58fda4e309382ad30ede7f30e2791d70dd29ea17f41970119f55bdb7a45c3 \
