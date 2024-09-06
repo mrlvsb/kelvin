@@ -1,106 +1,18 @@
 version: "3.9"
-x-django-app:
-    &django-app
-    user: ${HOST_USER_ID}:1000
-    build:
-      context: ./
-    working_dir: /kelvin
-    volumes:
-      - ./:/kelvin:cached
-      # /tmp is used for mounts in docker pipelines
-      # the path needs to be same in evaluator and docker remote host
-      - /tmp:/tmp
-    environment:
-      - POSTGRES_HOST=db
-      - POSTGRES_NAME=${DB_DATABASE}
-      - POSTGRES_DB=${DB_DATABASE}
-      - POSTGRES_USER=${DB_USERNAME}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - REDIS_HOST=redis
-      - API_INTERNAL_BASEURL=http://web:8000
-      - DOCKER_HOST=docker:2375
-    depends_on:
-      - db
-      - redis
-    networks:
-      - kelvin-network
-
 services:
   db:
     image: postgres:14
+    ports:
+      - "5432:5432"
     volumes:
-      - kelvin-postgres-data:/var/lib/postgresql/data
+      - ${KELVIN_DB_PATH?Absolute path to Kelvin database storage}:/var/lib/postgresql/data
     container_name: kelvin_db
     environment:
-      - POSTGRES_DB=${DB_DATABASE}
-      - POSTGRES_USER=${DB_USERNAME}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-    networks:
-      - kelvin-network
-
-  web:
-    <<: *django-app
-    command: python manage.py runserver 0.0.0.0:${WEB_EXPOSE_PORT}
-    container_name: kelvin_web
-    ports:
-      - ${WEB_EXPOSE_PORT}:8000
-
-  # main pipeline evaluator
-  evaluator:
-    <<: *django-app
-    container_name: kelvin_evaluator
-    command: python manage.py rqworker evaluator
-    stdin_open: true
-    tty: true
-
-  # generic background task worker
-  worker:
-    <<: *django-app
-    container_name: kelvin_worker
-    command: python manage.py rqworker default
-
-  # worker for scheduled tasks (like moss checks)
-  rqscheduler:
-    <<: *django-app
-    container_name: kelvin_rqscheduler
-    command: python manage.py rqscheduler
-
-  # proxy from TCP to unix socket, so we dont need to run web as root with different uid
-  # or solve issues with socket permissions
-  docker:
-    image: alpine/socat
-    command: tcp-listen:2375,fork,reuseaddr unix-connect:/var/run/docker.sock
-    user: root
-    container_name: kelvin_docker
-    volumes:
-      - type: bind
-        source: /var/run/docker.sock
-        target: /var/run/docker.sock
-    networks:
-      - kelvin-network
-
-  frontend:
-    image: node
-    container_name: kelvin_frontend_build
-    volumes:
-      - ./:/kelvin
-    working_dir: /kelvin/frontend
-    command: sh -c "npm install && npm run dev"
-
+      - POSTGRES_DB=${DB_DATABASE?Name of PostgreSQL database}
+      - POSTGRES_USER=${DB_USERNAME?PostgreSQL username}
+      - POSTGRES_PASSWORD=${DB_PASSWORD?PostgreSQL password}
   redis:
     image: redis
-    container_name: kelvin_redis
     ports:
-      - 6379
-    volumes:
-      - kelvin-redis-data:/data
-    networks:
-      - kelvin-network
-
-volumes:
-  kelvin-postgres-data:
-  kelvin-redis-data:
-
-networks:
-  kelvin-network:
-    driver: bridge
+      - "6379:6379"
+    container_name: kelvin_redis
