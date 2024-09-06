@@ -89,18 +89,18 @@ decorator==5.1.1 \
 deprecated==1.2.14 \
     --hash=sha256:e5323eb936458dccc2582dc6f9c322c852a775a27065ff2b0c4970b9d53d01b3 \
     --hash=sha256:6fac8b097794a90302bdbb17b9b815e732d3c4720583ff1b198499d78470466c
-django==4.0.10 \
-    --hash=sha256:2c2f73c16b11cb272c6d5e3b063f0d1be06f378d8dc6005fbe8542565db659cc \
-    --hash=sha256:4496eb4f65071578b703fdc6e6f29302553c7440e3f77baf4cefa4a4e091fc3d
+django==4.1.13 \
+    --hash=sha256:94a3f471e833c8f124ee7a2de11e92f633991d975e3fa5bdd91e8abd66426318 \
+    --hash=sha256:04ab3f6f46d084a0bba5a2c9a93a3a2eb3fe81589512367a75f79ee8acf790ce
 django-cas-ng==4.3.0 \
     --hash=sha256:6fcc9f52b9fb8765369e1a78e6abc1e7d4ed71fe01e604a304a3d1376a9dea19 \
     --hash=sha256:d15a3a7934732fd8f602a449fc0e59631972d74d9bd8b98710d165e1cea1f5fc
 django-model-utils==4.1.1 \
     --hash=sha256:eb5dd05ef7d7ce6bc79cae54ea7c4a221f6f81e2aad7722933aee66489e7264b \
     --hash=sha256:ef7c440024e797796a3811432abdd2be8b5225ae64ef346f8bfc6de7d8e5d73c
-django-notifications-hq==1.7.0 \
-    --hash=sha256:1ff90fbddb0a9dba3fdc57758e799b755c8844f673cd92e9ffaa64cedd33d5f5 \
-    --hash=sha256:5540a99681c0e73399726d662ab74f23c45ba385036431ecd75ffc962f02c793
+django-notifications-hq==1.8.0 \
+    --hash=sha256:7ba69cd5047aa4b8a202383fc2b39f14ca6aa152d509c66d22bee2ad9ef0ad15 \
+    --hash=sha256:c55b3c836facca5e5792213a8ea96421f99b25c609801c532cfe13cd6372e040
 django-redis==5.4.0 \
     --hash=sha256:6a02abaa34b0fea8bf9b707d2c363ab6adc7409950b2db93602e6cb292818c42 \
     --hash=sha256:ebc88df7da810732e2af9987f7f426c96204bf89319df4c6da6ca9a2942edd5b
