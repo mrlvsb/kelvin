@@ -2,54 +2,18 @@
 
 Kelvin - The Ultimate Code Examinator
 
-```
-kelvin
-├── api
-├── evaluator (pipeline for evaluating, linting submits)
-│   ├── images (docker images for custom pipeline actions)
-│   └── pipelines.py (integrated pipeline actions - Docker evaluation, ...)
-├── kelvin (base configuration of the application)
-├── survey (module for easy surveys defined in yaml)
-└── web (web interface for the kelvin)
-```
+This repository contains code for Kelvin, a web application designed for sharing lesson 
+materials with students, submitting lesson/exam code solutions, performing code review, 
+automatically evaluating submitted code and much more.
 
-## Getting started
+An instance of Kelvin used by the Faculty of Electrical Engineering and Computer Science at 
+VSB-TUO is deployed at `https://kelvin.cs.vsb.cz`.
 
-### Using docker
+If you find any bugs in Kelvin or want to suggest new features and improvements, please file an 
+[issue](https://github.com/mrlvsb/kelvin/issues/new).
 
-```shell-session
-$ cp .env.example .env
-$ docker-compose up
-$ docker-compose exec web ./manage.py migrate
-$ docker-compose exec web ./manage.py createsuperuser
-$ ./evaluator/images/build.py  # Rerun if pipeline images change
-$ ./sync_from_prod.sh  # Optional, you can populate the db yourself
-```
-
-## Development
-This project is managed by [uv](https://github.com/astral-sh/uv). As a first step for working
-with the Python code, install `uv` using some supported approach, e.g. `pip install uv==0.4.4`.
-
-- Install dependencies into a virtual environment (which will be created for you):
-    ```bash
-    $ uv sync
-    ```
-- Lint & reformat Python code:
-    ```bash
-    $ ruff check
-    $ ruff format
-    ```
-
-### Updating dependencies
-1) Add a new Python dependency:
-    ```bash
-    $ uv add package==<version>
-    ```
-2) Update the legacy lockfile, which is used to synchronize packages with `pip` on production:
-    ```bash
-    $ uv export --format requirements-txt > requirements.txt
-    ```
-3) Commit the changes:
-    ```bash
-    $ git add pyproject.toml uv.lock requirements.txt
-    ```
+You can find documentation on how Kelvin works and how to contribute to it in the following files:
+- [architecture.md](docs/architecture.md) describes the high-level architecture of Kelvin.
+- [setup.md](docs/setup.md) provides a guide on how to configure Kelvin for local development.
+- [development.md](docs/development.md) contains useful hints on how to perform various 
+  development tasks.

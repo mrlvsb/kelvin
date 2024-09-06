@@ -12,9 +12,15 @@ https://docs.djangoproject.com/en/dev/ref/settings/
 
 import os
 
+import dotenv
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Load environment variables from an .env file
+dotenv_file = os.path.join(BASE_DIR, ".env")
+if os.path.isfile(dotenv_file):
+    dotenv.load_dotenv(dotenv_file)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/dev/howto/deployment/checklist/
@@ -97,13 +103,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "HOST": os.getenv("POSTGRES_HOST"),
-        "USER": os.getenv("POSTGRES_USER"),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
-        "NAME": os.getenv("POSTGRES_DB"),
+        "HOST": os.getenv("DB_HOST", "127.0.0.1"),
+        "USER": os.getenv("DB_USERNAME"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "NAME": os.getenv("DB_DATABASE"),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-password-validators
