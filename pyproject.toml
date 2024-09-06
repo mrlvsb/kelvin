@@ -25,7 +25,7 @@ dependencies = [
     "numpy==1.26.4",
     "oauthlib==3.2.2",
     "pandas==2.2.1",
-    "psycopg2==2.9.9",
+    "psycopg[binary]==3.2.1",
     "pygraphviz==1.7",
     "pyserde==0.13.1",
     "python-dotenv==1.0.1",
