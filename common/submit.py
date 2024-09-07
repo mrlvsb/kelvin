@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 
 from django.contrib.contenttypes.models import ContentType
@@ -10,6 +11,18 @@ from common.evaluate import evaluate_submit
 from common.models import AssignedTask, Submit
 from common.upload import upload_submit_files
 from common.utils import is_teacher
+
+# How much time has to be elapsed between two consecutive submits.
+# Note that this is not perfect due to us not using atomicity properly, but it's
+# better than nothing.
+SUBMIT_RATELIMIT = datetime.timedelta(seconds=30)
+
+
+class SubmitRateLimited(Exception):
+    def __init__(self, message: str, time_until_limit_expires: datetime.timedelta):
+        super().__init__(message)
+
+        self.time_until_limit_expires = time_until_limit_expires
 
 
 def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
@@ -31,6 +44,15 @@ def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     submits = Submit.objects.filter(
         assignment__pk=assignment.id,
     ).order_by("-id")
+
+    # Check submit date across all tasks, just to be a bit more defensive
+    last_submit_date = Submit.objects.filter(student=request.user).order_by("-created_at").first()
+    if last_submit_date is not None:
+        since_last_submit = (
+            datetime.datetime.now(datetime.timezone.utc) - last_submit_date.created_at
+        )
+        if since_last_submit < SUBMIT_RATELIMIT:
+            raise SubmitRateLimited("Submit was rate limited", SUBMIT_RATELIMIT - since_last_submit)
 
     # TODO: transaction/better submit_num checking
     s = Submit()

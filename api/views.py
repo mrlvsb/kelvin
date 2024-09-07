@@ -22,7 +22,8 @@ from common.evaluate import evaluate_submit
 from django.http import JsonResponse
 from django.contrib.auth.decorators import user_passes_test
 
-from common.submit import store_submit
+from common.submit import SubmitRateLimited, store_submit
+from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher, points_to_color, inbus_search_user, user_from_inbus_person
 from django.contrib.auth.decorators import login_required
 import os
@@ -721,7 +722,19 @@ def import_activities(request):
 def create_submit(request: django.http.HttpRequest, task_assignment: int) -> JsonResponse:
     assignment: AssignedTask = get_object_or_404(AssignedTask, id=task_assignment)
 
-    submit = store_submit(request, assignment)
+    try:
+        submit = store_submit(request, assignment)
+    except TooManyFilesError:
+        return JsonResponse(
+            {"error": f"Too many files uploaded. Maximum is {MAX_UPLOAD_FILECOUNT}."}, status=400
+        )
+    except SubmitRateLimited as e:
+        return JsonResponse(
+            {
+                "error": f"You need to wait at least {e.time_until_limit_expires.total_seconds():.0f}s before sending another submit."
+            },
+            status=400,
+        )
 
     url = (
         reverse(
