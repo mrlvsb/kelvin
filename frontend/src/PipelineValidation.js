@@ -446,6 +446,7 @@ const rules = new DictRule({
         cargo: [new DockerPipeRule({
             cmd: [new ValueRule(), "Cargo command that should be executed. Default is `build`."],
             args: [new ArrayRule(new ValueRule()), "Arguments for Cargo."],
+            lib: [new ValueRule(), "Whether the submitted file should be compiled as a library."],
         }), 'Build a Rust crate with Cargo'],
         run: [new DockerPipeRule({
             commands: [new ArrayRule(

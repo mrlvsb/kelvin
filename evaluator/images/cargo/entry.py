@@ -16,7 +16,8 @@ in the working directory of the pipeline.
 
 Pipeline parameters:
 `cmd` - string with the Cargo command that should be executed (e.g. `build` or `test`).
-`args` - list of additional command line parameters for Cargo. 
+`args` - list of additional command line parameters for Cargo.
+`lib` - whether to compile the project as a library, rather than a binary (default=false)
 """
 
 
@@ -123,20 +124,37 @@ def run_cargo(command: str, args: List[str]) -> BuildResult:
                 "No `Cargo.toml` found. Either upload a whole crate (`Cargo.toml` + `src`) or a single .rs file."
             )
         # Synthesize a Cargo project
-        with open("Cargo.toml", "w") as f:
-            f.write(f"""
+        manifest = """
 [package]
 name = "submit"
 version = "0.1.0"
 edition = "2021"
-
+"""
+        lib_target = get_param("lib", default="False") == "True"
+        if lib_target:
+            manifest += f"""
+[lib]
+path = "{rs_files[0]}"
+"""
+        else:
+            manifest += f"""
 [[bin]]
 name = "main"
 path = "{rs_files[0]}"
-""")
+"""
 
+        with open("Cargo.toml", "w") as f:
+            f.write(manifest)
+
+    env = os.environ.copy()
+    env.update(dict(
+        # Make the build a bit faster, we don't need incremental build
+        CARGO_INCREMENTAL="0",
+        # Improve compilation time and reduce disk usage
+        CARGO_PROFILE_DEV_DEBUG="line-tables-only"
+    ))
     cmdline = ["cargo", command, "--message-format", "json", *args]
-    result = subprocess.run(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result = subprocess.run(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     stdout = result.stdout.decode()
     stderr = result.stderr.decode()
 
