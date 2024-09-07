@@ -153,12 +153,14 @@ path = "{rs_files[0]}"
             f.write(manifest)
 
     env = os.environ.copy()
-    env.update(dict(
-        # Make the build a bit faster, we don't need incremental build
-        CARGO_INCREMENTAL="0",
-        # Improve compilation time and reduce disk usage
-        CARGO_PROFILE_DEV_DEBUG="line-tables-only"
-    ))
+    env.update(
+        dict(
+            # Make the build a bit faster, we don't need incremental build
+            CARGO_INCREMENTAL="0",
+            # Improve compilation time and reduce disk usage
+            CARGO_PROFILE_DEV_DEBUG="line-tables-only",
+        )
+    )
     cmdline = ["cargo", command, "--message-format", "json", *args]
     result = subprocess.run(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     stdout = result.stdout.decode()
