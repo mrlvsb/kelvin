@@ -95,7 +95,7 @@ def schedule_subject_by_version_id(
     """
     url = urllib.parse.urljoin(config.INBUS_SERVICE_EDISON_URL, "schedule")
     concrete_activities_resp = utils.inbus_request(
-        url, {"subjectVersionId": subject_version_id, "semesterId": 129}
+        url, {"subjectVersionId": subject_version_id, "semesterId": 126}
     )
 
     concrete_activities = []
