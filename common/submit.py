@@ -20,6 +20,7 @@ def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     Optionally, the request can also contain a "paths" field that contains a string with a single
     path per line, assigning paths to the uploaded "solution" files.
     """
+
     def get_request_ip(request):
         # TODO: refactor this
         x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")

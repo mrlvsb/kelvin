@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import django.http
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseBadRequest
 from django.views.decorators.http import require_POST
@@ -20,6 +21,8 @@ from common.models import (
 from common.evaluate import evaluate_submit
 from django.http import JsonResponse
 from django.contrib.auth.decorators import user_passes_test
+
+from common.submit import store_submit
 from common.utils import is_teacher, points_to_color, inbus_search_user, user_from_inbus_person
 from django.contrib.auth.decorators import login_required
 import os
@@ -711,3 +714,34 @@ def import_activities(request):
         res["error"] = traceback.format_exc()
 
     return JsonResponse(serde.to_dict(res))
+
+
+@require_POST
+@login_required()
+def create_submit(request: django.http.HttpRequest, task_assignment: int) -> JsonResponse:
+    assignment: AssignedTask = get_object_or_404(AssignedTask, id=task_assignment)
+
+    submit = store_submit(request, assignment)
+
+    url = (
+        reverse(
+            "task_detail",
+            kwargs={
+                "login": submit.student.username,
+                "assignment_id": submit.assignment.id,
+                "submit_num": submit.submit_num,
+            },
+        )
+        + "#result"
+    )
+    url = request.build_absolute_uri(url)
+
+    return JsonResponse(
+        {
+            "submit": {
+                "id": submit.submit_num,
+                "url": url,
+            },
+            "task": {"name": assignment.task.name},
+        }
+    )
