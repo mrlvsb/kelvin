@@ -115,5 +115,5 @@ urlpatterns = [
     path("tasks", teacher_view.all_tasks, name="tasks"),
     path("tasks/<str:subject__abbr>", teacher_view.all_tasks, name="tasks"),
     path("reevaluate/<int:submit_id>", teacher_view.reevaluate, name="reevaluate"),
-    path("api_token", common_view.api_token),
+    path("api_token", common_view.api_token, name="api_token"),
 ]

@@ -11,7 +11,7 @@ import tarfile
 import tempfile
 from collections import namedtuple
 from pathlib import Path
-from typing import List
+from typing import Any, Dict, List, Optional
 from zipfile import ZIP_DEFLATED, ZipFile
 
 import django_rq
@@ -257,7 +257,9 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
             raise PermissionDenied()
 
     assignment = get_object_or_404(AssignedTask, id=assignment_id)
-    testset = create_taskset(assignment.task, login if login else request.user.username)
+    testset = create_taskset(assignment.task, login if login else request.user.username,
+                             meta=dict(assignment=assignment.id))
+
     is_announce = False
     if (
         assignment.assigned > datetime.now()
@@ -761,9 +763,13 @@ def raw_test_content(request, task_name, test_name, file):
     raise Http404()
 
 
-def create_taskset(task, user):
+def create_taskset(task, user, meta: Optional[Dict[str, Any]] = None):
+    meta_dict = get_meta(user)
+
+    if meta is not None:
+        meta_dict.update(meta)
     task_dir = os.path.join(BASE_DIR, "tasks", task.code)
-    return TestSet(task_dir, get_meta(user))
+    return TestSet(task_dir, meta_dict)
 
 
 def check_is_task_accessible(request, task):
