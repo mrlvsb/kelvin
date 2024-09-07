@@ -17,6 +17,8 @@ import dotenv
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+PUBLIC_URL = "https://kelvin.cs.vsb.cz"
+
 # Load environment variables from an .env file
 dotenv_file = os.path.join(BASE_DIR, ".env")
 if os.path.isfile(dotenv_file):
