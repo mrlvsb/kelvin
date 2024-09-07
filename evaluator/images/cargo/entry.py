@@ -97,6 +97,12 @@ def parse_cargo_output(cargo_stdout: str) -> CargoOutput:
                     stderr += f"{rendered}"
                 location = get_location_from_cargo_msg(msg)
                 text = msg.get("message")
+
+                code = msg.get("code")
+                if code is not None and isinstance(code, dict) and "code" in code:
+                    code = code["code"]
+                    text += f" ({code})"
+
                 if location is not None and text is not None:
                     (file, line) = location
                     comments[file].append({"line": line, "text": text, "source": "cargo"})
