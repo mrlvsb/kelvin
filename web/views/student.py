@@ -42,7 +42,7 @@ from common.models import (
     current_semester,
 )
 from common.moss import PlagiarismMatch, moss_result
-from common.submit import store_submit
+from common.submit import SubmitRateLimited, store_submit
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher
 from evaluator.results import EvaluationResult, PipeResult
@@ -257,8 +257,11 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
             raise PermissionDenied()
 
     assignment = get_object_or_404(AssignedTask, id=assignment_id)
-    testset = create_taskset(assignment.task, login if login else request.user.username,
-                             meta=dict(assignment=assignment.id))
+    testset = create_taskset(
+        assignment.task,
+        login if login else request.user.username,
+        meta=dict(assignment=assignment.id),
+    )
 
     is_announce = False
     if (
@@ -386,6 +389,14 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
             return HttpResponse(
                 f"You have uploaded too many files. The maximum allowed file count is {MAX_UPLOAD_FILECOUNT}.",
                 status=400,
+            )
+        except SubmitRateLimited as e:
+            # We show an error so that users can re-send the same submit with F5.
+            # It can be spammy, but probably better than forcing them to select the files
+            # repeatedly.
+            return HttpResponse(
+                f"Too many submits. You need to wait {e.time_until_limit_expires.total_seconds():.0f}s before sending another submit",
+                status=429,
             )
 
         return redirect(
