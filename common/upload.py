@@ -119,7 +119,7 @@ class TooManyFilesError(BaseException):
     pass
 
 
-def upload_submit_files(submit: Submit, paths: List[str], files: List[str]):
+def upload_submit_files(submit: Submit, paths: List[str], files: List[UploadedFile]):
     if len(paths) == 1 and get_extension(paths[0]) == ".zip":
         uploader = ZipUploader(files[0])
     else:

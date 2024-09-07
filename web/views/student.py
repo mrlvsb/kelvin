@@ -31,7 +31,7 @@ from django.views.decorators.csrf import csrf_exempt
 from notifications.models import Notification
 from notifications.signals import notify
 
-from common.evaluate import evaluate_submit, get_meta
+from common.evaluate import get_meta
 from common.models import (
     AssignedTask,
     Class,
@@ -42,13 +42,14 @@ from common.models import (
     current_semester,
 )
 from common.moss import PlagiarismMatch, moss_result
+from common.submit import store_submit
+from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher
 from evaluator.results import EvaluationResult, PipeResult
 from evaluator.testsets import TestSet
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES, MAX_INLINE_LINES
 from web.task_utils import load_readme
 from .test_script import render_test_script
-from .upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError, upload_submit_files
 from .utils import file_response
 
 mimedetector = magic.Magic(mime=True)
@@ -377,69 +378,21 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         data["pipeline_result_icon"] = result_icon
 
     if request.method == "POST":
-
-        def get_request_ip(request):
-            x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-            if x_forwarded_for:
-                x_forwarded_for = x_forwarded_for.split(",")[0].strip()
-            return x_forwarded_for
-
-        s = Submit()
-        s.student = request.user
-        s.assignment = assignment
-        s.submit_num = (
-            Submit.objects.filter(
-                assignment__id=s.assignment.id, student__id=request.user.id
-            ).count()
-            + 1
-        )
-        s.ip_address_hash = get_request_ip(request)
-        if s.ip_address_hash:
-            s.ip_address_hash = hashlib.sha256(s.ip_address_hash.encode()).hexdigest()
-
-        solutions = request.FILES.getlist("solution")
-        tmp = request.POST.get("paths", None)
-        if tmp:
-            paths = [f.rstrip("\r") for f in tmp.split("\n") if f.rstrip("\r")]
-        else:
-            paths = [f.name for f in solutions]
-
         try:
-            upload_submit_files(s, paths, solutions)
+            submit = store_submit(request, assignment)
         except TooManyFilesError:
             return HttpResponse(
                 f"You have uploaded too many files. The maximum allowed file count is {MAX_UPLOAD_FILECOUNT}.",
                 status=400,
             )
 
-        # we need submit_id before putting the job to the queue
-        s.save()
-        s.jobid = evaluate_submit(request, s).id
-        s.save()
-
-        # delete previous notifications
-        Notification.objects.filter(
-            action_object_object_id__in=[str(s.id) for s in submits],
-            action_object_content_type=ContentType.objects.get_for_model(Submit),
-            verb="submitted",
-        ).delete()
-
-        if not is_teacher(request.user):
-            notify.send(
-                sender=request.user,
-                recipient=[assignment.clazz.teacher],
-                verb="submitted",
-                action_object=s,
-                important=any([s.assigned_points is not None for s in submits]),
-            )
-
         return redirect(
             reverse(
                 "task_detail",
                 kwargs={
-                    "login": s.student.username,
-                    "assignment_id": s.assignment.id,
-                    "submit_num": s.submit_num,
+                    "login": submit.student.username,
+                    "assignment_id": submit.assignment.id,
+                    "submit_num": submit.submit_num,
                 },
             )
             + "#result"
