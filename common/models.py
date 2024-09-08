@@ -2,8 +2,9 @@ import os
 import re
 import logging
 
-from typing import List
+from typing import List, Optional
 
+from django.db.models import QuerySet
 from django.utils import timezone
 
 from django.db import models
@@ -16,25 +17,34 @@ from .utils import is_teacher
 from jinja2 import Environment, FileSystemLoader
 
 
-def current_semester_conds(prefix=""):
-    return {
-        f"{prefix}semester__begin__lte": timezone.now(),
-        f"{prefix}semester__end__gte": timezone.now(),
-    }
-
-
-def current_semester() -> "Semester":
-    semester = Semester.objects.filter(begin__lte=timezone.now(), end__gte=timezone.now()).first()
+def current_semester() -> Optional["Semester"]:
+    """
+    Returns the current active semester, if there is any.
+    """
+    semester = Semester.objects.filter(active=True).order_by("-begin").first()
 
     if semester:
         return semester
 
-    return Semester.objects.filter(begin__lte=timezone.now()).order_by("begin").last()
+    # If no semester is marked as active, return the latest semester that has already begun.
+    return Semester.objects.filter(begin__lte=timezone.now()).order_by("-begin").first()
 
 
 class ClassManager(models.Manager):
-    def current_semester(self):
-        return self.filter(**current_semester_conds())
+    def current_semester(self) -> QuerySet:
+        """
+        Return classes for the currently active semester.
+        Note that the semantics for this call are a bit less strict than for `current_semester`.
+        Notably, if multiple semesters are active, it will return classes for all of them.
+
+        We could create some query like
+        WHERE r.active=1 AND NOT
+        EXISTS (SELECT * FROM semester AS s WHERE s.active=1 AND r.id != s.id AND s.begin > r.begin)
+
+        But it seems like overkill, since we will only ever have exactly one active semester
+        (we just need to make sure in admin that this property holds).
+        """
+        return self.filter(semester__active=True)
 
 
 class Semester(models.Model):
@@ -42,6 +52,9 @@ class Semester(models.Model):
     end = models.DateField()
     year = models.IntegerField()
     winter = models.BooleanField()
+    # Is the semester currently marked as active?
+    # Ideally, only one semester should be marked as such.
+    active = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.year}{'W' if self.winter else 'S'}"
