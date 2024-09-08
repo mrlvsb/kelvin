@@ -14,7 +14,6 @@ from common.models import (
     Semester,
     Subject,
     assignedtask_results,
-    current_semester_conds,
     current_semester,
     submit_assignment_path,
 )
@@ -202,13 +201,17 @@ def class_detail_list(request):
 
 
 @user_passes_test(is_teacher)
-def subject_list(request, subject_abbr):
+def subject_list(request, subject_abbr: str):
+    """
+    Returns the list of active classes for a given subject.
+    Used when creating a new task.
+    """
     get_object_or_404(
         Subject, abbr=subject_abbr
     )  # The result is not needed, the call is to provide 404 error
 
     classes = []
-    for clazz in Class.objects.filter(subject__abbr=subject_abbr, **current_semester_conds()):
+    for clazz in Class.objects.current_semester().filter(subject__abbr=subject_abbr):
         classes.append(
             {
                 "id": clazz.pk,
@@ -515,9 +518,8 @@ def task_detail(request, task_id=None):
                     "type": "file",
                 }
 
-    classes = Class.objects.filter(
+    classes = Class.objects.current_semester().filter(
         subject__abbr=task.subject.abbr,
-        **current_semester_conds(),
     )
     assigned_count = 0
     for clazz in classes:
