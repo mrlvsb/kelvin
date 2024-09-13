@@ -3,6 +3,7 @@
 # GHA environment secrets `ENV_DEPLOY_TOKEN` and `ENV_DEPLOY_URL`, respectively.
 name: Deploy
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
