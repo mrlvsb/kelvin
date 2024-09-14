@@ -17,7 +17,6 @@ from common.models import Semester, Submit, Task, current_semester
 from common.plagcheck.moss import (
     PlagiarismMatch,
     enqueue_moss_check,
-    get_linked_tasks,
     get_match_local_dir,
     moss_delete_job_from_cache,
     moss_job_cache_key,
@@ -25,6 +24,7 @@ from common.plagcheck.moss import (
     moss_task_get_opts,
     moss_task_set_opts,
 )
+from common.plagcheck import get_linked_tasks
 from common.plagcheck.moss.local_result import download_moss_result
 from common.utils import is_teacher
 from web.views.teacher import enrich_matches

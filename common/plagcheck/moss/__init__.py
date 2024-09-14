@@ -6,6 +6,7 @@ import re
 import subprocess
 import tempfile
 from io import StringIO
+from logging import Logger
 from pathlib import Path
 from typing import List
 
@@ -15,48 +16,21 @@ import networkx as nx
 from django.conf import settings
 from django.core.cache import caches
 from django.db.models import DurationField, ExpressionWrapper, F
-from django.db.models.functions import ExtractHour, Now
+from django.db.models.functions import Now
 from django.shortcuts import resolve_url
 from django.urls import reverse
 from networkx.drawing.nx_agraph import write_dot
 from notifications.signals import notify
 
-from common.models import AssignedTask, Class, Submit, Task, SourcePath
+from common.models import AssignedTask, Class, Submit, Task
+from common.plagcheck import (
+    get_relevant_submits,
+    ALLOWED_EXTENSIONS,
+    is_source_valid,
+    iter_template_files,
+    iter_submits_per_student,
+)
 from kelvin.settings import BASE_DIR
-
-MAX_FILE_SIZE = 128 * 1024
-
-ALLOWED_EXTENSIONS = {
-    "asm": "c",
-    "c": "c",
-    "h": "c",
-    "cpp": "cc",
-    "cxx": "cc",
-    "c++": "cc",
-    "cc": "cc",
-    "hpp": "cc",
-    "java": "java",
-    "py": "python",
-    "cs": "csharp",
-}
-
-
-def is_ext_allowed(path) -> bool:
-    return path.split(".")[-1].lower() in ALLOWED_EXTENSIONS.keys()
-
-
-def check_file_size(path: str) -> bool:
-    return 0 < os.path.getsize(path) <= MAX_FILE_SIZE
-
-
-def is_source_valid(logger, source: SourcePath) -> bool:
-    if not is_ext_allowed(source.virt):
-        logger.warning(f"Skipping file {source.virt} because of extension")
-        return False
-    if not check_file_size(source.phys):
-        logger.warning(f"Skipping file {source.phys} because of file size")
-        return False
-    return True
 
 
 def add_file(logger, moss: mosspy.Moss, file_path: str, name: str, counters):
@@ -82,7 +56,7 @@ def get_login_and_assignment(identifier: str) -> (str, int):
     return (student, int(assignment))
 
 
-def add_submit(logger, moss: mosspy.Moss, submit: Submit, counters):
+def add_submit(logger: Logger, moss: mosspy.Moss, submit: Submit, counters):
     logger.info(f"Checking submit {submit.id} by {submit.student.username}")
     sources = [source for source in submit.all_sources() if is_source_valid(logger, source)]
     if not sources:
@@ -170,36 +144,6 @@ def get_match_local_dir(task: Task, match: PlagiarismMatch) -> Path:
     return directory / id
 
 
-def get_linked_tasks(task_id: int) -> List[Task]:
-    task = Task.objects.get(pk=task_id)
-    tasks = [task]
-    if task.plagiarism_key is not None and task.plagiarism_key.strip() != "":
-        tasks = Task.objects.filter(
-            subject__id=task.subject.id, plagiarism_key=task.plagiarism_key
-        ).order_by("-id")
-    return list(tasks)
-
-
-def get_relevant_submits(task_id: int) -> List[Submit]:
-    """
-    Find all submits that should be checked for plagiarism for this given task.
-    It will return both submits of the task with the given `task_id` and also from other
-    tasks that have the same `plagiarism_key` and are for the same subject.
-    """
-    tasks = get_linked_tasks(task_id)
-
-    submits = (
-        Submit.objects.filter(assignment__task__in=tasks)
-        .annotate(
-            year=F("assignment__clazz__semester__year"), hour=ExtractHour("assignment__assigned")
-        )
-        # Order from the newest year (semester), from the earliest hour, and from the latest
-        # submit of the student
-        .order_by("-year", "hour", "-submit_num")
-    )
-    return list(submits.all())
-
-
 @django_rq.job("default", timeout=60 * 15)
 def moss_check_task(task_id: int, notify_teacher: bool, submit_limit: int | None):
     start_timestamp = datetime.datetime.now()
@@ -234,28 +178,18 @@ def moss_check_task(task_id: int, notify_teacher: bool, submit_limit: int | None
         moss_client.setDirectoryMode(1)
 
         # template files
-        tpl_path = os.path.join(submits[0].assignment.task.dir(), "template")
-        for root, _, files in os.walk(tpl_path):
-            for f in files:
-                full_path = os.path.join(root, f)
-                if is_ext_allowed(f) and check_file_size(full_path):
-                    logger.info(f"Task {task_id}: adding base file {f}")
-                    moss_client.addBaseFile(full_path)
-                else:
-                    logger.warning(f"Skipping template file {full_path}")
+        for path in iter_template_files(logger, submits[0].assignment.task):
+            moss_client.addBaseFile(path)
 
-        processed = set()
-        for submit in submits:
-            if submit.student_id not in processed:
-                try:
-                    add_submit(logger, moss_client, submit, counters)
-                    processed.add(submit.student_id)
-                except IOError as e:
-                    logger.error(
-                        f"Cannot add submit {submit.id} by {submit.student.username} to MOSS: {e}"
-                    )
-                if submit_limit is not None and len(processed) >= submit_limit:
-                    break
+        handled_submits = 0
+        for submit in iter_submits_per_student(submits, limit=submit_limit):
+            try:
+                add_submit(logger, moss_client, submit, counters)
+                handled_submits += 1
+            except IOError as e:
+                logger.error(
+                    f"Cannot add submit {submit.id} by {submit.student.username} to MOSS: {e}"
+                )
 
         detected_lang = max(counters, key=counters.get)
         if counters[detected_lang] > 0:
@@ -263,7 +197,7 @@ def moss_check_task(task_id: int, notify_teacher: bool, submit_limit: int | None
 
         file_bytes = sum(os.path.getsize(file_path) for (file_path, _) in moss_client.files)
         logger.info(
-            f"Sending {len(processed)} submit(s), {len(moss_client.files)} file(s), {file_bytes} bytes to Moss"
+            f"Sending {handled_submits} submit(s), {len(moss_client.files)} file(s), {file_bytes} bytes to Moss"
         )
         url = moss_client.send()
         logger.info(f"Moss returned: {url}")
