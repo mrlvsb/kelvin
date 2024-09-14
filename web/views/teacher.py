@@ -21,7 +21,7 @@ from notifications.signals import notify
 
 from common.evaluate import evaluate_submit, get_meta
 from common.models import AssignedTask, Class, Subject, Submit, Task, assignedtask_results
-from common.moss import PlagiarismMatch
+from common.plagcheck.moss import PlagiarismMatch
 from common.utils import is_teacher
 from evaluator.results import EvaluationResult
 from evaluator.testsets import TestSet

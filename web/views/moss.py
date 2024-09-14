@@ -14,7 +14,7 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 from notifications.models import Notification
 
 from common.models import Semester, Submit, Task, current_semester
-from common.moss import (
+from common.plagcheck.moss import (
     PlagiarismMatch,
     enqueue_moss_check,
     get_linked_tasks,
@@ -25,7 +25,7 @@ from common.moss import (
     moss_task_get_opts,
     moss_task_set_opts,
 )
-from common.moss.local_result import download_moss_result
+from common.plagcheck.moss.local_result import download_moss_result
 from common.utils import is_teacher
 from web.views.teacher import enrich_matches
 from web.views.utils import file_response

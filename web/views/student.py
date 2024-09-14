@@ -41,7 +41,7 @@ from common.models import (
     assignedtask_results,
     current_semester,
 )
-from common.moss import PlagiarismMatch, moss_result
+from common.plagcheck.moss import PlagiarismMatch, moss_result
 from common.submit import SubmitRateLimited, store_submit
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher
