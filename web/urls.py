@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import moss
+from .views import plagcheck
 from .views import teacher as teacher_view
 from .views import student as student_view
 from .views import notification as notification_view
