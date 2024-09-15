@@ -1,10 +1,10 @@
 import os
 import re
 import hashlib
-import subprocess
 
 import lxml.html as html
 import lxml
+import markdown
 
 from django.urls import reverse
 from django.core.cache import caches
@@ -41,6 +41,18 @@ def load_readme(task_code, vars=None):
         pass
 
 
+def markdown_to_html(input: str) -> str:
+    return markdown.markdown(
+        input,
+        extensions=[
+            # Enable ``` code blocks
+            "fenced_code",
+            # Enable parsing Markdown inside HTML tags (<div markdown="1">)
+            "md_in_html",
+        ],
+    )
+
+
 def process_markdown(task_code, markdown):
     h = hashlib.md5()
     h.update(markdown.encode("utf-8"))
@@ -57,11 +69,7 @@ def process_markdown(task_code, markdown):
             k, v = map(str.strip, line.split(":", 1))
             meta[k] = v
 
-    p = subprocess.Popen(
-        ["pandoc", "--no-highlight"], stdout=subprocess.PIPE, stdin=subprocess.PIPE
-    )
-    out = p.communicate(input=markdown.encode("utf-8"))
-    out = out[0].decode("utf-8")
+    out = markdown_to_html(markdown)
 
     try:
         root = html.fromstring(out)
