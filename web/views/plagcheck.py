@@ -34,7 +34,6 @@ from common.plagcheck.dolos import (
 )
 from common.plagcheck.moss import (
     PlagiarismMatch,
-    enqueue_moss_check,
     get_match_local_dir,
     moss_delete_job_from_cache,
     moss_job_cache_key,
@@ -42,7 +41,7 @@ from common.plagcheck.moss import (
     moss_task_get_opts,
     moss_task_set_opts,
 )
-from common.plagcheck import get_linked_tasks
+from common.plagcheck import get_linked_tasks, enqueue_plagiarism_check
 from common.plagcheck.moss.local_result import download_moss_result
 from common.utils import is_teacher
 from kelvin.settings import BASE_DIR
@@ -166,7 +165,7 @@ def task_plagcheck_index(request: HttpRequest, task_id: int):
 def task_plagcheck_start(request: HttpRequest, task_id: int):
     submit_limit = request.POST.get("submit-limit")
     submit_limit = None if not submit_limit else int(submit_limit)
-    enqueue_moss_check(task_id, submit_limit=submit_limit)
+    enqueue_plagiarism_check(task_id, submit_limit=submit_limit)
     return redirect(reverse("teacher_task_plagiarism", kwargs=dict(task_id=task_id)))
 
 

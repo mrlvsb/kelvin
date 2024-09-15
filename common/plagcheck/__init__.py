@@ -4,6 +4,9 @@ from io import StringIO
 from logging import Logger
 from typing import List, Iterator, Optional, Tuple
 
+import django_rq
+from django.core.cache import caches
+
 from django.db.models import F
 from django.db.models.functions import ExtractHour
 from django.shortcuts import resolve_url
@@ -136,3 +139,28 @@ def plagcheck_notify_teacher(task_id: int):
         custom_text=f"Plagiarism check of {task.name} finished. See results <a href='{plagcheck_url}'>here</a>.",
         important=True,
     )
+
+
+def enqueue_plagiarism_check(task_id: int, notify: bool = False, submit_limit: int | None = None):
+    from common.plagcheck.dolos import dolos_check_task
+    from common.plagcheck.moss import (
+        moss_delete_result_from_cache,
+        moss_check_task,
+        moss_job_cache_key,
+    )
+
+    cache = caches["default"]
+
+    # MOSS
+    moss_delete_result_from_cache(task_id)
+    job = django_rq.enqueue(
+        moss_check_task,
+        task_id=task_id,
+        notify_teacher=notify,
+        submit_limit=submit_limit,
+        job_timeout=60 * 60,
+    )
+    cache.set(moss_job_cache_key(task_id), job.id, timeout=60 * 60 * 8)
+
+    # Dolos
+    django_rq.enqueue(dolos_check_task, task_id=task_id, job_timeout=60 * 60)

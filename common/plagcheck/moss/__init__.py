@@ -27,6 +27,7 @@ from common.plagcheck import (
     iter_submits_per_student,
     create_stream_logger,
     plagcheck_notify_teacher,
+    enqueue_plagiarism_check,
 )
 from kelvin.settings import BASE_DIR
 
@@ -250,19 +251,6 @@ def moss_check_task(task_id: int, notify_teacher: bool, submit_limit: int | None
         plagcheck_notify_teacher(task_id)
 
 
-def enqueue_moss_check(task_id: int, notify: bool = False, submit_limit: int | None = None):
-    cache = caches["default"]
-    moss_delete_result_from_cache(task_id)
-    job = django_rq.enqueue(
-        moss_check_task,
-        task_id=task_id,
-        notify_teacher=notify,
-        submit_limit=submit_limit,
-        job_timeout=60 * 60,
-    )
-    cache.set(moss_job_cache_key(task_id), job.id, timeout=60 * 60 * 8)
-
-
 def do_periodic_moss_check():
     classes = Class.objects.current_semester()
 
@@ -296,7 +284,7 @@ def do_periodic_moss_check():
         ):
             continue
         logging.info(f"Scheduling MOSS check for {task.id}")
-        enqueue_moss_check(task.id, notify=True)
+        enqueue_plagiarism_check(task.id, notify=True)
 
 
 # TODO: setup in code instead of UI (Django scheduler management command)
