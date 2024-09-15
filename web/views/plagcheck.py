@@ -104,6 +104,12 @@ def task_plagcheck_index(request: HttpRequest, task_id: int):
         "opts": opts,
     }
 
+    dolos_result = get_dolos_result(task)
+    if not isinstance(dolos_result, DolosResultMissing):
+        ctx["dolos_url"] = reverse(
+            "teacher_task_dolos_page", kwargs=dict(task_id=task_id, path="/")
+        )
+
     status = "missing"
     metadata = ""
 

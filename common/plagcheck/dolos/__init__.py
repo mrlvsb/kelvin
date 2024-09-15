@@ -84,7 +84,6 @@ class Builder:
         for entry in self.entries:
             # Files should be relative to the temp dir
             data["filename"].append(str(entry.combined_file.relative_to(self.dir.name)))
-            data["label"].append(entry.student)
             data["full_name"].append(entry.student)
             data["created_at"].append(entry.submit_date.isoformat())
 
@@ -170,14 +169,18 @@ def dolos_check_plagiarism(task_id: int):
 
         csv_path = builder.build_csv()
 
+        name = f"{task.name} ({task.subject.abbr})"
         args = [
             "npx",
             "--yes",
             "@dodona/dolos",
+            "run",
             str(csv_path),
-            "-l",
+            "--language",
             builder.detect_language(),
-            "-f",
+            "--name",
+            name,
+            "--output-format",
             "csv",
         ]
 
