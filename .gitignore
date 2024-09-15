@@ -112,6 +112,7 @@ web/static/frontend.css
 web/static/frontend.css.map
 web/static/frontend.js
 web/static/frontend.js.map
+web/static/dolos
 
 survey/surveys/*.yaml
 exams/
