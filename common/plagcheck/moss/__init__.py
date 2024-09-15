@@ -25,19 +25,33 @@ from notifications.signals import notify
 from common.models import AssignedTask, Class, Submit, Task
 from common.plagcheck import (
     get_relevant_submits,
-    ALLOWED_EXTENSIONS,
     is_source_valid,
     iter_template_files,
-    iter_submits_per_student,
+    iter_submits_per_student, create_stream_logger,
 )
 from kelvin.settings import BASE_DIR
+
+
+EXTENSION_TO_LANG_MAP = {
+    "asm": "c",
+    "c": "c",
+    "h": "c",
+    "cpp": "cc",
+    "cxx": "cc",
+    "c++": "cc",
+    "cc": "cc",
+    "hpp": "cc",
+    "java": "java",
+    "py": "python",
+    "cs": "csharp",
+}
 
 
 def add_file(logger, moss: mosspy.Moss, file_path: str, name: str, counters):
     logger.info(f"Adding file {name} from {file_path}")
     ext = name.split(".")[-1].lower()
-    if ext in ALLOWED_EXTENSIONS:
-        counters[ALLOWED_EXTENSIONS[ext]] += 1
+    if ext in EXTENSION_TO_LANG_MAP:
+        counters[EXTENSION_TO_LANG_MAP[ext]] += 1
     moss.addFile(file_path, name)
 
 
@@ -148,18 +162,10 @@ def get_match_local_dir(task: Task, match: PlagiarismMatch) -> Path:
 def moss_check_task(task_id: int, notify_teacher: bool, submit_limit: int | None):
     start_timestamp = datetime.datetime.now()
 
-    log_stream = StringIO()
-    log_handler = logging.StreamHandler(log_stream)
-    log_handler.setFormatter(
-        logging.Formatter(f"Task {task_id}: %(asctime)s - %(levelname)s - %(message)s")
-    )
-
-    logger = logging.getLogger(f"moss-{task_id}")
-    logger.addHandler(log_handler)
-    logger.setLevel(logging.INFO)
+    (log_stream, logger) = create_stream_logger("moss", task_id=task_id)
 
     logger.info("Plagiarism checking started")
-    counters = {lang: 0 for lang in ALLOWED_EXTENSIONS.values()}
+    counters = {lang: 0 for lang in EXTENSION_TO_LANG_MAP.values()}
 
     url = None
     matches = []

@@ -1,6 +1,8 @@
+import logging
 import os
+from io import StringIO
 from logging import Logger
-from typing import List, Iterator, Optional
+from typing import List, Iterator, Optional, Tuple
 
 from django.db.models import F
 from django.db.models.functions import ExtractHour
@@ -8,23 +10,25 @@ from django.db.models.functions import ExtractHour
 from common.models import Task, Submit, SourcePath
 
 
-ALLOWED_EXTENSIONS = {
-    "asm": "c",
-    "c": "c",
-    "h": "c",
-    "cpp": "cc",
-    "cxx": "cc",
-    "c++": "cc",
-    "cc": "cc",
-    "hpp": "cc",
-    "java": "java",
-    "py": "python",
-    "cs": "csharp",
-}
+ALLOWED_EXTENSIONS = frozenset(
+    (
+        "asm",
+        "c",
+        "h",
+        "cpp",
+        "cxx",
+        "c++",
+        "cc",
+        "hpp",
+        "java",
+        "py",
+        "cs",
+    )
+)
 
 
-def is_ext_allowed(path) -> bool:
-    return path.split(".")[-1].lower() in ALLOWED_EXTENSIONS.keys()
+def is_ext_allowed(path: str) -> bool:
+    return path.split(".")[-1].lower() in ALLOWED_EXTENSIONS
 
 
 MAX_FILE_SIZE = 128 * 1024
@@ -34,7 +38,7 @@ def check_file_size(path: str) -> bool:
     return 0 < os.path.getsize(path) <= MAX_FILE_SIZE
 
 
-def is_source_valid(logger, source: SourcePath) -> bool:
+def is_source_valid(logger: Logger, source: SourcePath) -> bool:
     if not is_ext_allowed(source.virt):
         logger.warning(f"Skipping file {source.virt} because of extension")
         return False
@@ -99,3 +103,16 @@ def iter_submits_per_student(
             processed.add(submit.student_id)
             if limit is not None and len(processed) >= limit:
                 break
+
+
+def create_stream_logger(name: str, task_id: int) -> Tuple[StringIO, Logger]:
+    log_stream = StringIO()
+    log_handler = logging.StreamHandler(log_stream)
+    log_handler.setFormatter(
+        logging.Formatter(f"Task {task_id}: %(asctime)s - %(levelname)s - %(message)s")
+    )
+
+    logger = logging.getLogger(f"{name}-{task_id}")
+    logger.addHandler(log_handler)
+    logger.setLevel(logging.INFO)
+    return (log_stream, logger)
