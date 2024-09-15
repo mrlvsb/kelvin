@@ -3,7 +3,7 @@ FROM python:3.12
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-RUN apt-get update && apt-get install -y libsasl2-dev libgraphviz-dev graphviz pandoc
+RUN apt-get update && apt-get install -y libsasl2-dev libgraphviz-dev graphviz
 
 COPY requirements.txt /kelvin/requirements.txt
 RUN pip install -r /kelvin/requirements.txt

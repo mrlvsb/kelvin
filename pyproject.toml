@@ -19,6 +19,7 @@ dependencies = [
     "imageio==2.6.1",
     "Jinja2==2.11.3",
     "lxml==5.1.0",
+    "markdown>=3.7",
     "MarkupSafe==2.0.1",
     "mosspy==1.0.9",
     "networkx==2.5",
