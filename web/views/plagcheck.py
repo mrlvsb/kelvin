@@ -1,21 +1,35 @@
 import dataclasses
 import logging
 import mimetypes
+from pathlib import Path
 from typing import List
 
 import django_rq
 import rq
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.cache import caches
-from django.http import Http404, HttpResponse
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpRequest,
+    HttpResponseNotFound,
+    FileResponse,
+    HttpResponseBadRequest,
+    HttpResponseBase,
+)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import cache_page
 from django.views.decorators.clickjacking import xframe_options_sameorigin
+from django.views.static import serve
 from notifications.models import Notification
 
 from common.models import Semester, Submit, Task, current_semester
-from common.plagcheck import get_linked_tasks
-from common.plagcheck.dolos import dolos_check_plagiarism
+from common.plagcheck.dolos import (
+    get_dolos_result,
+    DolosResultMissing,
+    DolosResultFailed,
+    DolosResultPresent,
+)
 from common.plagcheck.moss import (
     PlagiarismMatch,
     enqueue_moss_check,
@@ -26,8 +40,10 @@ from common.plagcheck.moss import (
     moss_task_get_opts,
     moss_task_set_opts,
 )
+from common.plagcheck import get_linked_tasks
 from common.plagcheck.moss.local_result import download_moss_result
 from common.utils import is_teacher
+from kelvin.settings import BASE_DIR
 from web.views.teacher import enrich_matches
 from web.views.utils import file_response
 
@@ -191,3 +207,52 @@ def task_moss_result(request, task_id: int, match_id: int, path: str):
 
     mimetype = mimetypes.guess_type(local_path)[0]
     return HttpResponse(open(match_dir / path, "rb"), mimetype)
+
+
+@user_passes_test(is_teacher)
+def dolos_page(request: HttpRequest, path: str, task_id: int) -> HttpResponse:
+    """
+    Return the Dolos SPA web.
+    """
+    task = get_object_or_404(Task, pk=task_id)
+    result = get_dolos_result(task)
+    if isinstance(result, DolosResultMissing):
+        return HttpResponseNotFound()
+    elif isinstance(result, DolosResultFailed):
+        return HttpResponse(f"<pre>{result.log}</pre>")
+    elif isinstance(result, DolosResultPresent):
+        return serve_static_dolos(request, path)
+    else:
+        assert False
+
+
+def serve_static_dolos(request: HttpRequest, path: str) -> HttpResponse:
+    """
+    Serve the Dolos SPA from web/static/dolos.
+    """
+    path = path.lstrip("/")
+    if path == "":
+        path = "index.html"
+
+    return serve(request, path, document_root=Path(BASE_DIR) / "web" / "static" / "dolos")
+
+
+@user_passes_test(is_teacher)
+def dolos_result(request: HttpRequest, task_id: int, path: str) -> HttpResponseBase:
+    """
+    Return a dynamic Dolos CSV result file.
+    """
+    task = get_object_or_404(Task, pk=task_id)
+    result = get_dolos_result(task)
+    if isinstance(result, DolosResultMissing):
+        return HttpResponseNotFound()
+    elif isinstance(result, DolosResultFailed):
+        return HttpResponseNotFound()
+    elif isinstance(result, DolosResultPresent):
+        file = result.dir / path
+        if not file.is_relative_to(result.dir):
+            return HttpResponseBadRequest()
+        if file.is_file() and file.suffix == ".csv":
+            return FileResponse(open(file, "rb"), filename=file.name, content_type="text/csv")
+    else:
+        assert False
