@@ -26,7 +26,7 @@
       <meta http-equiv="refresh" content="15"/>
     {% endif %}
   {% else %}
-    <form method="post" class="float-end">
+    <form action="{% url 'teacher_task_plagiarism_start' task_id=task.id %}" method="post" class="float-end">
       {% csrf_token %}
       <input name="submit-limit" type="number" placeholder="Submit limit" title="Maximum amount of submits sent to MOSS, to avoid timing out" />
       <button class="btn btn-sm btn-primary">Send to MOSS</button>
