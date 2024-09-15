@@ -5,7 +5,6 @@ import os
 import re
 import subprocess
 import tempfile
-from io import StringIO
 from logging import Logger
 from pathlib import Path
 from typing import List
@@ -27,7 +26,8 @@ from common.plagcheck import (
     get_relevant_submits,
     is_source_valid,
     iter_template_files,
-    iter_submits_per_student, create_stream_logger,
+    iter_submits_per_student,
+    create_stream_logger,
 )
 from kelvin.settings import BASE_DIR
 
