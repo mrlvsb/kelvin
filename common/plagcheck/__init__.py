@@ -6,9 +6,10 @@ from typing import List, Iterator, Optional, Tuple
 
 from django.db.models import F
 from django.db.models.functions import ExtractHour
+from django.shortcuts import resolve_url
+from notifications.signals import notify
 
-from common.models import Task, Submit, SourcePath
-
+from common.models import Task, Submit, SourcePath, Class
 
 ALLOWED_EXTENSIONS = frozenset(
     (
@@ -116,3 +117,22 @@ def create_stream_logger(name: str, task_id: int) -> Tuple[StringIO, Logger]:
     logger.addHandler(log_handler)
     logger.setLevel(logging.INFO)
     return (log_stream, logger)
+
+
+def plagcheck_notify_teacher(task_id: int):
+    classes = Class.objects.filter(assignedtask__task_id=task_id).distinct()
+    teachers = list(set([c.teacher for c in classes]))
+    if not teachers:
+        return
+
+    task = Task.objects.get(pk=task_id)
+    plagcheck_url = resolve_url("teacher_task_plagiarism_check", task_id=task_id)
+
+    notify.send(
+        sender=teachers[0],
+        recipient=teachers,
+        verb="plagiarism",
+        action_object=task,
+        custom_text=f"Plagiarism check of {task.name} finished. See results <a href='{plagcheck_url}'>here</a>.",
+        important=True,
+    )

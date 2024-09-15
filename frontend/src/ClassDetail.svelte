@@ -196,7 +196,7 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
                     {assignment.name}
                     <a href="/task/edit/{assignment.task_id}" use:link title="Edit"><span class="iconify" data-icon="clarity:edit-solid"></span></a>
                     <div style="display: flex; align-items: center;">
-                      <a href="{assignment.moss_link}" title="Plagiarism check"><span class="iconify" data-icon="bx:bx-check-double"></span></a>
+                      <a href="{assignment.plagcheck_link}" title="Plagiarism check"><span class="iconify" data-icon="bx:bx-check-double"></span></a>
                       <a href="{assignment.sources_link}" title="Download all source codes"><span class="iconify" data-icon="fe:download" data-inline="false"></span></a>
                       <a href="{assignment.csv_link}" title="Download CSV with results"><span class="iconify" data-icon="la:file-csv-solid"></span></a>
                       <a href="/assignment/show/{assignment.assignment_id}" title="Show all source codes"><span class="iconify" data-icon="bx-bx-code-alt"></span></a>

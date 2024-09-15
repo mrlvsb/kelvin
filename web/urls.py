@@ -67,7 +67,9 @@ urlpatterns = [
     path("teacher/task/<int:task_id>/dolos/data/<str:path>", plagcheck.dolos_result),
     path("teacher/task/<int:task_id>/dolos<path:path>", plagcheck.dolos_page),
     path(
-        "teacher/task/<int:task_id>/moss", plagcheck.task_moss_check, name="teacher_task_moss_check"
+        "teacher/task/<int:task_id>/plagcheck",
+        plagcheck.task_plagcheck_index,
+        name="teacher_task_plagiarism_check",
     ),
     path(
         "teacher/task/<int:task_id>/moss/graph",

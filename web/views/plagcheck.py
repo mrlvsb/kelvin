@@ -73,8 +73,8 @@ def get_linked_task_data(task_id: int) -> List[LinkedTask]:
 
 
 @user_passes_test(is_teacher)
-def task_moss_check(request, task_id):
-    # clear MOSS notifications
+def task_plagcheck_index(request, task_id):
+    # clear plagcheck notifications
     Notification.objects.filter(
         action_object_object_id=task_id,
         recipient_id=request.user.id,
@@ -109,7 +109,7 @@ def task_moss_check(request, task_id):
             status = "unknown"
         return render(
             request,
-            "web/moss.html",
+            "web/plagcheck.html",
             {"status": status, "task": task, "refresh": refresh, "linked_tasks": linked_tasks},
         )
 
@@ -131,7 +131,7 @@ def task_moss_check(request, task_id):
     if not res:
         return render(
             request,
-            "web/moss.html",
+            "web/plagcheck.html",
             {"task": task, "has_result": False, "linked_tasks": linked_tasks},
         )
     else:
@@ -141,7 +141,7 @@ def task_moss_check(request, task_id):
         matches = enrich_matches(res.matches, request.user, task)
         return render(
             request,
-            "web/moss.html",
+            "web/plagcheck.html",
             {
                 "has_result": True,
                 "success": res.success,
