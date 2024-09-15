@@ -9,6 +9,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List, Union, Optional
 
+import django_rq
 import pandas as pd
 
 from kelvin.settings import BASE_DIR
@@ -133,10 +134,6 @@ def get_error_log_path(task: Task) -> Path:
     return get_result_dir(task) / "error.log"
 
 
-def get_success_file_path(task: Task) -> Path:
-    return get_result_dir(task) / ".success"
-
-
 def get_dolos_result(task: Task) -> DolosResult:
     dir = get_result_dir(task)
     if not dir.is_dir():
@@ -203,13 +200,14 @@ def dolos_check_plagiarism(task_id: int):
 
         # Copy the result CSV files from the temporary dir to the task dir
         shutil.copytree(tmp_result_dir, result_dir)
-
-        # This "commits" the Dolos result
-        with open(get_success_file_path(task), "w") as f:
-            f.write("ok")
     except BaseException as e:
         logger.exception(e)
         store_error(task, log_stream.getvalue())
+
+
+@django_rq.job("default", timeout=60 * 15)
+def dolos_check_task(task_id: int):
+    dolos_check_plagiarism(task_id=task_id)
 
 
 def store_error(task: Task, log: str):
