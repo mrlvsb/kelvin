@@ -258,7 +258,7 @@ td:not(:nth-of-type(3)) {
         <AutoComplete bind:value={task.path} onChange={loadTask} on:click={() => syncPathWithTitle = false} />
         {#if taskLink}
           <button class="btn btn-outline-info" title="Plagiarism check">
-            <a href={task.moss_link} target="_blank" class="text-decoration: none;">
+            <a href={task.plagcheck_link} target="_blank" class="text-decoration: none;">
               <span class="iconify" data-icon="bx:bx-check-double"></span>
             </a>
           </button>

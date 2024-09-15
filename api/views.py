@@ -118,8 +118,8 @@ def class_detail_list(request):
                 "assignment_id": assignment.id,
                 "name": assignment.task.name,
                 "short_name": assignment.task.code_name(),
-                "moss_link": reverse(
-                    "teacher_task_moss_check", kwargs={"task_id": assignment.task.id}
+                "plagcheck_link": reverse(
+                    "teacher_task_plagiarism_check", kwargs={"task_id": assignment.task.id}
                 ),
                 "sources_link": reverse(
                     "download_assignment_submits", kwargs={"assignment_id": assignment.id}
@@ -484,7 +484,7 @@ def task_detail(request, task_id=None):
         ).rstrip("_"),
         "errors": errors,
         "task_link": reverse("teacher_task", kwargs=dict(task_id=task.pk)),
-        "moss_link": reverse("teacher_task_moss_check", kwargs=dict(task_id=task.pk)),
+        "plagcheck_link": reverse("teacher_task_plagiarism_check", kwargs=dict(task_id=task.pk)),
         "plagiarism_key": task.plagiarism_key,
     }
 

@@ -16,10 +16,8 @@ from django.conf import settings
 from django.core.cache import caches
 from django.db.models import DurationField, ExpressionWrapper, F
 from django.db.models.functions import Now
-from django.shortcuts import resolve_url
 from django.urls import reverse
 from networkx.drawing.nx_agraph import write_dot
-from notifications.signals import notify
 
 from common.models import AssignedTask, Class, Submit, Task
 from common.plagcheck import (
@@ -28,6 +26,7 @@ from common.plagcheck import (
     iter_template_files,
     iter_submits_per_student,
     create_stream_logger,
+    plagcheck_notify_teacher,
 )
 from kelvin.settings import BASE_DIR
 
@@ -95,25 +94,6 @@ def add_submit(logger: Logger, moss: mosspy.Moss, submit: Submit, counters):
         filename = generate_filename(source.virt)
         filenames.add(filename)
         add_file(logger, moss, filepath, filename, counters)
-
-
-def moss_notify_teacher(task_id: int):
-    classes = Class.objects.filter(assignedtask__task_id=task_id).distinct()
-    teachers = list(set([c.teacher for c in classes]))
-    if not teachers:
-        return
-
-    task = Task.objects.get(pk=task_id)
-    moss_url = resolve_url("teacher_task_moss_check", task_id=task_id)
-
-    notify.send(
-        sender=teachers[0],
-        recipient=teachers,
-        verb="plagiarism",
-        action_object=task,
-        custom_text=f"MOSS plagiarism check of {task.name} finished. See results <a href='{moss_url}'>here</a>.",
-        important=True,
-    )
 
 
 @dataclasses.dataclass(frozen=True)
@@ -267,7 +247,7 @@ def moss_check_task(task_id: int, notify_teacher: bool, submit_limit: int | None
     )
 
     if success and notify_teacher:
-        moss_notify_teacher(task_id)
+        plagcheck_notify_teacher(task_id)
 
 
 def enqueue_moss_check(task_id: int, notify: bool = False, submit_limit: int | None = None):
