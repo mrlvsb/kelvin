@@ -18,8 +18,10 @@ from django.http import (
     HttpResponseBase,
 )
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.cache import cache_page
 from django.views.decorators.clickjacking import xframe_options_sameorigin
+from django.views.decorators.http import require_http_methods
 from django.views.static import serve
 from notifications.models import Notification
 
@@ -73,7 +75,7 @@ def get_linked_task_data(task_id: int) -> List[LinkedTask]:
 
 
 @user_passes_test(is_teacher)
-def task_plagcheck_index(request, task_id):
+def task_plagcheck_index(request: HttpRequest, task_id: int):
     # clear plagcheck notifications
     Notification.objects.filter(
         action_object_object_id=task_id,
@@ -112,12 +114,6 @@ def task_plagcheck_index(request, task_id):
             "web/plagcheck.html",
             {"status": status, "task": task, "refresh": refresh, "linked_tasks": linked_tasks},
         )
-
-    if request.method == "POST":
-        submit_limit = request.POST.get("submit-limit")
-        submit_limit = None if not submit_limit else int(submit_limit)
-        enqueue_moss_check(task_id, submit_limit=submit_limit)
-        return redirect(request.path_info)
 
     opts = moss_task_get_opts(task_id)
 
@@ -158,6 +154,15 @@ def task_plagcheck_index(request, task_id):
                 "linked_tasks": linked_tasks,
             },
         )
+
+
+@user_passes_test(is_teacher)
+@require_http_methods(["POST"])
+def task_plagcheck_start(request: HttpRequest, task_id: int):
+    submit_limit = request.POST.get("submit-limit")
+    submit_limit = None if not submit_limit else int(submit_limit)
+    enqueue_moss_check(task_id, submit_limit=submit_limit)
+    return redirect(reverse("teacher_task_plagiarism", kwargs=dict(task_id=task_id)))
 
 
 @user_passes_test(is_teacher)

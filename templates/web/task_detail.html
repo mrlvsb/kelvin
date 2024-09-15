@@ -78,7 +78,7 @@
   {% if plagiarism_matches %}
     <div class="card p-2 my-2">
       <h5 title="Top 5 plagiarism matches for some checked submit of this student" class="card-title">Plagiarism check
-        (<a href="{% url 'teacher_task_plagiarism_check' task.id %}" target="_blank">full report</a>)
+        (<a href="{% url 'teacher_task_plagiarism' task.id %}" target="_blank">full report</a>)
       </h5>
       <ul>
         {% for match in plagiarism_matches|slice:":5" %}
@@ -89,7 +89,7 @@
           </li>
         {% endfor %}
         {% if plagiarism_matches|length > 5 %}
-          <li>… (<a href="{% url 'teacher_task_plagiarism_check' task.id %}" target="_blank">show all</a>)</li>
+          <li>… (<a href="{% url 'teacher_task_plagiarism' task.id %}" target="_blank">show all</a>)</li>
         {% endif %}
       </ul>
     </div>

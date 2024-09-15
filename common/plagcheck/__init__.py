@@ -126,7 +126,7 @@ def plagcheck_notify_teacher(task_id: int):
         return
 
     task = Task.objects.get(pk=task_id)
-    plagcheck_url = resolve_url("teacher_task_plagiarism_check", task_id=task_id)
+    plagcheck_url = resolve_url("teacher_task_plagiarism", task_id=task_id)
 
     notify.send(
         sender=teachers[0],
