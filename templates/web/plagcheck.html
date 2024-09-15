@@ -1,7 +1,7 @@
 {% extends 'web/layout.html' %}
 
 {% block content %}
-  <h1>MOSS for {{ task.name }}
+  <h1>Plagiarism check for {{ task.name }}
     {% if moss_url %}
       (<a href="{{ moss_url }}" target="_blank">MOSS URL</a>)
     {% endif %}
@@ -9,192 +9,196 @@
   <div>
     <span>Linked tasks:</span>
     {% for task in linked_tasks %}
-      <a href="{% url 'teacher_task' task_id=task.id %}">{{ task.name }} ({{ task.semesters }})</a>{% if not forloop.last %},{% endif %}
+      <a href="{% url 'teacher_task' task_id=task.id %}">{{ task.name }} ({{ task.semesters }})</a>
+      {% if not forloop.last %},{% endif %}
     {% endfor %}
   </div>
+  {% if dolos_url %}
+    <a href="{{ dolos_url }}" target="_blank">Dolos result</a> (experimental)
+  {% endif %}
   {% if started_at %}
     <div>Started at {{ started_at|date:"d. m. Y H:i:s" }}</div>
     <div>Finished at {{ finished_at|date:"d. m. Y H:i:s" }}</div>
   {% endif %}
-  {% if status %}
+  <form class="d-flex align-items-center my-2">
+    <div class="input-group input-group-sm me-1 w-auto">
+      <input type="number" min="0" max="100" class="form-control form-control-sm"
+             name="percent" value="{{ opts.percent }}"/>
+      <div class="input-group-text">%</div>
+    </div>
+    <div class="input-group input-group-sm me-1 w-auto">
+      <input type="number" min="0" max="1000" placeholder="Max lines"
+             class="form-control form-control-sm" name="lines" value="{{ opts.lines }}"/>
+      <div class="input-group-text">lines</div>
+    </div>
+    <div class="form-check me-2 w-auto">
+      <input class="form-check-input" type="checkbox" name="show_to_students"
+              {% if opts.show_to_students %} checked{% endif %} id="filter-show-to-students"
+             value="1">
+      <label class="form-check-label" for="filter-show-to-students"> Show to students on the
+        Result tab</label>
+    </div>
+    <input type="submit" class="btn btn-sm btn-primary w-auto" value="Save settings">
+  </form>
+  <form action="{% url 'teacher_task_plagiarism_start' task_id=task.id %}" method="post"
+        class="float-end">
+    {% csrf_token %}
+    <input name="submit-limit" type="number" placeholder="Submit limit"
+           title="Maximum amount of submits sent to MOSS, to avoid timing out"/>
+    <button class="btn btn-sm btn-primary">Start check</button>
+  </form>
+
+  {% if status == "missing" %}
+    No result present. Click on "Start check".
+  {% elif status == "started" or status == "queued" %}
     <div style="text-align: center; font-size: 30px">
     <pre>
       {{ status }}
+      {{ metadata }}
     </pre>
     </div>
     {% if refresh %}
       <meta http-equiv="refresh" content="15"/>
     {% endif %}
+  {% elif status == "failed" %}
+    <div>MOSS check has failed</div>
   {% else %}
-    <form action="{% url 'teacher_task_plagiarism_start' task_id=task.id %}" method="post" class="float-end">
-      {% csrf_token %}
-      <input name="submit-limit" type="number" placeholder="Submit limit" title="Maximum amount of submits sent to MOSS, to avoid timing out" />
-      <button class="btn btn-sm btn-primary">Send to MOSS</button>
-    </form>
+    {% if matches %}
+      <a href="{% url "teacher_task_moss_graph" task_id=task.id %}" class="btn btn-primary mt-2">Download
+        anonymized graph</a>
+      {% if newer_submit_count %}
+        There were <span class="badge bg-danger">{{ newer_submit_count }}</span> submit(s) since
+        the check was performed!
+      {% endif %}
 
-    {% if has_result %}
-      {% if success %}
-        <form class="d-flex align-items-center">
-          <div class="input-group input-group-sm me-1 w-auto">
-            <input type="number" min="0" max="100" class="form-control form-control-sm"
-                   name="percent" value="{{ opts.percent }}" />
-            <div class="input-group-text">%</div>
-          </div>
-          <div class="input-group input-group-sm me-1 w-auto">
-            <input type="number" min="0" max="1000" placeholder="Max lines"
-                   class="form-control form-control-sm" name="lines" value="{{ opts.lines }}" />
-            <div class="input-group-text">lines</div>
-          </div>
-          <div class="form-check me-2 w-auto">
-            <input class="form-check-input" type="checkbox" name="show_to_students"
-                {% if opts.show_to_students %} checked{% endif %} id="filter-show-to-students"
-                   value="1">
-            <label class="form-check-label" for="filter-show-to-students"> Show to students on the
-              Result tab</label>
-          </div>
-          <input type="submit" class="btn btn-sm btn-primary w-auto" value="Save settings">
-        </form>
-        <a href="{% url "teacher_task_moss_graph" task_id=task.id %}" class="btn btn-primary mt-2">Download
-          anonymized graph</a>
+      <div id="graph" style="margin-bottom: 20px;">
+        {{ graph | safe }}
+      </div>
 
-        {% if matches %}
-          {% if newer_submit_count %}
-            There were <span class="badge bg-danger">{{ newer_submit_count }}</span> submit(s) since
-            the check was performed!
-          {% endif %}
+      <style>
+          #graph svg {
+              width: 100%;
+              height: auto;
+              min-height: 300px;
+          }
 
-          <div id="graph" style="margin-bottom: 20px;">
-            {{ graph | safe }}
-          </div>
+          table td {
+              white-space: nowrap;
+              width: 1%;
+          }
 
-          <style>
-              #graph svg {
-                  width: 100%;
-                  height: auto;
-                  min-height: 300px;
-              }
+          table td, th {
+              text-align: center;
+          }
+      </style>
+      <link rel="stylesheet" type="text/css"
+            href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css"/>
 
-              table td {
-                  white-space: nowrap;
-                  width: 1%;
-              }
-
-              table td, th {
-                  text-align: center;
-              }
-          </style>
-          <link rel="stylesheet" type="text/css"
-                href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css"/>
-
-          <script
+      <script
               src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
-          <script>svgPanZoom('#graph svg')</script>
-          <script
+      <script>svgPanZoom('#graph svg')</script>
+      <script
               src="https://code.jquery.com/jquery-3.6.0.min.js"
               integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
               crossorigin="anonymous"></script>
-          <script src="//cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
-          <script>
-              var semesterRegex = /.*\((.*)\)$/;
+      <script src="//cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+      <script>
+          var semesterRegex = /.*\((.*)\)$/;
 
-              $(document).ready(function () {
-                  $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
-                      var filterMode = $("#filter-mode").val();
+          $(document).ready(function () {
+              $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+                  var filterMode = $("#filter-mode").val();
 
-                      var firstSemester = data[1].match(semesterRegex)[1];
-                      var secondSemester = data[4].match(semesterRegex)[1];
+                  var firstSemester = data[1].match(semesterRegex)[1];
+                  var secondSemester = data[4].match(semesterRegex)[1];
 
-                      var thisSemester = "{{ semester }}";
-                      var firstMatches = firstSemester === thisSemester;
-                      var secondMatches = secondSemester === thisSemester;
+                  var thisSemester = "{{ semester }}";
+                  var firstMatches = firstSemester === thisSemester;
+                  var secondMatches = secondSemester === thisSemester;
 
-                      if (filterMode === "both") {
-                          return firstMatches && secondMatches;
-                      } else if (filterMode === "one") {
-                          return firstMatches || secondMatches;
-                      } else {
-                          return true;
-                      }
-                  });
-
-                  var table = $(".moss-table").DataTable({
-                      "paging": false,
-                      "order": [
-                          [5, "desc"], // Percent B descending
-                          [6, "desc"]  // Line count descending
-                      ],
-                      columnDefs: [{
-                          targets: ["_all"],
-                          orderSequence: ["desc", "asc"]
-                      }, {
-                          targets: [-2],
-                          orderable: false
-                      }]
-                  });
-
-                  $("#filter-mode").change(function () {
-                      table.draw();
-                  });
+                  if (filterMode === "both") {
+                      return firstMatches && secondMatches;
+                  } else if (filterMode === "one") {
+                      return firstMatches || secondMatches;
+                  } else {
+                      return true;
+                  }
               });
-          </script>
 
-          <div style="display: flex; justify-content: end; margin-bottom: 5px;">
-            <span style="padding-right: 5px;">Filter mode:</span>
-            <select id="filter-mode">
-              <option value="one" selected="selected">At least one side from this semester</option>
-              <option value="both">Both sides from this semester</option>
-              <option value="all">All</option>
-            </select>
-          </div>
-          <table class="table table-sm table-hover table-striped moss-table">
-            <thead>
-            <tr>
-              <th>Student A</th>
-              <th>Class A</th>
-              <th>Percent A</th>
-              <th>Student B</th>
-              <th>Class B</th>
-              <th>Percent B</th>
-              <th>Line count</th>
-              <th>MOSS link</th>
-              <th>My student</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for match in matches %}
-              <tr>
-                <td><a target="_blank" href="{{ match.first_link }}">{{ match.first.login }}</a>
-                  ({{ match.first_fullname }})
-                </td>
-                <td>{{ match.first_class }}</td>
-                <td>{{ match.first.percent }}%</td>
-                <td><a target="_blank" href="{{ match.second_link }}">{{ match.second.login }}</a>
-                  ({{ match.second_fullname }})
-                </td>
-                <td>{{ match.second_class }}</td>
-                <td>{{ match.second.percent }}%</td>
-                <td>{{ match.lines }}</td>
-                <td>
-                  <a target="_blank" href="{{ match.link }}"><span class="iconify"
-                                                                   data-icon="ant-design:search-outlined"></span></a>
-                </td>
-                <td>{{ match.teaching|yesno:"Yes,No" }}</td>
-              </tr>
-            {% endfor %}
-            </tbody>
-          </table>
-        {% else %}
-          <p class="alert alert-info mt-2">
-            No matches found - try to set different thresholds.
-          </p>
-        {% endif %}
-      {% else %}
-        <div>MOSS check has failed</div>
-      {% endif %}
-      <div>
-        <h4>Log</h4>
-        <pre>{{ log }}</pre>
+              var table = $(".moss-table").DataTable({
+                  "paging": false,
+                  "order": [
+                      [5, "desc"], // Percent B descending
+                      [6, "desc"]  // Line count descending
+                  ],
+                  columnDefs: [{
+                      targets: ["_all"],
+                      orderSequence: ["desc", "asc"]
+                  }, {
+                      targets: [-2],
+                      orderable: false
+                  }]
+              });
+
+              $("#filter-mode").change(function () {
+                  table.draw();
+              });
+          });
+      </script>
+
+      <div style="display: flex; justify-content: end; margin-bottom: 5px;">
+        <span style="padding-right: 5px;">Filter mode:</span>
+        <select id="filter-mode">
+          <option value="one" selected="selected">At least one side from this semester</option>
+          <option value="both">Both sides from this semester</option>
+          <option value="all">All</option>
+        </select>
       </div>
+      <table class="table table-sm table-hover table-striped moss-table">
+        <thead>
+        <tr>
+          <th>Student A</th>
+          <th>Class A</th>
+          <th>Percent A</th>
+          <th>Student B</th>
+          <th>Class B</th>
+          <th>Percent B</th>
+          <th>Line count</th>
+          <th>MOSS link</th>
+          <th>My student</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for match in matches %}
+          <tr>
+            <td><a target="_blank" href="{{ match.first_link }}">{{ match.first.login }}</a>
+              ({{ match.first_fullname }})
+            </td>
+            <td>{{ match.first_class }}</td>
+            <td>{{ match.first.percent }}%</td>
+            <td><a target="_blank" href="{{ match.second_link }}">{{ match.second.login }}</a>
+              ({{ match.second_fullname }})
+            </td>
+            <td>{{ match.second_class }}</td>
+            <td>{{ match.second.percent }}%</td>
+            <td>{{ match.lines }}</td>
+            <td>
+              <a target="_blank" href="{{ match.link }}"><span class="iconify"
+                                                               data-icon="ant-design:search-outlined"></span></a>
+            </td>
+            <td>{{ match.teaching|yesno:"Yes,No" }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="alert alert-info mt-2">
+        No matches found - try to set different thresholds.
+      </p>
     {% endif %}
+    <div>
+      <h4>Log</h4>
+      <pre>{{ log }}</pre>
+    </div>
   {% endif %}
 {% endblock %}

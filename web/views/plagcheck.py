@@ -76,7 +76,7 @@ def get_linked_task_data(task_id: int) -> List[LinkedTask]:
 
 @user_passes_test(is_teacher)
 def task_plagcheck_index(request: HttpRequest, task_id: int):
-    # clear plagcheck notifications
+    # Clear plagcheck notifications
     Notification.objects.filter(
         action_object_object_id=task_id,
         recipient_id=request.user.id,
@@ -89,71 +89,70 @@ def task_plagcheck_index(request: HttpRequest, task_id: int):
     task = get_object_or_404(Task, pk=task_id)
     linked_tasks = get_linked_task_data(task_id)
 
-    job_id = cache.get(key_job)
-    if job_id:
-        refresh = False
-        try:
-            job = django_rq.jobs.get_job_class().fetch(
-                job_id, connection=django_rq.queues.get_connection()
-            )
-            status = job.get_status()
-            if status == "started":
-                refresh = True
-            elif status == "queued":
-                refresh = True
-                status += f" {job.get_position() + 1}"
-            elif status == "failed" and job.exc_info:
-                status += f"\n{job.exc_info}"
-                moss_delete_job_from_cache(task_id)
-        except (rq.exceptions.NoSuchJobError, AttributeError) as e:
-            moss_delete_job_from_cache(task_id)
-            logging.exception(e)
-            status = "unknown"
-        return render(
-            request,
-            "web/plagcheck.html",
-            {"status": status, "task": task, "refresh": refresh, "linked_tasks": linked_tasks},
-        )
-
+    # Configure task options
     opts = moss_task_get_opts(task_id)
-
     if "percent" in request.GET:
         opts.percent = int(request.GET["percent"])
         opts.lines = int(request.GET.get("lines", opts.lines))
         opts.show_to_students = request.GET.get("show_to_students") == "1"
         moss_task_set_opts(task_id, opts)
 
+    ctx = {
+        "task": task,
+        "linked_tasks": linked_tasks,
+        "semester": str(current_semester()),
+        "opts": opts,
+    }
+
+    status = "missing"
+    metadata = ""
+
+    job_id = cache.get(key_job)
+    if job_id:
+        """
+        In this case, the plagiarism check has been schedule and is running (or waiting to run).
+        """
+        try:
+            job = django_rq.jobs.get_job_class().fetch(
+                job_id, connection=django_rq.queues.get_connection()
+            )
+            status = job.get_status()
+            if status == "queued":
+                metadata = f"Position in queue: {job.get_position() + 1}"
+            elif status == "failed" and job.exc_info:
+                metadata = job.exc_info
+                moss_delete_job_from_cache(task_id)
+        except (rq.exceptions.NoSuchJobError, AttributeError) as e:
+            status = "failed"
+            metadata = str(e)
+            moss_delete_job_from_cache(task_id)
+            logging.exception(e)
+
+    ctx["refresh"] = status in ("started", "queued")
+    ctx["metadata"] = metadata
+
     res = moss_result(task_id, percent=opts.percent, lines=opts.lines)
-    if not res:
-        return render(
-            request,
-            "web/plagcheck.html",
-            {"task": task, "has_result": False, "linked_tasks": linked_tasks},
-        )
-    else:
+    if res:
+        status = "present"
         newer_submit_count = Submit.objects.filter(
             assignment__task_id=task.id, created_at__gt=res.started_at
         ).count()
         matches = enrich_matches(res.matches, request.user, task)
-        return render(
-            request,
-            "web/plagcheck.html",
-            {
-                "has_result": True,
-                "success": res.success,
-                "log": res.log,
-                "matches": matches,
-                "graph": res.to_svg(anonymize=False),
-                "opts": res.opts,
-                "started_at": res.started_at,
-                "finished_at": res.finished_at,
-                "moss_url": res.url,
-                "newer_submit_count": newer_submit_count,
-                "task": task,
-                "semester": str(current_semester()),
-                "linked_tasks": linked_tasks,
-            },
-        )
+        if not res.success:
+            status = "failed"
+        ctx["log"] = res.log
+        ctx["matches"] = matches
+        ctx["graph"] = res.to_svg(anonymize=False)
+        ctx["started_at"] = res.started_at
+        ctx["finished_at"] = res.finished_at
+        ctx["moss_url"] = res.url
+        ctx["newer_submit_count"] = newer_submit_count
+    ctx["status"] = status
+    return render(
+        request,
+        "web/plagcheck.html",
+        ctx,
+    )
 
 
 @user_passes_test(is_teacher)
