@@ -1,0 +1,34 @@
+# For local development, only database and redis is running
+#
+# docker compose -f docker-compose-local.yml up -d
+#
+
+services:
+  db:
+    container_name: kelvin_local_db
+    image: postgres:14    
+    environment:
+      - POSTGRES_DB=${DATABASE__DB}
+      - POSTGRES_USER=${DATABASE__USERNAME}
+      - POSTGRES_PASSWORD=${DATABASE__PASSWORD}
+    env_file:
+      - .env
+    volumes:
+      - kelvin_local_db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    ports:
+      - "${DATABASE__PORT}:5432"
+
+  redis:
+    container_name: kelvin_local_redis
+    image: redis:alpine
+    restart: unless-stopped
+    volumes:
+      - "kelvin_local_redis_data:/data"
+    ports:
+      - "${REDIS__PORT}:6379"
+    command: "redis-server --save 60 1 --loglevel warning"
+
+volumes:
+  kelvin_local_db_data:
+  kelvin_local_redis_data:
