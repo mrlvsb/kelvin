@@ -20,8 +20,6 @@ COPY frontend .
 
 RUN mkdir -p /web/static
 
-RUN ls -la
-
 RUN npm run build
 
 FROM python:3.12-bookworm AS runtime

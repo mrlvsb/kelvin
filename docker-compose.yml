@@ -4,7 +4,6 @@ services:
     depends_on:
       - db
       - redis
-      - nginx
     build:
       context: .
       dockerfile: Dockerfile
@@ -19,7 +18,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ${DATABASE__DATA_PATH}:/app/static
+      - kelvin_app_static:/app/static
       - ${KELVIN__LOCAL_SETTINGS_PATH}:/app/local_settings.py:ro
     restart: unless-stopped
     expose:
@@ -64,6 +63,6 @@ services:
       - ${NGINX__CONFIG_PATH}:/etc/nginx/nginx.conf:ro
       - ${NGINX__CERTS_PATH}:/etc/nginx/certs:ro
       - ${NGINX__LOGS_PATH}:/var/log/nginx
-      - kelvin_app_static:/var/www/kelvin/static
+      - kelvin_app_static:/app/static
 volumes:
   kelvin_app_static:
