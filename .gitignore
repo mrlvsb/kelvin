@@ -116,3 +116,7 @@ web/static/dolos
 
 survey/surveys/*.yaml
 exams/
+
+static/
+
+kelvin_data/

@@ -19,15 +19,11 @@ services:
     env_file:
       - .env
     volumes:
-      - kelvin_app_static:/app/static
-      - kelvin_app_media:/app/media
-      - ./local_settings.py:/app/local_settings.py:ro
+      - ${DATABASE__DATA_PATH}:/app/static
+      - ${KELVIN__LOCAL_SETTINGS_PATH}:/app/local_settings.py:ro
     restart: unless-stopped
     expose:
       - "8000"
-    command: >
-      sh -c "python3 manage.py collectstatic --noinput &&
-             python3 manage.py runserver 0.0.0.0:8000"
 
   db:
     container_name: kelvin_db
@@ -39,7 +35,7 @@ services:
     env_file:
       - .env
     volumes:
-      - kelvin_db_data:/var/lib/postgresql/data
+      - ${DATABASE__DATA_PATH}:/var/lib/postgresql/data
     restart: unless-stopped
     ports:
       - "${DATABASE__PORT}:5432"
@@ -51,7 +47,7 @@ services:
     env_file:
       - .env
     volumes:
-      - "kelvin_redis_data:/data"
+      - ${REDIS__DATA_PATH}:/data
     ports:
       - "${REDIS__PORT}:6379"
     command: "redis-server --save 60 1 --loglevel warning"
@@ -65,14 +61,9 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./certs:/etc/nginx/certs:ro
-      - ./logs:/var/log/nginx
-      - kelvin_app_static:/app/static
-      - kelvin_app_media:/app/media
-
+      - ${NGINX__CONFIG_PATH}:/etc/nginx/nginx.conf:ro
+      - ${NGINX__CERTS_PATH}:/etc/nginx/certs:ro
+      - ${NGINX__LOGS_PATH}:/var/log/nginx
+      - kelvin_app_static:/var/www/kelvin/static
 volumes:
-  kelvin_db_data:
-  kelvin_redis_data:
   kelvin_app_static:
-  kelvin_app_media:
