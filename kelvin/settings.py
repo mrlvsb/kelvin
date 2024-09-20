@@ -31,9 +31,11 @@ if os.path.isfile(dotenv_file):
 SECRET_KEY = "***REMOVED***"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = DEBUG = bool(os.environ.get("DEBUG", default=False))
+DEBUG = bool(os.environ.get("DEBUG", default=0))
 
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", "app", "kelvin.cs.vsb.cz"]
+
+CSRF_TRUSTED_ORIGINS = ["https://127.0.0.1", "https://localhost", "https://app", "https://kelvin.cs.vsb.cz"]
 
 # Application definition
 
