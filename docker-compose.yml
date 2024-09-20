@@ -4,6 +4,7 @@ services:
     depends_on:
       - db
       - redis
+      - nginx
     build:
       context: .
       dockerfile: Dockerfile
@@ -17,9 +18,16 @@ services:
       - REDIS__PORT=6379
     env_file:
       - .env
+    volumes:
+      - kelvin_app_static:/app/static
+      - kelvin_app_media:/app/media
+      - ./local_settings.py:/app/local_settings.py:ro
     restart: unless-stopped
-    ports:
-      - "${APP__PORT}:8000"
+    expose:
+      - "8000"
+    command: >
+      sh -c "python3 manage.py collectstatic --noinput &&
+             python3 manage.py runserver 0.0.0.0:8000"
 
   db:
     container_name: kelvin_db
@@ -60,7 +68,11 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./certs:/etc/nginx/certs:ro
       - ./logs:/var/log/nginx
+      - kelvin_app_static:/app/static
+      - kelvin_app_media:/app/media
 
 volumes:
   kelvin_db_data:
   kelvin_redis_data:
+  kelvin_app_static:
+  kelvin_app_media:
