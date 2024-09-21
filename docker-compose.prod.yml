@@ -1,0 +1,70 @@
+services:
+  app:
+    container_name: kelvin_app
+    depends_on:
+      - db
+      - redis
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    environment:
+      - DATABASE__HOSTNAME=db
+      - DATABASE__PORT=5432
+      - DATABASE__DB=${DATABASE__DB}
+      - DATABASE__USERNAME=${DATABASE__USERNAME}
+      - DATABASE__PASSWORD=${DATABASE__PASSWORD}
+      - REDIS__HOST=redis
+      - REDIS__PORT=6379
+    env_file:
+      - .env
+    volumes:
+      - kelvin_app_static:/app/static
+      - ${KELVIN__LOCAL_SETTINGS_PATH}:/app/local_settings.py:ro
+    restart: unless-stopped
+    expose:
+      - "8000"
+
+  db:
+    container_name: kelvin_db
+    image: postgres:14
+    environment:
+      - POSTGRES_DB=${DATABASE__DB}
+      - POSTGRES_USER=${DATABASE__USERNAME}
+      - POSTGRES_PASSWORD=${DATABASE__PASSWORD}
+    env_file:
+      - .env
+    volumes:
+      - ${DATABASE__DATA_PATH}:/var/lib/postgresql/data
+    restart: unless-stopped
+    ports:
+      - "${DATABASE__PORT}:5432"
+    
+  redis:
+    container_name: kelvin_redis
+    image: redis:alpine
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ${REDIS__DATA_PATH}:/data
+    ports:
+      - "${REDIS__PORT}:6379"
+    command: "redis-server --save 60 1 --loglevel warning"
+
+  nginx:
+    image: nginx:alpine
+    container_name: kelvin_nginx
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${NGINX__CONFIG_PATH}:/etc/nginx/nginx.conf:ro
+      - ${NGINX__CERTS_PATH}:/etc/nginx/certs:ro
+      - ${NGINX__LOGS_PATH}:/var/log/nginx
+      - kelvin_app_static:/app/static
+
+volumes:
+  kelvin_app_static:
