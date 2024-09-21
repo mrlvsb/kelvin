@@ -22,6 +22,12 @@ Do not forget to activate the virtual environment if you want to work with Pytho
 $ source .venv/bin/activate
 ```
 
+## Git pre-commit hooks
+To ensure that the code is formatted correctly and linted, you can install pre-commit hooks:
+```bash
+$ pre-commit install
+```
+
 ## Building the frontend
 For building the frontend, you'll need `npm`:
 ```bash

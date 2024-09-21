@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm AS build-backend-stage
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm AS build-backend
 
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
@@ -13,9 +13,9 @@ WORKDIR /app
 
 COPY pyproject.toml uv.lock ./
 
-RUN --mount=type=cache,target=/root/.cache uv sync --frozen --no-dev --no-install-project --compile-bytecode
+RUN uv sync --frozen --no-dev --no-install-project --compile-bytecode
 
-FROM node:22.9.0-bookworm-slim AS build-frontend-stage
+FROM node:22.9.0-bookworm-slim AS build-frontend
 
 WORKDIR /frontend
 
@@ -44,26 +44,18 @@ RUN groupadd --gid 1001 uvicorn && \
 
 RUN chown -R uvicorn:uvicorn /app
 
-COPY --from=build-backend-stage --chown=uvicorn:uvicorn /app .
-
+COPY --from=build-backend --chown=uvicorn:uvicorn /app .
 ENV PATH="/app/.venv/bin:$PATH"
 
-COPY --chown=uvicorn:uvicorn kelvin ./kelvin
-
 COPY --chown=uvicorn:uvicorn web ./web
+COPY --from=build-frontend --chown=uvicorn:uvicorn /web/static/frontend.[js|css]|dolos ./web/static/
 
-COPY --from=build-frontend-stage --chown=uvicorn:uvicorn /web/static/frontend.css /web/static/frontend.js /web/static/dolos ./web/static/
-
+COPY --chown=uvicorn:uvicorn kelvin ./kelvin
 COPY --chown=uvicorn:uvicorn templates ./templates
-
 COPY --chown=uvicorn:uvicorn evaluator ./evaluator
-
 COPY --chown=uvicorn:uvicorn survey ./survey
-
 COPY --chown=uvicorn:uvicorn common ./common
-
 COPY --chown=uvicorn:uvicorn api ./api
-
 COPY --chown=uvicorn:uvicorn manage.py .
 
 USER uvicorn

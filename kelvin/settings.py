@@ -31,7 +31,7 @@ if os.path.isfile(dotenv_file):
 SECRET_KEY = "***REMOVED***"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool(os.environ.get("DEBUG", default=0))
+DEBUG = True
 
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", "app", "kelvin.cs.vsb.cz"]
 
@@ -156,9 +156,6 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
-
-MEDIA_URL = "/media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 STORAGES = {
     "default": {
