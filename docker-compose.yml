@@ -6,7 +6,7 @@
 services:
   db:
     container_name: kelvin_local_db
-    image: postgres:14    
+    image: postgres:14
     environment:
       - POSTGRES_DB=${DATABASE__DB}
       - POSTGRES_USER=${DATABASE__USERNAME}

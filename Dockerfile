@@ -33,7 +33,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     -o APT::Install-Recommends=false \
     -o APT::Install-Suggests=false \
     graphviz && \
-    apt-get clean && \ 
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 WORKDIR /app

@@ -39,7 +39,7 @@ services:
     restart: unless-stopped
     ports:
       - "${DATABASE__PORT}:5432"
-    
+
   redis:
     container_name: kelvin_redis
     image: redis:alpine

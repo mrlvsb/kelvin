@@ -35,7 +35,12 @@ DEBUG = bool(os.environ.get("DEBUG", default=0))
 
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", "app", "kelvin.cs.vsb.cz"]
 
-CSRF_TRUSTED_ORIGINS = ["https://127.0.0.1", "https://localhost", "https://app", "https://kelvin.cs.vsb.cz"]
+CSRF_TRUSTED_ORIGINS = [
+    "https://127.0.0.1",
+    "https://localhost",
+    "https://app",
+    "https://kelvin.cs.vsb.cz",
+]
 
 # Application definition
 
@@ -112,7 +117,6 @@ DATABASES = {
         "NAME": os.getenv("DATABASE__DB"),
         "USER": os.getenv("DATABASE__USERNAME"),
         "PASSWORD": os.getenv("DATABASE__PASSWORD"),
-
     }
 }
 
