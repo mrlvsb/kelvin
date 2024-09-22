@@ -49,6 +49,9 @@ def markdown_to_html(input: str) -> str:
             "fenced_code",
             # Enable parsing Markdown inside HTML tags (<div markdown="1">)
             "md_in_html",
+            # Better list handling
+            # Allows nested indents to be just 2 spaces
+            "mdx_truly_sane_lists",
         ],
     )
 
