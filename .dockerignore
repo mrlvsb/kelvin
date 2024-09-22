@@ -2,3 +2,4 @@ tasks/
 submits/
 submit_results/
 .venv/
+node_modules/

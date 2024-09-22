@@ -9,6 +9,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runtime
+    restart: unless-stopped
     environment:
       - DATABASE__HOSTNAME=db
       - DATABASE__PORT=5432
@@ -20,15 +21,17 @@ services:
     env_file:
       - .env
     volumes:
-      - kelvin_app_static:/app/static
-      - ${KELVIN__LOCAL_SETTINGS_PATH}:/app/local_settings.py:ro
-    restart: unless-stopped
+      - app_static:/app/static
+      - app_socket:/socket
+      - ${KELVIN__LOCAL_SETTINGS_PATH}:/app/kelvin/local_settings.py:ro
+      - ${UWSGI__CONFIG_PATH}:/app/uwsgi.ini:ro
     expose:
       - "8000"
 
   db:
     container_name: kelvin_db
     image: postgres:14
+    restart: unless-stopped
     environment:
       - POSTGRES_DB=${DATABASE__DB}
       - POSTGRES_USER=${DATABASE__USERNAME}
@@ -37,7 +40,6 @@ services:
       - .env
     volumes:
       - ${DATABASE__DATA_PATH}:/var/lib/postgresql/data
-    restart: unless-stopped
     ports:
       - "${DATABASE__HOSTNAME}:${DATABASE__PORT}:5432"
 
@@ -58,6 +60,7 @@ services:
     container_name: kelvin_nginx
     depends_on:
       - app
+    restart: unless-stopped
     profiles: [prod]
     ports:
       - "80:80"
@@ -66,7 +69,9 @@ services:
       - ${NGINX__CONFIG_PATH}:/etc/nginx/nginx.conf:ro
       - ${NGINX__CERTS_PATH}:/etc/nginx/certs:ro
       - ${NGINX__LOGS_PATH}:/var/log/nginx
-      - kelvin_app_static:/app/static
+      - app_static:/app/static:ro
+      - app_socket:/socket
 
 volumes:
-  kelvin_app_static:
+  app_static:
+  app_socket:

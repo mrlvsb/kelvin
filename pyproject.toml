@@ -39,11 +39,27 @@ dependencies = [
     "typing-extensions==4.11.0",
     "Unidecode==1.3.6",
     "uWSGI==2.0.24",
-    "uvicorn[standard]>=0.30.6",
 ]
 
 [tool.uv]
 dev-dependencies = [
     "pre-commit>=3.8.0",
     "ruff==0.6.3",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+indent-width = 4
+
+include = [
+    "api/**/*.py",
+    "common/**/*.py",
+    "evaluator/**/*.py",
+    "kelvin/**/*.py",
+    "survey/**/*.py",
+    "web/**/*.py"
+]
+extend-exclude = [
+    "**/migrations/**"
 ]
