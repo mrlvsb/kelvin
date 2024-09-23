@@ -46,13 +46,19 @@ def markdown_to_html(input: str) -> str:
         input,
         extensions=[
             # Enable ``` code blocks
-            "fenced_code",
+            "pymdownx.superfences",
             # Enable parsing Markdown inside HTML tags (<div markdown="1">)
             "md_in_html",
             # Better list handling
             # Allows nested indents to be just 2 spaces
             "mdx_truly_sane_lists",
         ],
+        extension_configs={
+            "pymdownx.superfences": {
+                # Only allow ``` for code blocks
+                "disable_indented_code_blocks": True
+            }
+        },
     )
 
 
