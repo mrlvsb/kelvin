@@ -116,9 +116,9 @@ django-webpush==0.3.4 \
     --hash=sha256:a2613784e822e2dde27086fb20b6d1a2b76e4d5dc8271607aecd45c98a3b7954
 http-ece==1.2.0 \
     --hash=sha256:b5920f8efb8e1b5fb025713e3b36fda54336262010634b26dc1f98f85d1eb3de
-idna==3.6 \
-    --hash=sha256:9ecdbbd083b06798ae1e86adcbfe8ab1479cf864e4ee30fe4e46a003d12491ca \
-    --hash=sha256:c05567e9c24a6b9faaa835c4821bad0590fbb9d5779e7caa6e1cc4978e7eb24f
+idna==3.7 \
+    --hash=sha256:028ff3aadf0609c1fd278d8ea3089299412a7a8b9bd005dd08b9f8285bcb5cfc \
+    --hash=sha256:82fee1fc78add43492d3a1898bfa6d8a904cc97d8427f683ed8e798d07761aa0
 imageio==2.6.1 \
     --hash=sha256:f44eb231b9df485874f2ffd22dfd0c3c711e7de076516b9374edea5c65bc67ae \
     --hash=sha256:c9763e5c187ecf74091c845626b0bdcc6130a20a0de7a86ae0108e2b5335ed3f
