@@ -219,6 +219,9 @@ pycparser==2.21 ; platform_python_implementation != 'PyPy' \
     --hash=sha256:8ee45429555515e1f6b185e78100aea234072576aa43ab53aefcae078162fca9
 pygraphviz==1.7 \
     --hash=sha256:a7bec6609f37cf1e64898c59f075afd659106cf9356c5f387cecaa2e0cdb2304
+pymdown-extensions==10.10.1 \
+    --hash=sha256:ad277ee4739ced051c3b6328d22ce782358a3bec39bc6ca52815ccbf44f7acdc \
+    --hash=sha256:6c74ea6c2e2285186a241417480fc2d3cc52941b3ec2dced4014c84dc78c5493
 pyserde==0.13.1 \
     --hash=sha256:8d1644f44aa50ce671dce74958a4d2f2bf5db2e96e8965695b4481c9a0b857c3 \
     --hash=sha256:729a003e68bdb05cb4b52ce8bfeaa042de1dbc93c886fe0946589fed3ad7e96c
