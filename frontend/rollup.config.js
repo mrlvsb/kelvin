@@ -1,10 +1,13 @@
-import svelte from 'rollup-plugin-svelte';
-import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import livereload from 'rollup-plugin-livereload';
+import resolve from '@rollup/plugin-node-resolve';
+import replace from '@rollup/plugin-replace';
 import terser from '@rollup/plugin-terser';
-import postcss from 'rollup-plugin-postcss'
 import autoprefixer from 'autoprefixer';
+import livereload from 'rollup-plugin-livereload';
+import postcss from 'rollup-plugin-postcss';
+import svelte from 'rollup-plugin-svelte';
+import typescript from 'rollup-plugin-typescript2';
+import vue from 'rollup-plugin-vue';
 import sass from 'sass';
 
 const production = !process.env.ROLLUP_WATCH;
@@ -42,6 +45,19 @@ export default {
 		svelte({
             emitCss: true,
 		}),
+
+		vue({
+            preprocessStyles: true,
+        }),
+        // Replace the environment variables - https://github.com/rollup/rollup/issues/805
+        // btw the vue/dist/vue.esm.browser didn't work
+        replace({
+            'process.env.NODE_ENV': JSON.stringify('development'),
+            'process.env.VUE_ENV': JSON.stringify('browser'),
+        }),
+        typescript({
+            abortOnError: production,
+        }),
 
 		// If you have external dependencies installed from
 		// npm, you'll most likely need these plugins. In
