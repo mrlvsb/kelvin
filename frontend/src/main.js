@@ -1,20 +1,20 @@
 import "bootstrap/dist/css/bootstrap.css";
-import "./global.css";
 import "bootstrap/js/dist/collapse";
+import "./global.css";
 import './global.scss';
 
-import hljs from 'highlight.js/lib/core'
-import cpp from 'highlight.js/lib/languages/cpp'
-import c from 'highlight.js/lib/languages/c'
-import csharp from 'highlight.js/lib/languages/csharp'
-import java from 'highlight.js/lib/languages/java'
-import python from 'highlight.js/lib/languages/python'
-import xml from 'highlight.js/lib/languages/xml'
-import bash from 'highlight.js/lib/languages/bash'
-import shell from 'highlight.js/lib/languages/shell'
-import makefile from 'highlight.js/lib/languages/makefile'
-import x86asm from 'highlight.js/lib/languages/x86asm'
-import rust from 'highlight.js/lib/languages/rust'
+import hljs from 'highlight.js/lib/core';
+import bash from 'highlight.js/lib/languages/bash';
+import c from 'highlight.js/lib/languages/c';
+import cpp from 'highlight.js/lib/languages/cpp';
+import csharp from 'highlight.js/lib/languages/csharp';
+import java from 'highlight.js/lib/languages/java';
+import makefile from 'highlight.js/lib/languages/makefile';
+import python from 'highlight.js/lib/languages/python';
+import rust from 'highlight.js/lib/languages/rust';
+import shell from 'highlight.js/lib/languages/shell';
+import x86asm from 'highlight.js/lib/languages/x86asm';
+import xml from 'highlight.js/lib/languages/xml';
 
 hljs.registerLanguage('c-like', cpp);
 hljs.registerLanguage('c', c); 
@@ -32,21 +32,20 @@ hljs.registerLanguage('x86asm', x86asm);
 hljs.registerLanguage('rust', rust);
 hljs.highlightAll();
 
-import 'diff2html/bundles/css/diff2html.min.css'
-import * as Diff2Html from 'diff2html'
+import * as Diff2Html from 'diff2html';
+import 'diff2html/bundles/css/diff2html.min.css';
 window.Diff2Html = Diff2Html;
 
-import Iconify from '@iconify/iconify';
 
-import App from './App.svelte'
-import TaskDetail from './TaskDetail.svelte'
-import Notifications from './Notifications.svelte'
-import AnsiUp from 'ansi_up'
-import UploadSolution from './UploadSolution.svelte'
-import PipelineStatus from './PipelineStatus.svelte'
-import {safeMarkdown} from './markdown.js'
-import CtrlP from './CtrlP.svelte'
-import ColorTheme from "./ColorTheme.svelte"
+import * as AnsiUp from 'ansi_up';
+import App from './App.svelte';
+import ColorTheme from "./ColorTheme.svelte";
+import CtrlP from './CtrlP.svelte';
+import Notifications from './Notifications.svelte';
+import PipelineStatus from './PipelineStatus.svelte';
+import TaskDetail from './TaskDetail.svelte';
+import UploadSolution from './UploadSolution.svelte';
+import { safeMarkdown } from './markdown.js';
 
 class ReplaceHtmlElement extends HTMLElement {
 	constructor() {
@@ -126,3 +125,11 @@ function focusTab() {
 
 window.addEventListener("hashchange", focusTab);
 window.addEventListener("DOMContentLoaded", focusTab);
+
+
+import { defineCustomElement } from "vue";
+import Example from "./ExampleComponent.vue";
+
+customElements.define("kelvin-example", defineCustomElement(Example, {
+	shadowRoot: false // https://github.com/vuejs/core/issues/4314#issuecomment-2266382877
+}))

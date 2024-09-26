@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "target": "ES2023",
+        "lib": ["ES2023", "DOM"],
+        "moduleResolution": "Classic",
+        "outDir": "./"
+    },
+    "include": ["./src/**/*"],
+    "exclude": ["node_modules"]
+}
