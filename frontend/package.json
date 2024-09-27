@@ -24,7 +24,7 @@
     "highlight.js": "^11.8.0",
     "js-yaml": "^4.1.0",
     "marked": "^4.2.12",
-    "rollup": "^4.9.6",
+    "rollup": "^4.22.4",
     "rollup-plugin-livereload": "^2.0.5",
     "rollup-plugin-postcss": "^4.0.2",
     "rollup-plugin-svelte": "^7.1.6",
