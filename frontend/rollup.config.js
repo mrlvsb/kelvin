@@ -54,6 +54,9 @@ export default {
         replace({
             'process.env.NODE_ENV': JSON.stringify(production ? 'production' : 'development'),
             'process.env.VUE_ENV': JSON.stringify('browser'),
+			// fixes issue, when vue in production mode need to know if devtools are enabled or not
+			// fixing: Uncaught ReferenceError: __VUE_PROD_DEVTOOLS__ is not defined
+			'__VUE_PROD_DEVTOOLS__': JSON.stringify(false),
         }),
         typescript({
             abortOnError: production,
