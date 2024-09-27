@@ -1,7 +1,7 @@
 import yaml from 'js-yaml';
 import CodeMirror from 'codemirror';
 
-CodeMirror.registerHelper('hint', 'yaml', function (cm, options) {
+CodeMirror.registerHelper('hint', 'yaml', function (cm) {
     if (cm.options['filename'] != '/config.yml') {
         return null;
     }
@@ -171,7 +171,7 @@ class DictRule {
                 errors.push(err(sourceMap[mkey(prefix, key)].key, `Unknown key ${key}`));
             } else {
                 const rule = getRule(this.keys[key]);
-                errors.push(...rule.validate(mkey(prefix, key), data[key], sourceMap));
+                errors.push(...rule.validate(mkey(prefix, key), value, sourceMap));
             }
         }
         return errors;
@@ -361,7 +361,7 @@ class ArrayRule {
         let i = 0;
         let errors = [];
         for (const item of data) {
-            errors.push(...this.child.validate(mkey(prefix, i), data[i], sourceMap));
+            errors.push(...this.child.validate(mkey(prefix, i), item, sourceMap));
             i++;
         }
         return errors;
@@ -413,7 +413,6 @@ export function lintPipeline(content) {
         return rules.validate('', config, sourceMap);
     } catch (e) {
         if (e instanceof yaml.YAMLException) {
-            const info = CodeMirror.Pos(e.mark.line, e.mark.column);
             return [
                 {
                     message: e.message,

@@ -22,5 +22,10 @@ export default [
         rules: {
             'vue/multi-word-component-names': 'off'
         }
+    },
+    {
+        rules: {
+            'no-prototype-builtins': 'off'
+        }
     }
 ];
