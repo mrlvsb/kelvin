@@ -36,7 +36,8 @@ import * as Diff2Html from 'diff2html';
 import 'diff2html/bundles/css/diff2html.min.css';
 window.Diff2Html = Diff2Html;
 
-
+// Import iconify icons used in UI, don't remove this line
+import "@iconify/iconify";
 import * as AnsiUp from 'ansi_up';
 import App from './App.svelte';
 import ColorTheme from "./ColorTheme.svelte";
