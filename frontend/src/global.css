@@ -1,47 +1,63 @@
 h1 {
-  font-size: 2rem;
+    font-size: 2rem;
 }
 
 h2 {
-  font-size: 1.75rem;
+    font-size: 1.75rem;
 }
 
 h3 {
-  font-size: 1.5rem;
+    font-size: 1.5rem;
 }
 
 .tab-content {
-  overflow-x: auto;
+    overflow-x: auto;
 }
 
 .submit-file-header {
-  display: flex;
+    display: flex;
 }
 .submit-file-header > .icon {
-  margin: 0 10px;
-  align-self: center;
+    margin: 0 10px;
+    align-self: center;
 }
 .statistics-table {
-  width: 30%;
-  margin: 10px 0;
+    width: 30%;
+    margin: 10px 0;
 }
-.statistics-table th, .statistics-table td {
-  padding: 5px;
-  text-align: center;
+.statistics-table th,
+.statistics-table td {
+    padding: 5px;
+    text-align: center;
 }
 
 .morehover:hover .morehover-content {
-  display: block !important;
-  z-index: 100;
+    display: block !important;
+    z-index: 100;
 }
 
 body {
-  font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,Liberation Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        Segoe UI,
+        Roboto,
+        Helvetica Neue,
+        Arial,
+        Noto Sans,
+        Liberation Sans,
+        sans-serif,
+        Apple Color Emoji,
+        Segoe UI Emoji,
+        Segoe UI Symbol,
+        Noto Color Emoji;
 }
 
-a, .btn-link {
-  text-decoration: none;
+a,
+.btn-link {
+    text-decoration: none;
 }
-a:hover, .btn-link:hover {
-  text-decoration: underline;
+a:hover,
+.btn-link:hover {
+    text-decoration: underline;
 }
