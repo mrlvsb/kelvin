@@ -1,45 +1,45 @@
-@use 'sass:meta';
+@use "sass:meta";
 
-html[data-bs-theme='light'] {
-    @include meta.load-css('node_modules/highlight.js/styles/github.css');
-    @include meta.load-css('node_modules/flatpickr/dist/themes/light.css');
+html[data-bs-theme="light"] {
+  @include meta.load-css("node_modules/highlight.js/styles/github.css");
+  @include meta.load-css('node_modules/flatpickr/dist/themes/light.css');
 }
-html[data-bs-theme='dark'] {
-    @include meta.load-css('node_modules/highlight.js/styles/github-dark.css');
-    @include meta.load-css('node_modules/flatpickr/dist/themes/dark.css');
-    @include meta.load-css('node_modules/codemirror/theme/dracula.css');
+html[data-bs-theme="dark"] {
+  @include meta.load-css("node_modules/highlight.js/styles/github-dark.css");
+  @include meta.load-css('node_modules/flatpickr/dist/themes/dark.css');
+  @include meta.load-css('node_modules/codemirror/theme/dracula.css');
 
-    .code-diff {
-        .d2h-ins {
-            background-color: #748a74;
-        }
-        .d2h-code-side-linenumber,
-        .d2h-info,
-        .d2h-emptyplaceholder,
-        .d2h-code-side-emptyplaceholder {
-            background-color: #272822;
-            color: #d0d0d0;
-        }
-        span {
-            color: #d0d0d0;
-        }
-
-        .d2h-del {
-            background-color: #7d4e50;
-        }
-
-        del {
-            background-color: #a07c7e;
-        }
-        .d2h-ins {
-            background-color: #748a74;
-        }
-
-        ins {
-            background-color: #177016;
-        }
+  .code-diff {
+    .d2h-ins {
+      background-color: #748a74;
     }
-    .d2h-file-header {
-        background-color: #343434;
-    }
+    .d2h-code-side-linenumber,
+      .d2h-info,
+      .d2h-emptyplaceholder,
+      .d2h-code-side-emptyplaceholder {
+        background-color: #272822;
+        color: #d0d0d0;
+      }
+      span {
+        color: #d0d0d0;
+      }
+
+      .d2h-del {
+        background-color: #7d4e50;
+      }
+
+      del {
+        background-color: #a07c7e;
+      }
+      .d2h-ins {
+        background-color: #748a74;
+      }
+
+      ins {
+        background-color: #177016;
+      }
+  }
+  .d2h-file-header {
+    background-color: #343434;
+  }
 }
