@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "scripts": {
     "copy-dolos": "node copy-dolos.js",
-    "build": "npm run copy-dolos && vue-tsc && rollup -c --bundleConfigAsCjs",
+    "build": "npm run copy-dolos && rollup -c --bundleConfigAsCjs",
     "dev": "npm run copy-dolos && rollup -c -w --bundleConfigAsCjs",
     "start": "npm run copy-dolos && sirv public",
-    "check": "vue-tsc && prettier --check src && eslint src",
+    "check": "prettier --check src && eslint src",
     "fix": "prettier --write src && eslint --fix src"
   },
   "devDependencies": {
@@ -45,8 +45,7 @@
     "timeago.js": "^4.0.2",
     "typescript-eslint": "^8.7.0",
     "uppie": "1.1.4",
-    "vue": "^3.5.8",
-    "vue-tsc": "^2.1.6"
+    "vue": "^3.5.8"
   },
   "dependencies": {
     "@dodona/dolos-web": "^2.7.1",
