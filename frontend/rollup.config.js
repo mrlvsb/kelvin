@@ -52,7 +52,7 @@ export default {
         // Replace the environment variables - https://github.com/rollup/rollup/issues/805
         // btw the vue/dist/vue.esm.browser didn't work
         replace({
-            'process.env.NODE_ENV': JSON.stringify(production ? 'production' : 'development'),
+            'process.env.NODE_ENV': JSON.stringify('development'),
             'process.env.VUE_ENV': JSON.stringify('browser'),
         }),
         typescript({
