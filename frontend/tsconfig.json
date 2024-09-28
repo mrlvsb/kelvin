@@ -1,10 +1,11 @@
 {
     "compilerOptions": {
         "allowJs": true,
-        "target": "ES2018",
-        "lib": ["ES2018", "DOM"],
-        "moduleResolution": "Bundler",
-        "noEmit": true
+        "target": "ES2023",
+        "lib": ["ES2023", "DOM"],
+        "moduleResolution": "Classic",
+        "outDir": "./"
     },
-    "include": ["./src/**/*"]
+    "include": ["./src/**/*"],
+    "exclude": ["node_modules"]
 }
