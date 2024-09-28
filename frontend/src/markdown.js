@@ -9,7 +9,6 @@ marked.setOptions({
                 return hljs.highlight(lang, code).value;
             } catch (err) {
                 if (typeof Sentry !== 'undefined') {
-                    // eslint-disable-next-line no-undef
                     Sentry.captureException(err);
                 }
             }
