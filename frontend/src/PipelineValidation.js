@@ -1,118 +1,118 @@
-import yaml from 'js-yaml';
-import CodeMirror from 'codemirror';
+import yaml from 'js-yaml'
+import CodeMirror from 'codemirror'
 
-CodeMirror.registerHelper('hint', 'yaml', function (cm, options) {
+CodeMirror.registerHelper("hint", "yaml", function (cm, options) {
     if (cm.options['filename'] != '/config.yml') {
         return null;
     }
 
     try {
-        const sourceMap = yamlSourceMap(cm.getValue());
-        const config = yaml.load(cm.getValue());
-        const cur = cm.getCursor();
-        let longest = null;
-        for (const [key, pos] of Object.entries(sourceMap)) {
-            if (cur.line >= pos.key.from.line && cur.line <= pos.value.to.line) {
-                if (!longest || longest.length < key.length) {
-                    longest = key;
-                }
+      const sourceMap = yamlSourceMap(cm.getValue());
+      const config = yaml.load(cm.getValue());
+      const cur = cm.getCursor();
+      let longest = null;
+      for (const [key, pos] of Object.entries(sourceMap)) {
+          if (cur.line >= pos.key.from.line && cur.line <= pos.value.to.line) {
+              if (!longest || longest.length < key.length) {
+                  longest = key;
+              }
+          }
+      }
+
+      if (longest !== null) {
+          let parts = longest.split('.');
+          while(parts.length) {
+            if(cur.ch > sourceMap[parts.join('.')].key.from.ch) {
+              break;
             }
-        }
+            parts.pop();
+          }
+          longest = parts.join('.');
 
-        if (longest !== null) {
-            let parts = longest.split('.');
-            while (parts.length) {
-                if (cur.ch > sourceMap[parts.join('.')].key.from.ch) {
-                    break;
-                }
-                parts.pop();
-            }
-            longest = parts.join('.');
+          const list = rules.hint(longest.split('.'), 0, config);
+          const isKey = list.length && (list[0].constructor == Object ? list[0].text.endsWith(': ') : list[0].endsWith(': '));
 
-            const list = rules.hint(longest.split('.'), 0, config);
-            const isKey = list.length && (list[0].constructor == Object ? list[0].text.endsWith(': ') : list[0].endsWith(': '));
-
-            return {
-                list: list,
-                from: isKey ? cur : sourceMap[longest].value.from,
-                to: isKey ? cur : sourceMap[longest].value.to
-            };
-        }
-    } catch (e) {
-        if (e instanceof yaml.YAMLException) {
-            console.log(e);
-        } else {
-            throw e;
-        }
+          return {
+              list: list,
+              from: isKey ? cur : sourceMap[longest].value.from,
+              to: isKey ? cur : sourceMap[longest].value.to,
+          }
+      }
+    } catch(e) {
+      if(e instanceof yaml.YAMLException) {
+        console.log(e);
+      } else {
+        throw e;
+      }
     }
 });
 
 function isObject(value) {
-    return typeof value === 'object' && value !== null;
+    return typeof value === 'object' && value !== null
 }
 
 function lineInfo(lineNumber, line) {
-    const indentation = (line.match(/^\s*/) || [''])[0];
+    const indentation = (line.match(/^\s*/) || [''])[0]
     return {
         from: { line: lineNumber, ch: indentation.length },
         to: { line: lineNumber, ch: line.length }
-    };
+    }
 }
 
 function keyInfo(lineNumber, line, key) {
-    const ch = line.indexOf(key);
-    if (ch === -1) return lineInfo(lineNumber, line);
+    const ch = line.indexOf(key)
+    if (ch === -1) return lineInfo(lineNumber, line)
     return {
         from: { line: lineNumber, ch },
         to: { line: lineNumber, ch: ch + key.length }
-    };
+    }
 }
 
 function valueInfo(lineNumber, line, value) {
-    if (isObject(value)) return lineInfo(lineNumber, line);
-
-    if (value === null) {
-        const ch = line.indexOf(':');
-        return {
-            from: { line: lineNumber, ch: ch + 2 },
-            to: { line: lineNumber, ch: ch + 2 }
-        };
+    if (isObject(value)) return lineInfo(lineNumber, line)
+    
+    if(value === null) {
+      const ch = line.indexOf(':')
+      return {
+          from: { line: lineNumber, ch: ch + 2 },
+          to: { line: lineNumber, ch: ch + 2 }
+      }
     }
-    const asString = String(value);
-    const ch = line.lastIndexOf(asString);
-    if (ch === -1) return lineInfo(lineNumber, line);
+    const asString = String(value)
+    const ch = line.lastIndexOf(asString)
+    if (ch === -1) return lineInfo(lineNumber, line)
     return {
         from: { line: lineNumber, ch },
         to: { line: lineNumber, ch: ch + asString.length }
-    };
+    }
 }
 
 let prev = '';
 function findNewPaths(paths, lines, value, path, lineNumber) {
-    if (value === undefined) return;
-    const fullPath = path.join('.');
+    if (value === undefined) return
+    const fullPath = path.join('.')
     if (fullPath && !paths[fullPath]) {
-        const line = lines[lineNumber];
-        const lastKey = path[path.length - 1];
+        const line = lines[lineNumber]
+        const lastKey = path[path.length - 1]
         paths[fullPath] = {
             key: keyInfo(lineNumber, line, lastKey),
             value: valueInfo(lineNumber, line, value)
-        };
+        }
         prev = fullPath;
     }
-    if (typeof value !== 'object') return;
+    if (typeof value !== 'object') return
     for (const key in value) {
-        if (!value.hasOwnProperty(key)) continue;
-        findNewPaths(paths, lines, value[key], [...path, key], lineNumber);
+        if (!value.hasOwnProperty(key)) continue
+        findNewPaths(paths, lines, value[key], [...path, key], lineNumber)
     }
 }
 
 // sourcemap generation taken from github workflows
 function yamlSourceMap(lines) {
-    lines = lines.split('\n');
+    lines = lines.split("\n");
     const info = {
         from: { line: 0, ch: 0 },
-        to: { line: lines.length - 1, ch: lines[lines.length - 1].lentth }
+        to: { line: lines.length - 1, ch: lines[lines.length - 1].lentth },
     };
     let paths = { '': { key: info, value: info } };
     for (let i = 0; i < lines.length; i++) {
@@ -124,8 +124,8 @@ function yamlSourceMap(lines) {
                 paths[x.join('.')].value.to.line = i;
             }
         }
-        const partial = lines.slice(0, i + 1).join('\n');
-        findNewPaths(paths, lines, yaml.load(partial), [], i);
+        const partial = lines.slice(0, i + 1).join('\n')
+        findNewPaths(paths, lines, yaml.load(partial), [], i)
     }
 
     for (let [path, info] of Object.entries(paths)) {
@@ -148,8 +148,8 @@ function renderHelpFn(el, self, data) {
     const header = document.createElement('strong');
     header.innerText = data['text'];
     el.appendChild(header);
-    if (data['help']) {
-        const x = document.createElement('div');
+    if(data['help']) {
+        const x = document.createElement("div");
         x.innerHTML = data['help'];
         el.appendChild(x);
     }
@@ -162,7 +162,7 @@ class DictRule {
 
     validate(prefix, data, sourceMap) {
         if (data === null || data.constructor !== Object) {
-            return [err(sourceMap[mkey(prefix)].value, 'Not dictionary')];
+            return [err(sourceMap[mkey(prefix)].value, "Not dictionary")];
         }
 
         let errors = [];
@@ -180,22 +180,20 @@ class DictRule {
     hint(path, depth, data) {
         if (path == '' || depth >= path.length) {
             let alreadyUsed = data;
-            for (const key of path) {
-                if (alreadyUsed[key]) {
+            for(const key of path) {
+                if(alreadyUsed[key]) {
                     alreadyUsed = alreadyUsed[key];
                 }
             }
             alreadyUsed = Object.keys(alreadyUsed || {});
 
-            return Object.keys(this.keys)
-                .filter((k) => alreadyUsed.indexOf(k) == -1)
-                .map((k) => {
-                    return {
-                        text: k + ': ',
-                        help: Array.isArray(this.keys[k]) ? this.keys[k][1] : null,
-                        render: renderHelpFn
-                    };
-                });
+            return Object.keys(this.keys).filter(k => alreadyUsed.indexOf(k) == -1).map(k => {
+                return {
+                    text: k + ': ',
+                    help: Array.isArray(this.keys[k]) ? this.keys[k][1] : null,
+                    render: renderHelpFn,
+                }
+            });
         }
 
         if (path[depth] in this.keys) {
@@ -207,10 +205,7 @@ class DictRule {
 }
 
 function mkey(...parts) {
-    return parts
-        .map((k) => k.toString())
-        .filter((k) => k.length > 0)
-        .join('.');
+    return parts.map(k => k.toString()).filter(k => k.length > 0).join('.');
 }
 
 class EnumRule {
@@ -249,6 +244,7 @@ class UnionRule {
             errors.push(...err);
         }
 
+
         let changed = true;
         let reduced = [];
         while (changed) {
@@ -275,15 +271,16 @@ class UnionRule {
         }
         return results;
     }
+
 }
 
 class ValueRule {
     validate(prefix, data, sourceMap) {
         if (data === null) {
-            return [err(sourceMap[mkey(prefix)].value, 'Should not be null.')];
+            return [err(sourceMap[mkey(prefix)].value, "Should not be null.")];
         }
         if (data.constructor == Object) {
-            return [err(sourceMap[mkey(prefix)].value, 'Should not be dictionary.')];
+            return [err(sourceMap[mkey(prefix)].value, "Should not be dictionary.")];
         }
 
         return [];
@@ -300,15 +297,15 @@ class PipelineRule {
     }
 
     validate(prefix, data, sourceMap) {
-        if (!Array.isArray(data)) {
-            return [err(sourceMap[mkey(prefix)].key, 'Pipeline must be array')];
+        if(!Array.isArray(data)) {
+          return [err(sourceMap[mkey(prefix)].key, "Pipeline must be array")];
         }
 
         let errors = [];
         let i = 0;
         for (const pipe of data) {
-            if (!pipe || pipe.constructor !== Object || !('type' in pipe)) {
-                return [err(sourceMap[mkey(prefix, i)].key, 'Action must contain type')];
+            if(!pipe || pipe.constructor !== Object || !('type' in pipe)) {
+              return [err(sourceMap[mkey(prefix, i)].key, "Action must contain type")];
             }
             const type = pipe['type'];
             if (type in this.pipes) {
@@ -326,25 +323,25 @@ class PipelineRule {
 
     hint(path, depth, data) {
         if (path.length == 3 && path[2] == 'type') {
-            return Object.keys(this.pipes).map((k) => {
+            return Object.keys(this.pipes).map(k => {
                 return {
                     text: k,
                     help: Array.isArray(this.pipes[k]) ? this.pipes[k][1] : null,
-                    render: renderHelpFn
-                };
+                    render: renderHelpFn,
+                }
             });
         }
 
         const pipeId = path[1];
-        if (pipeId !== undefined) {
-            const pipe = data['pipeline'][pipeId];
-            if (pipe && pipe['type']) {
-                return getRule(this.pipes[pipe['type']]).hint(path, depth + 1, data);
-            } else {
-                return ['type: '];
-            }
+        if(pipeId !== undefined) {
+          const pipe = data['pipeline'][pipeId];
+          if(pipe && pipe['type']) {
+            return getRule(this.pipes[pipe['type']]).hint(path, depth + 1, data);
+          } else {
+              return ['type: '];
+          }
         }
-        return [];
+        return []
     }
 }
 
@@ -354,10 +351,10 @@ class ArrayRule {
     }
 
     validate(prefix, data, sourceMap) {
-        if (!Array.isArray(data)) {
-            return [err(sourceMap[mkey(prefix)].key, 'Should be array.')];
+        if(!Array.isArray(data)) {
+            return [err(sourceMap[mkey(prefix)].key, 'Should be array.')]
         }
-
+        
         let i = 0;
         let errors = [];
         for (const item of data) {
@@ -369,6 +366,7 @@ class ArrayRule {
     hint(path, depth, data) {
         return this.child.hint(path, depth + 1, data);
     }
+
 }
 
 class PipeRule extends DictRule {
@@ -377,8 +375,8 @@ class PipeRule extends DictRule {
             ...keys,
             enabled: new EnumRule(['true', 'false', 'always', 'announce']),
             fail_on_error: [new EnumRule(['true', 'false']), 'Stop execution of successive actions if this action fails'],
-            title: [new ValueRule(), ['Human readable title of this action in pipeline']]
-        });
+            title: [new ValueRule(), ['Human readable title of this action in pipeline']],
+        })
     }
 }
 
@@ -387,15 +385,12 @@ class DockerPipeRule extends PipeRule {
         super({
             ...keys,
             before: [new ArrayRule(new ValueRule()), 'List of commands for container preparation. Will be cached for next run.'],
-            limits: [
-                new DictRule({
-                    fsize: [new ValueRule(), 'Maximal size for one created file. You can use suffixes like 16M'],
-                    memory: [new ValueRule(), 'Maximal memory use for the container, not the process. You can use suffixes like 128M'],
-                    network: [new EnumRule(['none', 'bridge']), '"none" to disable network access (default) or "bridge" to enable it']
-                }),
-                'Container runtime limits like file size or maximal memory use'
-            ]
-        });
+            limits: [new DictRule({
+              fsize: [new ValueRule(), 'Maximal size for one created file. You can use suffixes like 16M'],
+              memory: [new ValueRule(), 'Maximal memory use for the container, not the process. You can use suffixes like 128M'],
+              network: [new EnumRule(["none", "bridge"]), '"none" to disable network access (default) or "bridge" to enable it'],
+            }), 'Container runtime limits like file size or maximal memory use'],
+        })
     }
 }
 
@@ -403,8 +398,8 @@ function err(info, msg) {
     return {
         message: msg,
         from: CodeMirror.Pos(info.from.line, info.from.ch),
-        to: CodeMirror.Pos(info.to.line, info.to.ch)
-    };
+        to: CodeMirror.Pos(info.to.line, info.to.ch),
+    }
 }
 export function lintPipeline(content) {
     try {
@@ -414,13 +409,11 @@ export function lintPipeline(content) {
     } catch (e) {
         if (e instanceof yaml.YAMLException) {
             const info = CodeMirror.Pos(e.mark.line, e.mark.column);
-            return [
-                {
-                    message: e.message,
-                    from: CodeMirror.Pos(e.mark.line, e.mark.column),
-                    to: CodeMirror.Pos(e.mark.line, e.mark.column + 1)
-                }
-            ];
+            return [{
+                message: e.message,
+                from: CodeMirror.Pos(e.mark.line, e.mark.column),
+                to: CodeMirror.Pos(e.mark.line, e.mark.column + 1),
+            }]
         } else {
             throw e;
         }
@@ -428,95 +421,62 @@ export function lintPipeline(content) {
 }
 
 const rules = new DictRule({
-    queue: [new EnumRule(['evaluator', 'cuda']), 'Queue where to execute the job'],
-    timeout: [new ValueRule(), 'Maximal execution of the pipeline in seconds. You can also use <strong>15m</strong> or <strong>1h</strong>.'],
-    tests: new ArrayRule(
-        new DictRule({
-            name: [new ValueRule(), 'The identification of test. Should not contain any space.'],
-            title: [new ValueRule(), 'Human readable title of the test.'],
-            exit_code: [new ValueRule(), 'Expected exit code from the process. By default <strong>0</strong>'],
-            args: [new ArrayRule(new ValueRule()), 'Array of arguments passed to the program']
-        })
-    ),
+    queue: [new EnumRule(['evaluator', 'cuda']), "Queue where to execute the job"],
+    timeout: [new ValueRule(), "Maximal execution of the pipeline in seconds. You can also use <strong>15m</strong> or <strong>1h</strong>."],
+    tests: new ArrayRule(new DictRule({
+        name: [new ValueRule(), 'The identification of test. Should not contain any space.'],
+        title: [new ValueRule(), 'Human readable title of the test.'],
+        exit_code: [new ValueRule(), 'Expected exit code from the process. By default <strong>0</strong>'],
+        args: [new ArrayRule(new ValueRule()), 'Array of arguments passed to the program'],
+    })),
     pipeline: new PipelineRule({
-        dotnet: [
-            new DockerPipeRule({
-                unittests: [new ValueRule(), 'Run unit tests. By default <strong>false</strong>']
-            })
-        ],
-        java: [
-            new DockerPipeRule({
-                unittests: [new ValueRule(), 'Run unit tests. By default <strong>false</strong>']
-            })
-        ],
-        gcc: [
-            new DockerPipeRule({
-                flags: [new ValueRule(), 'Flags for the gcc/g++ compiler.'],
-                output: [new ValueRule(), 'Built executable name <strong>-o main</strong>'],
-                ldflags: new ValueRule(),
-                cmakeflags: new ValueRule(),
-                makeflags: new ValueRule()
-            }),
-            'Build program with CMake, make or collect all files and compile them directly with <strong>gcc</strong> or <strong>g++</strong>'
-        ],
-        cargo: [
-            new DockerPipeRule({
-                cmd: [new ValueRule(), 'Cargo command that should be executed. Default is `build`.'],
-                args: [new ArrayRule(new ValueRule()), 'Arguments for Cargo.'],
-                lib: [new ValueRule(), 'Whether the submitted file should be compiled as a library.']
-            }),
-            'Build a Rust crate with Cargo'
-        ],
-        run: [
-            new DockerPipeRule({
-                commands: [
-                    new ArrayRule(
-                        new UnionRule(
-                            new DictRule({
-                                cmd: new ValueRule(),
-                                display: [new ArrayRule(new ValueRule()), 'List of image/video patterns that will be converted and shown on the result page.'],
-                                hide: [new EnumRule(['true', 'false']), 'Hide command and its output from the result page.'],
-                                asciinema: [new EnumRule(['true', 'false']), 'Run the command in asciinema and generate video animation from the run.'],
-                                timeout: [new ValueRule(), 'Timeout in seconds. You can also suffixes like 5m']
-                            }),
-                            new ValueRule()
-                        )
-                    ),
-                    'Command can be string or a dict.<br>Commands prefixed with <strong>#</strong> are not shown on the result page.'
-                ]
-            }),
-            'Run custom commands and show the output.'
-        ],
-        flake8: [
-            new DockerPipeRule({
-                select: [new ArrayRule(new ValueRule()), 'List of enabled PEP8 codes. Can be array or string delimited by comma'],
-                ignore: [new ArrayRule(new ValueRule()), 'List of ignored PEP8 codes. Can be array or string delimited by comma']
-            }),
-            'Python static analysis comments in source code'
-        ],
-        'clang-tidy': [
-            new DockerPipeRule({
-                checks: [
-                    new ArrayRule(new ValueRule()),
-                    'List of used <a href="https://clang.llvm.org/extra/clang-tidy/checks/list.html">checks</a>. You may use asterisks <strong>*</strong> or block checks with hyphen <strong>-</strong>.'
-                ],
-                files: [new ArrayRule(new ValueRule()), 'List of analyzed files.']
-            }),
-            'C/C++ static analysis comments in source code'
-        ],
-        tests: [
-            new DockerPipeRule({
-                executable: new UnionRule(new ValueRule(), new ArrayRule())
-            }),
-            'Run input/output/files tests on compiled program.'
-        ],
-        auto_grader: [
-            new PipeRule({
-                propose: [new EnumRule(['true', 'false']), 'Only propose points without assigning.'],
-                overwrite: [new EnumRule(['true', 'false']), 'Do not overwrite already assigned points in current submit.'],
-                after_deadline_multiplier: [new ValueRule(), 'Points multiplier in range of 0 to 1 when submit is after deadline']
-            }),
-            'Automatically assign or propose points based on executed tests.'
-        ]
-    })
+        dotnet: [new DockerPipeRule({
+            unittests: [new ValueRule(), 'Run unit tests. By default <strong>false</strong>'],
+        })],
+        java: [new DockerPipeRule({
+            unittests: [new ValueRule(), 'Run unit tests. By default <strong>false</strong>'],
+        })],
+        gcc: [new DockerPipeRule({
+            flags: [new ValueRule(), 'Flags for the gcc/g++ compiler.'],
+            output: [new ValueRule(), 'Built executable name <strong>-o main</strong>'],
+            ldflags: new ValueRule(),
+            cmakeflags: new ValueRule(),
+            makeflags: new ValueRule()
+        }), 'Build program with CMake, make or collect all files and compile them directly with <strong>gcc</strong> or <strong>g++</strong>'],
+        cargo: [new DockerPipeRule({
+            cmd: [new ValueRule(), "Cargo command that should be executed. Default is `build`."],
+            args: [new ArrayRule(new ValueRule()), "Arguments for Cargo."],
+            lib: [new ValueRule(), "Whether the submitted file should be compiled as a library."],
+        }), 'Build a Rust crate with Cargo'],
+        run: [new DockerPipeRule({
+            commands: [new ArrayRule(
+                new UnionRule(
+                    new DictRule({
+                        cmd: new ValueRule(),
+                        display: [new ArrayRule(new ValueRule()), 'List of image/video patterns that will be converted and shown on the result page.'],
+                        hide: [new EnumRule(['true', 'false']), 'Hide command and its output from the result page.'],
+                        asciinema: [new EnumRule(['true', 'false']), 'Run the command in asciinema and generate video animation from the run.'],
+                        timeout: [new ValueRule(), 'Timeout in seconds. You can also suffixes like 5m'],
+                    }),
+                    new ValueRule()
+                )
+            ), 'Command can be string or a dict.<br>Commands prefixed with <strong>#</strong> are not shown on the result page.']
+        }), 'Run custom commands and show the output.'],
+        'flake8': [new DockerPipeRule({
+            select: [new ArrayRule(new ValueRule()), 'List of enabled PEP8 codes. Can be array or string delimited by comma'],
+            ignore: [new ArrayRule(new ValueRule()), 'List of ignored PEP8 codes. Can be array or string delimited by comma'],
+        }), 'Python static analysis comments in source code'],
+        'clang-tidy': [new DockerPipeRule({
+            checks: [new ArrayRule(new ValueRule()), 'List of used <a href="https://clang.llvm.org/extra/clang-tidy/checks/list.html">checks</a>. You may use asterisks <strong>*</strong> or block checks with hyphen <strong>-</strong>.'],
+            files: [new ArrayRule(new ValueRule()), 'List of analyzed files.'],
+        }), 'C/C++ static analysis comments in source code'],
+        'tests': [new DockerPipeRule({
+            executable: new UnionRule(new ValueRule(), new ArrayRule()),
+        }), 'Run input/output/files tests on compiled program.'],
+        'auto_grader': [new PipeRule({
+          propose: [new EnumRule(['true', 'false']), 'Only propose points without assigning.'],
+          overwrite: [new EnumRule(['true', 'false']), 'Do not overwrite already assigned points in current submit.'],
+          after_deadline_multiplier: [new ValueRule(), 'Points multiplier in range of 0 to 1 when submit is after deadline'],
+        }), 'Automatically assign or propose points based on executed tests.'],
+    }),
 });
