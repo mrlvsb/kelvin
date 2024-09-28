@@ -36,6 +36,7 @@ EXTENSION_TO_LANG_MAP = {
     "java": "java",
     "py": "python",
     "cs": "c-sharp",
+    "rs": "rust",
 }
 
 
@@ -170,7 +171,11 @@ def dolos_check_plagiarism(task_id: int):
         args = [
             "npx",
             "--yes",
+            "-p",
+            "tree-sitter-rust",
+            "-p",
             "@dodona/dolos",
+            "dolos",
             "run",
             str(csv_path),
             "--language",

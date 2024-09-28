@@ -36,6 +36,8 @@ EXTENSION_TO_LANG_MAP = {
     "asm": "c",
     "c": "c",
     "h": "c",
+    # Hack to support Rust files
+    "rs": "c",
     "cpp": "cc",
     "cxx": "cc",
     "c++": "cc",
