@@ -1,15 +1,14 @@
-name: Test
+name: Test Python
 on:
   push:
     branches:
       - master
   pull_request:
 jobs:
-  test_backend:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout sources
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       - name: Install Python
         uses: actions/setup-python@v5
         with:
@@ -33,24 +32,3 @@ jobs:
           uv lock --locked
           uv export --format requirements-txt > requirements.txt.locked
           diff requirements.txt requirements.txt.locked
-  test_frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v4
-      - name: Install NodeJS
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Install dependencies
-        run: |
-          cd frontend
-          npm ci
-      - name: Build packages
-        run: |
-          cd frontend
-          npm run build
-      - name: Check lints and formatting
-        run: |
-          cd frontend
-          npm run check
