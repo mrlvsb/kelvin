@@ -1,11 +1,11 @@
 import dataclasses
 import datetime
 import glob
-import logging
 import shutil
 import subprocess
 import tempfile
 from collections import defaultdict
+from logging import Logger
 from pathlib import Path
 from typing import List, Union, Optional
 
@@ -21,8 +21,6 @@ from .. import (
     create_stream_logger,
 )
 from ...models import Submit, Task
-
-logger = logging.getLogger(__name__)
 
 EXTENSION_TO_LANG_MAP = {
     "asm": "c",
@@ -48,16 +46,17 @@ class Entry:
 
 
 class Builder:
-    def __init__(self):
+    def __init__(self, logger: Logger):
         self.dir = tempfile.TemporaryDirectory()
         self.entries: List[Entry] = []
         self.counters = {lang: 0 for lang in EXTENSION_TO_LANG_MAP.values()}
+        self.logger = logger
 
     def path(self, path: str) -> Path:
         return Path(self.dir.name) / path
 
     def add_submit(self, submit: Submit):
-        sources = [s for s in submit.all_sources() if is_source_valid(logger, s)]
+        sources = [s for s in submit.all_sources() if is_source_valid(self.logger, s)]
         if not sources:
             return
 
@@ -70,6 +69,9 @@ class Builder:
             ext = filepath.suffix[1:]
             if ext in EXTENSION_TO_LANG_MAP:
                 self.counters[EXTENSION_TO_LANG_MAP[ext]] += 1
+        self.logger.info(
+            f"Adding file {combined_path} ({len(files)} combined) for student {submit.student.username}"
+        )
         self.entries.append(
             Entry(
                 student=submit.student.username,
@@ -91,6 +93,7 @@ class Builder:
 
         df = pd.DataFrame(data)
 
+        self.logger.info(f"Building CSV with {len(self.entries)} entries")
         csv_path = self.path("info.csv")
         df.to_csv(csv_path, index=False)
         return csv_path
@@ -154,7 +157,7 @@ def dolos_check_plagiarism(task_id: int):
 
     (log_stream, logger) = create_stream_logger("dolos", task_id=task_id)
 
-    builder = Builder()
+    builder = Builder(logger)
     try:
         submits = get_relevant_submits(task_id)
         for submit in iter_submits_per_student(submits):
@@ -192,6 +195,7 @@ def dolos_check_plagiarism(task_id: int):
             combine_files(templates, template_path)
             args += ["-i", str(template_path.relative_to(builder.dir.name))]
 
+        logger.info(f"Running Dolos\n{' '.join(args)}")
         output = subprocess.run(
             args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=builder.dir.name
         )
@@ -208,6 +212,7 @@ def dolos_check_plagiarism(task_id: int):
     except BaseException as e:
         logger.exception(e)
         store_error(task, log_stream.getvalue())
+    print(log_stream.getvalue())
 
 
 @django_rq.job("default", timeout=60 * 15)
