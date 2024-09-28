@@ -19,6 +19,7 @@ ALLOWED_EXTENSIONS = frozenset(
         "asm",
         "c",
         "h",
+        "rs",
         "cpp",
         "cxx",
         "c++",
