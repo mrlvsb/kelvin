@@ -5,12 +5,9 @@
     "copy-dolos": "node copy-dolos.js",
     "build": "npm run copy-dolos && rollup -c --bundleConfigAsCjs",
     "dev": "npm run copy-dolos && rollup -c -w --bundleConfigAsCjs",
-    "start": "npm run copy-dolos && sirv public",
-    "check": "prettier --check src && eslint src",
-    "fix": "prettier --write src && eslint --fix src"
+    "start": "npm run copy-dolos && sirv public"
   },
   "devDependencies": {
-    "@eslint/js": "^9.11.1",
     "@iconify/iconify": "^1.0.7",
     "@popperjs/core": "^2.11.8",
     "@rollup/plugin-commonjs": "^25.0.7",
@@ -23,16 +20,11 @@
     "codemirror": "^5.58.2",
     "diff2html": "^3.4.35",
     "dompurify": "^2.5.4",
-    "eslint": "^9.11.1",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-vue": "^9.28.0",
     "flatpickr": "^4.6.6",
     "fuzzysort": "^1.1.4",
     "highlight.js": "^11.8.0",
     "js-yaml": "^4.1.0",
     "marked": "^4.2.12",
-    "prettier": "^3.3.3",
-    "prettier-plugin-vue": "^1.1.6",
     "rollup": "^4.9.6",
     "rollup-plugin-livereload": "^2.0.5",
     "rollup-plugin-postcss": "^4.0.2",
@@ -43,7 +35,6 @@
     "svelte": "^3.55.1",
     "svelte-spa-router": "^3.0.3",
     "timeago.js": "^4.0.2",
-    "typescript-eslint": "^8.7.0",
     "uppie": "1.1.4",
     "vue": "^3.5.8"
   },
