@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "copy-dolos": "node copy-dolos.js",
-    "build": "npm run copy-dolos && vite build",
+    "build": "npm run copy-dolos && vue-tsc && vite build",
     "dev": "npm run copy-dolos && vite build --watch --mode dev",
     "start": "npm run copy-dolos && sirv public"
   },
@@ -28,7 +28,9 @@
     "svelte-spa-router": "^3.0.3",
     "timeago.js": "^4.0.2",
     "uppie": "1.1.4",
-    "vite": "^5.4.8"
+    "vite": "^5.4.8",
+    "vue": "^3.5.10",
+    "vue-tsc": "^2.1.6"
   },
   "dependencies": {
     "@dodona/dolos-web": "^2.7.1",
