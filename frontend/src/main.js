@@ -47,6 +47,7 @@ import PipelineStatus from './PipelineStatus.svelte'
 import {safeMarkdown} from './markdown.js'
 import CtrlP from './CtrlP.svelte'
 import ColorTheme from "./ColorTheme.svelte"
+import TestFile from "./TestFile.svelte"
 
 class ReplaceHtmlElement extends HTMLElement {
 	constructor() {
@@ -108,6 +109,7 @@ createElement('upload-solution', UploadSolution);
 createElement('pipeline-status', PipelineStatus);
 createElement('ctrlp', CtrlP);
 createElement("color-theme", ColorTheme);
+createElement('test-file', TestFile);
 
 function focusTab() {
 	const hash = document.location.hash.replace('#', '').split('-')[0].split(';')[0];
