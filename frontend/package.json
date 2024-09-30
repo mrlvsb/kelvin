@@ -5,7 +5,6 @@
     "copy-dolos": "node copy-dolos.js",
     "build": "npm run copy-dolos && vue-tsc && vite build",
     "dev": "npm run copy-dolos && vite build --watch --mode dev",
-    "start": "npm run copy-dolos && sirv public",
     "check": "vue-tsc && prettier --check src && eslint src",
     "fix": "prettier --write src && eslint --fix src"
   },
@@ -42,7 +41,6 @@
     "vue-tsc": "^2.1.6"
   },
   "dependencies": {
-    "@dodona/dolos-web": "^2.7.1",
-    "sirv-cli": "^1.0.0"
+    "@dodona/dolos-web": "^2.7.1"
   }
 }
