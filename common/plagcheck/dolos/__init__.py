@@ -40,7 +40,10 @@ EXTENSION_TO_LANG_MAP = {
 
 @dataclasses.dataclass
 class Entry:
+    # Login + full name
     student: str
+    # Year/lesson
+    cohort: str
     combined_file: Path
     submit_date: datetime.datetime
 
@@ -72,9 +75,14 @@ class Builder:
         self.logger.info(
             f"Adding file {combined_path} ({len(files)} combined) for student {submit.student.username}"
         )
+
+        student_name = f"{submit.student.get_full_name()} ({submit.student.username})"
+        clazz = submit.assignment.clazz
+        cohort = f"{clazz.code} ({clazz.semester})"
         self.entries.append(
             Entry(
-                student=submit.student.username,
+                student=student_name,
+                cohort=cohort,
                 combined_file=combined_path,
                 submit_date=submit.created_at,
             )
@@ -89,6 +97,7 @@ class Builder:
             # Files should be relative to the temp dir
             data["filename"].append(str(entry.combined_file.relative_to(self.dir.name)))
             data["full_name"].append(entry.student)
+            data["label"].append(entry.cohort)
             data["created_at"].append(entry.submit_date.isoformat())
 
         df = pd.DataFrame(data)
