@@ -3,16 +3,15 @@
   "version": "1.0.0",
   "scripts": {
     "copy-dolos": "node copy-dolos.js",
-    "build": "npm run copy-dolos && rollup -c --bundleConfigAsCjs",
-    "dev": "npm run copy-dolos && rollup -c -w --bundleConfigAsCjs",
+    "build": "npm run copy-dolos && vite build",
+    "dev": "npm run copy-dolos && vite build --watch --mode dev",
     "start": "npm run copy-dolos && sirv public"
   },
   "devDependencies": {
     "@iconify/iconify": "^1.0.7",
     "@popperjs/core": "^2.11.8",
-    "@rollup/plugin-commonjs": "^25.0.7",
-    "@rollup/plugin-node-resolve": "^15.2.3",
-    "@rollup/plugin-terser": "^0.4.4",
+    "@sveltejs/vite-plugin-svelte": "^3.1.2",
+    "@vitejs/plugin-vue": "^5.1.4",
     "ansi_up": "^5.0.0",
     "autoprefixer": "^10.4.13",
     "bootstrap": "^5.3.2",
@@ -24,15 +23,12 @@
     "highlight.js": "^11.8.0",
     "js-yaml": "^4.1.0",
     "marked": "^4.2.12",
-    "rollup": "^4.9.6",
-    "rollup-plugin-livereload": "^2.0.5",
-    "rollup-plugin-postcss": "^4.0.2",
-    "rollup-plugin-svelte": "^7.1.6",
     "sass": "^1.63.6",
     "svelte": "^4.2.19",
     "svelte-spa-router": "^3.0.3",
     "timeago.js": "^4.0.2",
-    "uppie": "1.1.4"
+    "uppie": "1.1.4",
+    "vite": "^5.4.8"
   },
   "dependencies": {
     "@dodona/dolos-web": "^2.7.1",
