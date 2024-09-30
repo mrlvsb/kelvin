@@ -66,6 +66,11 @@ urlpatterns = [
     path("teacher/task/<int:task_id>.tar", student_view.teacher_task_tar, name="teacher_task_tar"),
     path("teacher/task/<int:task_id>/dolos/data/<str:path>", plagcheck.dolos_result),
     path(
+        "teacher/task/<int:task_id>/dolos/log",
+        plagcheck.dolos_result_log,
+        name="teacher_task_dolos_log",
+    ),
+    path(
         "teacher/task/<int:task_id>/dolos<path:path>",
         plagcheck.dolos_page,
         name="teacher_task_dolos_page",

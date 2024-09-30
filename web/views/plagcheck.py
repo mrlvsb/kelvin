@@ -27,6 +27,7 @@ from notifications.models import Notification
 
 from common.models import Semester, Submit, Task, current_semester
 from common.plagcheck.dolos import (
+    get_dolos_log_path,
     get_dolos_result,
     DolosResultMissing,
     DolosResultFailed,
@@ -228,11 +229,25 @@ def dolos_page(request: HttpRequest, path: str, task_id: int) -> HttpResponse:
     if isinstance(result, DolosResultMissing):
         return HttpResponseNotFound()
     elif isinstance(result, DolosResultFailed):
-        return HttpResponse(f"<pre>{result.log}</pre>")
+        # The check has failed, redirect the user to the log
+        return redirect(reverse("teacher_task_dolos_log", kwargs=dict(task_id=task_id)))
     elif isinstance(result, DolosResultPresent):
         return serve_static_dolos(request, path)
     else:
         assert False
+
+
+@user_passes_test(is_teacher)
+def dolos_result_log(request: HttpRequest, task_id: int) -> HttpResponse:
+    """
+    Returns the log of a dolos check.
+    """
+    task = get_object_or_404(Task, pk=task_id)
+    result = get_dolos_result(task)
+    if isinstance(result, DolosResultMissing):
+        return HttpResponseNotFound()
+    with open(get_dolos_log_path(task)) as f:
+        return HttpResponse(f"<pre>{f.read()}</pre>")
 
 
 def serve_static_dolos(request: HttpRequest, path: str) -> HttpResponse:
@@ -253,9 +268,7 @@ def dolos_result(request: HttpRequest, task_id: int, path: str) -> HttpResponseB
     """
     task = get_object_or_404(Task, pk=task_id)
     result = get_dolos_result(task)
-    if isinstance(result, DolosResultMissing):
-        return HttpResponseNotFound()
-    elif isinstance(result, DolosResultFailed):
+    if isinstance(result, DolosResultMissing) or isinstance(result, DolosResultFailed):
         return HttpResponseNotFound()
     elif isinstance(result, DolosResultPresent):
         file = result.dir / path

@@ -1,6 +1,7 @@
 import dataclasses
 import datetime
 import glob
+import logging
 import shutil
 import subprocess
 import tempfile
@@ -128,7 +129,7 @@ class DolosResultMissing:
 
 @dataclasses.dataclass
 class DolosResultFailed:
-    log: str
+    pass
 
 
 @dataclasses.dataclass
@@ -139,23 +140,54 @@ class DolosResultPresent:
 DolosResult = Union[DolosResultPresent, DolosResultFailed, DolosResultMissing]
 
 
+OUTCOME_SUCCESS = "OK"
+
+
 def get_result_dir(task: Task) -> Path:
     return Path(BASE_DIR) / task.dir() / ".dolos-results"
 
 
-def get_error_log_path(task: Task) -> Path:
-    return get_result_dir(task) / "error.log"
+def get_dolos_log_path(task: Task) -> Path:
+    """
+    This file contains the log of the check.
+    """
+    return get_result_dir(task) / "dolos.log"
+
+
+def outcome_file(task: Task) -> Path:
+    """
+    This file records the outcome of the check (OK or FAIL).
+    """
+    return get_result_dir(task) / "result.txt"
+
+
+def mark_outcome(task: Task, outcome: str):
+    path = get_result_dir(task)
+    path.mkdir(parents=True, exist_ok=True)
+    with open(outcome_file(task), "w") as f:
+        f.write(outcome)
+
+
+def mark_success(task: Task):
+    mark_outcome(task, OUTCOME_SUCCESS)
+
+
+def mark_failure(task: Task):
+    mark_outcome(task, "FAIL")
 
 
 def get_dolos_result(task: Task) -> DolosResult:
-    dir = get_result_dir(task)
-    if not dir.is_dir():
+    outcome = outcome_file(task)
+    if not outcome.is_file():
         return DolosResultMissing()
-    error_log = get_error_log_path(task)
-    if error_log.is_file():
-        with open(error_log) as f:
-            return DolosResultFailed(log=f.read())
-    return DolosResultPresent(dir=dir)
+
+    try:
+        with open(outcome, "r") as f:
+            if f.read().strip() == OUTCOME_SUCCESS:
+                return DolosResultPresent(dir=get_result_dir(task))
+    except IOError as e:
+        logging.error(e)
+    return DolosResultFailed()
 
 
 def dolos_check_plagiarism(task_id: int):
@@ -218,10 +250,14 @@ def dolos_check_plagiarism(task_id: int):
 
         # Copy the result CSV files from the temporary dir to the task dir
         shutil.copytree(tmp_result_dir, result_dir)
+        mark_success(task)
     except BaseException as e:
         logger.exception(e)
-        store_error(task, log_stream.getvalue())
-    print(log_stream.getvalue())
+        mark_failure(task)
+
+    log_contents = log_stream.getvalue()
+    store_log(task, log_contents)
+    print(log_contents)
 
 
 @django_rq.job("default", timeout=60 * 15)
@@ -229,8 +265,8 @@ def dolos_check_task(task_id: int):
     dolos_check_plagiarism(task_id=task_id)
 
 
-def store_error(task: Task, log: str):
-    path = get_error_log_path(task)
+def store_log(task: Task, log: str):
+    path = get_dolos_log_path(task)
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w") as f:
         f.write(log)
