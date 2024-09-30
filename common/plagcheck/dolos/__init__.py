@@ -105,10 +105,10 @@ class Builder:
 
 
 def combine_files(files: List[Path], target: Path):
-    with open(target, "w") as combined:
+    with open(target, "wb") as combined:
         for file in files:
-            with open(file) as f:
-                print(f"// File {file.name}", file=combined)
+            with open(file, "rb") as f:
+                combined.write(f"// File {file.name}\n".encode("utf8"))
                 combined.write(f.read())
 
 
