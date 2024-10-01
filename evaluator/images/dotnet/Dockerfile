@@ -2,8 +2,8 @@ FROM kelvin/base
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    dotnet7 \
-    aspnetcore-runtime-7.0 \
+    dotnet8 \
+    aspnetcore-runtime-8.0 \
     python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
