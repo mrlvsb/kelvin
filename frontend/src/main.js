@@ -144,11 +144,22 @@ window.addEventListener('hashchange', focusTab);
 window.addEventListener('DOMContentLoaded', focusTab);
 
 import { defineCustomElement } from 'vue';
-import Example from './ExampleComponent.vue';
+import AllTasks from './Teacher/AllTasks.vue';
 
-customElements.define(
-    'kelvin-example',
-    defineCustomElement(Example, {
-        shadowRoot: false // https://github.com/vuejs/core/issues/4314#issuecomment-2266382877
-    })
-);
+/**
+ * Register new Vue component as a custom element.
+ * @param {string} name Suffix to `kelvin-` as name of new custom element
+ * @param {(props: unknown, ctx: unknown) => unknown} component Vue Component
+ * @param {(app) => void} configure Expose app variable to use plugins for example
+ */
+const registerVueComponent = (name, component, configure = undefined) => {
+    customElements.define(
+        `kelvin-${name}`,
+        defineCustomElement(component, {
+            shadowRoot: false, // https://github.com/vuejs/core/issues/4314#issuecomment-2266382877
+            configureApp: configure
+        })
+    );
+};
+
+registerVueComponent('tasks-all', AllTasks);
