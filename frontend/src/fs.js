@@ -58,7 +58,7 @@ function createFs() {
             if (openedFiles[path]) {
                 delete openedFiles[path];
 
-                currentOpenedFile.update((current) => {
+                currentOpenedFile.update(() => {
                     return Object.keys(openedFiles).length ? Object.keys(openedFiles)[0] : null;
                 });
             }
@@ -124,7 +124,7 @@ function createFs() {
                 return;
             }
 
-            const res = await fetch(get(fs)['endpoint_url'] + oldPath.slice(1), {
+            await fetch(get(fs)['endpoint_url'] + oldPath.slice(1), {
                 method: 'MOVE',
                 headers: {
                     Destination: newPath
