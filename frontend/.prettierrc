@@ -5,6 +5,6 @@
     "trailingComma": "none",
     "printWidth": 180,
     "semi": true,
-    "plugins": ["prettier-plugin-vue"],
+    "plugins": ["prettier-plugin-vue", "prettier-plugin-svelte"],
     "overrides": [{ "files": "*.vue", "options": { "parser": "vue", "vueExcludeBlocks": [] } }]
 }
