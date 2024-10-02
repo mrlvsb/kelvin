@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "target": "ES2018",
+        "lib": ["ES2018", "DOM"],
+        "moduleResolution": "Bundler",
+        "noEmit": true
+    },
+    "include": ["./src/**/*"]
+}
