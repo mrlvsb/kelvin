@@ -3,8 +3,15 @@
     "tabWidth": 4,
     "singleQuote": true,
     "trailingComma": "none",
-    "printWidth": 180,
+    "printWidth": 100,
     "semi": true,
-    "plugins": ["prettier-plugin-vue"],
-    "overrides": [{ "files": "*.vue", "options": { "parser": "vue", "vueExcludeBlocks": [] } }]
+    "plugins": ["prettier-plugin-vue", "prettier-plugin-svelte"],
+    "overrides": [{
+        "files": "*.vue",
+        "options": {"parser": "vue", "vueExcludeBlocks": [], "tabWidth": 2}
+    }, {
+        "files": "*.svelte",
+        "options": {"parser": "svelte", "bracketSameLine": true, "tabWidth": 2}
+    }],
+    "svelteIndentScriptAndStyle": false
 }

@@ -1,43 +1,49 @@
 <script>
-    import CommentForm from './CommentForm.svelte'
-    import Comment from './Comment.svelte'
-    import { createEventDispatcher } from 'svelte';
+import CommentForm from './CommentForm.svelte';
+import Comment from './Comment.svelte';
+import { createEventDispatcher } from 'svelte';
 
-    export let summaryComments;
+export let summaryComments;
 
-    let showForm = false;
+let showForm = false;
 
-    const dispatch = createEventDispatcher();
+const dispatch = createEventDispatcher();
 
-    function addComment(evt) {
-        dispatch('saveComment', {
-            text: evt.detail,
-            success: () => showForm = false,
-        });
-    }
+function addComment(evt) {
+  dispatch('saveComment', {
+    text: evt.detail,
+    success: () => (showForm = false)
+  });
+}
 </script>
 
-<style>
-div :global(.CodeMirror) {
-    height: 100px;
-}
-
-button {
-    line-height: normal;
-    margin-top: -10px;
-}
-</style>
-
 {#each summaryComments as comment}
-    <Comment {...comment} on:saveComment on:setNotification />
+  <Comment {...comment} on:saveComment on:setNotification />
 {/each}
 
 {#if showForm}
-    <div>
-        <CommentForm on:save={addComment} />
-    </div>
+  <div>
+    <CommentForm on:save={addComment} />
+  </div>
 {:else}
-    <button class="btn p-0" on:click={() => showForm = !showForm}>
-        <span class="iconify" data-icon="bx:bx-comment-add" data-inline="false" data-flip="vertical" data-height="20" title="Add new comment"></span>
-    </button>
+  <button class="btn p-0" on:click={() => (showForm = !showForm)}>
+    <span
+      class="iconify"
+      data-icon="bx:bx-comment-add"
+      data-inline="false"
+      data-flip="vertical"
+      data-height="20"
+      title="Add new comment"></span>
+  </button>
 {/if}
+
+<style>
+div :global(.CodeMirror) {
+  height: 100px;
+}
+
+button {
+  line-height: normal;
+  margin-top: -10px;
+}
+</style>
