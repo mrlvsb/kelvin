@@ -88,3 +88,18 @@ Then you can start a worker with the following command:
 ```bash
 (.venv) $ python3 manage.py rqworker default evaluator --with-scheduler
 ```
+## Initial setup
+At first, let's create a superuser
+```bash
+(.venv) $ python3 manage.py createsuperuser
+```
+Ensure that local kelvin server and database is up, visit an admin page `<local_kelvin_url>/admin` and assign a group to admin, the name of the group is teacher.
+
+## Database seeding
+
+If you want to seed database with initial data, you can perform a command
+```bash
+(.venv) $ python3 manage.py initial_db_seed
+```
+A few students, subjects, teacher, semester and classes will be added.
+
