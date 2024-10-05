@@ -81,7 +81,6 @@ class Task(models.Model):
     plagiarism_key = models.CharField(max_length=255, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-
     def path_to_code(path):
         path = os.path.realpath(os.path.abspath(path))
         return os.path.relpath(path, os.path.abspath("./tasks"))

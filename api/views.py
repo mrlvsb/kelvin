@@ -56,6 +56,7 @@ def tasks_list(request):
         )
     return JsonResponse({"tasks": result})
 
+
 def tasks_list_all(request: HttpRequest):
     result = []
     filters = {}
@@ -78,7 +79,6 @@ def tasks_list_all(request: HttpRequest):
     if "search" in request.GET:
         filters["name__icontains"] = request.GET["search"]
 
-
     if len(filters) == 0:
         tasks = Task.objects.all()
     else:
@@ -90,7 +90,7 @@ def tasks_list_all(request: HttpRequest):
 
     if start is not None:
         tasks = tasks[start:]
-    
+
     if count is not None:
         tasks = tasks[:count]
 
