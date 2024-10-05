@@ -1,4 +1,5 @@
 tasks/
 submits/
 submit_results/
-frontend/
+.venv/
+node_modules/

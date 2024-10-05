@@ -33,7 +33,14 @@ SECRET_KEY = "***REMOVED***"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", "web"]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "app", "kelvin.cs.vsb.cz"]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://127.0.0.1",
+    "https://localhost",
+    "https://app",
+    "https://kelvin.cs.vsb.cz",
+]
 
 # Application definition
 
@@ -105,10 +112,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "HOST": os.getenv("DB_HOST", "127.0.0.1"),
-        "USER": os.getenv("DB_USERNAME"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "NAME": os.getenv("DB_DATABASE"),
+        "HOST": os.getenv("DATABASE__HOSTNAME", "127.0.0.1"),
+        "PORT": os.getenv("DATABASE__PORT", 5432),
+        "NAME": os.getenv("DATABASE__DB"),
+        "USER": os.getenv("DATABASE__USERNAME"),
+        "PASSWORD": os.getenv("DATABASE__PASSWORD"),
     }
 }
 
@@ -175,14 +183,14 @@ CAS_SERVER_URL = "https://www.sso.vsb.cz/"
 CAS_CREATE_USER = False
 CAS_FORCE_CHANGE_USERNAME_CASE = "upper"
 
-redis_host = os.getenv("REDIS_HOST", "127.0.0.1")
-redis_port = os.getenv("REDIS_EXPOSE_PORT", 6379)
-redis_connection = f"redis://{redis_host}:{redis_port}/0"
+REDIS_HOST = os.getenv("REDIS__HOST", "127.0.0.1")
+REDIS_PORT = os.getenv("REDIS__PORT", 6379)
+REDIS_CONNECTION = f"redis://{REDIS_HOST}:{REDIS_PORT}/0"
 
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": redis_connection,
+        "LOCATION": REDIS_CONNECTION,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
@@ -204,7 +212,7 @@ RQ_QUEUES = {
 }
 
 # For django-tasks-scheduler
-SCHEDULER_QUEUES = {"default": {"HOST": redis_host, "PORT": redis_port}}
+SCHEDULER_QUEUES = {"default": {"HOST": REDIS_HOST, "PORT": REDIS_PORT}}
 
 LOGGING = {
     "version": 1,

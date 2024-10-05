@@ -1,22 +1,73 @@
-FROM python:3.12
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm AS build-backend
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt-get update && \
+    apt-get install -y \
+    -o APT::Install-Recommends=false \
+    -o APT::Install-Suggests=false \
+    libsasl2-dev \
+    libgraphviz-dev \
+    graphviz
 
-RUN apt-get update && apt-get install -y libsasl2-dev libgraphviz-dev graphviz
+WORKDIR /app
 
-COPY requirements.txt /kelvin/requirements.txt
-RUN pip install -r /kelvin/requirements.txt
+COPY pyproject.toml uv.lock ./
 
-RUN apt-get update \
-      && apt-get install -y ca-certificates curl gnupg lsb-release \
-      && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
-      && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list \
-      && apt-get update \
-      && apt-get install -y docker-ce docker-ce-cli containerd.io
+RUN uv sync --frozen --no-dev --no-install-project --compile-bytecode
 
-WORKDIR /kelvin
+FROM node:22.9.0-bookworm-slim AS build-frontend
 
-#RUN addgroup --gid 1000 user
-#RUN adduser --disabled-password --gecos '' --uid $HOST_USER_ID --gid 1000 user
-#USER user
+WORKDIR /frontend
+
+COPY frontend .
+
+RUN mkdir -p /web/static
+
+RUN npm ci
+
+RUN npm run build
+
+FROM python:3.12-bookworm AS runtime
+
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt-get update && \
+    apt-get install -y \
+    -o APT::Install-Recommends=false \
+    -o APT::Install-Suggests=false \
+    graphviz && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+WORKDIR /app
+
+# Create new user to run app process as unprivilaged user
+RUN groupadd --gid 102 webserver && \
+    useradd --uid 101 --gid 102 --shell /bin/false --system webserver
+
+RUN chown -R webserver:webserver /app
+
+COPY --from=build-backend --chown=webserver:webserver /app .
+ENV PATH="/app/.venv/bin:$PATH"
+
+COPY --chown=webserver:webserver web ./web
+COPY --from=build-frontend --chown=uvicorn:uvicorn /web/static/frontend.* ./web/static/
+COPY --from=build-frontend --chown=uvicorn:uvicorn /web/static/dolos ./web/static/dolos
+COPY --chown=webserver:webserver kelvin ./kelvin
+COPY --chown=webserver:webserver templates ./templates
+COPY --chown=webserver:webserver evaluator ./evaluator
+COPY --chown=webserver:webserver survey ./survey
+COPY --chown=webserver:webserver common ./common
+COPY --chown=webserver:webserver api ./api
+COPY --chown=webserver:webserver manage.py .
+
+RUN mkdir -p /socket && chown webserver:webserver /socket
+
+USER webserver
+
+RUN python manage.py collectstatic --no-input --clear
+
+EXPOSE 8000
+
+COPY --chown=webserver:webserver deploy/entrypoint.sh ./
+ENTRYPOINT [ "/app/entrypoint.sh" ]
+STOPSIGNAL SIGINT

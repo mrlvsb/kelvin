@@ -45,5 +45,23 @@ dependencies = [
 
 [tool.uv]
 dev-dependencies = [
-    "ruff==0.6.3"
+    "pre-commit>=3.8.0",
+    "ruff==0.6.3",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+indent-width = 4
+
+include = [
+    "api/**/*.py",
+    "common/**/*.py",
+    "evaluator/**/*.py",
+    "kelvin/**/*.py",
+    "survey/**/*.py",
+    "web/**/*.py"
+]
+extend-exclude = [
+    "**/migrations/**"
 ]

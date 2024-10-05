@@ -1,0 +1,28 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-json
+      - id: check-toml
+      - id: check-shebang-scripts-are-executable
+      - id: end-of-file-fixer
+        name: Makes sure files end in a newline and only a newline.
+        entry: end-of-file-fixer
+        types: [text]
+      - id: trailing-whitespace
+        name: Trims trailing whitespace.
+        entry: trailing-whitespace-fixer
+        types: [text]
+      - id: mixed-line-ending
+        args: [ --fix=lf ]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.7
+    hooks:
+      - id: ruff-format
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.7
+    hooks:
+      - id: ruff
+        args: [ --fix ]

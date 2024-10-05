@@ -1,18 +1,77 @@
-version: "3.9"
 services:
-  db:
-    image: postgres:14
-    ports:
-      - "5432:5432"
-    volumes:
-      - ${KELVIN_DB_PATH?Absolute path to Kelvin database storage}:/var/lib/postgresql/data
-    container_name: kelvin_db
+  app:
+    container_name: kelvin_app
+    depends_on:
+      - db
+      - redis
+    profiles: [prod]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    restart: unless-stopped
     environment:
-      - POSTGRES_DB=${DB_DATABASE?Name of PostgreSQL database}
-      - POSTGRES_USER=${DB_USERNAME?PostgreSQL username}
-      - POSTGRES_PASSWORD=${DB_PASSWORD?PostgreSQL password}
-  redis:
-    image: redis
+      - DATABASE__HOSTNAME=db
+      - DATABASE__PORT=5432
+      - DATABASE__DB=${DATABASE__DB}
+      - DATABASE__USERNAME=${DATABASE__USERNAME}
+      - DATABASE__PASSWORD=${DATABASE__PASSWORD}
+      - REDIS__HOST=redis
+      - REDIS__PORT=6379
+    env_file:
+      - .env
+    volumes:
+      - app_static:/app/static
+      - app_socket:/socket
+      - ${KELVIN__LOCAL_SETTINGS_PATH}:/app/kelvin/local_settings.py:ro
+      - ${UWSGI__CONFIG_PATH}:/app/uwsgi.ini:ro
+    expose:
+      - "8000"
+
+  db:
+    container_name: kelvin_db
+    image: postgres:14
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${DATABASE__DB}
+      - POSTGRES_USER=${DATABASE__USERNAME}
+      - POSTGRES_PASSWORD=${DATABASE__PASSWORD}
+    env_file:
+      - .env
+    volumes:
+      - ${DATABASE__DATA_PATH}:/var/lib/postgresql/data
     ports:
-      - "6379:6379"
+      - "${DATABASE__HOSTNAME}:${DATABASE__PORT}:5432"
+
+  redis:
     container_name: kelvin_redis
+    image: redis:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ${REDIS__DATA_PATH}:/data
+    ports:
+      - "${REDIS__HOSTNAME}:${REDIS__PORT}:6379"
+    command: "redis-server --save 60 1 --loglevel warning"
+
+  nginx:
+    image: nginx:stable
+    container_name: kelvin_nginx
+    depends_on:
+      - app
+    restart: unless-stopped
+    profiles: [prod]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${NGINX__CONFIG_PATH}:/etc/nginx/nginx.conf:ro
+      - ${NGINX__CERTS_PATH}:/etc/nginx/certs:ro
+      - ${NGINX__LOGS_PATH}:/var/log/nginx
+      - app_static:/app/static:ro
+      - app_socket:/socket
+
+volumes:
+  app_static:
+  app_socket:
