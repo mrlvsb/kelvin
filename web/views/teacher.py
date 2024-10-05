@@ -307,14 +307,10 @@ def download_csv_per_class(request, class_id: int):
 
 
 @user_passes_test(is_teacher)
-def all_tasks(request, **kwargs):
+def all_tasks(request):
     return render(
         request,
-        "web/all_tasks.html",
-        {
-            "tasks": Task.objects.filter(**kwargs).order_by("-id"),
-            "subjects": Subject.objects.all(),
-        },
+        "web/all_tasks.html"
     )
 
 
