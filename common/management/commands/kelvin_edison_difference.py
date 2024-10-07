@@ -4,6 +4,7 @@ from django.core.cache import cache
 
 from common.models import Class, Subject
 from common.inbus import inbus
+from common.inbus.dto import SubjectVersionId
 
 
 class Command(BaseCommand):
@@ -24,7 +25,7 @@ class Command(BaseCommand):
         ]
         for subject_version in subject_versions:
             subject_version_schedule = inbus.schedule_subject_by_version_id(
-                subject_version.subjectVersionId
+                SubjectVersionId(subject_version.subjectVersionId)
             )
 
             # mapping of student -> class
@@ -47,8 +48,8 @@ class Command(BaseCommand):
                 code = ca.code()
                 if code.startswith("C"):
                     try:
-                        clazz = Class.objects.get(code=code)
                         print(f"{ca.code()} by {ca.teacherLogins}")
+                        clazz = Class.objects.get(code=code, semester__active=True)
 
                         students_class = [u.username.upper() for u in clazz.students.all()]
 
