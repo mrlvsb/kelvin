@@ -57,25 +57,34 @@ def tasks_list(request):
     return JsonResponse({"tasks": result})
 
 
-def tasks_list_all(request: HttpRequest):
+@user_passes_test(is_teacher)
+def tasks_list_all(request: HttpRequest, subject_abbr: str | None = None):
     result = []
     filters = {}
 
     count = None
     start = None
-    order = ["-created_at", "-id"]
+    orderBy = "created_at"
+    sort = "desc"
 
-    if "subject" in request.GET:
-        filters["subject__abbr"] = request.GET["subject"]
+    if subject_abbr is not None:
+        filters["subject__abbr"] = subject_abbr
     if "count" in request.GET:
         count = int(request.GET["count"])
     if "start" in request.GET:
         start = int(request.GET["start"])
+    if "order_column" in request.GET:
+        if request.GET["order_column"] in ("created_at", "name"):
+            orderBy = request.GET["order_column"]
     if "sort" in request.GET:
         if request.GET["sort"] == "asc":
-            order = ["created_at", "id"]
-        else:
-            order = ["-created_at", "-id"]
+            sort = "asc"
+
+    if sort != "desc":
+        order = (orderBy, "id")
+    else:
+        order = (f"-{orderBy}", "-id")
+
     if "search" in request.GET:
         filters["name__icontains"] = request.GET["search"]
 
@@ -99,6 +108,7 @@ def tasks_list_all(request: HttpRequest):
             {
                 "id": task.pk,
                 "title": task.name,
+                "path": task.code,
                 "subject": task.subject.abbr,
                 "date": task.created_at,
             }
