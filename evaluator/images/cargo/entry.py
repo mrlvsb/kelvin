@@ -184,6 +184,8 @@ Warning: multiple binary artifacts built ({', '.join([artifact.name for artifact
 Using the first one for further commands.
 """
     if len(artifacts) > 0:
+        if os.path.isfile("main"):
+            os.remove("main")
         os.symlink(artifacts[0].path, "main")
 
     if not stdout:
