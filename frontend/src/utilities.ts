@@ -40,30 +40,3 @@ export const getFromAPI = async <$ReturnType>(
 export const generateRange = (size: number, start = 0) => {
     return Array.from({ length: size }).map((_, i) => i + start);
 };
-
-/**
- * Generate string date format from date
- * @param date Date object or string in format 'YYYY-MM-DD' or 'YYYY-MM-DDTHH:MMZ'
- * @param withTime Include time in the output
- * @returns If withTime is false 'YYYY-MM-DD', otherwise 'YYYY-MM-DD HH:MM'
- */
-export const getDate = (date: Date | string, withTime = false) => {
-    let d: Date;
-    if (typeof date === 'string') {
-        d = new Date(date);
-    } else {
-        d = date;
-    }
-
-    const year = d.getFullYear();
-    const month = (d.getMonth() + 1).toString().padStart(2, '0');
-    const day = d.getDate().toString().padStart(2, '0');
-
-    if (!withTime) {
-        return `${year}-${month}-${day}`;
-    }
-
-    const hours = d.getHours().toString().padStart(2, '0');
-    const minutes = d.getMinutes().toString().padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}`;
-};

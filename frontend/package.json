@@ -21,6 +21,7 @@
     "codemirror": "^5.58.2",
     "datatables.net-bs5": "^2.1.8",
     "datatables.net-vue3": "^3.0.2",
+    "date-fns": "^4.1.0",
     "diff2html": "^3.4.35",
     "dompurify": "^2.5.4",
     "eslint": "^9.11.1",

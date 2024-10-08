@@ -2,9 +2,10 @@
 import type { Config, ConfigColumns, Api as DataTableObject } from 'datatables.net';
 import DataTablesCore from 'datatables.net-bs5';
 import DataTable from 'datatables.net-vue3';
+import { format } from 'date-fns';
 import { ref, watchEffect } from 'vue';
 import Loader from '../components/Loader.vue';
-import { getDate, getFromAPI } from '../utilities';
+import { getFromAPI } from '../utilities';
 
 DataTable.use(DataTablesCore);
 
@@ -39,8 +40,9 @@ const getTasks = async (
 ): Promise<[number, Task[]]> => {
   const params = new URLSearchParams();
 
+  let subjectPath = '';
   if (subject !== 'all') {
-    params.append('subject', subject);
+    subjectPath = `/${subject}`;
   }
 
   params.append('count', count.toString());
@@ -51,7 +53,7 @@ const getTasks = async (
   const data = await getFromAPI<{
     tasks: RawTask[];
     count: number;
-  }>(`/api/tasks/all?${params.toString()}`);
+  }>(`/api/task-list${subjectPath}?${params.toString()}`);
 
   if (data) {
     return [
@@ -115,7 +117,7 @@ const columns = [
     data: 'date',
     orderable: true,
     searchable: false,
-    render: (data: Date) => getDate(data, true)
+    render: (data: Date) => format(data, 'yyyy-MM-dd hh:mm')
   },
   {
     title: 'Moss check',
