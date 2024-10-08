@@ -21,6 +21,7 @@ type RawTask = Omit<Task, 'date'> & {
 };
 
 type SortValue = 'asc' | 'desc';
+type OderColumn = 'created_at' | 'name';
 
 /**
  * Get tasks from API
@@ -35,6 +36,7 @@ const getTasks = async (
   subject: string,
   count: number,
   start = 0,
+  sortCol: OderColumn,
   sort: SortValue = 'desc',
   search: string = ''
 ): Promise<[number, Task[]]> => {
@@ -49,6 +51,7 @@ const getTasks = async (
   params.append('start', start.toString());
   params.append('sort', sort);
   params.append('search', search);
+  params.append('order_column', sortCol);
 
   const data = await getFromAPI<{
     tasks: RawTask[];
@@ -103,7 +106,7 @@ const columns = [
   {
     title: 'Title',
     data: 'title',
-    orderable: false,
+    orderable: true,
     searchable: true
   },
   {
@@ -149,16 +152,25 @@ const options = {
     },
     callback: (data: { data: Task[]; recordsTotal: number; recordsFiltered: number }) => void
   ) => {
+    let col = data.order.find((order) => order.column === 3);
+    let orderColumn: OderColumn = 'created_at';
+    if (!col) {
+      col = data.order.find((order) => order.column === 1);
+      if (col) orderColumn = 'name';
+    }
+
     const [count, items] = await getTasks(
       subject.value,
       data.length,
       data.start,
-      data.order.find((order) => order.column === 3)?.dir ?? 'desc',
+      orderColumn,
+      col?.dir ?? 'desc',
       data.search.value
     );
 
     callback({ data: items, recordsTotal: count, recordsFiltered: count }); // https://datatables.net/manual/server-side#Returned-data
-  }
+  },
+  orderMulti: false
 } satisfies Config;
 
 //save ref to data table and if it changes save datatable instance to table variable
