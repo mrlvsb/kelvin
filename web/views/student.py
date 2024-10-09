@@ -311,9 +311,10 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
 
         moss_res = moss_result(current_submit.assignment.task.id)
         if moss_res and (user_is_teacher or moss_res.opts.show_to_students):
-            svg = moss_res.to_svg(
-                login=current_submit.student.username, anonymize=not user_is_teacher
-            )
+            svg = None
+            # moss_res.to_svg(
+            #     login=current_submit.student.username, anonymize=not user_is_teacher
+            # )
             if svg:
                 data["has_pipeline"] = True
 
@@ -324,7 +325,6 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
                 if is_teacher(request.user):
                     if not moss_res.opts.show_to_students:
                         prepend = "<div class='text-muted'>Not shown to students</div>"
-                    prepend += f'<a href="/teacher/task/{current_submit.assignment.task_id}/moss">Change thresholds</a>'
 
                 res.html = f"""
                     {prepend}
