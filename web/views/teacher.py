@@ -20,7 +20,7 @@ from notifications.models import Notification
 from notifications.signals import notify
 
 from common.evaluate import evaluate_submit, get_meta
-from common.models import AssignedTask, Class, Subject, Submit, Task, assignedtask_results
+from common.models import AssignedTask, Class, Submit, Task, assignedtask_results
 from common.plagcheck.moss import PlagiarismMatch
 from common.utils import is_teacher
 from evaluator.results import EvaluationResult
@@ -307,15 +307,8 @@ def download_csv_per_class(request, class_id: int):
 
 
 @user_passes_test(is_teacher)
-def all_tasks(request, **kwargs):
-    return render(
-        request,
-        "web/all_tasks.html",
-        {
-            "tasks": Task.objects.filter(**kwargs).order_by("-id"),
-            "subjects": Subject.objects.all(),
-        },
-    )
+def all_tasks(request):
+    return render(request, "web/all_tasks.html")
 
 
 @user_passes_test(is_teacher)

@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import django.http
 from django.shortcuts import get_object_or_404
-from django.http import HttpResponseBadRequest
+from django.http import HttpRequest, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -44,17 +44,62 @@ logger = logging.getLogger(__name__)
 
 
 @user_passes_test(is_teacher)
-def tasks_list(request):
+def tasks_list_all(request: HttpRequest, subject_abbr: str | None = None):
     result = []
-    for task in Task.objects.all():
+    filters = {}
+
+    count = None
+    start = None
+    orderBy = "created_at"
+    sort = "desc"
+
+    if subject_abbr is not None:
+        filters["subject__abbr"] = subject_abbr
+    if "count" in request.GET:
+        count = int(request.GET["count"])
+    if "start" in request.GET:
+        start = int(request.GET["start"])
+    if "order_column" in request.GET:
+        if request.GET["order_column"] in ("created_at", "name"):
+            orderBy = request.GET["order_column"]
+    if "sort" in request.GET:
+        if request.GET["sort"] == "asc":
+            sort = "asc"
+
+    if sort != "desc":
+        order = (orderBy, "id")
+    else:
+        order = (f"-{orderBy}", "-id")
+
+    if "search" in request.GET:
+        filters["name__icontains"] = request.GET["search"]
+
+    if len(filters) == 0:
+        tasks = Task.objects.all()
+    else:
+        tasks = Task.objects.filter(**filters)
+
+    tasks = tasks.order_by(*order)
+
+    allCount = tasks.count()
+
+    if start is not None:
+        tasks = tasks[start:]
+
+    if count is not None:
+        tasks = tasks[:count]
+
+    for task in tasks:
         result.append(
             {
                 "id": task.pk,
                 "title": task.name,
                 "path": task.code,
+                "subject": task.subject.abbr,
+                "date": task.created_at,
             }
         )
-    return JsonResponse({"tasks": result})
+    return JsonResponse({"tasks": result, "count": allCount})
 
 
 @user_passes_test(is_teacher)

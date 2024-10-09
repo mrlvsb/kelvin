@@ -42,11 +42,11 @@ import AnsiUp from 'ansi_up';
 import App from './App.svelte';
 import ColorTheme from './ColorTheme.svelte';
 import CtrlP from './CtrlP.svelte';
+import { safeMarkdown } from './markdown.js';
 import Notifications from './Notifications.svelte';
 import PipelineStatus from './PipelineStatus.svelte';
 import TaskDetail from './TaskDetail.svelte';
 import UploadSolution from './UploadSolution.svelte';
-import { safeMarkdown } from './markdown.js';
 
 class ReplaceHtmlElement extends HTMLElement {
     constructor() {
@@ -143,12 +143,42 @@ function focusTab() {
 window.addEventListener('hashchange', focusTab);
 window.addEventListener('DOMContentLoaded', focusTab);
 
-import { defineCustomElement } from 'vue';
-import Example from './ExampleComponent.vue';
+import { defineCustomElement, h } from 'vue';
+import SuspensionWrapper from './components/SuspensionWrapper.vue';
+import AllTasks from './Teacher/AllTasks.vue';
 
-customElements.define(
-    'kelvin-example',
-    defineCustomElement(Example, {
-        shadowRoot: false // https://github.com/vuejs/core/issues/4314#issuecomment-2266382877
-    })
-);
+/**
+ * Register new Vue component as a custom element.
+ * @param {string} name Suffix to `kelvin-` as name of new custom element
+ * @param {(props: unknown, ctx: unknown) => unknown} component Vue Component
+ * @param {(app: import('@vue/runtime-dom').App) => void} configureApp Expose app variable to use plugins for example
+ */
+const registerVueComponent = (name, component, configureApp = undefined) => {
+    customElements.define(
+        `kelvin-${name}`,
+        defineCustomElement(component, {
+            shadowRoot: false, // https://github.com/vuejs/core/issues/4314#issuecomment-2266382877
+            configureApp
+        })
+    );
+};
+
+/**
+ * Wrap Vue component in SuspensionWrapper to support toplevel await - https://vuejs.org/guide/built-ins/suspense
+ * @param {string} name Suffix to `kelvin-` as name of new custom element
+ * @param {(props: unknown, ctx: unknown) => unknown} component Vue Component
+ * @param {(app: import('@vue/runtime-dom').App) => void} configureApp Expose app variable to use plugins for example
+ */
+const registerSuspendedVueComponent = (name, component, configureApp = undefined) => {
+    registerVueComponent(
+        name,
+        {
+            render() {
+                return h(SuspensionWrapper, { childComponent: component });
+            }
+        },
+        configureApp
+    );
+};
+
+registerSuspendedVueComponent('tasks-all', AllTasks);

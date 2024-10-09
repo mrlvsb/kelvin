@@ -79,6 +79,7 @@ class Task(models.Model):
     # Key used to combine plagiarism checks for multiple relevant tasks
     # All tasks with the same key will be checked together
     plagiarism_key = models.CharField(max_length=255, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def path_to_code(path):
         path = os.path.realpath(os.path.abspath(path))
