@@ -1,9 +1,8 @@
 <script>
-import { onMount } from 'svelte';
-import { clickOutside } from './utils.js';
+import { createEventDispatcher, onMount } from 'svelte';
 import CopyToClipboard from './CopyToClipboard.svelte';
 import { user } from './global.js';
-import { createEventDispatcher } from 'svelte';
+import { clickOutside } from './utils.js';
 const dispatch = createEventDispatcher();
 
 export let value;
@@ -15,7 +14,7 @@ let focused = false;
 let highlight_row = -1;
 
 onMount(async () => {
-  let res = await fetch('api/tasks');
+  let res = await fetch('api/task-list?sort=asc');
   res = await res.json();
   items = res['tasks'];
 });

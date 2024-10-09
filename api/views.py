@@ -44,20 +44,6 @@ logger = logging.getLogger(__name__)
 
 
 @user_passes_test(is_teacher)
-def tasks_list(request):
-    result = []
-    for task in Task.objects.all():
-        result.append(
-            {
-                "id": task.pk,
-                "title": task.name,
-                "path": task.code,
-            }
-        )
-    return JsonResponse({"tasks": result})
-
-
-@user_passes_test(is_teacher)
 def tasks_list_all(request: HttpRequest, subject_abbr: str | None = None):
     result = []
     filters = {}
