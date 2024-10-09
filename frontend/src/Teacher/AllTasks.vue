@@ -20,7 +20,7 @@ type RawTask = Omit<Task, 'date'> & {
 };
 
 type SortValue = 'asc' | 'desc';
-type OderColumn = 'created_at' | 'name';
+type OrderColumn = 'created_at' | 'name';
 
 /**
  * Get tasks from API
@@ -35,7 +35,7 @@ const getTasks = async (
   subject: string,
   count: number,
   start = 0,
-  sortCol: OderColumn,
+  sortCol: OrderColumn,
   sort: SortValue = 'desc',
   search: string = ''
 ): Promise<[number, Task[]]> => {
@@ -152,7 +152,7 @@ const options = {
     callback: (data: { data: Task[]; recordsTotal: number; recordsFiltered: number }) => void
   ) => {
     let col = data.order.find((order) => order.column === 3);
-    let orderColumn: OderColumn = 'created_at';
+    let orderColumn: OrderColumn = 'created_at';
     if (!col) {
       col = data.order.find((order) => order.column === 1);
       if (col) orderColumn = 'name';
@@ -198,7 +198,7 @@ const onChangeSubject = () => {
 
   <DataTable ref="dataTable" class="table table-striped" :columns="columns" :options="options">
     <template #moss="props">
-      <a class="btn btn-secondary btn-sm" :href="`/teacher/task/${props.cellData.id}/moss`">
+      <a class="btn btn-secondary btn-sm" :href="`/teacher/task/${props.cellData.id}/plagcheck`">
         MOSS check
       </a>
     </template>
