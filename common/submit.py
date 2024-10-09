@@ -34,16 +34,15 @@ def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     path per line, assigning paths to the uploaded "solution" files.
     """
 
+    # get existing submits of the student
+    submits = Submit.objects.filter(assignment__pk=assignment.id, student__pk=request.user.id)
+
     def get_request_ip(request):
         # TODO: refactor this
         x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
         if x_forwarded_for:
             x_forwarded_for = x_forwarded_for.split(",")[0].strip()
         return x_forwarded_for
-
-    submits = Submit.objects.filter(
-        assignment__pk=assignment.id,
-    ).order_by("-id")
 
     # Check submit date across all tasks, just to be a bit more defensive
     last_submit_date = Submit.objects.filter(student=request.user).order_by("-created_at").first()
