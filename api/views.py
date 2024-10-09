@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 import django.http
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, resolve_url
 from django.http import HttpRequest, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
@@ -97,6 +97,7 @@ def tasks_list_all(request: HttpRequest, subject_abbr: str | None = None):
                 "path": task.code,
                 "subject": task.subject.abbr,
                 "date": task.created_at,
+                "link": resolve_url("teacher_task", task_id=task.pk),
             }
         )
     return JsonResponse({"tasks": result, "count": allCount})

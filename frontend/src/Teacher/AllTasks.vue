@@ -18,6 +18,7 @@ type Task = {
   title: string;
   subject: string;
   date: Date;
+  link: string;
 };
 
 type RawTask = Omit<Task, 'date'> & {
@@ -109,9 +110,10 @@ const columns = [
   },
   {
     title: 'Title',
-    data: 'title',
+    data: (row: Task) => row,
     orderable: true,
-    searchable: true
+    searchable: true,
+    render: (data: Task) => `<a href="${data.link}" target="_blank">${data.title}</a>`
   },
   {
     title: 'Subject',
@@ -174,7 +176,8 @@ const options = {
 
     callback({ data: items, recordsTotal: count, recordsFiltered: count }); // https://datatables.net/manual/server-side#Returned-data
   },
-  orderMulti: false
+  orderMulti: false,
+  pageLength: 25
 } satisfies Config;
 
 //save ref to data table and if it changes save datatable instance to table variable
