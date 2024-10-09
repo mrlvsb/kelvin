@@ -1,4 +1,9 @@
 <script setup lang="ts">
+/**
+ * This component displays a table that allows filtering and sorting
+ * of tasks.
+ * It is only available to teachers, and it is accessible from the main page.
+ */
 import type { Config, ConfigColumns, Api as DataTableObject } from 'datatables.net';
 import DataTablesCore from 'datatables.net-bs5';
 import DataTable from 'datatables.net-vue3';
