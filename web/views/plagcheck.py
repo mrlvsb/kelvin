@@ -174,7 +174,8 @@ def task_moss_graph(request, task_id):
     if res is None:
         raise Http404
     task = get_object_or_404(Task, pk=task_id)
-    graph = res.to_svg(anonymize=True)
+    anonymize = request.GET.get("anonymized", "") == "true"
+    graph = res.to_svg(anonymize=anonymize)
     return file_response(graph.encode("utf8"), f"{task.name}-graph.svg", "image/svg+xml")
 
 

@@ -58,6 +58,8 @@
   {% else %}
     {% if matches %}
       <a href="{% url "teacher_task_moss_graph" task_id=task.id %}" class="btn btn-primary mt-2">Download
+        plagiarism graph</a>
+      <a href="{% url "teacher_task_moss_graph" task_id=task.id %}?anonymized=true" class="btn btn-primary mt-2">Download
         anonymized graph</a>
       {% if newer_submit_count %}
         There were <span class="badge bg-danger">{{ newer_submit_count }}</span> submit(s) since
