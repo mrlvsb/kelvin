@@ -3,8 +3,7 @@ import type { Config, ConfigColumns, Api as DataTableObject } from 'datatables.n
 import DataTablesCore from 'datatables.net-bs5';
 import DataTable from 'datatables.net-vue3';
 import { format } from 'date-fns';
-import { ref, watchEffect } from 'vue';
-import Loader from '../components/Loader.vue';
+import { onMounted, ref } from 'vue';
 import { getFromAPI } from '../utilities';
 
 DataTable.use(DataTablesCore);
@@ -93,7 +92,7 @@ const getSubjects = async () => {
   }
 };
 
-getSubjects();
+await getSubjects();
 
 const columns = [
   {
@@ -175,9 +174,9 @@ const options = {
 
 //save ref to data table and if it changes save datatable instance to table variable
 const dataTable = ref();
-let table: undefined | DataTableObject<unknown> = undefined;
+let table: DataTableObject<unknown>;
 
-watchEffect(() => {
+onMounted(() => {
   table = dataTable.value?.dt;
 });
 
@@ -188,27 +187,22 @@ const onChangeSubject = () => {
 </script>
 
 <template>
-  <div v-if="!loaded" class="d-flex justify-content-center loading-animation">
-    <Loader />
+  <div class="d-flex gap-1 justify-content-start">
+    <select v-model="subject" class="form-select" @change="onChangeSubject">
+      <option value="all" selected>All</option>
+      <option v-for="subj in subjects" :key="subj.abbr" :value="subj.abbr">
+        {{ subj.name }}
+      </option>
+    </select>
   </div>
-  <template v-else>
-    <div class="d-flex gap-1 justify-content-start">
-      <select v-model="subject" class="form-select" @change="onChangeSubject">
-        <option value="all" selected>All</option>
-        <option v-for="subj in subjects" :key="subj.abbr" :value="subj.abbr">
-          {{ subj.name }}
-        </option>
-      </select>
-    </div>
 
-    <DataTable ref="dataTable" class="table table-striped" :columns="columns" :options="options">
-      <template #moss="props">
-        <a class="btn btn-secondary btn-sm" :href="`/teacher/task/${props.cellData.id}/moss`">
-          MOSS check
-        </a>
-      </template>
-    </DataTable>
-  </template>
+  <DataTable ref="dataTable" class="table table-striped" :columns="columns" :options="options">
+    <template #moss="props">
+      <a class="btn btn-secondary btn-sm" :href="`/teacher/task/${props.cellData.id}/moss`">
+        MOSS check
+      </a>
+    </template>
+  </DataTable>
 </template>
 
 <style>
