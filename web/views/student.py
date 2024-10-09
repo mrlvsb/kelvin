@@ -45,7 +45,7 @@ from common.plagcheck.moss import PlagiarismMatch, moss_result
 from common.submit import SubmitRateLimited, store_submit
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher
-from evaluator.results import EvaluationResult, PipeResult
+from evaluator.results import EvaluationResult
 from evaluator.testsets import TestSet
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES, MAX_INLINE_LINES
 from web.task_utils import load_readme
@@ -310,50 +310,9 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         data["comment_count"] = current_submit.comment_set.count()
 
         moss_res = moss_result(current_submit.assignment.task.id)
-        if moss_res and (user_is_teacher or moss_res.opts.show_to_students):
-            svg = None
-            # moss_res.to_svg(
-            #     login=current_submit.student.username, anonymize=not user_is_teacher
-            # )
-            if svg:
-                data["has_pipeline"] = True
-
-                res = PipeResult("plagiarism")
-                res.title = "Plagiarism checker"
-
-                prepend = ""
-                if is_teacher(request.user):
-                    if not moss_res.opts.show_to_students:
-                        prepend = "<div class='text-muted'>Not shown to students</div>"
-
-                res.html = f"""
-                    {prepend}
-                    <style>
-                    #plagiarism svg {{
-                        width: 100%;
-                        height: 300px;
-                        border: 1px solid rgba(0,0,0,.125);
-                    }}
-                    </style>
-                    <div id="plagiarism">{svg}</div>
-                    <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
-                    <script>
-                        document.addEventListener('DOMContentLoaded', () => {{
-                            const observer = new MutationObserver((changes) => {{
-                                if(changes[0].target.classList.contains('active')) {{
-                                    svgPanZoom('#plagiarism svg')
-                                }}
-                            }});
-                            observer.observe(document.querySelector('#plagiarism svg').closest('.tab-pane'), {{
-                                attributeFilter: ['class']
-                            }});
-                        }});
-                    </script>
-                """
-                data["results"].pipelines = [res] + data["results"].pipelines
-            if user_is_teacher:
-                plagiarisms = build_plagiarism_entries(login, moss_res.matches)
-                data["plagiarism_matches"] = plagiarisms
+        if moss_res is not None and user_is_teacher:
+            plagiarisms = build_plagiarism_entries(login, moss_res.matches)
+            data["plagiarism_matches"] = plagiarisms
 
         submit_nums = sorted(submits.values_list("submit_num", flat=True))
         current_idx = submit_nums.index(current_submit.submit_num)

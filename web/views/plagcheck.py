@@ -94,7 +94,6 @@ def task_plagcheck_index(request: HttpRequest, task_id: int):
     if "percent" in request.GET:
         opts.percent = int(request.GET["percent"])
         opts.lines = int(request.GET.get("lines", opts.lines))
-        opts.show_to_students = request.GET.get("show_to_students") == "1"
         moss_task_set_opts(task_id, opts)
 
     ctx = {
