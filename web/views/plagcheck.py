@@ -147,7 +147,6 @@ def task_plagcheck_index(request: HttpRequest, task_id: int):
             status = "failed"
         ctx["log"] = res.log
         ctx["matches"] = matches
-        ctx["graph"] = res.to_svg(anonymize=False)
         ctx["started_at"] = res.started_at
         ctx["finished_at"] = res.finished_at
         ctx["moss_url"] = res.url

@@ -64,17 +64,7 @@
         the check was performed!
       {% endif %}
 
-      <div id="graph" class="my-4 border border-primary">
-        {{ graph | safe }}
-      </div>
-
       <style>
-          #graph svg {
-              width: 100%;
-              height: auto;
-              min-height: 300px;
-          }
-
           table td {
               white-space: nowrap;
               width: 1%;
@@ -87,9 +77,6 @@
       <link rel="stylesheet" type="text/css"
             href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css"/>
 
-      <script
-              src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
-      <script>svgPanZoom('#graph svg')</script>
       <script
               src="https://code.jquery.com/jquery-3.6.0.min.js"
               integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
