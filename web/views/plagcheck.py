@@ -94,7 +94,6 @@ def task_plagcheck_index(request: HttpRequest, task_id: int):
     if "percent" in request.GET:
         opts.percent = int(request.GET["percent"])
         opts.lines = int(request.GET.get("lines", opts.lines))
-        opts.show_to_students = request.GET.get("show_to_students") == "1"
         moss_task_set_opts(task_id, opts)
 
     ctx = {
@@ -148,7 +147,6 @@ def task_plagcheck_index(request: HttpRequest, task_id: int):
             status = "failed"
         ctx["log"] = res.log
         ctx["matches"] = matches
-        ctx["graph"] = res.to_svg(anonymize=False)
         ctx["started_at"] = res.started_at
         ctx["finished_at"] = res.finished_at
         ctx["moss_url"] = res.url
@@ -176,7 +174,8 @@ def task_moss_graph(request, task_id):
     if res is None:
         raise Http404
     task = get_object_or_404(Task, pk=task_id)
-    graph = res.to_svg(anonymize=True)
+    anonymize = request.GET.get("anonymized", "") == "true"
+    graph = res.to_svg(anonymize=anonymize)
     return file_response(graph.encode("utf8"), f"{task.name}-graph.svg", "image/svg+xml")
 
 

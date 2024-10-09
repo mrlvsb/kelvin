@@ -31,13 +31,6 @@
              class="form-control form-control-sm" name="lines" value="{{ opts.lines }}"/>
       <div class="input-group-text">lines</div>
     </div>
-    <div class="form-check me-2 w-auto">
-      <input class="form-check-input" type="checkbox" name="show_to_students"
-              {% if opts.show_to_students %} checked{% endif %} id="filter-show-to-students"
-             value="1">
-      <label class="form-check-label" for="filter-show-to-students"> Show to students on the
-        Result tab</label>
-    </div>
     <input type="submit" class="btn btn-sm btn-primary w-auto" value="Save settings">
   </form>
   <form action="{% url 'teacher_task_plagiarism_start' task_id=task.id %}" method="post"
@@ -65,23 +58,15 @@
   {% else %}
     {% if matches %}
       <a href="{% url "teacher_task_moss_graph" task_id=task.id %}" class="btn btn-primary mt-2">Download
+        plagiarism graph</a>
+      <a href="{% url "teacher_task_moss_graph" task_id=task.id %}?anonymized=true" class="btn btn-primary mt-2">Download
         anonymized graph</a>
       {% if newer_submit_count %}
         There were <span class="badge bg-danger">{{ newer_submit_count }}</span> submit(s) since
         the check was performed!
       {% endif %}
 
-      <div id="graph" class="my-4 border border-primary">
-        {{ graph | safe }}
-      </div>
-
       <style>
-          #graph svg {
-              width: 100%;
-              height: auto;
-              min-height: 300px;
-          }
-
           table td {
               white-space: nowrap;
               width: 1%;
@@ -94,9 +79,6 @@
       <link rel="stylesheet" type="text/css"
             href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css"/>
 
-      <script
-              src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
-      <script>svgPanZoom('#graph svg')</script>
       <script
               src="https://code.jquery.com/jquery-3.6.0.min.js"
               integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="

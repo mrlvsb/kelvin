@@ -120,7 +120,8 @@ class PlagiarismMatch:
 class MossTaskOptions:
     percent: int
     lines: int
-    show_to_students: bool
+    # Obsolete/unused. We no longer show the graph to students.
+    show_to_students: bool = False
     # New attributes below this line must provide a default value!
 
 
@@ -368,7 +369,6 @@ def moss_task_get_opts(task_id: int) -> MossTaskOptions:
     opts = MossTaskOptions(
         percent=20,
         lines=10,
-        show_to_students=False,
     )
 
     saved_opts = caches["default"].get(f"moss.{task_id}.opts", {})
