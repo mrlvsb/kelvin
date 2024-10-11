@@ -40,11 +40,9 @@ let subject_kelvin_selected = ref(null);
 let semester = ref(null);
 let busy = ref<boolean>(false);
 
-const semesters = ref(await loadSemesters());
-const [subjects_inbus_filtered, subjects_kelvin]: [
-  typeof ref<InbusSubjectVersion[]>,
-  typeof ref<KelvinSubject[]>
-] = (await loadInbusAndKelvinSubjects()).map((val) => ref(val));
+const semesters = await loadSemesters();
+const subjects_kelvin = await loadKelvinSubjects();
+const subjects_inbus_filtered = await loadInbusSubjects(subjects_kelvin);
 
 let subject_inbus_schedule = ref<ConcreteActivity[] | null>(null);
 
@@ -81,36 +79,39 @@ function svcc2num(svcc: string): number {
   return svcc_num;
 }
 
-async function loadInbusAndKelvinSubjects(): Promise<[InbusSubjectVersion[], KelvinSubject[]]> {
-  const res1 = await fetch('/api/inbus/subject_versions', {});
-  const res2 = await fetch('/api/subjects/all', {});
+async function loadKelvinSubjects(): Promise<KelvinSubject[]> {
+    const res = await fetch('/api/subjects/all', {});
+    const subjects_kelvin_resp = await res.json();
 
-  const subjects_inbus: InbusSubjectVersion[] = await res1.json();
-  const subjects_kelvin_resp = await res2.json();
+    const subjects_kelvin: KelvinSubject[] = subjects_kelvin_resp.subjects;
+    subjects_kelvin.sort((a, b) => {
+        const name_a = a.name.toUpperCase();
+        const name_b = b.name.toUpperCase();
+        if (name_a < name_b) {
+            return -1;
+        }
+        if (name_a > name_b) {
+            return 1;
+        }
+        return 0;
+    });
+    return subjects_kelvin;
+}
 
-  let subjects_kelvin: KelvinSubject[] = subjects_kelvin_resp.subjects;
-  subjects_kelvin.sort((a, b) => {
-    const name_a = a.name.toUpperCase();
-    const name_b = b.name.toUpperCase();
-    if (name_a < name_b) {
-      return -1;
-    }
-    if (name_a > name_b) {
-      return 1;
-    }
-    return 0;
-  });
+async function loadInbusSubjects(kelvin_subjects: KelvinSubject[]): Promise<InbusSubjectVersion[]> {
+  const res = await fetch('/api/inbus/subject_versions', {});
 
-  const subject_kelvin_abbrs = subjects_kelvin.map((s) => s.abbr);
+  const subjects_inbus: InbusSubjectVersion[] = await res.json();
+  const subject_kelvin_abbrs = kelvin_subjects.map((s) => s.abbr);
 
-  let subjects_inbus_filtered = subjects_inbus.filter((subject_inbus) =>
+  const subjects_inbus_filtered = subjects_inbus.filter((subject_inbus) =>
     subject_kelvin_abbrs.includes(subject_inbus.subject.abbrev)
   );
-  subjects_inbus_filtered = subjects_inbus_filtered.sort(
+  subjects_inbus_filtered.sort(
     (a, b) => svcc2num(a.subjectVersionCompleteCode) - svcc2num(b.subjectVersionCompleteCode)
   );
 
-  return [subjects_inbus_filtered, subjects_kelvin];
+  return subjects_inbus_filtered;
 }
 
 function parseSemesters(semesters_data: Semester[]) {
