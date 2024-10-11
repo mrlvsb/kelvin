@@ -745,7 +745,7 @@ def import_activities(request):
     post = json.loads(request.body.decode("utf-8"))
 
     semester_id = post["semester_id"]
-    subject = post["subject"]
+    subject_abbr = post["subject_abbr"]
     activities_id = post["activities"]
 
     activities = [inbus.concrete_activity(activity_id) for activity_id in activities_id]
@@ -755,7 +755,7 @@ def import_activities(request):
     semester = Semester.objects.get(pk=semester_id)
 
     try:
-        res["users"] = list(common.bulk_import.run(activities, subject, semester, request.user))
+        res["users"] = list(common.bulk_import.run(activities, subject_abbr, semester, request.user))
         res["count"] = len(res["users"])
     except (ImportException, UnicodeDecodeError) as e:
         res["error"] = "".join(traceback.TracebackException.from_exception(e).format())

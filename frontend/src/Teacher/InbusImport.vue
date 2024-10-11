@@ -35,15 +35,20 @@ interface Result {
   error?: string;
 }
 
-let subject_kelvin_selected = ref(null);
-
-let semester = ref(null);
 let busy = ref<boolean>(false);
 
 const semesters = await loadSemesters();
-const subjects_kelvin = await loadKelvinSubjects();
-const subjects_inbus_filtered = await loadInbusSubjects(subjects_kelvin);
+// Semester ID
+const semester = ref(semesters.length > 0 ? semesters[semesters.length - 1].pk : null);
 
+const subjects_kelvin = await loadKelvinSubjects();
+
+// Subject abbreviation
+const subject_kelvin_selected = ref(
+    subjects_kelvin.length > 0 ? subjects_kelvin[0].abbr : null
+);
+
+const subjects_inbus_filtered = await loadInbusSubjects(subjects_kelvin);
 let subject_inbus_schedule = ref<ConcreteActivity[] | null>(null);
 
 let classes_to_import = ref([]);
@@ -147,7 +152,7 @@ async function importActivities() {
   busy.value = true;
   const req = {
     semester_id: semester.value,
-    subject: subject_kelvin_selected.value,
+    subject_abbr: subject_kelvin_selected.value,
     activities: classes_to_import.value
   };
 
@@ -178,7 +183,7 @@ function onInbusSubjectSelected(event: Event) {
   </select>
 
   <select v-model="subject_kelvin_selected">
-    <option v-for="item in subjects_kelvin" :key="item.abbr" :value="item">
+    <option v-for="item in subjects_kelvin" :key="item.abbr" :value="item.abbr">
       {{ item.abbr }} - {{ item.name }}
     </option>
   </select>
