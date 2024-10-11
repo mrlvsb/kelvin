@@ -35,7 +35,7 @@ interface Result {
   error?: string;
 }
 
-let busy = ref<boolean>(false);
+const busy = ref<boolean>(false);
 
 const semesters = await loadSemesters();
 // Semester ID
@@ -44,17 +44,15 @@ const semester = ref(semesters.length > 0 ? semesters[semesters.length - 1].pk :
 const subjects_kelvin = await loadKelvinSubjects();
 
 // Subject abbreviation
-const subject_kelvin_selected = ref(
-    subjects_kelvin.length > 0 ? subjects_kelvin[0].abbr : null
-);
+const subject_kelvin_selected = ref(subjects_kelvin.length > 0 ? subjects_kelvin[0].abbr : null);
 
 const subjects_inbus_filtered = await loadInbusSubjects(subjects_kelvin);
-let subject_inbus_schedule = ref<ConcreteActivity[] | null>(null);
+const subject_inbus_schedule = ref<ConcreteActivity[] | null>(null);
 
-let classes_to_import = ref([]);
-let result = ref<Result | null>(null);
+const classes_to_import = ref([]);
+const result = ref<Result | null>(null);
 
-let canImport = computed(() => {
+const canImport = computed(() => {
   return (
     classes_to_import.value.length && !busy.value && subject_kelvin_selected.value && semester.value
   );
@@ -85,22 +83,22 @@ function svcc2num(svcc: string): number {
 }
 
 async function loadKelvinSubjects(): Promise<KelvinSubject[]> {
-    const res = await fetch('/api/subjects/all', {});
-    const subjects_kelvin_resp = await res.json();
+  const res = await fetch('/api/subjects/all', {});
+  const subjects_kelvin_resp = await res.json();
 
-    const subjects_kelvin: KelvinSubject[] = subjects_kelvin_resp.subjects;
-    subjects_kelvin.sort((a, b) => {
-        const name_a = a.name.toUpperCase();
-        const name_b = b.name.toUpperCase();
-        if (name_a < name_b) {
-            return -1;
-        }
-        if (name_a > name_b) {
-            return 1;
-        }
-        return 0;
-    });
-    return subjects_kelvin;
+  const subjects_kelvin: KelvinSubject[] = subjects_kelvin_resp.subjects;
+  subjects_kelvin.sort((a, b) => {
+    const name_a = a.name.toUpperCase();
+    const name_b = b.name.toUpperCase();
+    if (name_a < name_b) {
+      return -1;
+    }
+    if (name_a > name_b) {
+      return 1;
+    }
+    return 0;
+  });
+  return subjects_kelvin;
 }
 
 async function loadInbusSubjects(kelvin_subjects: KelvinSubject[]): Promise<InbusSubjectVersion[]> {
@@ -140,10 +138,9 @@ async function loadSemesters() {
 
 async function loadScheduleForSubjectVersionId(subject_index: number) {
   subject_inbus_schedule.value = null;
-  const request = assembleRequest(
-    '/api/inbus/schedule/subject/version/' +
-      subjects_inbus_filtered.value[subject_index].subjectVersionId
-  );
+
+  const versionId = subjects_inbus_filtered[subject_index].subjectVersionId;
+  const request = assembleRequest(`/api/inbus/schedule/subject/version/${versionId}`);
   let res = await fetch(request, {});
   subject_inbus_schedule.value = await res.json();
 }
@@ -155,8 +152,6 @@ async function importActivities() {
     subject_abbr: subject_kelvin_selected.value,
     activities: classes_to_import.value
   };
-
-  //console.log(req);
 
   const res = await fetch('/api/import/activities', {
     method: 'POST',
@@ -173,7 +168,12 @@ async function importActivities() {
 }
 
 function onInbusSubjectSelected(event: Event) {
-  loadScheduleForSubjectVersionId(event.target.value);
+  const value: string = event.target.value;
+  if (value !== '') {
+    loadScheduleForSubjectVersionId(Number.parseInt(value));
+  } else {
+    subject_inbus_schedule.value = null;
+  }
 }
 </script>
 
@@ -189,6 +189,7 @@ function onInbusSubjectSelected(event: Event) {
   </select>
 
   <select @change="onInbusSubjectSelected">
+    <option value="">Select Edison subject</option>
     <option v-for="(item, index) in subjects_inbus_filtered" :key="index" :value="index">
       {{ item.subjectVersionCompleteCode }} - {{ item.subject.abbrev }} - {{ item.subject.title }}
     </option>
