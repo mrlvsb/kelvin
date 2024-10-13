@@ -3,7 +3,7 @@ from collections import defaultdict
 import django.http
 from django.shortcuts import get_object_or_404, resolve_url
 from django.http import HttpRequest, HttpResponseBadRequest
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from django.contrib.auth.models import User
 from django.urls import reverse
 from common.models import (
@@ -281,6 +281,16 @@ def subjects_all(request) -> JsonResponse:
 
     resp = {"subjects": subjects_dicts}
 
+    return JsonResponse(resp)
+
+
+@user_passes_test(is_teacher)
+@require_GET
+def teachers_all(request) -> JsonResponse:
+    teachers = User.objects.filter(groups__name="teachers")
+    items = tuple({"username": t.username, "full_name": t.get_full_name(), "last_name": t.last_name} for t in teachers)
+
+    resp = {"teachers": items}
     return JsonResponse(resp)
 
 
