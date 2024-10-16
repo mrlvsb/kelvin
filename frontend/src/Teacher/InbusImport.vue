@@ -35,6 +35,12 @@ interface Result {
   error?: string;
 }
 
+interface Teacher {
+  username: string;
+  full_name: string;
+  last_name: string;
+}
+
 const busy = ref<boolean>(false);
 
 const semesters = await loadSemesters();
@@ -48,6 +54,8 @@ const subject_kelvin_selected = ref(subjects_kelvin.length > 0 ? subjects_kelvin
 
 const subjects_inbus_filtered = await loadInbusSubjects(subjects_kelvin);
 const subject_inbus_schedule = ref<ConcreteActivity[] | null>(null);
+
+const teachers = await loadTeachers();
 
 const classes_to_import = ref([]);
 const result = ref<Result | null>(null);
@@ -82,14 +90,10 @@ function svcc2num(svcc: string): number {
   return svcc_num;
 }
 
-async function loadKelvinSubjects(): Promise<KelvinSubject[]> {
-  const res = await fetch('/api/subjects/all', {});
-  const subjects_kelvin_resp = await res.json();
-
-  const subjects_kelvin: KelvinSubject[] = subjects_kelvin_resp.subjects;
-  subjects_kelvin.sort((a, b) => {
-    const name_a = a.name.toUpperCase();
-    const name_b = b.name.toUpperCase();
+function sortCollection<T>(collection: T[], key: string) {
+  collection.sort((a, b) => {
+    const name_a = a[key].toUpperCase();
+    const name_b = b[key].toUpperCase();
     if (name_a < name_b) {
       return -1;
     }
@@ -98,6 +102,15 @@ async function loadKelvinSubjects(): Promise<KelvinSubject[]> {
     }
     return 0;
   });
+}
+
+async function loadKelvinSubjects(): Promise<KelvinSubject[]> {
+  const res = await fetch('/api/subjects/all', {});
+  const subjects_kelvin_resp = await res.json();
+
+  const subjects_kelvin: KelvinSubject[] = subjects_kelvin_resp.subjects;
+  sortCollection(subjects_kelvin, 'name');
+
   return subjects_kelvin;
 }
 
@@ -141,8 +154,19 @@ async function loadScheduleForSubjectVersionId(subject_index: number) {
 
   const versionId = subjects_inbus_filtered[subject_index].subjectVersionId;
   const request = assembleRequest(`/api/inbus/schedule/subject/version/${versionId}`);
-  let res = await fetch(request, {});
+  const res = await fetch(request, {});
   subject_inbus_schedule.value = await res.json();
+}
+
+async function loadTeachers(): Promise<Teacher[]> {
+  const request = assembleRequest('/api/teachers/all');
+  const res = await fetch(request, {});
+  const teachers_data = await res.json();
+  const teachers: Teacher[] = teachers_data['teachers'];
+
+  sortCollection(teachers, 'last_name');
+
+  return teachers;
 }
 
 async function importActivities() {
