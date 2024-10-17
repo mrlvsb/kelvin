@@ -5,6 +5,7 @@ import { fetch } from './api.js';
 import CopyToClipboard from './CopyToClipboard.svelte';
 import TimeAgo from './TimeAgo.svelte';
 import { localStorageStore } from './utils.js';
+import { user } from './global.js';
 import AddStudentsToClass from './AddStudentsToClass.svelte';
 import Markdown from './Markdown.svelte';
 import AssignmentPoints from './AssignmentPoints.svelte';
@@ -110,6 +111,11 @@ let showSummary = false;
           <span><span class="iconify" data-icon="la:eye-slash"></span></span>
         {/if}
       </button>
+      {#if $user.is_staff}
+        <a href="/admin/common/class/{clazz.id}/change" title="Edit class in Admin">
+          <span class="iconify" data-icon="clarity:edit-solid"></span>
+        </a>
+      {/if}
     </div>
     <button class="btn" on:click={() => (showStudentsList = !showStudentsList)}>
       {clazz.subject_abbr}
