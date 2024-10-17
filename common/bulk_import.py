@@ -26,15 +26,14 @@ class ImportResult:
 
 def run(
     concrete_activities: List[ConcreteActivity],
-    subj: Dict[str, str],
+    subject_abbr: str,
     semester: Semester,
     user: User,
 ) -> Generator[ImportResult, None, None]:
     """
-    `subj`: subject from selected subject in UI as dictionary with k:abbr, v: name
+    `subject_addr`: subject abbreviation from selected subject in UI
     """
 
-    subject_abbr = subj["abbr"]
     try:
         subject = Subject.objects.get(abbr=subject_abbr)
     except Subject.DoesNotExist:
