@@ -22,7 +22,10 @@ $: canTransfer = assignments.length && notAssignedCount == 0 && uniqueAssignment
 async function loadClasses() {
   const res = await fetch('/api/classes/all');
   data = await res.json();
-  semester = Object.keys(data.semesters)[Object.keys(data.semesters).length - 1];
+
+  if (Object.keys(data.semesters).length > 0) {
+    semester = Object.keys(data.semesters)[0];
+  }
 }
 
 async function loadClass() {
