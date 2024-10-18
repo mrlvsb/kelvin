@@ -45,17 +45,22 @@ const busy = ref<boolean>(false);
 
 const semesters = await loadSemesters();
 // Semester ID
-const semester = ref(semesters.length > 0 ? semesters[semesters.length - 1].pk : null);
+const semester = ref<number | null>(
+  semesters.length > 0 ? semesters[semesters.length - 1].pk : null
+);
 
 const subjects_kelvin = await loadKelvinSubjects();
 
 // Subject abbreviation
-const subject_kelvin_selected = ref(subjects_kelvin.length > 0 ? subjects_kelvin[0].abbr : null);
+const subject_kelvin_selected = ref<string | null>(
+  subjects_kelvin.length > 0 ? subjects_kelvin[0].abbr : null
+);
 
 const subjects_inbus_filtered = await loadInbusSubjects(subjects_kelvin);
 const subject_inbus_schedule = ref<ConcreteActivity[] | null>(null);
 
 const teachers = await loadTeachers();
+const activities_to_teacher_selected = ref({});
 
 const classes_to_import = ref([]);
 const result = ref<Result | null>(null);
@@ -151,6 +156,7 @@ async function loadSemesters() {
 
 async function loadScheduleForSubjectVersionId(subject_index: number) {
   subject_inbus_schedule.value = null;
+  activities_to_teacher_selected.value = {};
 
   const versionId = subjects_inbus_filtered[subject_index].subjectVersionId;
   const request = assembleRequest(`/api/inbus/schedule/subject/version/${versionId}`);
@@ -174,7 +180,8 @@ async function importActivities() {
   const req = {
     semester_id: semester.value,
     subject_abbr: subject_kelvin_selected.value,
-    activities: classes_to_import.value
+    activities: classes_to_import.value,
+    activities_to_teacher: activities_to_teacher_selected.value
   };
 
   const res = await fetch('/api/import/activities', {
@@ -191,13 +198,20 @@ async function importActivities() {
   busy.value = false;
 }
 
-function onInbusSubjectSelected(event: Event) {
+function onInbusSubjectSelected(event) {
   const value: string = event.target.value;
   if (value !== '') {
     loadScheduleForSubjectVersionId(Number.parseInt(value));
   } else {
     subject_inbus_schedule.value = null;
   }
+}
+
+function onTeacherSelected(event) {
+  const value: string = event.target.value;
+  const [activity_id, teacher_username] = value.split(',');
+
+  activities_to_teacher_selected.value[parseInt(activity_id)] = teacher_username;
 }
 </script>
 
@@ -237,7 +251,18 @@ function onInbusSubjectSelected(event: Event) {
         <td>{{ ca.educationTypeAbbrev }}/{{ ca.order }}, {{ ca.subjectVersionCompleteCode }}</td>
 
         <td>
-          {{ ca.teacherFullNames }}
+          <span v-if="ca.teacherFullNames">{{ ca.teacherFullNames }}</span>
+          <span v-else>
+            <select @change="onTeacherSelected">
+              <option
+                v-for="teacher in teachers"
+                :key="teacher.username"
+                :value="`${ca.concreteActivityId},${teacher.username}`"
+              >
+                {{ teacher.username }} - {{ teacher.full_name }}
+              </option>
+            </select>
+          </span>
         </td>
 
         <td>

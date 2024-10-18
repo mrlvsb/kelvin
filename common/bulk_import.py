@@ -29,9 +29,12 @@ def run(
     subject_abbr: str,
     semester: Semester,
     user: User,
+    activities_to_teacher: Dict[int, str],
 ) -> Generator[ImportResult, None, None]:
     """
     `subject_addr`: subject abbreviation from selected subject in UI
+    `user`: importing user (the that uses import UI)
+    `activities_to_teacher`: dictionary of activities and manually assigned teachers (username) in the UI
     """
 
     try:
@@ -74,8 +77,9 @@ def run(
                             f"Cannot create user {ca.teacherLogins.upper()}.\n\nTraceback\n\n{traceback.format_exc()}"
                         )
             else:
-                # TODO: We assign all activities without teacher to one special user :-)
-                teacher = User.objects.get(username="GAU01")
+                # We assign all activities without teacher in INBUS to the one selected by importing user
+                teacher_username = activities_to_teacher[ca.concreteActivityId]
+                teacher = User.objects.get(username=teacher_username)
 
             if not is_teacher(teacher):
                 teachers_group = Group.objects.get_by_natural_key("teachers")
