@@ -146,6 +146,7 @@ window.addEventListener('DOMContentLoaded', focusTab);
 import { defineCustomElement, h } from 'vue';
 import SuspensionWrapper from './components/SuspensionWrapper.vue';
 import AllTasks from './Teacher/AllTasks.vue';
+import InbusImport from './Teacher/InbusImport.vue';
 
 /**
  * Register new Vue component as a custom element.
@@ -182,3 +183,4 @@ const registerSuspendedVueComponent = (name, component, configureApp = undefined
 };
 
 registerSuspendedVueComponent('tasks-all', AllTasks);
+registerSuspendedVueComponent('inbus-import', InbusImport);
