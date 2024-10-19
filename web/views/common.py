@@ -1,4 +1,4 @@
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render
 from django.utils.crypto import get_random_string
 from django.conf import settings
@@ -15,6 +15,11 @@ def index(request):
     if is_teacher(request.user):
         return ui(request)
     return student_index(request)
+
+
+@user_passes_test(is_teacher)
+def import_inbus(request):
+    return render(request, "web/inbusimport.html", {})
 
 
 @login_required()
