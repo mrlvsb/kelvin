@@ -8,7 +8,7 @@ from common.models import Class, Semester, Subject
 from typing import List, Dict, Generator
 import traceback
 
-from .inbus.dto import ConcreteActivity
+from .inbus.dto import ConcreteActivity, ConcreteActivityId
 
 
 class ImportException(Exception):
@@ -90,7 +90,9 @@ def run(
             class_in_db[c].save()
 
         # Students
-        students_in_class = inbus.students_in_concrete_activity(ca.concreteActivityId)
+        students_in_class = inbus.students_in_concrete_activity(
+            ConcreteActivityId(ca.concreteActivityId)
+        )
 
         for student in students_in_class:
             login = student.login.upper()
