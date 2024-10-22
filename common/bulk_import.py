@@ -8,7 +8,7 @@ from common.models import Class, Semester, Subject
 from typing import List, Dict, Generator
 import traceback
 
-from .inbus.dto import ConcreteActivity
+from .inbus.dto import ConcreteActivity, ConcreteActivityId
 
 
 class ImportException(Exception):
@@ -26,15 +26,17 @@ class ImportResult:
 
 def run(
     concrete_activities: List[ConcreteActivity],
-    subj: Dict[str, str],
+    subject_abbr: str,
     semester: Semester,
     user: User,
+    activities_to_teacher: Dict[int, str],
 ) -> Generator[ImportResult, None, None]:
     """
-    `subj`: subject from selected subject in UI as dictionary with k:abbr, v: name
+    `subject_addr`: subject abbreviation from selected subject in UI
+    `user`: importing user (the that uses import UI)
+    `activities_to_teacher`: dictionary of activities and manually assigned teachers (username) in the UI
     """
 
-    subject_abbr = subj["abbr"]
     try:
         subject = Subject.objects.get(abbr=subject_abbr)
     except Subject.DoesNotExist:
@@ -75,8 +77,13 @@ def run(
                             f"Cannot create user {ca.teacherLogins.upper()}.\n\nTraceback\n\n{traceback.format_exc()}"
                         )
             else:
-                # TODO: We assign all activities without teacher to one special user :-)
-                teacher = User.objects.get(username="GAU01")
+                # We assign all activities without teacher in INBUS to the one selected by importing user
+                try:
+                    teacher_username = activities_to_teacher[ca.concreteActivityId]
+                    teacher = User.objects.get(username=teacher_username)
+                except KeyError:
+                    msg = f"There's no assigned teacher to activity {ca.code()}. Please, make sure you selected one."
+                    raise ImportException(msg)
 
             if not is_teacher(teacher):
                 teachers_group = Group.objects.get_by_natural_key("teachers")
@@ -87,7 +94,9 @@ def run(
             class_in_db[c].save()
 
         # Students
-        students_in_class = inbus.students_in_concrete_activity(ca.concreteActivityId)
+        students_in_class = inbus.students_in_concrete_activity(
+            ConcreteActivityId(ca.concreteActivityId)
+        )
 
         for student in students_in_class:
             login = student.login.upper()

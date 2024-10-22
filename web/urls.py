@@ -9,6 +9,7 @@ from .views import statistics as statistics_view
 
 urlpatterns = [
     path("", common_view.index, name="index"),
+    path("import/inbus", common_view.import_inbus, name="import_inbus"),
     path("student-view", student_view.student_index, name="student_index"),
     path(
         "find-task/<int:task_id>/<str:login>/",
