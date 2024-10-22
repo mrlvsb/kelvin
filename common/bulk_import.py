@@ -78,8 +78,12 @@ def run(
                         )
             else:
                 # We assign all activities without teacher in INBUS to the one selected by importing user
-                teacher_username = activities_to_teacher[ca.concreteActivityId]
-                teacher = User.objects.get(username=teacher_username)
+                try:
+                    teacher_username = activities_to_teacher[ca.concreteActivityId]
+                    teacher = User.objects.get(username=teacher_username)
+                except KeyError:
+                    msg = f"There's no assigned teacher to activity {ca.code()}. Please, make sure you selected one."
+                    raise ImportException(msg)
 
             if not is_teacher(teacher):
                 teachers_group = Group.objects.get_by_natural_key("teachers")

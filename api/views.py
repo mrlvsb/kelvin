@@ -783,7 +783,9 @@ def import_activities(request):
         )
         res["count"] = len(res["users"])
     except (ImportException, UnicodeDecodeError) as e:
-        res["error"] = "".join(traceback.TracebackException.from_exception(e).format())
+        # msg = traceback.TracebackException.from_exception(e).format()
+        msg = e.args[0]
+        res["error"] = msg
     except BaseException:
         res["error"] = traceback.format_exc()
 

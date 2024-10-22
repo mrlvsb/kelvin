@@ -41,6 +41,13 @@ interface Teacher {
   last_name: string;
 }
 
+interface ImportRequest {
+  semester_id: number;
+  subject_abbr: string;
+  activities: number[];
+  activities_to_teacher: { [key: number]: string };
+}
+
 const busy = ref<boolean>(false);
 
 const semesters = await loadSemesters();
@@ -175,14 +182,75 @@ async function loadTeachers(): Promise<Teacher[]> {
   return teachers;
 }
 
+function classesWithoutTeacher() {
+  const classes_without_teacher: number[] = [];
+  for (const clazz of subject_inbus_schedule.value) {
+    if (!clazz.teacherFullNames) {
+      classes_without_teacher.push(clazz.concreteActivityId);
+    }
+  }
+
+  return classes_without_teacher;
+}
+
+function isRequestValid(req) {
+  const classes_without_teacher = classesWithoutTeacher();
+
+  for (const activity of req.activities) {
+    if (classes_without_teacher.includes(activity)) {
+      if (!req.activities_to_teacher.hasOwnProperty(activity)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+function getCorrespondingActivityRepr(activity_id: number) {
+  for (const ca of subject_inbus_schedule.value) {
+    if (ca.concreteActivityId === activity_id) {
+      return `${ca.educationTypeAbbrev}/${ca.order}, ${ca.subjectVersionCompleteCode}`;
+    }
+  }
+}
+
+function classesWithoutSelectedTeacher(req: ImportRequest) {
+  const classes_without_selected_teacher: string[] = [];
+  const classes_without_teacher = classesWithoutTeacher();
+  //console.log('classes_without_teacher', classes_without_teacher);
+
+  for (const activity_id of req.activities) {
+    if (classes_without_teacher.includes(activity_id)) {
+      if (!req.activities_to_teacher.hasOwnProperty(activity_id)) {
+        classes_without_selected_teacher.push(getCorrespondingActivityRepr(activity_id));
+      }
+    }
+  }
+
+  return classes_without_selected_teacher;
+}
+
 async function importActivities() {
   busy.value = true;
-  const req = {
+  const req: ImportRequest = {
     semester_id: semester.value,
     subject_abbr: subject_kelvin_selected.value,
     activities: classes_to_import.value,
     activities_to_teacher: activities_to_teacher_selected.value
   };
+
+  if (!isRequestValid(req)) {
+    const classes_without_selected_teacher = classesWithoutSelectedTeacher(req);
+    const err_msg =
+      classes_without_selected_teacher.length > 1
+        ? `Selected classes to import (${classes_without_selected_teacher.join(', ')}) don't have assigned teacher. Please, select ones.`
+        : `Selected class to import (${classes_without_selected_teacher}) doesn't have assigned teacher. Please, select one.`;
+    result.value = { users: [], count: 0, error: err_msg };
+    busy.value = false;
+
+    return;
+  }
 
   const res = await fetch('/api/import/activities', {
     method: 'POST',
@@ -254,6 +322,7 @@ function onTeacherSelected(event) {
           <span v-if="ca.teacherFullNames">{{ ca.teacherFullNames }}</span>
           <span v-else>
             <select @change="onTeacherSelected">
+              <option value="">Select teacher</option>
               <option
                 v-for="teacher in teachers"
                 :key="teacher.username"
