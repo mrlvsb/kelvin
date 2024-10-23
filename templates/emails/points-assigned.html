@@ -1,0 +1,13 @@
+{{ teacher.get_full_name }} obodoval Vaše řešení úlohy <b>{{ submit.assignment.task.name }}</b>
+v předmětu <i>{{ submit.assignment.task.subject.name }} ({{ submit.assignment.task.subject.abbr }})</i>:
+<b>{{ points }}b</b>{% if max_points %} (z {{ max_points }}b){% endif %}.
+
+Více informací se dozvíte na <a href="{{ url }}">tomto odkazu</a>.
+
+--------------------
+
+{{ teacher.get_full_name }} has scored your solution for <b>{{ submit.assignment.task.name }}</b>
+in the <i>{{ submit.assignment.task.subject.name }} ({{ submit.assignment.task.subject.abbr }})</i> subject:
+<b>{{ points }}b</b>{% if max_points %} (out of {{ max_points }}b){% endif %}.
+
+You can find more information <a href="{{ url }}">here</a>.

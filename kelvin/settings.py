@@ -174,6 +174,8 @@ AUTHENTICATION_BACKENDS = [
     "django_cas_ng.backends.CASBackend",
 ]
 
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
 DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024
 
 LOGIN_REDIRECT_URL = "/"
