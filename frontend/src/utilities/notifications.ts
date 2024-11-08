@@ -1,4 +1,4 @@
-import { computed } from '@vue/reactivity';
+import { computed } from 'vue';
 import { ref } from 'vue';
 import { getDataWithCSRF } from './utils';
 
@@ -24,7 +24,7 @@ export type Notification = {
     target?: string;
 };
 
-export const notifications = (function() {
+export const notifications = (function () {
     const notificationsRef = ref<Notification[]>([]);
 
     const refresh = async () => {
@@ -53,7 +53,7 @@ export const notifications = (function() {
     };
 })();
 
-export const pushNotifications = (function() {
+export const pushNotifications = (function () {
     const pushNotificationsStatus = ref({
         supported: false,
         enabled: null

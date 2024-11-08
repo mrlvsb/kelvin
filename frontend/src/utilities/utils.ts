@@ -82,6 +82,7 @@ const localStorageStores: Record<string, Ref<unknown>> = {};
  *
  * @param key Key of localStorage item
  * @param initialValue Initial value of item
+ *
  * @returns {@link Ref} to localStorage value
  */
 export const localStorageStore = <$Type>(key: string, initialValue: $Type): Ref<$Type> => {
