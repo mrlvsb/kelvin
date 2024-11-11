@@ -113,9 +113,16 @@ function createElement(name, component) {
     );
 }
 
+const getCookies = () => {
+    return Object.fromEntries(document.cookie.split('; ').map((cookie) => cookie.split('=')));
+};
+
+const cookies = getCookies();
+const enableNewUI = Object.keys(cookies).includes('newUI') && cookies['newUI'] != 0;
+
 createElement('app', App);
 createElement('submit-sources', TaskDetail);
-createElement('notifications', Notifications);
+if (!enableNewUI) createElement('notifications', Notifications);
 createElement('upload-solution', UploadSolution);
 createElement('pipeline-status', PipelineStatus);
 createElement('ctrlp', CtrlP);
@@ -147,6 +154,7 @@ import { defineCustomElement, h } from 'vue';
 import SuspensionWrapper from './components/SuspensionWrapper.vue';
 import AllTasks from './Teacher/AllTasks.vue';
 import InbusImport from './Teacher/InbusImport.vue';
+import NotificationsNew from './components/Notifications.vue';
 
 /**
  * Register new Vue component as a custom element.
@@ -184,3 +192,4 @@ const registerSuspendedVueComponent = (name, component, configureApp = undefined
 
 registerSuspendedVueComponent('tasks-all', AllTasks);
 registerSuspendedVueComponent('inbus-import', InbusImport);
+if (enableNewUI) registerVueComponent('notifications', NotificationsNew);
