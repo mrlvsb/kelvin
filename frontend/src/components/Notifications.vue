@@ -52,7 +52,7 @@ const getFilteredNotifications = (notifications: Readonly<Notification[]>) => {
         </button>
 
         <div class="dropdown-menu dropdown-menu-end shadow p-0 rounded dropdown-menu-custom">
-            <ul class="list-group list-group-flush">
+            <ul class="list-group list-group-flush" style="max-height: 50vh; overflow-y: auto;">
                 <li class="list-group-item">
                     <div class="d-flex align-items-center">
                         <div>
