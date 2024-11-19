@@ -8,7 +8,7 @@ defineProps<{
 
 <template>
   <Suspense>
-    <component :is="childComponent" />
+    <component :is="childComponent" v-bind="$attrs" />
     <template #fallback>
       <div class="d-flex justify-content-center loading-animation">
         <Loader />

@@ -1,5 +1,15 @@
 <script setup lang="ts">
-import { generateRange } from '../utilities';
+/**
+ * Generate array with range of numbers from start
+ *
+ * @param size size of the array
+ * @param start starting number
+ *
+ * @returns array of numbers from start to start + size
+ */
+const generateRange = (size: number, start = 0) => {
+  return Array.from({ length: size }).map((_, i) => i + start);
+};
 
 const size = 60;
 const color = '#FF3E00';
@@ -23,6 +33,7 @@ const unit = 'px';
   align-items: center;
   justify-content: center;
 }
+
 .dot {
   height: var(--dotSize);
   width: var(--dotSize);
@@ -32,29 +43,35 @@ const unit = 'px';
   border-radius: 100%;
   animation: sync 0.6s ease-in-out infinite alternate both running;
 }
+
 @-webkit-keyframes sync {
   33% {
     -webkit-transform: translateY(10px);
     transform: translateY(10px);
   }
+
   66% {
     -webkit-transform: translateY(-10px);
     transform: translateY(-10px);
   }
+
   100% {
     -webkit-transform: translateY(0);
     transform: translateY(0);
   }
 }
+
 @keyframes sync {
   33% {
     -webkit-transform: translateY(10px);
     transform: translateY(10px);
   }
+
   66% {
     -webkit-transform: translateY(-10px);
     transform: translateY(-10px);
   }
+
   100% {
     -webkit-transform: translateY(0);
     transform: translateY(0);

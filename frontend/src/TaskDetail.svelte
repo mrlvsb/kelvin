@@ -6,7 +6,7 @@ import SummaryComments from './SummaryComments.svelte';
 import SubmitsDiff from './SubmitsDiff.svelte';
 import { fetch } from './api.js';
 import { user } from './global';
-import { notifications } from './notifications.js';
+import { notifications } from './utilities/notifications';
 import { hideComments, HideCommentsState } from './stores.js';
 
 export let url;

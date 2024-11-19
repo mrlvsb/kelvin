@@ -8,7 +8,7 @@
  */
 import { computed, ref } from 'vue';
 
-import { csrfToken } from '../api.js';
+import { csrfToken } from '../utilities/api';
 import { ConcreteActivity, InbusSubjectVersion } from './inbusdto';
 
 interface KelvinSubject {
