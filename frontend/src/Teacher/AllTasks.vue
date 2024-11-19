@@ -9,7 +9,7 @@ import DataTablesCore from 'datatables.net-bs5';
 import DataTable from 'datatables.net-vue3';
 import { format } from 'date-fns';
 import { onMounted, ref } from 'vue';
-import { getFromAPI } from '../utilities/utils';
+import { getFromAPI } from '../utilities/api';
 
 DataTable.use(DataTablesCore);
 

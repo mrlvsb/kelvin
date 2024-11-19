@@ -1,5 +1,15 @@
 <script setup lang="ts">
-import { generateRange } from '../utilities/utils';
+/**
+ * Generate array with range of numbers from start
+ *
+ * @param size size of the array
+ * @param start starting number
+ *
+ * @returns array of numbers from start to start + size
+ */
+const generateRange = (size: number, start = 0) => {
+  return Array.from({ length: size }).map((_, i) => i + start);
+};
 
 const size = 60;
 const color = '#FF3E00';

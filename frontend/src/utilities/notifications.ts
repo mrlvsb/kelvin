@@ -1,6 +1,6 @@
 import { computed } from 'vue';
 import { ref } from 'vue';
-import { getDataWithCSRF } from './utils';
+import { getDataWithCSRF } from './api';
 
 //@TODO: complete null unions if missing
 export type Notification = {
