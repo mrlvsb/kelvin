@@ -43,7 +43,6 @@ import App from './App.svelte';
 import ColorTheme from './ColorTheme.svelte';
 import CtrlP from './CtrlP.svelte';
 import { safeMarkdown } from './markdown.js';
-import Notifications from './Notifications.svelte';
 import PipelineStatus from './PipelineStatus.svelte';
 import TaskDetail from './TaskDetail.svelte';
 import UploadSolution from './UploadSolution.svelte';
@@ -118,11 +117,11 @@ const getCookies = () => {
 };
 
 const cookies = getCookies();
+/* eslint-disable @typescript-eslint/no-unused-vars */
 const enableNewUI = Object.keys(cookies).includes('newUI') && cookies['newUI'] != 0;
 
 createElement('app', App);
 createElement('submit-sources', TaskDetail);
-if (!enableNewUI) createElement('notifications', Notifications);
 createElement('upload-solution', UploadSolution);
 createElement('pipeline-status', PipelineStatus);
 createElement('ctrlp', CtrlP);
@@ -192,4 +191,4 @@ const registerSuspendedVueComponent = (name, component, configureApp = undefined
 
 registerSuspendedVueComponent('tasks-all', AllTasks);
 registerSuspendedVueComponent('inbus-import', InbusImport);
-if (enableNewUI) registerVueComponent('notifications', NotificationsNew);
+registerVueComponent('notifications', NotificationsNew);
