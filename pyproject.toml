@@ -9,7 +9,7 @@ dependencies = [
     "beautifulsoup4==4.11.1",
     "bokeh==2.3.2",
     "cssselect==1.1.0",
-    "django==4.2.16",
+    "django==4.2.17",
     "django-cas-ng==4.3.0",
     "django-notifications-hq==1.8.0",
     "django-redis>=5.4.0",
