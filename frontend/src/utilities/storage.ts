@@ -28,6 +28,3 @@ export const localStorageStore = <$Type>(key: string, initialValue: $Type): Ref<
     }
     return localStorageStores[key] as Ref<$Type>;
 };
-
-export type ThemeValue = 'auto' | 'light' | 'dark';
-export const currentTheme = ref<ThemeValue>('auto');
