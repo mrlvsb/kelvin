@@ -117,7 +117,6 @@ const getCookies = () => {
 };
 
 const cookies = getCookies();
-/* eslint-disable @typescript-eslint/no-unused-vars */
 const enableNewUI = Object.keys(cookies).includes('newUI') && cookies['newUI'] != 0;
 
 createElement('app', App);
@@ -125,7 +124,7 @@ createElement('submit-sources', TaskDetail);
 createElement('upload-solution', UploadSolution);
 createElement('pipeline-status', PipelineStatus);
 createElement('ctrlp', CtrlP);
-createElement('color-theme', ColorTheme);
+if (!enableNewUI) createElement('color-theme', ColorTheme);
 
 function focusTab() {
     const hash = document.location.hash.replace('#', '').split('-')[0].split(';')[0];
@@ -154,6 +153,7 @@ import SuspensionWrapper from './components/SuspensionWrapper.vue';
 import AllTasks from './Teacher/AllTasks.vue';
 import InbusImport from './Teacher/InbusImport.vue';
 import NotificationsNew from './components/Notifications.vue';
+import ColorThemeNew from './components/ColorTheme.vue';
 
 /**
  * Register new Vue component as a custom element.
@@ -192,3 +192,4 @@ const registerSuspendedVueComponent = (name, component, configureApp = undefined
 registerSuspendedVueComponent('tasks-all', AllTasks);
 registerSuspendedVueComponent('inbus-import', InbusImport);
 registerVueComponent('notifications', NotificationsNew);
+if (enableNewUI) registerVueComponent('color-theme', ColorThemeNew);
