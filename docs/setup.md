@@ -2,8 +2,16 @@
 Kelvin has uses a relatively complicated set of runtime services, so you need to configure a bunch
 of things to start using it.
 
+
+## Installing dependencies
+Firstly, install necessary system packages:
+
+```bash
+$ apt-get install libsasl2-dev libgraphviz-dev graphviz gcc libxml2-dev libxslt1-dev libffi-dev libz-dev
+```
+
 ## Installing Python dependencies
-First, you need to prepare a Python virtual environment and install dependencies of Kelvin, which is
+Secondly, you need to prepare a Python virtual environment and install dependencies of Kelvin, which is
 a Django app. The easiest way of doing that is to use [uv](https://github.com/astral-sh/uv),
 which manages the dependencies of this project. As a first step for working
 with the Python code, install `uv` using some supported approach, for example:
@@ -11,7 +19,6 @@ with the Python code, install `uv` using some supported approach, for example:
 ```bash
 $ pip install --user uv==0.4.4
 ```
-
 Then, use `uv` to create a virtual environment and install the necessary dependencies into it:
 ```bash
 $ uv sync
