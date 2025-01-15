@@ -1,4 +1,4 @@
-import CodeMirror from 'codemirror';
+import 'codemirror';
 
 declare module 'codemirror' {
     type LintError = {
