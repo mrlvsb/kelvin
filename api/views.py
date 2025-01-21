@@ -433,7 +433,7 @@ def task_detail(request, task_id=None):
                 try:
                     os.renames(os.path.join("tasks", task.code), new_path)
                 except FileNotFoundError as e:
-                    logger.warn(e)
+                    logger.warning(e)
 
                 for assignment in AssignedTask.objects.filter(task_id=task.pk):
                     try:
@@ -444,7 +444,7 @@ def task_detail(request, task_id=None):
                             ),
                         )
                     except FileNotFoundError as e:
-                        logger.warn(e)
+                        logger.warning(e)
 
         task.code = data["path"]
         os.makedirs(task.dir(), exist_ok=True)
