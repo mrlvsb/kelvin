@@ -17,12 +17,15 @@ import dotenv
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-PUBLIC_URL = "https://kelvin.cs.vsb.cz"
-
 # Load environment variables from an .env file
 dotenv_file = os.path.join(BASE_DIR, ".env")
 if os.path.isfile(dotenv_file):
     dotenv.load_dotenv(dotenv_file)
+
+KELVIN_ROOT_HOST = os.getenv("KELVIN__HOST_URL")
+
+PUBLIC_URL = f"https://{KELVIN_ROOT_HOST}"
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/dev/howto/deployment/checklist/
@@ -33,13 +36,13 @@ SECRET_KEY = "***REMOVED***"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", "app", "kelvin.cs.vsb.cz"]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "app", KELVIN_ROOT_HOST]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://127.0.0.1",
     "https://localhost",
     "https://app",
-    "https://kelvin.cs.vsb.cz",
+    f"https://{KELVIN_ROOT_HOST}",
 ]
 
 # Application definition
