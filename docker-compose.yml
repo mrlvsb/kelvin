@@ -4,20 +4,12 @@ services:
     depends_on:
       - db
       - redis
-    profiles: [prod]
+    profiles: [ prod ]
     build:
       context: .
       dockerfile: Dockerfile
       target: runtime
     restart: unless-stopped
-    environment:
-      - DATABASE__HOSTNAME=db
-      - DATABASE__PORT=5432
-      - DATABASE__DB=${DATABASE__DB}
-      - DATABASE__USERNAME=${DATABASE__USERNAME}
-      - DATABASE__PASSWORD=${DATABASE__PASSWORD}
-      - REDIS__HOST=redis
-      - REDIS__PORT=6379
     env_file:
       - .env
     volumes:
@@ -25,8 +17,6 @@ services:
       - app_socket:/socket
       - ${KELVIN__LOCAL_SETTINGS_PATH}:/app/kelvin/local_settings.py:ro
       - ${UWSGI__CONFIG_PATH}:/app/uwsgi.ini:ro
-    expose:
-      - "8000"
 
   db:
     container_name: kelvin_db
@@ -41,27 +31,29 @@ services:
     volumes:
       - ${DATABASE__DATA_PATH}:/var/lib/postgresql/data
     ports:
-      - "${DATABASE__HOSTNAME}:${DATABASE__PORT}:5432"
+      - "${DATABASE__PORT}:5432"
 
   redis:
     container_name: kelvin_redis
-    image: redis:latest
+    image: redis:7
     restart: unless-stopped
     env_file:
       - .env
     volumes:
       - ${REDIS__DATA_PATH}:/data
     ports:
-      - "${REDIS__HOSTNAME}:${REDIS__PORT}:6379"
-    command: "redis-server --save 60 1 --loglevel warning"
+      - "${REDIS__PORT}:6379"
+    # Save Redis DB to disk at least once per 30 minutes
+    # Set maximum DB size to 1 GiB, evict all old keys
+    command: "redis-server --save 1800 1 300 100 60 1000 --maxmemory 1024mb --maxmemory-policy allkeys-lru --loglevel warning"
 
   nginx:
-    image: nginx:stable
+    image: nginx:1.26
     container_name: kelvin_nginx
     depends_on:
       - app
     restart: unless-stopped
-    profiles: [prod]
+    profiles: [ prod ]
     ports:
       - "80:80"
       - "443:443"

@@ -1,13 +1,19 @@
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm AS build-backend
 
+# Workaround for a timeouting VSB DNS. It seems that it is sadly unable to download APT packages
+# from the default Debian mirror.
+RUN sed -i "s#deb.debian.org/debian\$#ftp.debian.cz/debian#g" /etc/apt/sources.list.d/debian.sources
+
 RUN export DEBIAN_FRONTEND=noninteractive && \
-    apt-get update && \
+    apt-get update \
+    -o Acquire::http::Timeout=10 \
+    -o Acquire::https::Timeout=10 \
+    -o Acquire::Retries=1 && \
     apt-get install -y \
     -o APT::Install-Recommends=false \
     -o APT::Install-Suggests=false \
     libsasl2-dev \
-    libgraphviz-dev \
-    graphviz
+    libgraphviz-dev
 
 WORKDIR /app
 
@@ -29,8 +35,13 @@ RUN npm run build
 
 FROM python:3.12-bookworm AS runtime
 
+RUN sed -i "s#deb.debian.org/debian\$#ftp.debian.cz/debian#g" /etc/apt/sources.list.d/debian.sources
+
 RUN export DEBIAN_FRONTEND=noninteractive && \
-    apt-get update && \
+    apt-get update \
+    -o Acquire::http::Timeout=10 \
+    -o Acquire::https::Timeout=10 \
+    -o Acquire::Retries=1 && \
     apt-get install -y \
     -o APT::Install-Recommends=false \
     -o APT::Install-Suggests=false \
@@ -40,18 +51,16 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 
 WORKDIR /app
 
-# Create new user to run app process as unprivilaged user
+# Create new user to run app process as unprivileged user
 RUN groupadd --gid 102 webserver && \
     useradd --uid 101 --gid 102 --shell /bin/false --system webserver
 
-RUN chown -R webserver:webserver /app
+RUN chown -R webserver:webserver .
 
 COPY --from=build-backend --chown=webserver:webserver /app .
 ENV PATH="/app/.venv/bin:$PATH"
 
 COPY --chown=webserver:webserver web ./web
-COPY --from=build-frontend --chown=uvicorn:uvicorn /web/static/frontend.* ./web/static/
-COPY --from=build-frontend --chown=uvicorn:uvicorn /web/static/dolos ./web/static/dolos
 COPY --chown=webserver:webserver kelvin ./kelvin
 COPY --chown=webserver:webserver templates ./templates
 COPY --chown=webserver:webserver evaluator ./evaluator
@@ -59,6 +68,7 @@ COPY --chown=webserver:webserver survey ./survey
 COPY --chown=webserver:webserver common ./common
 COPY --chown=webserver:webserver api ./api
 COPY --chown=webserver:webserver manage.py .
+COPY --from=build-frontend --chown=webserver:webserver /web/static/ ./web/static/
 
 RUN mkdir -p /socket && chown webserver:webserver /socket
 
@@ -66,8 +76,8 @@ USER webserver
 
 RUN python manage.py collectstatic --no-input --clear
 
-EXPOSE 8000
-
 COPY --chown=webserver:webserver deploy/entrypoint.sh ./
-ENTRYPOINT [ "/app/entrypoint.sh" ]
+
 STOPSIGNAL SIGINT
+
+ENTRYPOINT ["/app/entrypoint.sh"]
