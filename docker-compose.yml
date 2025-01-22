@@ -10,6 +10,13 @@ services:
       dockerfile: Dockerfile
       target: runtime
     restart: unless-stopped
+    environment:
+      # Hardcode the DB and Redis hostnames and ports, since they necessarily
+      # run inside the same Docker network, as they are defined in this docker-compose.yml file.
+      - DATABASE__HOST=db
+      - DATABASE__PORT=5432
+      - REDIS__HOST=redis
+      - REDIS__PORT=6379
     env_file:
       - .env
     volumes:
@@ -31,7 +38,7 @@ services:
     volumes:
       - ${DATABASE__DATA_PATH}:/var/lib/postgresql/data
     ports:
-      - "${DATABASE__PORT}:5432"
+      - "127.0.0.1:${DATABASE__PORT}:5432"
 
   redis:
     container_name: kelvin_redis
@@ -42,7 +49,7 @@ services:
     volumes:
       - ${REDIS__DATA_PATH}:/data
     ports:
-      - "${REDIS__PORT}:6379"
+      - "127.0.0.1:${REDIS__PORT}:6379"
     # Save Redis DB to disk at least once per 30 minutes
     # Set maximum DB size to 1 GiB, evict all old keys
     command: "redis-server --save 1800 1 300 100 60 1000 --maxmemory 1024mb --maxmemory-policy allkeys-lru --loglevel warning"
