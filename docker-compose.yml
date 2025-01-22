@@ -4,7 +4,7 @@ services:
     depends_on:
       - db
       - redis
-    profiles: [prod]
+    profiles: [ prod ]
     build:
       context: .
       dockerfile: Dockerfile
@@ -45,7 +45,7 @@ services:
 
   redis:
     container_name: kelvin_redis
-    image: redis:latest
+    image: redis:7
     restart: unless-stopped
     env_file:
       - .env
@@ -53,7 +53,9 @@ services:
       - ${REDIS__DATA_PATH}:/data
     ports:
       - "${REDIS__HOSTNAME}:${REDIS__PORT}:6379"
-    command: "redis-server --save 60 1 --loglevel warning"
+    # Save Redis DB to disk at least once per 30 minutes
+    # Set maximum DB size to 1 GiB, evict all old keys
+    command: "redis-server --save 1800 1 300 100 60 1000 --maxmemory 1024mb --maxmemory-policy allkeys-lru --loglevel warning"
 
   nginx:
     image: nginx:stable
@@ -61,7 +63,7 @@ services:
     depends_on:
       - app
     restart: unless-stopped
-    profiles: [prod]
+    profiles: [ prod ]
     ports:
       - "80:80"
       - "443:443"
