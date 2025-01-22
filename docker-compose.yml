@@ -10,6 +10,13 @@ services:
       dockerfile: Dockerfile
       target: runtime
     restart: unless-stopped
+    environment:
+      # Hardcode the DB and Redis hostnames and ports, since they necessarily
+      # run inside the same Docker network, as they are defined in this docker-compose.yml file.
+      - DATABASE__HOSTNAME=db
+      - DATABASE__PORT=5432
+      - REDIS__HOST=redis
+      - REDIS__PORT=6379
     env_file:
       - .env
     volumes:
