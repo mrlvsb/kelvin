@@ -115,7 +115,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "HOST": os.getenv("DATABASE__HOSTNAME", "127.0.0.1"),
+        "HOST": os.getenv("DATABASE__HOST", "127.0.0.1"),
         "PORT": os.getenv("DATABASE__PORT", 5432),
         "NAME": os.getenv("DATABASE__DB"),
         "USER": os.getenv("DATABASE__USERNAME"),
