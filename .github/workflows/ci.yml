@@ -17,20 +17,12 @@ jobs:
           sudo apt-get install libgraphviz-dev
           python -m pip install --upgrade pip
           pip install uv==0.4.4
-          # Use the legacy lockfile to battle test it
-          uv pip sync --system requirements.txt
+          uv sync --frozen
       # Update output format to enable automatic inline annotations.
       - name: Lint Python code
-        run: ruff check --output-format=github
+        run: uv run ruff check --output-format=github
       - name: Check Python formatting
-        run: ruff format --check
-      # Check that the lockfile does not need to be updated
-      # If this fails, run `uv export --format requirements-txt > requirements.txt`.
-      - name: Check lockfile
-        run: |
-          uv lock --locked
-          uv export --format requirements-txt > requirements.txt.locked
-          diff requirements.txt requirements.txt.locked
+        run: uv run ruff format --check
   test-frontend:
     runs-on: ubuntu-latest
     steps:
@@ -128,4 +120,3 @@ jobs:
           # Check if all jobs that we depend on (in the needs array)
           # were either successful or skipped.
           jq --exit-status 'all(.result == "success" or .result == "skipped")' <<< '${{ toJson(needs) }}'
-

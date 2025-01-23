@@ -13,13 +13,9 @@ $ ruff format
     ```bash
     $ uv add package==<version>
     ```
-2) Update the legacy lockfile, which is used to synchronize packages with `pip` on production:
+2) Commit the changes:
     ```bash
-    $ uv export --format requirements-txt > requirements.txt
-    ```
-3) Commit the changes:
-    ```bash
-    $ git add pyproject.toml uv.lock requirements.txt
+    $ git add pyproject.toml uv.lock
     ```
 
 To update the version of an existing transitive dependency, you can use `uv lock --upgrade-package <package>=<version>`.
