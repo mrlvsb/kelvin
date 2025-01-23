@@ -1,14 +1,7 @@
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm AS build-backend
 
-# Workaround for a timeouting VSB DNS. It seems that it is sadly unable to download APT packages
-# from the default Debian mirror.
-RUN sed -i "s#deb.debian.org/debian\$#ftp.debian.cz/debian#g" /etc/apt/sources.list.d/debian.sources
-
 RUN export DEBIAN_FRONTEND=noninteractive && \
-    apt-get update \
-    -o Acquire::http::Timeout=10 \
-    -o Acquire::https::Timeout=10 \
-    -o Acquire::Retries=1 && \
+    apt-get update && \
     apt-get install -y \
     -o APT::Install-Recommends=false \
     -o APT::Install-Suggests=false \
@@ -35,13 +28,8 @@ RUN npm run build
 
 FROM python:3.12-bookworm AS runtime
 
-RUN sed -i "s#deb.debian.org/debian\$#ftp.debian.cz/debian#g" /etc/apt/sources.list.d/debian.sources
-
 RUN export DEBIAN_FRONTEND=noninteractive && \
-    apt-get update \
-    -o Acquire::http::Timeout=10 \
-    -o Acquire::https::Timeout=10 \
-    -o Acquire::Retries=1 && \
+    apt-get update && \
     apt-get install -y \
     -o APT::Install-Recommends=false \
     -o APT::Install-Suggests=false \
