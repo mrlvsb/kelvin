@@ -110,3 +110,24 @@ jobs:
         with:
           push: true
           tags: ghcr.io/mrlvsb/kelvin:latest
+  # Summary job to enable easier handling of required statust checks.
+  # On PRs, we need everything to be green, while deploy is skipped.
+  # On merge queue, we need everything to be green.
+  # ALL THE PREVIOUS JOBS NEED TO BE ADDED TO THE `needs` SECTION OF THIS JOB!
+  conclusion:
+    needs: [test-frontend, test-backend, build-docker, deploy]
+    # We need to ensure this job does *not* get skipped if its dependencies fail,
+    # because a skipped job is considered a success by GitHub. So we have to
+    # overwrite `if:`. We use `!cancelled()` to ensure the job does still not get run
+    # when the workflow is canceled manually.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Conclusion
+        run: |
+          # Print the dependent jobs to see them in the CI log
+          jq -C <<< '${{ toJson(needs) }}'
+          # Check if all jobs that we depend on (in the needs array)
+          # were either successful or skipped.
+          jq --exit-status 'all(.result == "success" or .result == "skipped")' <<< '${{ toJson(needs) }}'
+
