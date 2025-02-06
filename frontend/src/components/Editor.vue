@@ -176,21 +176,6 @@ const initializeEditor = () => {
   editor.on('change', (editor) => {
     editorContent.value = editor.getValue();
   });
-
-  //refresh editor on resize
-  let timer: number | undefined;
-
-  const observer = new MutationObserver(() => {
-    if (timer) {
-      clearTimeout(timer);
-    }
-
-    timer = setTimeout(() => editor.refresh(), 100);
-  });
-
-  observer.observe(editor.getWrapperElement(), {
-    attributes: true
-  });
 };
 
 onMounted(initializeEditor);
