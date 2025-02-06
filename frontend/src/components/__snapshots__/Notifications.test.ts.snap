@@ -1,0 +1,82 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Notifications > Don't wait for notifications 1`] = `
+"<li class="nav-item dropdown"><button class="btn nav-link dropdown-toggle" href="#" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Notifications"><span class="iconify" data-icon="bi:bell"></span><span class="d-md-none ms-1">Notifications</span>
+    <!--v-if-->
+  </button>
+  <div class="dropdown-menu dropdown-menu-end shadow p-0 rounded dropdown-menu-custom">
+    <ul class="list-group list-group-flush" style="max-height: 50vh; overflow-y: auto;">
+      <li class="list-group-item">
+        <div class="d-flex align-items-center">
+          <div> Notifications
+            <!--v-if-->
+          </div>
+          <div class="ms-auto">
+            <!--v-if--><button class="btn text-body text-muted" title="Clear all notifications"><span class="iconify" data-icon="mdi:notification-clear-all"></span></button>
+          </div>
+        </div>
+      </li><span class="list-group-item p-1 text-center">There are no notifications!</span>
+    </ul>
+  </div>
+</li>"
+`;
+
+exports[`Notifications > Read notification 1`] = `
+"<li class="nav-item dropdown"><button class="btn nav-link dropdown-toggle" href="#" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Notifications"><span class="iconify" data-icon="bi:bell"></span><span class="d-md-none ms-1">Notifications</span>
+    <!--v-if-->
+  </button>
+  <div class="dropdown-menu dropdown-menu-end shadow p-0 rounded dropdown-menu-custom">
+    <ul class="list-group list-group-flush" style="max-height: 50vh; overflow-y: auto;">
+      <li class="list-group-item">
+        <div class="d-flex align-items-center">
+          <div> Notifications
+            <!--v-if-->
+          </div>
+          <div class="ms-auto">
+            <!--v-if--><button class="btn text-body text-muted" title="Clear all notifications"><span class="iconify" data-icon="mdi:notification-clear-all"></span></button>
+          </div>
+        </div>
+      </li>
+      <li class="list-group-item p-1 d-flex align-items-center justify-content-between text-body-secondary">
+        <div><strong>some-actor2&nbsp;</strong>
+          <div>some-custom-text2</div><span>&nbsp;(<time datetime="1999-12-31T23:00:00.000Z" title="1. 1. 2000 0:00:00"><!--v-if-->25 years ago<!--v-if--></time>) </span>
+        </div>
+        <div><button type="button" hidden="" class="btn-close" aria-label="Close"></button></div>
+      </li>
+    </ul>
+  </div>
+</li>"
+`;
+
+exports[`Notifications > Wait for notification 1`] = `
+"<li class="nav-item dropdown"><button class="btn nav-link dropdown-toggle" href="#" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Notifications"><span class="iconify" data-icon="bi:bell"></span><span class="d-md-none ms-1">Notifications</span>
+    <!--v-if-->
+  </button>
+  <div class="dropdown-menu dropdown-menu-end shadow p-0 rounded dropdown-menu-custom">
+    <ul class="list-group list-group-flush" style="max-height: 50vh; overflow-y: auto;">
+      <li class="list-group-item">
+        <div class="d-flex align-items-center">
+          <div> Notifications
+            <!--v-if-->
+          </div>
+          <div class="ms-auto">
+            <!--v-if--><button class="btn text-body text-muted" title="Clear all notifications"><span class="iconify" data-icon="mdi:notification-clear-all"></span></button>
+          </div>
+        </div>
+      </li>
+      <li class="list-group-item p-1 d-flex align-items-center justify-content-between text-body-secondary">
+        <div><strong>some-actor1&nbsp;</strong>
+          <div>some-custom-text</div><span>&nbsp;(<time datetime="1999-12-31T23:00:00.000Z" title="1. 1. 2000 0:00:00"><!--v-if-->25 years ago<!--v-if--></time>) </span>
+        </div>
+        <div><button type="button" hidden="" class="btn-close" aria-label="Close"></button></div>
+      </li>
+      <li class="list-group-item p-1 d-flex align-items-center justify-content-between text-body-secondary">
+        <div><strong>some-actor2&nbsp;</strong>
+          <div>some-custom-text2</div><span>&nbsp;(<time datetime="1999-12-31T23:00:00.000Z" title="1. 1. 2000 0:00:00"><!--v-if-->25 years ago<!--v-if--></time>) </span>
+        </div>
+        <div><button type="button" hidden="" class="btn-close" aria-label="Close"></button></div>
+      </li>
+    </ul>
+  </div>
+</li>"
+`;

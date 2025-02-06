@@ -38,6 +38,11 @@ export default defineConfig((env) => {
             postcss: {
                 plugins: [autoprefixer()]
             }
+        },
+        test: {
+            globals: true,
+            environment: 'jsdom',
+            setupFiles: 'src/utilities/setupTests.ts'
         }
     };
 });
