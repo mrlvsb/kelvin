@@ -100,7 +100,7 @@ export const subscribePushNotifications = async (reg: ServiceWorkerRegistration)
     return isEnabled;
 };
 
-export const getPushStatus = async (): Promise<
+export type PushNotifications =
     | {
           supported: true;
           enabled: boolean;
@@ -110,8 +110,9 @@ export const getPushStatus = async (): Promise<
           supported: false;
           enabled: null;
           reg: null;
-      }
-> => {
+      };
+
+export const getPushStatus = async (): Promise<PushNotifications> => {
     let reg: null | ServiceWorkerRegistration = null;
     if ('serviceWorker' in navigator && 'PushManager' in window && getPublicKey()) {
         try {
@@ -137,6 +138,6 @@ export const getPushStatus = async (): Promise<
     return {
         supported: false,
         enabled: null,
-        reg: reg as null //because if ServiceWorker or PushManager is not supported, reg will be null
+        reg: null
     };
 };

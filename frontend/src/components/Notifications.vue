@@ -13,12 +13,10 @@ import {
   markAllRead,
   getPushStatus,
   type Notification,
-  subscribePushNotifications
+  subscribePushNotifications,
+  PushNotifications
 } from '../utilities/notifications';
 import TimeAgo from './TimeAgo.vue';
-
-type DePromise<$Promise> = $Promise extends Promise<infer $Inner> ? $Inner : $Promise;
-type PushNotifications = DePromise<ReturnType<typeof getPushStatus>>;
 
 let pushNotifications = ref<PushNotifications>({
   supported: false,
