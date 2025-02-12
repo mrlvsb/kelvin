@@ -6,7 +6,7 @@ import SummaryComments from './SummaryComments.svelte';
 import SubmitsDiff from './SubmitsDiff.svelte';
 import { fetch } from './api.js';
 import { user } from './global';
-import { notifications } from './utilities/notifications';
+import { markRead } from './utilities/notifications';
 import { hideComments, HideCommentsState } from './stores.js';
 
 export let url;
@@ -133,7 +133,7 @@ async function saveComment(comment) {
 
 async function markCommentAsRead(comment) {
   if (comment.unread && comment.author_id !== $user.id && comment.notification_id) {
-    await notifications.markRead(comment.notification_id);
+    await markRead(comment.notification_id);
     comment.unread = false;
   }
   return comment;
@@ -144,7 +144,7 @@ async function setNotification(evt) {
     if (comments.filter((c) => c.id === evt.detail.comment_id).length) {
       for (const comment of comments) {
         if (comment.unread && comment.author_id !== $user.id && comment.notification_id) {
-          await notifications.markRead(comment.notification_id);
+          await markRead(comment.notification_id);
           updateCommentProps(comment.id, { unread: evt.detail.unread });
         }
       }
