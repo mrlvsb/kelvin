@@ -40,31 +40,33 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 WORKDIR /app
 
 # Create new user to run app process as unprivileged user
-RUN groupadd --gid 102 webserver && \
-    useradd --uid 101 --gid 102 --shell /bin/false --system webserver
+# We want to use ID 1000, to have the same ID as the default outside user
+# And we also want group 101, to provide share access to the Unix uWSGI
+# socket with the nginx image.
+RUN useradd --uid 1000 --gid 101 --shell /bin/false --system webserver
 
-RUN chown -R webserver:webserver .
+RUN chown -R webserver .
 
-COPY --from=build-backend --chown=webserver:webserver /app .
+COPY --from=build-backend --chown=webserver /app .
 ENV PATH="/app/.venv/bin:$PATH"
 
-COPY --chown=webserver:webserver web ./web
-COPY --chown=webserver:webserver kelvin ./kelvin
-COPY --chown=webserver:webserver templates ./templates
-COPY --chown=webserver:webserver evaluator ./evaluator
-COPY --chown=webserver:webserver survey ./survey
-COPY --chown=webserver:webserver common ./common
-COPY --chown=webserver:webserver api ./api
-COPY --chown=webserver:webserver manage.py .
-COPY --from=build-frontend --chown=webserver:webserver /web/static/ ./web/static/
+COPY --chown=webserver web ./web
+COPY --chown=webserver kelvin ./kelvin
+COPY --chown=webserver templates ./templates
+COPY --chown=webserver evaluator ./evaluator
+COPY --chown=webserver survey ./survey
+COPY --chown=webserver common ./common
+COPY --chown=webserver api ./api
+COPY --chown=webserver manage.py .
+COPY --from=build-frontend --chown=webserver /web/static/ ./web/static/
 
-RUN mkdir -p /socket && chown webserver:webserver /socket
+RUN mkdir -p /socket && chown webserver /socket
 
 USER webserver
 
 RUN python manage.py collectstatic --no-input --clear
 
-COPY --chown=webserver:webserver deploy/entrypoint.sh ./
+COPY --chown=webserver deploy/entrypoint.sh ./
 
 STOPSIGNAL SIGINT
 
