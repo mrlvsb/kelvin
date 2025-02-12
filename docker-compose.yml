@@ -9,6 +9,8 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runtime
+    image: ghcr.io/mrlvsb/kelvin:latest
+    pull_policy: always
     restart: unless-stopped
     environment:
       # Hardcode the DB and Redis hostnames and ports, since they necessarily
