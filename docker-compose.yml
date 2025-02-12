@@ -9,6 +9,8 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runtime
+    image: ghcr.io/mrlvsb/kelvin:latest
+    pull_policy: always
     restart: unless-stopped
     environment:
       # Hardcode the DB and Redis hostnames and ports, since they necessarily
@@ -24,7 +26,9 @@ services:
       - app_socket:/socket
       - ${KELVIN__LOCAL_SETTINGS_PATH}:/app/kelvin/local_settings.py:ro
       - ${UWSGI__CONFIG_PATH}:/app/uwsgi.ini:ro
-
+      - ${KELVIN__TASKS_PATH}:/app/tasks
+      - ${KELVIN__SUBMITS_PATH}:/app/submits
+      - ${KELVIN__SUBMIT_RESULTS_PATH}:/app/submit_results
   db:
     container_name: kelvin_db
     image: postgres:14
