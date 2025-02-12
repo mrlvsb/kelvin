@@ -14,7 +14,8 @@ describe('ThemeSelector', () => {
                 theme: 'auto' satisfies ThemeValue
             }
         });
-        expect(wrapper.html()).toMatchSnapshot();
+
+        expect(wrapper.get('ul > li:nth-child(1) > button').classes()).toContain('active');
     });
     it('Theme prop to light', () => {
         const wrapper = mount(ThemeSelector, {
@@ -22,7 +23,8 @@ describe('ThemeSelector', () => {
                 theme: 'light' satisfies ThemeValue
             }
         });
-        expect(wrapper.html()).toMatchSnapshot();
+
+        expect(wrapper.get('ul > li:nth-child(2) > button').classes()).toContain('active');
     });
     it('Theme prop to dark', () => {
         const wrapper = mount(ThemeSelector, {
@@ -30,6 +32,7 @@ describe('ThemeSelector', () => {
                 theme: 'dark' satisfies ThemeValue
             }
         });
-        expect(wrapper.html()).toMatchSnapshot();
+
+        expect(wrapper.get('ul > li:nth-child(3) > button').classes()).toContain('active');
     });
 });

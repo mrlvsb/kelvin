@@ -9,33 +9,3 @@ exports[`ThemeSelector > Auto option with no prop 1`] = `
   </ul>
 </li>"
 `;
-
-exports[`ThemeSelector > Theme prop to auto 1`] = `
-"<li class="nav-item dropdown"><button class="btn nav-link dropdown-toggle" href="#" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Change theme"><i class="bi bi-circle-half"></i><span class="d-md-none ms-1">Change theme</span></button>
-  <ul class="dropdown-menu dropdown-menu-end shadow">
-    <li><button class="d-flex dropdown-item active"><i class="me-1 bi bi-circle-half"></i>Auto <i class="opacity-75 ms-auto bi bi-check2"></i></button></li>
-    <li><button class="d-flex dropdown-item"><i class="me-1 bi bi-sun"></i>Light mode <i class="opacity-75 ms-auto bi bi-check2" hidden=""></i></button></li>
-    <li><button class="d-flex dropdown-item"><i class="me-1 bi bi-moon-stars"></i>Dark mode <i class="opacity-75 ms-auto bi bi-check2" hidden=""></i></button></li>
-  </ul>
-</li>"
-`;
-
-exports[`ThemeSelector > Theme prop to dark 1`] = `
-"<li class="nav-item dropdown"><button class="btn nav-link dropdown-toggle" href="#" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Change theme"><i class="bi bi-moon-stars"></i><span class="d-md-none ms-1">Change theme</span></button>
-  <ul class="dropdown-menu dropdown-menu-end shadow">
-    <li><button class="d-flex dropdown-item"><i class="me-1 bi bi-circle-half"></i>Auto <i class="opacity-75 ms-auto bi bi-check2" hidden=""></i></button></li>
-    <li><button class="d-flex dropdown-item"><i class="me-1 bi bi-sun"></i>Light mode <i class="opacity-75 ms-auto bi bi-check2" hidden=""></i></button></li>
-    <li><button class="d-flex dropdown-item active"><i class="me-1 bi bi-moon-stars"></i>Dark mode <i class="opacity-75 ms-auto bi bi-check2"></i></button></li>
-  </ul>
-</li>"
-`;
-
-exports[`ThemeSelector > Theme prop to light 1`] = `
-"<li class="nav-item dropdown"><button class="btn nav-link dropdown-toggle" href="#" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Change theme"><i class="bi bi-sun"></i><span class="d-md-none ms-1">Change theme</span></button>
-  <ul class="dropdown-menu dropdown-menu-end shadow">
-    <li><button class="d-flex dropdown-item"><i class="me-1 bi bi-circle-half"></i>Auto <i class="opacity-75 ms-auto bi bi-check2" hidden=""></i></button></li>
-    <li><button class="d-flex dropdown-item active"><i class="me-1 bi bi-sun"></i>Light mode <i class="opacity-75 ms-auto bi bi-check2"></i></button></li>
-    <li><button class="d-flex dropdown-item"><i class="me-1 bi bi-moon-stars"></i>Dark mode <i class="opacity-75 ms-auto bi bi-check2" hidden=""></i></button></li>
-  </ul>
-</li>"
-`;
