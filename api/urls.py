@@ -24,7 +24,7 @@ urlpatterns = [
     path("import/activities", views.import_activities),
     path("inbus/subject_versions", inbus_views.subject_versions),
     path(
-        "inbus/schedule/subject/version/<int:subject_version_id>",
+        "inbus/schedule/subject/version/<int:subject_version_id>/<int:inbus_semester_id>",
         inbus_views.schedule_subject_by_version_id,
     ),
     path(

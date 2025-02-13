@@ -88,14 +88,14 @@ def subject_versions(
 
 
 def schedule_subject_by_version_id(
-    subject_version_id: dto.SubjectVersionId,
+    subject_version_id: dto.SubjectVersionId, inbus_semester_id: int
 ) -> dto.SubjectVersionSchedule:
     """
     Complete schedule for given subject version for current semester.
     """
     url = urllib.parse.urljoin(config.INBUS_SERVICE_EDISON_URL, "schedule")
     concrete_activities_resp = utils.inbus_request(
-        url, {"subjectVersionId": subject_version_id, "semesterId": 126}
+        url, {"subjectVersionId": subject_version_id, "semesterId": inbus_semester_id}
     )
 
     concrete_activities = []

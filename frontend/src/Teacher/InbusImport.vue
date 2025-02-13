@@ -20,6 +20,7 @@ interface Semester {
   pk: number;
   year: number;
   winter: boolean;
+  inbus_semester_id: number;
 }
 
 interface ImportResult {
@@ -147,6 +148,7 @@ function parseSemesters(semesters_data: Semester[]) {
     pk: sm.pk,
     year: sm.year,
     winter: sm.winter,
+    inbus_semester_id: sm.inbus_semester_id,
     display: String(sm.year) + (sm.winter ? 'W' : 'S')
   }));
 
@@ -166,7 +168,10 @@ async function loadScheduleForSubjectVersionId(subject_index: number) {
   activities_to_teacher_selected.value = {};
 
   const versionId = subjects_inbus_filtered[subject_index].subjectVersionId;
-  const request = assembleRequest(`/api/inbus/schedule/subject/version/${versionId}`);
+  const inbusSemesterId = semesters.find((item) => item.pk === semester.value).inbus_semester_id;
+  const request = assembleRequest(
+    `/api/inbus/schedule/subject/version/${versionId}/${inbusSemesterId}`
+  );
   const res = await fetch(request, {});
   subject_inbus_schedule.value = await res.json();
 }
