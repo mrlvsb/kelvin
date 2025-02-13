@@ -144,15 +144,13 @@ async function loadInbusSubjects(kelvin_subjects: KelvinSubject[]): Promise<Inbu
 }
 
 function parseSemesters(semesters_data: Semester[]) {
-  const semesters = semesters_data.map((sm) => ({
+  return semesters_data.map((sm) => ({
     pk: sm.pk,
     year: sm.year,
     winter: sm.winter,
     inbus_semester_id: sm.inbus_semester_id,
     display: String(sm.year) + (sm.winter ? 'W' : 'S')
   }));
-
-  return semesters;
 }
 
 async function loadSemesters() {
@@ -223,7 +221,6 @@ function getCorrespondingActivityRepr(activity_id: number) {
 function classesWithoutSelectedTeacher(req: ImportRequest) {
   const classes_without_selected_teacher: string[] = [];
   const classes_without_teacher = classesWithoutTeacher();
-  //console.log('classes_without_teacher', classes_without_teacher);
 
   for (const activity_id of req.activities) {
     if (classes_without_teacher.includes(activity_id)) {
@@ -283,6 +280,7 @@ function onInbusSubjectSelected(event) {
 function onTeacherSelected(event) {
   const value: string = event.target.value;
   const [activity_id, teacher_username] = value.split(',');
+  console.log(value);
 
   activities_to_teacher_selected.value[parseInt(activity_id)] = teacher_username;
 }
