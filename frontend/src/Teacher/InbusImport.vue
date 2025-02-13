@@ -280,7 +280,6 @@ function onInbusSubjectSelected(event) {
 function onTeacherSelected(event) {
   const value: string = event.target.value;
   const [activity_id, teacher_username] = value.split(',');
-  console.log(value);
 
   activities_to_teacher_selected.value[parseInt(activity_id)] = teacher_username;
 }
