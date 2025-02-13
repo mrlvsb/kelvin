@@ -315,6 +315,7 @@ def info(request):
         "year": semester.year,
         "winter": semester.winter,
         "abbr": str(semester),
+        "inbus_semester_id": semester.inbus_semester_id,
     }
 
     return JsonResponse(res)
@@ -745,6 +746,7 @@ def semesters(request):
             "pk": semester.pk,
             "year": semester.year,
             "winter": semester.winter,
+            "inbus_semester_id": semester.inbus_semester_id,
         }
         for semester in semesters
     ]

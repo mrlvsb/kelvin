@@ -21,8 +21,10 @@ def subject_versions(request):
 
 
 @user_passes_test(is_teacher)
-def schedule_subject_by_version_id(request, subject_version_id: dto.SubjectVersionId):
-    schedule_subject = inbus.schedule_subject_by_version_id(subject_version_id)
+def schedule_subject_by_version_id(
+    request, subject_version_id: dto.SubjectVersionId, inbus_semester_id: int
+):
+    schedule_subject = inbus.schedule_subject_by_version_id(subject_version_id, inbus_semester_id)
 
     # safe=False is used because we return a list directly
     return JsonResponse(serde.to_dict(schedule_subject), safe=False)
