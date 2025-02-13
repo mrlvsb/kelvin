@@ -55,6 +55,7 @@ class Semester(models.Model):
     # Is the semester currently marked as active?
     # Ideally, only one semester should be marked as such.
     active = models.BooleanField(default=False)
+    inbus_semester_id = models.IntegerField()
 
     def __str__(self):
         return f"{self.year}{'W' if self.winter else 'S'}"
