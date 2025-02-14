@@ -6,30 +6,52 @@
  * main layout on each page, next to name.
  */
 
+import { computed, onMounted, ref } from 'vue';
 import {
-  notifications,
-  pushNotifications,
-  importantNotificationsCount,
-  notificationsCount,
-  type Notification
+  getNotifications,
+  markRead,
+  markAllRead,
+  getPushStatus,
+  type Notification,
+  subscribePushNotifications,
+  PushNotifications
 } from '../utilities/notifications';
 import TimeAgo from './TimeAgo.vue';
 
-async function enablePushNotifications() {
-  if (!(await pushNotifications.subscribePushNotifications())) {
+let pushNotifications = ref<PushNotifications>({
+  supported: false,
+  enabled: null,
+  reg: null
+});
+
+const enablePushNotifications = async () => {
+  if (!pushNotifications.value.supported) {
+    alert('Your browser does not support push notifications.');
+    return;
+  }
+
+  if (!(await subscribePushNotifications(pushNotifications.value.reg))) {
     alert(
       'Notifications are denied, click on the icon before the URL address and enable them manually.\n\nAlso check if option "Use Google services for push messaging" is enabled in your browser privacy settings.'
     );
   }
-}
+};
 
-async function openNotification(notification: Notification) {
+let notifications = ref<Notification[]>([]);
+
+onMounted(async () => {
+  notifications.value = await getNotifications();
+  pushNotifications.value = await getPushStatus();
+});
+
+const openNotification = async (notification: Notification) => {
   if (notification.public) {
-    await notifications.markRead(notification.id);
+    //we don't care about return value, because we immediately redirect user
+    await markRead(notification.id);
   }
 
   document.location.href = notification.action_object_url;
-}
+};
 
 const getFilteredNotifications = (notifications: Readonly<Notification[]>) => {
   const ret = notifications.slice();
@@ -42,6 +64,19 @@ const getFilteredNotifications = (notifications: Readonly<Notification[]>) => {
   });
 
   return ret;
+};
+
+const notificationsCount = computed(() => notifications.value.filter((n) => n.unread).length);
+const importantNotificationsCount = computed(
+  () => notifications.value.filter((n) => n.important && n.unread).length
+);
+
+const readNotification = async (id: number) => {
+  notifications.value = await markRead(id);
+};
+
+const readAll = async () => {
+  notifications.value = await markAllRead();
 };
 </script>
 
@@ -81,7 +116,7 @@ const getFilteredNotifications = (notifications: Readonly<Notification[]>) => {
 
             <div class="ms-auto">
               <button
-                v-if="pushNotifications.ref.value.supported && !pushNotifications.ref.value.enabled"
+                v-if="pushNotifications.supported && !pushNotifications.enabled"
                 class="btn text-body"
                 title="Enable desktop notifications"
                 @click="enablePushNotifications"
@@ -92,16 +127,16 @@ const getFilteredNotifications = (notifications: Readonly<Notification[]>) => {
                 class="btn text-body"
                 :class="{ 'text-muted': notificationsCount <= 0 }"
                 title="Clear all notifications"
-                @click="notifications.markAllRead"
+                @click="readAll"
               >
                 <span class="iconify" data-icon="mdi:notification-clear-all"></span>
               </button>
             </div>
           </div>
         </li>
-        <template v-if="notifications.notificationsRef.value.length > 0">
+        <template v-if="notifications.length > 0">
           <li
-            v-for="item in getFilteredNotifications(notifications.notificationsRef.value)"
+            v-for="item in getFilteredNotifications(notifications)"
             :key="item.id"
             class="list-group-item p-1 d-flex align-items-center justify-content-between"
             :class="{ 'text-body-secondary': !item.unread || !item.important }"
@@ -117,7 +152,7 @@ const getFilteredNotifications = (notifications: Readonly<Notification[]>) => {
                   v-if="item.action_object_url"
                   :href="item.action_object_url"
                   @click.prevent="openNotification(item)"
-                  @auxclick="notifications.markRead(item.id)"
+                  @auxclick="readNotification(item.id)"
                 >
                   {{ item.action_object }}
                 </a>
@@ -134,7 +169,7 @@ const getFilteredNotifications = (notifications: Readonly<Notification[]>) => {
                 :hidden="!item.unread"
                 class="btn-close"
                 aria-label="Close"
-                @click="notifications.markRead(item.id)"
+                @click="readNotification(item.id)"
               ></button>
             </div>
           </li>

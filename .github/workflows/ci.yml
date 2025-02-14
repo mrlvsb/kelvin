@@ -44,6 +44,10 @@ jobs:
         run: |
           cd frontend
           npm run check
+      - name: Run tests
+        run: |
+          cd frontend
+          npm run test
 
   build-docker:
     runs-on: ubuntu-latest
