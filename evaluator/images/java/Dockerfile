@@ -2,7 +2,7 @@ FROM kelvin/base
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    openjdk-17-jdk \
+    openjdk-21-jdk \
     python3-pip \
     wget && \
     rm -rf /var/lib/apt/lists/*
