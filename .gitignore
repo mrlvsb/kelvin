@@ -120,3 +120,6 @@ exams/
 static/
 
 kelvin_data/
+
+# JetBrains InteliJ Idea
+.idea/
