@@ -40,16 +40,16 @@ jobs:
         run: |
           cd frontend
           npm run build
-      - name: Check lints and formatting
-        run: |
-          cd frontend
-          npm run check
       - name: Run tests
         env:
           TZ: "CET"
         run: |
           cd frontend
           npm run test
+      - name: Check lints and formatting
+        run: |
+          cd frontend
+          npm run check
 
   build-docker:
     runs-on: ubuntu-latest
