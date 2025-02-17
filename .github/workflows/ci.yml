@@ -40,6 +40,12 @@ jobs:
         run: |
           cd frontend
           npm run build
+      - name: Run tests
+        env:
+          TZ: "CET"
+        run: |
+          cd frontend
+          npm run test
       - name: Check lints and formatting
         run: |
           cd frontend

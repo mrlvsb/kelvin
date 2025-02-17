@@ -1,0 +1,46 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Markdown > Should render empty markdown 1`] = `"<div class="md"></div>"`;
+
+exports[`Markdown > Should render example markdown 1`] = `
+"<div class="md"><h1>Title</h1>
+<h2>Subtitle</h2>
+<h3>Subsubtitle</h3>
+<p>Some <strong>bold</strong> text and also italic text.
+This is underlined and this is strikethrough.
+Here is some <code>inline code</code> and here is a code block:</p>
+<pre><code class="language-javascript">console.log('Hello, world!');
+</code></pre>
+<p>Also there is <a href="https://example.com">link</a> and an image:
+<img src="https://example.com/image.jpg"></p>
+<ol>
+<li>First</li>
+<li>Second</li>
+<li>Third</li>
+</ol>
+<ul>
+<li>One</li>
+<li>Two</li>
+<li>Three</li>
+</ul>
+
+<p>Blockquote
+is very useful</p>
+
+<p>Also we don't forget about tables:</p>
+
+
+
+Cell 1
+Cell 2
+
+
+Cell 3
+Cell 4
+
+
+
+<p>which looks like, that we don't currently render :(.</p>
+
+</div>"
+`;
