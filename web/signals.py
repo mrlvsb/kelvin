@@ -45,4 +45,4 @@ def send_webpush_notification(sender, instance, created, **kwargs):
     try:
         send_user_notification(user=notification.recipient, payload=payload)
     except WebPushException as e:
-        logging.warn("%s failed for %s", e, notification.recipient)
+        logging.warning("%s failed for %s", e, notification.recipient)
