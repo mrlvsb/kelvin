@@ -220,6 +220,12 @@ SCHEDULER_QUEUES = {"default": {"HOST": REDIS_HOST, "PORT": REDIS_PORT}}
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{asctime} - {levelname} - {message}",
+            "style": "{",
+        },
+    },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
@@ -228,10 +234,15 @@ LOGGING = {
             "level": "ERROR",
             "class": "django.utils.log.AdminEmailHandler",
         },
+        "file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": os.getenv("KELVIN__LOGFILE_PATH", "./kelvin_app.log"),
+        },
     },
     "loggers": {
         "django": {
-            "handlers": ["console", "mail_admins"],
+            "handlers": ["console", "mail_admins", "file"],
             "level": "ERROR",
             "propagate": True,
         },
@@ -239,6 +250,11 @@ LOGGING = {
             "handlers": ["console", "mail_admins"],
             "level": "DEBUG",
             "propagate": True,
+        },
+        "user_logins": {  # Custom logger for user login events
+            "handlers": ["file"],
+            "level": "INFO",
+            "propagate": False,
         },
     },
 }

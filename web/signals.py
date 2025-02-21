@@ -53,12 +53,14 @@ def send_webpush_notification(sender, instance, created, **kwargs):
 
 @receiver(user_logged_in, sender=User)
 def login_success(sender, request, user, **kwargs):
+    logger = logging.getLogger("user_logins")
+
     client_ip, is_routable = get_client_ip(request)
     if client_ip is None:
-        logging.debug(f"No IP address for user: {user}.")
+        logger.info(f"No IP address for user: {user}.")
     else:
         if is_routable:
-            logging.debug(f"IP address for user: {user} is {client_ip}.")
+            logger.info(f"IP address for user: {user} is {client_ip}.")
         else:
             # The client's IP address is private
             pass
