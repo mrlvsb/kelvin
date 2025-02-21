@@ -41,6 +41,7 @@ dependencies = [
     "typing-extensions==4.11.0",
     "Unidecode==1.3.6",
     "uWSGI==2.0.24",
+    "django-ipware==7.0.1",
 ]
 
 [tool.uv]
