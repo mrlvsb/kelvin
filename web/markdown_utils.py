@@ -13,11 +13,11 @@ from jinja2 import Environment, FileSystemLoader
 from kelvin.settings import BASE_DIR
 
 
-class Readme:
-    def __init__(self, name, announce, content, meta=None):
+class ProcessedMarkdown:
+    def __init__(self, name, content, announce, meta=None):
         self.name = name
-        self.announce = announce
         self.content = content
+        self.announce = announce
         self.meta = meta if meta else {}
 
     def __str__(self):
@@ -62,7 +62,7 @@ def markdown_to_html(input: str) -> str:
     )
 
 
-def process_markdown(task_code, markdown):
+def process_markdown(asset_dir, markdown, asset_group='task'):
     h = hashlib.md5()
     h.update(markdown.encode("utf-8"))
     key = "markdown_" + h.hexdigest()
@@ -114,7 +114,7 @@ def process_markdown(task_code, markdown):
 
             parts = dst.split("#", 1)
             if parts[0]:
-                el.attrib[attr] = reverse("task_asset", args=[task_code, parts[0]])
+                el.attrib[attr] = reverse(f"{asset_group}_asset", args=[asset_dir, parts[0]])
             else:
                 el.attrib[attr] = ""
 
@@ -126,6 +126,7 @@ def process_markdown(task_code, markdown):
         announce = html.tostring(tag[0], pretty_print=True).decode("utf-8")
 
     content = html.tostring(root, pretty_print=True).decode("utf-8")
-    task_readme = Readme(name, announce, content, meta)
-    caches["default"].set(key, task_readme)
-    return task_readme
+    processed_markdown = ProcessedMarkdown(name, content, announce, meta)
+    caches["default"].set(key, processed_markdown)
+
+    return processed_markdown

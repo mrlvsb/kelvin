@@ -7,7 +7,7 @@ import traceback
 import yaml
 
 from .script import Script
-from web.task_utils import load_readme
+from web.markdown_utils import load_readme
 from kelvin.settings import BASE_DIR
 
 
