@@ -14,9 +14,10 @@ from kelvin.settings import BASE_DIR
 
 
 class ProcessedMarkdown:
-    def __init__(self, name, content, announce, meta=None):
+    def __init__(self, name: str, content: str , announce: str, meta: dict = None):
         self.name = name
         self.content = content
+        # announce is a html message that is displayed before the task starts, if available
         self.announce = announce
         self.meta = meta if meta else {}
 
@@ -62,7 +63,7 @@ def markdown_to_html(input: str) -> str:
     )
 
 
-def process_markdown(asset_dir, markdown, asset_group='task'):
+def process_markdown(asset_dir: str, markdown: str, asset_group: str = 'task'):
     h = hashlib.md5()
     h.update(markdown.encode("utf-8"))
     key = "markdown_" + h.hexdigest()
