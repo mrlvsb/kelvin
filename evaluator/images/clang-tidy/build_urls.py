@@ -1,17 +1,18 @@
 import subprocess
+import urllib.request
+import urllib.error
+import urllib.parse
 import concurrent.futures
 import logging
 import re
 import json
 from pathlib import Path
-from urllib.parse import urljoin
-from urllib.error import HTTPError
-from urllib.request import urlopen
+from typing import Dict, Tuple
 
 logging.basicConfig(level=logging.DEBUG)
 
 
-def get(url):
+def get(url: str) -> str:
     cache_file = f"/tmp/cache_{url.replace('/', '')}"
     try:
         with open(cache_file) as f:
@@ -19,9 +20,9 @@ def get(url):
     except FileNotFoundError:
         logging.info("Downloading %s", url)
         try:
-            with urlopen(url) as f:
+            with urllib.request.urlopen(url) as f:
                 html = f.read().decode("utf-8")
-        except HTTPError as e:
+        except urllib.error.HTTPError as e:
             logging.exception(e)
             html = ""
         with open(cache_file, "w") as f:
@@ -29,7 +30,7 @@ def get(url):
         return html
 
 
-def process(check):
+def process(check: str) -> Tuple[str, str]:
     logging.info("Processing %s", check)
     baseurl = "https://clang.llvm.org/extra/clang-tidy/checks/"
     checks = list_checks()
@@ -42,14 +43,16 @@ def process(check):
     if page:
         m = re.search(r'<meta content="\d+;URL=([^"]+)', page)
         if m:
-            url = urljoin(("" if m.group(1).startswith("http") else baseurl), m.group(1))
+            url = urllib.parse.urljoin(
+                ("" if m.group(1).startswith("http") else baseurl), m.group(1)
+            )
     else:
         url = None
 
     return check, url
 
 
-def list_checks():
+def list_checks() -> Dict[str, str]:
     f = Path("/tmp/cache_clangtidy_parsed_checks")
     if f.exists():
         with open(f, "r") as file:
@@ -67,7 +70,7 @@ def list_checks():
             # Checks table
             tab = table[0]
             dct = {
-                m.group(2): urljoin(baseurl, m.group(1))
+                m.group(2): urllib.parse.urljoin(baseurl, m.group(1))
                 for m in re.finditer(
                     r'<a class="reference internal" href="(.*?)"><span class="doc">(.*?)</span></a>',
                     tab,
@@ -78,7 +81,7 @@ def list_checks():
                 # Check aliases table
                 tab = table[1]
                 dct |= {
-                    m.group(2): urljoin(baseurl, m.group(1))
+                    m.group(2): urllib.parse.urljoin(baseurl, m.group(1))
                     for m in re.finditer(
                         r'<tr class="row-.*?"><td><p><a class="reference internal" href="(.*?)"><span class="doc">(.*?)</span></a></p></td>',
                         tab,
