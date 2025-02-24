@@ -248,7 +248,7 @@ class Submit(models.Model):
     assigned_points = models.FloatField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     jobid = models.CharField(max_length=64, null=True)
-    ip_address_hash = models.CharField(max_length=64, null=True)
+    ip_address = models.GenericIPAddressField(null=True, verbose_name="IP address")
 
     def path_parts(self):
         return [
@@ -300,12 +300,6 @@ class Submit(models.Model):
             )
             + "#src"
         )
-
-    @property
-    def ip_address_hash_short(self) -> str | None:
-        if self.ip_address_hash and len(self.ip_address_hash) >= 7:
-            return self.ip_address_hash[0:7]
-        return None
 
 
 class Comment(models.Model):
