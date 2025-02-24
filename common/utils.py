@@ -1,8 +1,13 @@
 from datetime import timedelta
+from django.http import HttpRequest
 from .inbus import inbus
 import django.contrib.auth.models
 import re
 from functools import lru_cache
+from ipware import get_client_ip
+from typing import NewType
+
+IPAddressString = NewType("IPAddressString", str)
 
 
 @lru_cache()
@@ -63,3 +68,16 @@ def user_from_login(login: str) -> django.contrib.auth.models.User | None:
     user.save()
 
     return user
+
+
+def get_client_ip_address(request: HttpRequest) -> IPAddressString | None:
+    """
+    Returns client IP address from HttpRequest instance.
+    Returns None if no client IP address is available.
+    """
+    client_ip, is_routable = get_client_ip(request)
+
+    if client_ip is None:
+        return None
+    else:
+        return IPAddressString(client_ip)

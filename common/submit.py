@@ -1,5 +1,4 @@
 import datetime
-import hashlib
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import BadRequest
@@ -10,7 +9,7 @@ from notifications.signals import notify
 from common.evaluate import evaluate_submit
 from common.models import AssignedTask, Submit
 from common.upload import upload_submit_files
-from common.utils import is_teacher
+from common.utils import is_teacher, get_client_ip_address
 
 # How much time has to be elapsed between two consecutive submits.
 # Note that this is not perfect due to us not using atomicity properly, but it's
@@ -37,13 +36,6 @@ def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     # get existing submits of the student
     submits = Submit.objects.filter(assignment__pk=assignment.id, student__pk=request.user.id)
 
-    def get_request_ip(request):
-        # TODO: refactor this
-        x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-        if x_forwarded_for:
-            x_forwarded_for = x_forwarded_for.split(",")[0].strip()
-        return x_forwarded_for
-
     # Check submit date across all tasks, just to be a bit more defensive
     last_submit_date = Submit.objects.filter(student=request.user).order_by("-created_at").first()
     if last_submit_date is not None:
@@ -61,9 +53,9 @@ def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
         Submit.objects.filter(assignment__id=s.assignment.id, student__id=request.user.id).count()
         + 1
     )
-    s.ip_address_hash = get_request_ip(request)
-    if s.ip_address_hash:
-        s.ip_address_hash = hashlib.sha256(s.ip_address_hash.encode()).hexdigest()
+    client_ip = get_client_ip_address(request)
+    if client_ip:
+        s.ip_address = client_ip
 
     solutions = request.FILES.getlist("solution")
     tmp = request.POST.get("paths", None)
