@@ -1,9 +1,12 @@
 import subprocess
-import urllib.request
 import concurrent.futures
 import logging
 import re
 import json
+from pathlib import Path
+from urllib.parse import urljoin
+from urllib.error import HTTPError
+from urllib.request import urlopen
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -16,9 +19,9 @@ def get(url):
     except FileNotFoundError:
         logging.info("Downloading %s", url)
         try:
-            with urllib.request.urlopen(url) as f:
+            with urlopen(url) as f:
                 html = f.read().decode("utf-8")
-        except urllib.error.HTTPError as e:
+        except HTTPError as e:
             logging.exception(e)
             html = ""
         with open(cache_file, "w") as f:
@@ -29,17 +32,62 @@ def get(url):
 def process(check):
     logging.info("Processing %s", check)
     baseurl = "https://clang.llvm.org/extra/clang-tidy/checks/"
-    url = f"{baseurl}{check}.html"
+    checks = list_checks()
+    if check in checks and checks[check]:
+        url = checks[check]
+    else:
+        url = f"{baseurl}{check}.html"
     page = get(url)
 
     if page:
         m = re.search(r'<meta content="\d+;URL=([^"]+)', page)
         if m:
-            url = ("" if m.group(1).startswith("http") else baseurl) + m.group(1)
+            url = urljoin(("" if m.group(1).startswith("http") else baseurl), m.group(1))
     else:
         url = None
 
     return check, url
+
+
+def list_checks():
+    f = Path("/tmp/cache_clangtidy_parsed_checks")
+    if f.exists():
+        with open(f, "r") as file:
+            return json.load(file)
+
+    logging.info("Downloading Clang-Tidy checks")
+    baseurl = "https://clang.llvm.org/extra/clang-tidy/checks/"
+    list_url = f"{baseurl}list.html"
+    page = get(list_url)
+    dct = {}
+
+    if page:
+        table = re.findall(r'<table class="docutils align-default">(.*?)</table>', page, re.DOTALL)
+        if len(table) > 0:
+            # Checks table
+            tab = table[0]
+            dct = {
+                m.group(2): urljoin(baseurl, m.group(1))
+                for m in re.finditer(
+                    r'<a class="reference internal" href="(.*?)"><span class="doc">(.*?)</span></a>',
+                    tab,
+                    re.DOTALL,
+                )
+            }
+            if len(table) > 1:
+                # Check aliases table
+                tab = table[1]
+                dct |= {
+                    m.group(2): urljoin(baseurl, m.group(1))
+                    for m in re.finditer(
+                        r'<tr class="row-.*?"><td><p><a class="reference internal" href="(.*?)"><span class="doc">(.*?)</span></a></p></td>',
+                        tab,
+                        re.DOTALL,
+                    )
+                }
+    with open(f, "w") as file:
+        json.dump(dct, file)
+    return dct
 
 
 result = {}
