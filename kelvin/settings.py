@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "api.apps.ApiConfig",
     "survey.apps.SurveyConfig",
     "common.apps.CommonConfig",
+    "quiz.apps.QuizConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
