@@ -48,7 +48,7 @@ from common.utils import is_teacher
 from evaluator.results import EvaluationResult
 from evaluator.testsets import TestSet
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES, MAX_INLINE_LINES
-from web.task_utils import load_readme
+from web.markdown_utils import load_readme
 from .test_script import render_test_script
 from .utils import file_response
 

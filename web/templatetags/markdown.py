@@ -1,6 +1,6 @@
 from django import template
 from django.template.defaultfilters import stringfilter
-from web.task_utils import process_markdown
+from web.markdown_utils import process_markdown
 
 register = template.Library()
 
