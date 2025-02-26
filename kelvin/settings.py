@@ -222,40 +222,37 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
-            "format": "{asctime} - {levelname} - {message}",
+            "format": "{asctime} [{levelname}] ({name}:{pathname}:{lineno}) {message}",
+            "style": "{",
+        },
+        "http": {
+            "format": "{asctime} [{levelname}] {message}",
             "style": "{",
         },
     },
     "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-        },
+        "console": {"class": "logging.StreamHandler", "formatter": "verbose"},
+        "console_http": {"class": "logging.StreamHandler", "formatter": "http"},
         "mail_admins": {
             "level": "ERROR",
             "class": "django.utils.log.AdminEmailHandler",
-        },
-        "file": {
-            "level": "INFO",
-            "class": "logging.FileHandler",
-            "filename": os.getenv("KELVIN__LOGFILE_PATH", "./kelvin_app.log"),
+            "formatter": "verbose",
         },
     },
     "loggers": {
-        "django": {
-            "handlers": ["console", "mail_admins", "file"],
-            "level": "ERROR",
-            "propagate": True,
-        },
-        "evaluator": {
+        # Default logger for everything
+        "": {
             "handlers": ["console", "mail_admins"],
             "level": "DEBUG",
-            "propagate": True,
         },
-        "user_logins": {  # Custom logger for user login events
-            "handlers": ["file"],
-            "level": "INFO",
+        # Override format of default Django logs
+        "django.server": {
+            "handlers": ["console_http"],
+            "level": "DEBUG",
             "propagate": False,
         },
+        # Disable logs from the serde crate, to avoid spam
+        "serde": {"handlers": [], "level": "DEBUG", "propagate": False},
     },
 }
 
