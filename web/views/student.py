@@ -664,6 +664,8 @@ def submit_comments(request, assignment_id, login, submit_num):
     for pipe in resultset["results"]:
         for source, comments in pipe.comments.items():
             for comment in comments:
+                if source not in result:
+                    continue
                 try:
                     line = min(result[source]["content"].count("\n"), int(comment["line"])) - 1
                     if not any(
