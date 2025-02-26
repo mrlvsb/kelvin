@@ -13,21 +13,14 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 def get(url: str) -> str:
-    cache_file = f"/tmp/cache_{url.replace('/', '')}"
+    logging.info("Downloading %s", url)
     try:
-        with open(cache_file) as f:
-            return f.read()
-    except FileNotFoundError:
-        logging.info("Downloading %s", url)
-        try:
-            with urllib.request.urlopen(url) as f:
-                html = f.read().decode("utf-8")
-        except urllib.error.HTTPError as e:
-            logging.exception(e)
-            html = ""
-        with open(cache_file, "w") as f:
-            f.write(html)
-        return html
+        with urllib.request.urlopen(url) as f:
+            html = f.read().decode("utf-8")
+    except urllib.error.HTTPError as e:
+        logging.exception(e)
+        html = ""
+    return html
 
 
 def process(check: str) -> Tuple[str, Optional[str]]:
