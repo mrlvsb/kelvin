@@ -1,1 +1,1 @@
-QUIZZ_PATH = "quizzes"
+QUIZ_PATH = "quizzes"
