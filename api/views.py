@@ -1,11 +1,32 @@
+import dataclasses
+import json
+import logging
+import os
+import re
+import shutil
+import traceback
 from collections import defaultdict
+from pathlib import Path
+from shutil import copytree, ignore_patterns
+from typing import Optional, List
 
 import django.http
-from django.shortcuts import get_object_or_404, resolve_url
-from django.http import HttpRequest, HttpResponseBadRequest
-from django.views.decorators.http import require_GET, require_POST
+import serde
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
+from django.db.models import QuerySet
+from django.http import HttpRequest, HttpResponseBadRequest
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, resolve_url
 from django.urls import reverse
+from django.utils.dateparse import parse_datetime
+from django.views.decorators.http import require_GET, require_POST
+
+import common.bulk_import
+from common.bulk_import import ImportException
+from common.evaluate import evaluate_submit
+from common.inbus import inbus
 from common.models import (
     Submit,
     Class,
@@ -17,30 +38,57 @@ from common.models import (
     current_semester,
     submit_assignment_path,
 )
-from common.evaluate import evaluate_submit
-from django.http import JsonResponse
-from django.contrib.auth.decorators import user_passes_test
-
 from common.submit import SubmitRateLimited, store_submit
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher, points_to_color, inbus_search_user, user_from_inbus_person
-from django.contrib.auth.decorators import login_required
-import os
-import re
-import json
-import logging
-import serde
-import shutil
-import traceback
-
-import common.bulk_import
-from common.bulk_import import ImportException
-from common.inbus import inbus
-from pathlib import Path
-from shutil import copytree, ignore_patterns
-from django.utils.dateparse import parse_datetime
 
 logger = logging.getLogger(__name__)
+
+
+@dataclasses.dataclass
+class SearchParams:
+    count: int = None
+    start: Optional[int] = None
+    order_by: Optional[str] = None
+    sort: str = "asc"
+
+    @staticmethod
+    def from_request(
+        request: HttpRequest, max_count: int, allowed_sort_columns: List["str"]
+    ) -> "SearchParams":
+        count = max_count
+        if "count" in request.GET:
+            count = min(max_count, int(request.GET["count"]))
+
+        start = None
+        if "start" in request.GET:
+            start = int(request.GET["start"])
+
+        order_by = None
+        if "order_column" in request.GET:
+            order_req = request.GET["order_column"]
+            if order_req in allowed_sort_columns:
+                order_by = order_req
+
+        sort = "asc"
+        if request.GET.get("sort") == "desc":
+            sort = "desc"
+        return SearchParams(count=count, start=start, order_by=order_by, sort=sort)
+
+    def apply(self, query: QuerySet) -> QuerySet:
+        if self.sort != "desc":
+            order = (self.order_by, "id")
+        else:
+            order = (f"-{self.order_by}", "-id")
+
+        query = query.order_by(*order)
+
+        if self.start is not None:
+            query = query[self.start :]
+
+        if self.count is not None:
+            query = query[: self.count]
+        return query
 
 
 @user_passes_test(is_teacher)
@@ -48,28 +96,12 @@ def tasks_list_all(request: HttpRequest, subject_abbr: str | None = None):
     result = []
     filters = {}
 
-    count = None
-    start = None
-    orderBy = "created_at"
-    sort = "desc"
+    params = SearchParams.from_request(
+        request, max_count=100, allowed_sort_columns=["created_at", "name"]
+    )
 
     if subject_abbr is not None:
         filters["subject__abbr"] = subject_abbr
-    if "count" in request.GET:
-        count = int(request.GET["count"])
-    if "start" in request.GET:
-        start = int(request.GET["start"])
-    if "order_column" in request.GET:
-        if request.GET["order_column"] in ("created_at", "name"):
-            orderBy = request.GET["order_column"]
-    if "sort" in request.GET:
-        if request.GET["sort"] == "asc":
-            sort = "asc"
-
-    if sort != "desc":
-        order = (orderBy, "id")
-    else:
-        order = (f"-{orderBy}", "-id")
 
     if "search" in request.GET:
         filters["name__icontains"] = request.GET["search"]
@@ -79,15 +111,8 @@ def tasks_list_all(request: HttpRequest, subject_abbr: str | None = None):
     else:
         tasks = Task.objects.filter(**filters)
 
-    tasks = tasks.order_by(*order)
-
     allCount = tasks.count()
-
-    if start is not None:
-        tasks = tasks[start:]
-
-    if count is not None:
-        tasks = tasks[:count]
+    tasks = params.apply(tasks)
 
     for task in tasks:
         result.append(
