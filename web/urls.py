@@ -133,7 +133,8 @@ urlpatterns = [
     path(
         "task/<int:task_id>/csv", teacher_view.download_csv_per_task, name="download_csv_per_task"
     ),
-    path("tasks", teacher_view.all_tasks, name="tasks"),
+    path("tasks", teacher_view.task_list, name="tasks"),
+    path("students", teacher_view.student_list, name="students"),
     path("reevaluate/<int:submit_id>", teacher_view.reevaluate, name="reevaluate"),
     path("api_token", common_view.api_token, name="api_token"),
 ]

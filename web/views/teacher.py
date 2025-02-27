@@ -307,8 +307,19 @@ def download_csv_per_class(request, class_id: int):
 
 
 @user_passes_test(is_teacher)
-def all_tasks(request):
-    return render(request, "web/all_tasks.html")
+def task_list(request):
+    """
+    Page that renders a Vue component with a list of tasks.
+    """
+    return render(request, "web/task_list.html")
+
+
+@user_passes_test(is_teacher)
+def student_list(request):
+    """
+    Page that renders a Vue component with a list of students.
+    """
+    return render(request, "web/student_list.html")
 
 
 @user_passes_test(is_teacher)
