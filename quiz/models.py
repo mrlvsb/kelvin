@@ -5,9 +5,7 @@ from common.models import Class, Subject, User, Semester
 # Model that represents a quiz
 class Quiz(models.Model):
     name = models.CharField(max_length=100)
-    # root directory of stored quiz
-    root = models.CharField(max_length=255, default="quizzes")
-    # relative quiz path of quiz root directory
+    # path for quiz relative to directory defined in settings.py
     src = models.CharField(max_length=255, verbose_name="Directory", unique=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
@@ -43,6 +41,7 @@ class TemplateQuiz(models.Model):
     content = models.JSONField(default=dict)
     # computed hash of enrolled quiz template
     hash = models.CharField(max_length=255, unique=True)
+    max_points = models.FloatField(default=0.0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -58,7 +57,6 @@ class EnrolledQuiz(models.Model):
     template = models.ForeignKey(TemplateQuiz, on_delete=models.CASCADE)
     student = models.ForeignKey(User, on_delete=models.CASCADE)
     deadline = models.DateTimeField()
-    max_points = models.FloatField(default=0.0)
     submit = models.JSONField(default=dict)
     scoring = models.JSONField(default=dict)
     scored_by = models.ForeignKey(

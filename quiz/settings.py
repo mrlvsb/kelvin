@@ -1,0 +1,1 @@
+QUIZZ_PATH = "quizzes"
