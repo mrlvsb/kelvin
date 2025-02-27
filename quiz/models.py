@@ -1,14 +1,13 @@
 from django.db import models
-from common.models import Class, Subject, User, Semester
+from common.models import Class, Subject, User
 
 
 # Model that represents a quiz
 class Quiz(models.Model):
     name = models.CharField(max_length=100)
-    # path for quiz relative to directory defined in settings.py
+    # path for quiz relative to path defined in settings.py
     src = models.CharField(max_length=255, verbose_name="Directory", unique=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
