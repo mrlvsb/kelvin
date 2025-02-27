@@ -32,6 +32,11 @@ IMAGE_LIMITS = {
         "memory": "512M",
         "fsize": "128M",
     },
+    "kelvin/run": {
+        "network": "bridge",
+        "memory": "256M",
+        "fsize": "16M",
+    },
 }
 
 
