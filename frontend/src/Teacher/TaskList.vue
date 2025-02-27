@@ -177,7 +177,11 @@ const options = {
     callback({ data: items, recordsTotal: count, recordsFiltered: count }); // https://datatables.net/manual/server-side#Returned-data
   },
   orderMulti: false,
-  pageLength: 25
+  pageLength: 25,
+  layout: {
+    topStart: 'search',
+    topEnd: 'pageLength'
+  }
 } satisfies Config;
 
 //save ref to data table and if it changes save datatable instance to table variable
