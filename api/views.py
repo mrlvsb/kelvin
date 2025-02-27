@@ -15,7 +15,7 @@ import serde
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Q
 from django.http import HttpRequest, HttpResponseBadRequest
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, resolve_url
@@ -126,6 +126,32 @@ def tasks_list_all(request: HttpRequest, subject_abbr: str | None = None):
             }
         )
     return JsonResponse({"tasks": result, "count": allCount})
+
+
+@user_passes_test(is_teacher)
+def student_list(request: HttpRequest):
+    params = SearchParams.from_request(request, max_count=100, allowed_sort_columns=[])
+    params.sort = "asc"
+    params.order_by = "username"
+
+    # Only allow searching through students
+    users = User.objects.exclude(groups__name="teachers")
+
+    if "search" in request.GET:
+        search = request.GET["search"].strip()
+        users = users.filter(
+            Q(username__icontains=search)
+            | Q(first_name__icontains=search)
+            | Q(last_name__icontains=search)
+        )
+
+    user_count = users.count()
+    users = params.apply(users)
+
+    result = []
+    for user in users:
+        result.append({"login": user.username, "name": user.get_full_name()})
+    return JsonResponse({"students": result, "count": user_count})
 
 
 @user_passes_test(is_teacher)

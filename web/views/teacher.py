@@ -315,6 +315,14 @@ def task_list(request):
 
 
 @user_passes_test(is_teacher)
+def student_list(request):
+    """
+    Page that renders a Vue component with a list of students.
+    """
+    return render(request, "web/student_list.html")
+
+
+@user_passes_test(is_teacher)
 def reevaluate(request, submit_id):
     submit = Submit.objects.get(pk=submit_id)
     try:
