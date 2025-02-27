@@ -1,41 +1,48 @@
+#!/usr/bin/env python3
 import subprocess
 import urllib.request
+import urllib.error
+import urllib.parse
 import concurrent.futures
 import logging
 import re
 import json
+from typing import Tuple, Optional
 
 logging.basicConfig(level=logging.DEBUG)
 
 
-def get(url):
-    cache_file = f"/tmp/cache_{url.replace('/', '')}"
+def get(url: str) -> str:
+    logging.info("Downloading %s", url)
     try:
-        with open(cache_file) as f:
-            return f.read()
-    except FileNotFoundError:
-        logging.info("Downloading %s", url)
-        try:
-            with urllib.request.urlopen(url) as f:
-                html = f.read().decode("utf-8")
-        except urllib.error.HTTPError as e:
-            logging.exception(e)
-            html = ""
-        with open(cache_file, "w") as f:
-            f.write(html)
-        return html
+        with urllib.request.urlopen(url) as f:
+            html = f.read().decode("utf-8")
+    except urllib.error.HTTPError as e:
+        logging.exception(e)
+        html = ""
+    return html
 
 
-def process(check):
+def process(check: str) -> Tuple[str, Optional[str]]:
     logging.info("Processing %s", check)
     baseurl = "https://clang.llvm.org/extra/clang-tidy/checks/"
+    prefixes = ["clang-analyzer"]
+    matched = [prefix for prefix in prefixes if check.startswith(prefix)]
+    if len(matched):
+        matched.append(check.split(f"{matched[0]}-", 1)[1])
+    else:
+        matched = check.split("-", 1)
+    baseurl += f"{matched.pop(0)}/"
+    check = matched.pop(0)
     url = f"{baseurl}{check}.html"
     page = get(url)
 
     if page:
         m = re.search(r'<meta content="\d+;URL=([^"]+)', page)
         if m:
-            url = ("" if m.group(1).startswith("http") else baseurl) + m.group(1)
+            url = urllib.parse.urljoin(
+                ("" if m.group(1).startswith("http") else baseurl), m.group(1)
+            )
     else:
         url = None
 
