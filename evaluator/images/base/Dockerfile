@@ -12,9 +12,9 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
 
 # Workaround for https://github.com/dotnet/sdk/issues/31457
 # It is included here, because it has to be present not only for building .NET projects,
