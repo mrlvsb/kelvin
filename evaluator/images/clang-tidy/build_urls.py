@@ -33,8 +33,8 @@ def process(check: str) -> Tuple[str, Optional[str]]:
     else:
         matched = check.split("-", 1)
     baseurl += f"{matched.pop(0)}/"
-    check = matched.pop(0)
-    url = f"{baseurl}{check}.html"
+    short_check = matched.pop(0)
+    url = f"{baseurl}{short_check}.html"
     page = get(url)
 
     if page:
