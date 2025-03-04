@@ -155,8 +155,8 @@ import InbusImport from './Teacher/InbusImport.vue';
 import NotificationsNew from './components/Notifications.vue';
 import ColorThemeNew from './components/ColorTheme.vue';
 import StudentList from './Teacher/StudentList.vue';
-import Quiz from "./Quiz/Quiz.vue"
-import QuizEdit from "./Quiz/QuizEdit.vue";
+import Quiz from './Quiz/Quiz.vue';
+import QuizEdit from './Quiz/QuizEdit.vue';
 
 /**
  * Register new Vue component as a custom element.
