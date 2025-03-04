@@ -1075,7 +1075,7 @@ def quiz_enroll(request, assignment_id):
             except TemplateQuiz.DoesNotExist:
                 template = TemplateQuiz.objects.create(
                     hash=quiz_json_hash,
-                    content=json.loads(to_json(quiz_dto)),
+                    content=json.loads(quiz_json),
                     max_points=sum(map(lambda q: q.points, quiz_dto.questions)),
                 )
                 template.save()
