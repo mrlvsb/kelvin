@@ -31,7 +31,7 @@ from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from quiz.models import EnrolledQuiz, Quiz, quiz_assigned_classes
 from . import statistics
 from .utils import file_response, quiz_to_html
-from serde.json import from_json, to_json
+from serde.json import to_json
 
 
 @user_passes_test(is_teacher)
