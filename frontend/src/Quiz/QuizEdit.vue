@@ -643,18 +643,18 @@ onUnmounted(() => {
   <div class="container">
     <div class="col-12 mb-2">
       <quizAssign
+        v-model="isDeletableRef"
         :quiz_id="id"
         :assignments="assignments"
         :teacher="teacher"
-        v-model="isDeletableRef"
       ></quizAssign>
     </div>
     <div class="col-12">
-      <button @click="openQuestionAddModal" class="btn btn-primary">Add question</button>
+      <button class="btn btn-primary" @click="openQuestionAddModal">Add question</button>
       <button
         :disabled="!changesMade || !questionsRef.length"
-        @click="saveQuiz"
         class="btn btn-success ms-2"
+        @click="saveQuiz"
       >
         Save quiz
       </button>
@@ -678,8 +678,8 @@ onUnmounted(() => {
         <span class="iconify" data-icon="ant-design:copy-outlined"></span>
       </button>
       <a
-        class="btn btn-outline-info"
         v-if="questionsRef.length"
+        class="btn btn-outline-info"
         :href="`/teacher/quiz/${id}`"
         title="Display quiz"
       >
@@ -688,21 +688,21 @@ onUnmounted(() => {
       <button
         class="btn btn-outline-danger"
         title="Delete quiz"
-        @click="deleteQuiz(id)"
         :disabled="!isDeletableRef"
+        @click="deleteQuiz(id)"
       >
         <span class="iconify" data-icon="akar-icons:trash-can"></span>
       </button>
     </div>
     <div class="row mt-2">
       <div class="col-lg-3 col-12">
-        <div class="d-flex align-items-center mb-3 col-12" v-if="questionsRef.length">
+        <div v-if="questionsRef.length" class="d-flex align-items-center mb-3 col-12">
           <label for="shuffle" class="me-2">Shuffle questions:</label>
           <input
-            class="form-check"
-            ref="shuffle"
-            type="checkbox"
             id="shuffle"
+            ref="shuffle"
+            class="form-check"
+            type="checkbox"
             @change="
               () => {
                 changesMade = true;
@@ -729,9 +729,9 @@ onUnmounted(() => {
                 </div>
                 <div class="col-1">
                   <button
-                    @click="removeQuestion(element.hiddenId)"
                     class="btn btn-outline-danger float-end"
                     title="Delete question"
+                    @click="removeQuestion(element.hiddenId)"
                   >
                     ✕
                   </button>
@@ -741,12 +741,12 @@ onUnmounted(() => {
           </template>
         </draggable>
       </div>
-      <div class="col-lg-9 col-12" v-if="questionsRef.length">
-        <ul class="nav nav-tabs" id="quizEditHeader" role="tablist">
+      <div v-if="questionsRef.length" class="col-lg-9 col-12">
+        <ul id="quizEditHeader" class="nav nav-tabs" role="tablist">
           <li class="nav-item" role="presentation">
             <button
-              class="nav-link active"
               id="content-tab"
+              class="nav-link active"
               data-bs-toggle="tab"
               data-bs-target="#content-block"
               type="button"
@@ -759,43 +759,43 @@ onUnmounted(() => {
           </li>
           <li class="nav-item" role="presentation">
             <button
-              @click="previewQuestion"
+              id="preview-tab"
               ref="previewButton"
               class="nav-link"
-              id="preview-tab"
               data-bs-toggle="tab"
               data-bs-target="#preview-block"
               type="button"
               role="tab"
               aria-controls="preview-block"
               aria-selected="false"
+              @click="previewQuestion"
             >
               Preview
             </button>
           </li>
         </ul>
-        <div class="tab-content" id="quizEditContent">
+        <div id="quizEditContent" class="tab-content">
           <div
-            class="tab-pane fade show active p-3"
             id="content-block"
+            class="tab-pane fade show active p-3"
             role="tabpanel"
             aria-labelledby="content-tab"
           >
             <div class="col-12">
               <Editor
-                filename="quiz.yaml"
                 v-model:value="currentQuestionYamlRef"
-                @input="updateQuestionFromYaml"
+                filename="quiz.yaml"
                 :extensions="[extension]"
                 :lint="true"
                 :wrap="true"
+                @input="updateQuestionFromYaml"
               >
               </Editor>
             </div>
           </div>
           <div
-            class="tab-pane fade p-3"
             id="preview-block"
+            class="tab-pane fade p-3"
             role="tabpanel"
             aria-labelledby="preview-tab"
           >
@@ -812,8 +812,8 @@ onUnmounted(() => {
     </div>
   </div>
   <div
-    class="modal fade"
     id="question_add_modal"
+    class="modal fade"
     tabindex="-1"
     aria-labelledby="question_add_modal_label"
     aria-hidden="true"
@@ -821,7 +821,7 @@ onUnmounted(() => {
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="question_add_modal_label">Add question</h5>
+          <h5 id="question_add_modal_label" class="modal-title">Add question</h5>
           <button
             type="button"
             class="btn-close"

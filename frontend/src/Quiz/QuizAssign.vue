@@ -182,8 +182,8 @@ watchEffect(() => {
         </div>
         <div class="d-flex m-1">
           <label for="teacher-select" class="form-label mt-2">Teacher</label>
-          <select id="teacher-select" class="form-control mx-2" v-model="selectedTeacher">
-            <option :value="teacherName" v-for="teacherName in teacherNames">
+          <select id="teacher-select" v-model="selectedTeacher" class="form-control mx-2">
+            <option v-for="teacherName in teacherNames" :key="teacherName" :value="teacherName">
               {{ teacherName }}
             </option>
           </select>
@@ -191,9 +191,9 @@ watchEffect(() => {
         <table id="assign" class="table m-0">
           <tbody>
             <tr
-              class="col-12 p-2"
               v-for="clazz in assignmentsData"
               :key="clazz.id"
+              class="col-12 p-2"
               :class="{ 'table-success': !isMissingPropertyToAssign(clazz) }"
               :style="{ display: clazz.visible ? 'table-row' : 'none' }"
             >
@@ -206,9 +206,9 @@ watchEffect(() => {
                 <div class="row col-12">
                   <div class="col-lg d-flex justify-content-start">
                     <VueDatePicker
+                      v-model="clazz.assigned"
                       class="border-0"
                       placeholder="Active from"
-                      v-model="clazz.assigned"
                     />
                     <button
                       class="btn btn-sm btn-secondary"
@@ -221,9 +221,9 @@ watchEffect(() => {
                   </div>
                   <div class="col-lg d-flex justify-content-start">
                     <VueDatePicker
+                      v-model="clazz.deadline"
                       :disabled="!clazz.assigned"
                       placeholder="Deadline"
-                      v-model="clazz.deadline"
                     />
                     <button
                       class="btn btn-sm btn-secondary"
@@ -236,13 +236,13 @@ watchEffect(() => {
                   </div>
                   <div class="col-lg d-flex justify-content-start">
                     <input
+                      v-model="clazz.duration"
                       placeholder="Duration (minutes)"
                       class="form-control"
                       type="number"
                       min="1"
                       step="1"
                       :disabled="!clazz.deadline || !clazz.assigned"
-                      v-model="clazz.duration"
                     />
                     <button
                       class="btn btn-sm btn-secondary"
@@ -259,10 +259,10 @@ watchEffect(() => {
                 <div class="form-check d-flex p-0">
                   <input
                     :id="'publish-results-input-' + clazz.id"
+                    v-model="clazz.publish_results"
                     class="form-check-input"
                     type="checkbox"
                     :disabled="isMissingPropertyToAssign(clazz)"
-                    v-model="clazz.publish_results"
                     :checked="clazz.publish_results"
                   />
                   <label :for="'publish-results-input-' + clazz.id" class="form-check-label"
@@ -284,8 +284,8 @@ watchEffect(() => {
                 <button
                   class="btn-close"
                   aria-label="Unassign class"
-                  @click="deleteAssignmentValues(clazz)"
                   :disabled="!clazz.deletable"
+                  @click="deleteAssignmentValues(clazz)"
                 ></button>
               </td>
             </tr>

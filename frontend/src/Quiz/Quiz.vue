@@ -206,11 +206,11 @@ onUnmounted(() => {
 <template>
   <div id="quiz">
     <div class="row">
-      <div class="col-12 col-md-3 bg-light py-3" id="sidebar-wrapper">
+      <div id="sidebar-wrapper" class="col-12 col-md-3 bg-light py-3">
         <vue-countdown
           v-if="mode === Modes.Filling"
-          :time="remainingTime"
           v-slot="{ hours, minutes, seconds }"
+          :time="remainingTime"
           @end="sendAnswers(ResultsType.Submit)"
         >
           <div class="text-center mb-2">
@@ -237,7 +237,7 @@ onUnmounted(() => {
             {{ scored_by }}
           </h5>
         </template>
-        <h5 class="col-12 mb-2 text-center" v-else-if="mode === Modes.Scoring">
+        <h5 v-else-if="mode === Modes.Scoring" class="col-12 mb-2 text-center">
           <strong>Student:</strong>
           {{ student }}
         </h5>
@@ -266,23 +266,23 @@ onUnmounted(() => {
         <div class="text-center mt-2">
           <button
             v-if="!isScoring"
-            @click="submitQuiz"
             class="btn btn-danger w-auto px-4"
             :disabled="isTeacher"
+            @click="submitQuiz"
           >
             Submit
           </button>
           <button
             v-else-if="isTeacher"
-            @click="sendScoring"
             class="btn btn-success w-auto px-4"
             :disabled="!scoringUnsaved"
+            @click="sendScoring"
           >
             Save scoring
           </button>
         </div>
       </div>
-      <div class="col-12 col-md-9 py-3" id="page-content-wrapper">
+      <div id="page-content-wrapper" class="col-12 col-md-9 py-3">
         <div v-for="(question, index) in quiz" :key="question.id">
           <div v-show="currentQuestionIndex === index" class="question">
             <div class="card">
@@ -292,25 +292,25 @@ onUnmounted(() => {
                   <strong>{{ question.points }}</strong>
                 </h6>
                 <input
-                  type="number"
                   v-if="mode === Modes.Scoring"
+                  :ref="(el) => (scoringPointsRef[question.id] = el)"
+                  type="number"
                   class="form-control float-end w-auto"
                   :value="scoringData[question.id].points"
-                  :ref="(el) => (scoringPointsRef[question.id] = el)"
+                  min="0"
+                  step="0.5"
                   @input="
                     scoringData[question.id].points =
                       parseFloat(scoringPointsRef[question.id].value) || 0;
                     scoringUnsaved = true;
                   "
-                  min="0"
-                  step="0.5"
                 />
                 <input
-                  type="number"
                   v-else-if="mode === Modes.ViewScoring"
+                  :ref="(el) => (scoringPointsRef[question.id] = el)"
+                  type="number"
                   class="form-control float-end w-auto teacher-scoring"
                   :value="scoringData[question.id].points"
-                  :ref="(el) => (scoringPointsRef[question.id] = el)"
                   disabled
                 />
               </div>
@@ -321,13 +321,13 @@ onUnmounted(() => {
                     v-if="mode === Modes.Scoring"
                     :ref="(el) => (scoringCommentsRef[question.id] = el)"
                     :value="scoringData[question.id].comment"
+                    class="form-control mb-2 teacher-scoring"
+                    rows="3"
+                    placeholder="Add comment here"
                     @input="
                       scoringData[question.id].comment = scoringCommentsRef[question.id].value;
                       scoringUnsaved = true;
                     "
-                    class="form-control mb-2 teacher-scoring"
-                    rows="3"
-                    placeholder="Add comment here"
                   ></textarea>
                 </template>
                 <template
@@ -351,14 +351,14 @@ onUnmounted(() => {
                 <div v-if="question.type === 'open'" class="mt-3">
                   <textarea
                     v-if="!isScoring"
-                    @input="
-                      question.unansweredAsterisk =
-                        mode === Modes.Filling && answersRef[question.id].value === ''
-                    "
                     :ref="(el) => (answersRef[question.id] = el)"
                     class="form-control"
                     rows="3"
                     placeholder="Your answer"
+                    @input="
+                      question.unansweredAsterisk =
+                        mode === Modes.Filling && answersRef[question.id].value === ''
+                    "
                   ></textarea>
                   <textarea
                     v-else
@@ -381,16 +381,16 @@ onUnmounted(() => {
                     <div class="col-1 text-center align-self-center">
                       <input
                         v-if="!isScoring"
-                        @change="
-                          question.unansweredAsterisk =
-                            mode === Modes.Filling &&
-                            question.answers.every((a) => !answersRef[a.id].checked)
-                        "
                         :ref="(el) => (answersRef[answer.id] = el)"
                         :type="question.type === 'abcd' ? 'radio' : 'checkbox'"
                         :name="'question-' + question.id"
                         class="form-check-input"
                         :value="answer.id"
+                        @change="
+                          question.unansweredAsterisk =
+                            mode === Modes.Filling &&
+                            question.answers.every((a) => !answersRef[a.id].checked)
+                        "
                       />
                       <input
                         v-else
