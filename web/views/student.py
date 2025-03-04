@@ -60,6 +60,7 @@ from evaluator.results import EvaluationResult
 from evaluator.testsets import TestSet
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES, MAX_INLINE_LINES
 from quiz.models import EnrolledQuiz, AssignedQuiz, TemplateQuiz
+from quiz.settings import QUIZ_PATH
 from web.markdown_utils import load_readme
 from .test_script import render_test_script
 from .utils import file_response, quiz_to_html
@@ -1153,7 +1154,7 @@ def quiz_asset(request, quiz_src, asset_path):
     if ".." in path or ("quiz.yml" in path and not is_teacher(request.user)):
         raise PermissionDenied()
 
-    system_path = os.path.join("quizzes", quiz_src, asset_path)
+    system_path = os.path.join(QUIZ_PATH, quiz_src, asset_path)
 
     try:
         with open(system_path, "rb") as f:
