@@ -37,7 +37,7 @@ type DraggableQuestion = {
   hiddenId: number;
 };
 
-type quizUpdate = {
+type QuizUpdate = {
   shuffle: boolean;
   questions: Question[];
   quiz_directory: string;
@@ -197,7 +197,7 @@ const getIndexOfQuestionByHiddenId = async (hiddenId: number): Promise<number> =
  * Send quiz to the server in order to save it
  * @param quizUpdate quiz object
  */
-const saveQuizAPI = async (quizUpdate: quizUpdate) => {
+const saveQuizAPI = async (quizUpdate: QuizUpdate) => {
   const data = await getDataWithCSRF<{ yaml: string }>(
     '/api/quiz/' + id,
     'POST',
