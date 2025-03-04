@@ -4,16 +4,19 @@ import io
 import json
 import logging
 import os
+import random
 import re
 import shutil
 import subprocess
 import tarfile
 import tempfile
 from collections import namedtuple
+from datetime import timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from zipfile import ZIP_DEFLATED, ZipFile
 
+from django.utils import timezone
 import django_rq
 import magic
 import rq
@@ -23,13 +26,21 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.core import signing
 from django.core.exceptions import PermissionDenied
-from django.http import FileResponse, Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.http import (
+    FileResponse,
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    JsonResponse,
+    HttpResponseRedirect,
+)
 from django.shortcuts import get_object_or_404, redirect, render, resolve_url
 from django.urls import reverse
 from django.utils import timezone as datetime
 from django.views.decorators.csrf import csrf_exempt
 from notifications.models import Notification
 from notifications.signals import notify
+from serde.json import to_json
 
 from common.evaluate import get_meta
 from common.models import (
@@ -48,9 +59,11 @@ from common.utils import is_teacher
 from evaluator.results import EvaluationResult
 from evaluator.testsets import TestSet
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES, MAX_INLINE_LINES
+from quiz.models import EnrolledQuiz, AssignedQuiz, TemplateQuiz
+from quiz.settings import QUIZ_PATH
 from web.markdown_utils import load_readme
 from .test_script import render_test_script
-from .utils import file_response
+from .utils import file_response, quiz_to_html
 
 mimedetector = magic.Magic(mime=True)
 
@@ -981,3 +994,174 @@ def teacher_task_tar(request, task_id):
     res = FileResponse(f)
     res["Content-Type"] = "application/x-tar"
     return res
+
+
+# Function that renders the results of a quiz for student if possible, otherwise redirects to main page, or returns 404
+# if enroll for quiz not exists.
+@login_required
+def quiz_result(request, enrolled_id):
+    enrolled_quiz = get_object_or_404(EnrolledQuiz, pk=enrolled_id)
+
+    if (
+        request.user != enrolled_quiz.student
+        or not enrolled_quiz.submitted
+        or not enrolled_quiz.assigned_quiz.publish_results
+    ):
+        return HttpResponseRedirect("/")
+
+    return render(
+        request,
+        "web/quiz/quiz.html",
+        {
+            "quiz": enrolled_quiz.assigned_quiz.quiz,
+            "enrolled_id": enrolled_quiz.id,
+            "scoring": json.dumps(enrolled_quiz.scoring),
+            "answers": json.dumps(enrolled_quiz.submit),
+            "student": None,
+            "scored_by": enrolled_quiz.scored_by,
+            "quiz_html": json.dumps(
+                quiz_to_html(enrolled_quiz.assigned_quiz.quiz.src, enrolled_quiz.template.content)
+            ),
+        },
+    )
+
+
+# Function that allows enrolling student to a quiz.
+# If student can be enrolled, it enrolls student and render the quiz that student has to solve.
+# If student can't be enrolled, it redirects to the main page or page with results.
+@login_required
+def quiz_enroll(request, assignment_id):
+    assigned_quiz = get_object_or_404(AssignedQuiz, pk=assignment_id)
+
+    now = timezone.now()
+
+    # If student is not member of a class, or quiz is not possible to be enrolled yet, it redirects to the main page.
+    if (
+        assigned_quiz.clazz.students.filter(username=request.user.username).count() == 0
+        or assigned_quiz.assigned > now
+    ):
+        return HttpResponseRedirect("/")
+
+    try:
+        enrolled_quiz = EnrolledQuiz.objects.get(assigned_quiz=assigned_quiz, student=request.user)
+    except EnrolledQuiz.DoesNotExist:
+        # If enrolling to quiz is possible, enroll.
+        if now <= assigned_quiz.deadline:
+            quiz_dto = assigned_quiz.quiz.get_dto()
+
+            question_id = 1
+
+            for question in quiz_dto.questions:
+                question._id = str(question_id)
+                question_id += 1
+                if question.answers is not None:
+                    for answer in question.answers:
+                        answer._id = str(question_id)
+                        question_id += 1
+
+            if quiz_dto.shuffle:
+                random.shuffle(quiz_dto.questions)
+
+                for question in quiz_dto.questions:
+                    if question.answers is not None:
+                        random.shuffle(question.answers)
+
+            quiz_json = to_json(quiz_dto).encode("utf-8")
+
+            quiz_json_hash = hashlib.sha256(quiz_json).hexdigest()
+
+            try:
+                template = TemplateQuiz.objects.get(hash=quiz_json_hash)
+            except TemplateQuiz.DoesNotExist:
+                template = TemplateQuiz.objects.create(
+                    hash=quiz_json_hash,
+                    content=json.loads(quiz_json),
+                    max_points=sum(map(lambda q: q.points, quiz_dto.questions)),
+                )
+                template.save()
+
+            deadline = now + timedelta(minutes=assigned_quiz.duration)
+
+            if assigned_quiz.deadline < deadline:
+                deadline = assigned_quiz.deadline
+
+            enrolled_quiz = EnrolledQuiz.objects.create(
+                assigned_quiz=assigned_quiz,
+                template=template,
+                student=request.user,
+                deadline=deadline,
+            )
+            enrolled_quiz.save()
+
+            remaining = enrolled_quiz.deadline - now
+
+            return render(
+                request,
+                "web/quiz/quiz.html",
+                {
+                    "quiz": assigned_quiz.quiz,
+                    "enrolled_id": enrolled_quiz.id,
+                    "remaining": remaining.total_seconds(),
+                    "scoring": None,
+                    "answers": None,
+                    "student": None,
+                    "quiz_html": json.dumps(quiz_to_html(assigned_quiz.quiz.src, template.content)),
+                },
+            )
+        else:
+            return HttpResponseRedirect("/")
+
+    # If enrolled quiz is after deadline and still not submitted, it's marked as submitted
+    if now > enrolled_quiz.deadline:
+        enrolled_quiz.submitted = True
+        enrolled_quiz.submitted_at = now
+        enrolled_quiz.score_questions()
+
+    # If enrolled quiz is submitted, it redirects to the results page if and only if results are allowed to be published,
+    # otherwise redirects to main page.
+    if enrolled_quiz.submitted:
+        if assigned_quiz.publish_results:
+            return HttpResponseRedirect(reverse("quiz_result", args=[enrolled_quiz.id]))
+        else:
+            return HttpResponseRedirect("/")
+
+    # Student will continue solving active quiz.
+    remaining = enrolled_quiz.deadline - now
+
+    return render(
+        request,
+        "web/quiz/quiz.html",
+        {
+            "quiz": assigned_quiz.quiz,
+            "enrolled_id": enrolled_quiz.id,
+            "remaining": remaining.total_seconds(),
+            "scoring": None,
+            "student": None,
+            "answers": json.dumps(enrolled_quiz.submit),
+            "quiz_html": json.dumps(
+                quiz_to_html(assigned_quiz.quiz.src, enrolled_quiz.template.content)
+            ),
+        },
+    )
+
+
+# Function that returns an asset of a quiz folder if asset is found, 404 otherwise.
+# Raises permission denied if user is trying to access something he can't.
+@login_required
+def quiz_asset(request, quiz_src, asset_path):
+    path = quiz_src + asset_path
+
+    if ".." in path or ("quiz.yml" in path and not is_teacher(request.user)):
+        raise PermissionDenied()
+
+    system_path = os.path.join(QUIZ_PATH, quiz_src, asset_path)
+
+    try:
+        with open(system_path, "rb") as f:
+            resp = HttpResponse(f)
+            mime = mimedetector.from_file(system_path)
+            if mime:
+                resp["Content-Type"] = f"{mime};charset=utf-8"
+            return resp
+    except FileNotFoundError:
+        raise Http404()

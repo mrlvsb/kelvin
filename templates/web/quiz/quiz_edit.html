@@ -1,0 +1,8 @@
+{% extends 'web/layout.html' %} {% block content %}
+    <kelvin-quiz-edit assignments="{{ assignments }}"
+                      id="{{ id }}"
+                      quiz_directory="{{ quiz_directory }}"
+                      teacher="{{ teacher }}"
+                      deletable="{{ deletable }}">
+    </kelvin-quiz-edit>
+{% endblock %}

@@ -32,4 +32,18 @@ urlpatterns = [
         "inbus/schedule/students/activity/<int:concrete_activity_id>",
         inbus_views.students_in_concrete_activity,
     ),
+    path("quiz/<int:quiz_id>", views.quiz_yaml, name="api_quiz_yaml"),
+    path(
+        "quiz/<int:quiz_id>/question/preview",
+        views.quiz_question_preview,
+        name="api_quiz_question_preview",
+    ),
+    path(
+        "quiz/<int:enrolled_id>/result/<int:is_submit>", views.quiz_results, name="api_quiz_results"
+    ),
+    path("quiz/<int:enrolled_id>/scoring", views.quiz_scoring, name="api_quiz_scoring"),
+    path("quiz/<int:quiz_id>/classes", views.quiz_classes, name="api_quiz_classes"),
+    path("quiz/add", views.quiz_add, name="api_quiz_add"),
+    path("quiz/<int:quiz_id>/duplicate", views.quiz_duplicate),
+    path("quiz/<int:quiz_id>/assignments", views.quiz_assignments, name="api_quiz_assignments"),
 ]
