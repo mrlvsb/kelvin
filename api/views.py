@@ -1,4 +1,5 @@
 import dataclasses
+import errno
 import json
 import logging
 import os
@@ -6,17 +7,27 @@ import re
 import shutil
 import traceback
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
-from shutil import copytree, ignore_patterns
+from shutil import copytree, rmtree, ignore_patterns
 from typing import Optional, List
 
+from django.utils import timezone
 import django.http
 import serde
+from serde.json import from_json
+from serde.yaml import to_yaml
+from unidecode import unidecode
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from django.db.models import QuerySet, Q
-from django.http import HttpRequest, HttpResponseBadRequest
+from django.http import (
+    HttpRequest,
+    HttpResponseBadRequest,
+    HttpResponseNotFound,
+    HttpResponseForbidden,
+)
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, resolve_url
 from django.urls import reverse
@@ -41,6 +52,10 @@ from common.models import (
 from common.submit import SubmitRateLimited, store_submit
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher, points_to_color, inbus_search_user, user_from_inbus_person
+from quiz.dto import QuizDto, UpdateQuizDto
+from quiz.models import Quiz, AssignedQuiz, EnrolledQuiz, quiz_assigned_classes
+from quiz.settings import QUIZ_PATH
+from web.markdown_utils import process_markdown
 
 logger = logging.getLogger(__name__)
 
@@ -886,3 +901,280 @@ def create_submit(request: django.http.HttpRequest, task_assignment: int) -> Jso
             "task": {"name": assignment.task.name},
         }
     )
+
+
+# Function that gets, updates, or delete quiz and its content.
+@user_passes_test(is_teacher)
+def quiz_yaml(request: HttpRequest, quiz_id: int):
+    quiz = Quiz.objects.get(pk=quiz_id)
+
+    if quiz is None:
+        return HttpResponseNotFound()
+
+    if request.method == "POST":
+        content = json.loads(request.body.decode("utf-8"))
+
+        update_quiz = from_json(UpdateQuizDto, content)
+
+        quiz.set_up_directory(update_quiz.quiz_directory)
+
+        quiz_dto = QuizDto(shuffle=update_quiz.shuffle, questions=update_quiz.questions)
+
+        # Helper function that replaces all escape sequences in the text with the corresponding Czech characters
+        # in order to quiz YAML file to be more human-readable. 'to_yaml' function uses escape sequences.
+        def replace_escapes(text):
+            escape_to_char_map = {
+                "\\xC1": "Á",
+                "\\xE1": "á",
+                "\\xC9": "É",
+                "\\xE9": "é",
+                "\\xCD": "Í",
+                "\\xED": "í",
+                "\\xDA": "Ú",
+                "\\xFA": "ú",
+                "\\xDD": "Ý",
+                "\\xFD": "ý",
+                "\\u010C": "Č",
+                "\\u010D": "č",
+                "\\u010E": "Ď",
+                "\\u010F": "ď",
+                "\\u011A": "Ě",
+                "\\u011B": "ě",
+                "\\u0147": "Ň",
+                "\\u0148": "ň",
+                "\\u0158": "Ř",
+                "\\u0159": "ř",
+                "\\u0160": "Š",
+                "\\u0161": "š",
+                "\\u0164": "Ť",
+                "\\u0165": "ť",
+                "\\u017D": "Ž",
+                "\\u017E": "ž",
+                "\\u016E": "Ů",
+                "\\u016F": "ů",
+            }
+
+            for escape, ch in escape_to_char_map.items():
+                text = text.replace(escape, ch)
+            return text
+
+        quiz.write(replace_escapes(to_yaml(quiz_dto)))
+    elif request.method == "DELETE":
+        if quiz.assignedquiz_set.count() == 0:
+            rmtree(quiz.get_directory_path())
+            quiz.delete()
+            return JsonResponse({"redirect": "/"})
+
+    return JsonResponse({"yaml": quiz.read()})
+
+
+# Function that stores student answers for enrolled quiz.
+@login_required
+def quiz_results(request: HttpRequest, enrolled_id: int, is_submit: int):
+    enrolled_quiz = get_object_or_404(EnrolledQuiz, pk=enrolled_id)
+
+    if request.user.id != enrolled_quiz.student.id:
+        return HttpResponseForbidden()
+
+    if enrolled_quiz.submitted:
+        return HttpResponseForbidden()
+
+    content = json.loads(request.body.decode("utf-8"))
+
+    enrolled_quiz.submit = content
+
+    if is_submit:
+        enrolled_quiz.submitted = True
+        enrolled_quiz.submitted_at = timezone.now()
+        enrolled_quiz.save()
+        enrolled_quiz.score_questions()
+        return JsonResponse({"redirect": "/"})
+
+    enrolled_quiz.save()
+
+    return JsonResponse({"message": "Answers have been saved."})
+
+
+# Function that stores quiz scoring.
+@user_passes_test(is_teacher)
+def quiz_scoring(request: HttpRequest, enrolled_id: int):
+    enrolled_quiz = get_object_or_404(EnrolledQuiz, pk=enrolled_id)
+
+    scoring = json.loads(request.body.decode("utf-8"))
+
+    teacher = request.user
+
+    if enrolled_quiz.scored_by is None:
+        enrolled_quiz.scored_by = teacher
+    elif enrolled_quiz.scored_by.id != teacher.id:
+        return HttpResponseForbidden()
+
+    enrolled_quiz.scoring = scoring
+
+    enrolled_quiz.save()
+
+    return JsonResponse({"message": "Scoring has been updated."})
+
+
+# Function to assign or remove quizzes from classes.
+@user_passes_test(is_teacher)
+def quiz_assignments(request: HttpRequest, quiz_id: int):
+    quiz = get_object_or_404(Quiz, pk=quiz_id)
+
+    if request.method == "POST":
+        post = json.loads(request.body.decode("utf-8"))
+        for assignment in post["assignments"]:
+            if (
+                assignment.get("id")
+                and assignment.get("assigned")
+                and assignment.get("deadline")
+                and assignment.get("duration")
+            ):
+                # If assignment already exist, update it.
+                # Otherwise, create new assignment.
+                if assignment.get("assigned_id"):
+                    assigned_quiz = AssignedQuiz.objects.get(pk=assignment["assigned_id"])
+
+                    assigned_quiz.deadline = datetime.fromisoformat(assignment["deadline"])
+                    assigned_quiz.assigned = datetime.fromisoformat(assignment["assigned"])
+                    assigned_quiz.duration = assignment["duration"]
+                    assigned_quiz.publish_results = assignment.get("publish_results", False)
+                else:
+                    assigned_quiz = AssignedQuiz.objects.create(
+                        clazz_id=assignment["id"],
+                        quiz_id=quiz.pk,
+                        deadline=assignment["deadline"],
+                        assigned=assignment["assigned"],
+                        duration=assignment["duration"],
+                        publish_results=assignment.get("publish_results", False),
+                    )
+
+                assigned_quiz.save()
+            else:
+                # If the assignment is not complete, it will be deleted if possible.
+                if assignment.get("assigned_id"):
+                    try:
+                        assigned_quiz = AssignedQuiz.objects.get(pk=assignment["assigned_id"])
+
+                        if assigned_quiz.enrolledquiz_set.count() == 0:
+                            assigned_quiz.delete()
+                    except AssignedQuiz.DoesNotExist:
+                        pass
+
+    return JsonResponse(
+        {
+            "message": "Assignments have been updated.",
+            "assignments": quiz_assigned_classes(quiz, request.user.id),
+            "quiz_deletable": quiz.assignedquiz_set.count() == 0,
+        }
+    )
+
+
+# Function that convert markdown question to HTML and then returns it.
+@user_passes_test(is_teacher)
+def quiz_question_preview(request: HttpRequest, quiz_id: int):
+    quiz = Quiz.objects.get(pk=quiz_id)
+
+    if quiz is None:
+        return HttpResponseNotFound()
+
+    content = json.loads(request.body.decode("utf-8"))
+
+    markdown = process_markdown(quiz.src, content, "quiz")
+
+    return JsonResponse({"html": markdown.content})
+
+
+# Function that returns the list of all classes quiz is assigned to.
+@user_passes_test(is_teacher)
+def quiz_classes(request: HttpRequest, quiz_id: int):
+    assignments = AssignedQuiz.objects.filter(quiz=quiz_id)
+
+    classes_dto = []
+
+    for assignment in assignments:
+        classes_dto.append(
+            {
+                "classId": assignment.clazz.id,
+                "className": str(assignment.clazz),
+            }
+        )
+
+    return JsonResponse({"classes": classes_dto})
+
+
+# Function that creates a new quiz.
+@user_passes_test(is_teacher)
+def quiz_add(request: HttpRequest):
+    if request.method == "POST":
+        post = json.loads(request.body.decode("utf-8"))
+
+        subject = Subject.objects.get(abbr=post["subject"])
+
+        abbr = subject.abbr.upper()
+        username = request.user.username.upper()
+        dir_name = unidecode(post["name"]).replace(" ", "_").upper()
+
+        src = abbr + "/" + username + "/" + dir_name
+
+        postfix = 1
+
+        while True:
+            postfix_src = src + "_" + str(postfix)
+
+            count = Quiz.objects.filter(src=postfix_src).count()
+
+            if count == 0:
+                try:
+                    os.makedirs(os.path.join(QUIZ_PATH, postfix_src))
+
+                    break
+                except OSError as e:
+                    if e.errno != errno.EEXIST:
+                        raise
+
+            postfix += 1
+
+        quiz = Quiz.objects.create(name=post["name"], subject=subject, src=postfix_src)
+
+        quiz.save()
+
+        with open(quiz.get_identifier_path(), "w", encoding="utf-8") as file:
+            file.write(str(quiz.pk))
+
+        quiz.write("questions:\n")
+
+        return JsonResponse({"message": "Quiz successfully added."})
+
+    return HttpResponseBadRequest()
+
+
+# Function that create a duplicate of the quiz.
+@user_passes_test(is_teacher)
+def quiz_duplicate(request, quiz_id):
+    quiz = get_object_or_404(Quiz, pk=quiz_id)
+    new_src = quiz.src
+
+    for user in User.objects.filter(groups__name="teachers"):
+        new_src = new_src.replace(user.username, request.user.username)
+
+    i = 1
+    while True:
+        new_src = re.sub(r"(_copy_[0-9]+$|$)", f"_copy_{i}", new_src, count=1)
+        count = Quiz.objects.filter(src=new_src).count()
+        if count == 0 and not os.path.exists(os.path.join(QUIZ_PATH, new_src)):
+            break
+        i += 1
+
+    new_path = os.path.join(QUIZ_PATH, new_src)
+    copytree(quiz.get_directory_path(), new_path, ignore=ignore_patterns(".quiz_id"))
+
+    quiz_copy = quiz
+    quiz_copy.pk = None
+    quiz_copy.src = new_src
+    quiz_copy.save()
+
+    with open(quiz_copy.get_identifier_path(), "w", encoding="utf-8") as file:
+        file.write(str(quiz_copy.pk))
+
+    return JsonResponse({"id": quiz_copy.pk})
