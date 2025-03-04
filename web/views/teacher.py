@@ -14,6 +14,7 @@ import django.http
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
+from django.http import HttpRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from notifications.models import Notification
@@ -28,6 +29,7 @@ from evaluator.testsets import TestSet
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from . import statistics
 from .utils import file_response
+from ..emails import send_email_points_assigned
 
 
 @user_passes_test(is_teacher)
@@ -196,7 +198,7 @@ def show_task_submits(request, task_id: int):
 
 
 @user_passes_test(is_teacher)
-def submit_assign_points(request, submit_id):
+def submit_assign_points(request: HttpRequest, submit_id: int):
     submit = get_object_or_404(Submit, pk=submit_id)
 
     points = None
@@ -210,6 +212,13 @@ def submit_assign_points(request, submit_id):
             verb="assigned points to",
             action_object=submit,
             important=True,
+        )
+        send_email_points_assigned(
+            request=request,
+            sender=request.user,
+            student=submit.student,
+            submit=submit,
+            points=points,
         )
 
     submit.assigned_points = points
