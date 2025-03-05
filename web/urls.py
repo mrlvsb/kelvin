@@ -135,6 +135,7 @@ urlpatterns = [
     ),
     path("tasks", teacher_view.task_list, name="tasks"),
     path("students", teacher_view.student_list, name="students"),
+    path("student/transfer", teacher_view.student_transfer, name="student_transfer"),
     path("student/<str:login>", teacher_view.student_page, name="student_page"),
     path("reevaluate/<int:submit_id>", teacher_view.reevaluate, name="reevaluate"),
     path("api_token", common_view.api_token, name="api_token"),

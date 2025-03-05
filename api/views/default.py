@@ -17,10 +17,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet, Q
-from django.http import (
-    HttpRequest,
-    HttpResponseBadRequest,
-)
+from django.http import HttpRequest
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, resolve_url
 from django.urls import reverse
@@ -105,6 +102,13 @@ class SearchParams:
         return query
 
 
+@dataclasses.dataclass
+class Transfer:
+    submit_id: int
+    before: str
+    after: str
+
+
 @user_passes_test(is_teacher)
 def tasks_list_all(request: HttpRequest, subject_abbr: str | None = None):
     result = []
@@ -147,9 +151,7 @@ def tasks_list_all(request: HttpRequest, subject_abbr: str | None = None):
 
 @user_passes_test(is_teacher)
 def student_list(request: HttpRequest):
-    params = SearchParams.from_request(
-        request, max_count=100, allowed_order_by_columns=[], default_order_by="date_joined"
-    )
+    params = SearchParams.from_request(request, max_count=100, allowed_sort_columns=[])
     params.sort = "asc"
     params.order_by = "username"
 
@@ -829,42 +831,50 @@ def search(request):
     )
 
 
-@user_passes_test(is_teacher)
-def transfer_students(request):
-    if request.method != "POST":
-        return HttpResponseBadRequest()
+@serde.serde
+@dataclasses.dataclass
+class AssignmentTransfer:
+    src_assignment_id: int
+    dst_assignment_id: int
 
-    post = json.loads(request.body.decode("utf-8"))
-    src = get_object_or_404(Class, pk=post["src_class"])
-    dst = get_object_or_404(Class, pk=post["dst_class"])
-    student = get_object_or_404(User, username=post["student"])
+
+@serde.serde
+@dataclasses.dataclass
+class TransferRequestData:
+    src_class: int
+    dst_class: int
+    student: str
+    assignments: List[AssignmentTransfer]
+
+
+@user_passes_test(is_teacher)
+@require_POST
+def transfer_students(request):
+    post: TransferRequestData = serde.json.from_json(TransferRequestData, request.body.decode("utf-8"))
+    src = get_object_or_404(Class, pk=post.src_class)
+    dst = get_object_or_404(Class, pk=post.dst_class)
+    student = get_object_or_404(User, username=post.student)
 
     # add student to new class
     dst.students.add(student)
 
     # transfer all tasks
-    transfers = []
-    for assignment in post["assignments"]:
+    transfers: List[Transfer] = []
+    for assignment in post.assignments:
         for submit in Submit.objects.filter(
-            assignment_id=assignment["src_assignment_id"], student_id=student.pk
+            assignment_id=assignment.src_assignment_id, student_id=student.pk
         ):
             prev_dir = submit.dir()
-            submit.assignment_id = assignment["dst_assignment_id"]
+            submit.assignment_id = assignment.dst_assignment_id
 
-            transfers.append(
-                {
-                    "submit_id": submit.pk,
-                    "before": prev_dir,
-                    "after": submit.dir(),
-                }
-            )
+            transfers.append(Transfer(submit.id, prev_dir, submit.dir()))
             shutil.move(prev_dir, submit.dir())
             submit.save()
 
     # remove student from previous class
     src.students.remove(student)
 
-    return JsonResponse({"transfers": transfers})
+    return JsonResponse(serde.to_dict({"transfers": transfers}))
 
 
 @user_passes_test(is_teacher)
