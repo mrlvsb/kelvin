@@ -17,10 +17,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet, Q
-from django.http import (
-    HttpRequest,
-    HttpResponseBadRequest,
-)
+from django.http import HttpRequest
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, resolve_url
 from django.urls import reverse
@@ -104,6 +101,30 @@ class SearchParams:
         if self.count is not None:
             query = query[: self.count]
         return query
+
+
+@dataclasses.dataclass
+class Transfer:
+    submit_id: int
+    before: str
+    after: str
+    error: str
+
+
+@serde.serde
+@dataclasses.dataclass
+class AssignmentTransfer:
+    src_assignment_id: int
+    dst_assignment_id: int
+
+
+@serde.serde
+@dataclasses.dataclass
+class TransferRequestData:
+    src_class: int
+    dst_class: int
+    student: str
+    assignments: List[AssignmentTransfer]
 
 
 @user_passes_test(is_teacher)
@@ -802,41 +823,41 @@ def reevaluate_task(request, task_id):
 
 
 @user_passes_test(is_teacher)
+@require_POST
 def transfer_students(request):
-    if request.method != "POST":
-        return HttpResponseBadRequest()
-
-    post = json.loads(request.body.decode("utf-8"))
-    src = get_object_or_404(Class, pk=post["src_class"])
-    dst = get_object_or_404(Class, pk=post["dst_class"])
-    student = get_object_or_404(User, username=post["student"])
+    post: TransferRequestData = serde.json.from_json(
+        TransferRequestData, request.body.decode("utf-8")
+    )
+    src = get_object_or_404(Class, pk=post.src_class)
+    dst = get_object_or_404(Class, pk=post.dst_class)
+    student = get_object_or_404(User, username=post.student)
 
     # add student to new class
     dst.students.add(student)
 
     # transfer all tasks
-    transfers = []
-    for assignment in post["assignments"]:
+    transfers: List[Transfer] = []
+    for assignment in post.assignments:
         for submit in Submit.objects.filter(
-            assignment_id=assignment["src_assignment_id"], student_id=student.pk
+            assignment_id=assignment.src_assignment_id, student_id=student.pk
         ):
             prev_dir = submit.dir()
-            submit.assignment_id = assignment["dst_assignment_id"]
+            submit.assignment_id = assignment.dst_assignment_id
 
-            transfers.append(
-                {
-                    "submit_id": submit.pk,
-                    "before": prev_dir,
-                    "after": submit.dir(),
-                }
-            )
-            shutil.move(prev_dir, submit.dir())
+            transfer = Transfer(submit.id, prev_dir, submit.dir(), "")
+            try:
+                shutil.move(prev_dir, submit.dir())
+            except FileNotFoundError as e:
+                print(e)
+                transfer.error = str(e)
+
+            transfers.append(transfer)
             submit.save()
 
     # remove student from previous class
     src.students.remove(student)
 
-    return JsonResponse({"transfers": transfers})
+    return JsonResponse(serde.to_dict({"transfers": transfers}))
 
 
 @user_passes_test(is_teacher)
