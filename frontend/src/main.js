@@ -154,6 +154,7 @@ import NotificationsNew from './components/Notifications.vue';
 import ColorThemeNew from './components/ColorTheme.vue';
 import StudentList from './Teacher/StudentList.vue';
 import StudentPage from './Teacher/student-page/StudentPage.vue';
+import StudentTransfer from './Teacher/StudentTransfer.vue';
 
 /**
  * Register new Vue component as a custom element.
@@ -191,6 +192,7 @@ const registerSuspendedVueComponent = (name, component, configureApp = undefined
 
 registerSuspendedVueComponent('task-list', TaskList);
 registerVueComponent('student-list', StudentList);
+registerSuspendedVueComponent('student-transfer', StudentTransfer);
 registerSuspendedVueComponent('inbus-import', InbusImport);
 registerVueComponent('notifications', NotificationsNew);
 if (enableNewUI) registerVueComponent('color-theme', ColorThemeNew);
