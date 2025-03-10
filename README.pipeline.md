@@ -16,7 +16,7 @@ This can be overriden by the yaml configuration:
 
 ```yaml
 limits:
-  fsize: 5M  # max filesize  
+  fsize: 5M  # max filesize
   wall-time: 5 # max 5 seconds per test
   cg-mem: 5M # max 5MB of memory usage
 ```
@@ -91,7 +91,7 @@ Checks if the student's program created file `result.txt` with the expected cont
 
 ### Provide an input file
 Provides the input file `data.txt` to student's program.
-It can be combined with stdout or file comparing. 
+It can be combined with stdout or file comparing.
 
 ```
 # 04_nums.file_in.data.txt
@@ -112,7 +112,7 @@ tests:
 
 ### Exit code checking
 Program's exit code must be zero in order to pass the test.
-Different program's exit code or disabling of this check can be configured in yaml. 
+Different program's exit code or disabling of this check can be configured in yaml.
 
 ```yaml
 tests:
@@ -154,7 +154,7 @@ def gen_tests(evaluation):
 
     f = test.add_memory_file('output.txt')
     f.write(f'output.txt {evaluation.meta["login"]}'.encode('utf-8'))
-``` 
+```
 
 ## Autograder
 Automatically assigns points gained in tests evaluation.
@@ -177,7 +177,7 @@ Following example enables all checks `*` and disables `-` the remaining ones.
 
 ```yaml
 pipeline:
- - type: clang-tidy 
+ - type: clang-tidy
     checks:
         - '*'
         - '-cppcoreguidelines-avoid-magic-numbers'
@@ -188,7 +188,7 @@ pipeline:
         - '-clang-analyzer-security*'
     files:
       - main.cpp
-      - lib.cpp 
+      - lib.cpp
 ```
 
 ## run
@@ -198,7 +198,7 @@ This can be used for simply executing the students program and showing the resul
 ```yaml
 pipeline:
   - type: run
-    commands:    
+    commands:
       - ./main
       - ./main > out
       - cat /etc/passwd | ./main
@@ -207,8 +207,9 @@ pipeline:
         cmd_show: ./main
 
       - '# apt install faketime # executed but hidden from the output'
-      
-      - cmd: timeout 5 ./main || true
+
+      - cmd: ./main || true
+        timeout: 10
         cmd_show: ./main
         asciinema: true
 
