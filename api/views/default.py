@@ -521,6 +521,16 @@ def task_detail(request, task_id=None):
         else:
             task.plagiarism_key = plagiarism_key[:255]
 
+        if data.get("type") in Task.TaskType.values or data.get("type") is None:
+            task.type = data.get("type")
+        else:
+            return JsonResponse(
+                {
+                    "errors": [f'Invalid task type {data.get("type")}'],
+                },
+                status=400,
+            )
+
         task.save()
 
         taskid_path = os.path.join(task.dir(), ".taskid")
@@ -609,6 +619,7 @@ def task_detail(request, task_id=None):
         "task_link": reverse("teacher_task", kwargs=dict(task_id=task.pk)),
         "plagcheck_link": reverse("teacher_task_plagiarism", kwargs=dict(task_id=task.pk)),
         "plagiarism_key": task.plagiarism_key,
+        "type": task.type,
     }
 
     ignore_list = [r"\.git", r"^\.taskid$", r"^\.$", r"__pycache__", r"\.pyc$"]
