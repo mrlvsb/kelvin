@@ -50,11 +50,14 @@ class SearchParams:
     count: int = None
     start: Optional[int] = None
     order_by: Optional[str] = None
-    sort: str = "asc"
+    sort: str = "desc"
 
     @staticmethod
     def from_request(
-        request: HttpRequest, max_count: int, allowed_sort_columns: List["str"]
+        request: HttpRequest,
+        max_count: int,
+        allowed_order_by_columns: List[str],
+        default_order_by: Optional[str],
     ) -> "SearchParams":
         count = max_count
         if "count" in request.GET:
@@ -64,24 +67,25 @@ class SearchParams:
         if "start" in request.GET:
             start = int(request.GET["start"])
 
-        order_by = None
+        order_by = default_order_by
         if "order_column" in request.GET:
             order_req = request.GET["order_column"]
-            if order_req in allowed_sort_columns:
+            if order_req in allowed_order_by_columns:
                 order_by = order_req
 
-        sort = "asc"
-        if request.GET.get("sort") == "desc":
-            sort = "desc"
+        sort = "desc"
+        if request.GET.get("sort") == "asc":
+            sort = "asc"
         return SearchParams(count=count, start=start, order_by=order_by, sort=sort)
 
     def apply(self, query: QuerySet) -> QuerySet:
-        if self.sort != "desc":
-            order = (self.order_by, "id")
-        else:
-            order = (f"-{self.order_by}", "-id")
+        if self.order_by is not None:
+            if self.sort != "desc":
+                order = (self.order_by, "id")
+            else:
+                order = (f"-{self.order_by}", "-id")
 
-        query = query.order_by(*order)
+            query = query.order_by(*order)
 
         if self.start is not None:
             query = query[self.start :]
@@ -97,7 +101,10 @@ def tasks_list_all(request: HttpRequest, subject_abbr: str | None = None):
     filters = {}
 
     params = SearchParams.from_request(
-        request, max_count=100, allowed_sort_columns=["created_at", "name"]
+        request,
+        max_count=100,
+        allowed_order_by_columns=["created_at", "name"],
+        default_order_by="created_at",
     )
 
     if subject_abbr is not None:
@@ -130,7 +137,9 @@ def tasks_list_all(request: HttpRequest, subject_abbr: str | None = None):
 
 @user_passes_test(is_teacher)
 def student_list(request: HttpRequest):
-    params = SearchParams.from_request(request, max_count=100, allowed_sort_columns=[])
+    params = SearchParams.from_request(
+        request, max_count=100, allowed_order_by_columns=[], default_order_by="date_joined"
+    )
     params.sort = "asc"
     params.order_by = "username"
 

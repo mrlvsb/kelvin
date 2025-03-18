@@ -14,7 +14,8 @@ let focused = false;
 let highlight_row = -1;
 
 onMount(async () => {
-  let res = await fetch('api/task-list?sort=asc');
+  // TODO: this only fetches the 100 newest tasks, that doesn't really work..
+  let res = await fetch('api/task-list?sort=desc');
   res = await res.json();
   items = res['tasks'];
 });
