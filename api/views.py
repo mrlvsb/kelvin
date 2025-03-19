@@ -16,7 +16,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from django.db.models import QuerySet, Q
-from django.http import HttpRequest, HttpResponseBadRequest
+from django.http import HttpRequest
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, resolve_url
 from django.urls import reverse
@@ -93,6 +93,13 @@ class SearchParams:
         if self.count is not None:
             query = query[: self.count]
         return query
+
+
+@dataclasses.dataclass()
+class Transfer:
+    submit_id: int
+    before: str
+    after: str
 
 
 @user_passes_test(is_teacher)
@@ -761,10 +768,8 @@ def search(request):
 
 
 @user_passes_test(is_teacher)
+@require_POST
 def transfer_students(request):
-    if request.method != "POST":
-        return HttpResponseBadRequest()
-
     post = json.loads(request.body.decode("utf-8"))
     src = get_object_or_404(Class, pk=post["src_class"])
     dst = get_object_or_404(Class, pk=post["dst_class"])
@@ -782,20 +787,14 @@ def transfer_students(request):
             prev_dir = submit.dir()
             submit.assignment_id = assignment["dst_assignment_id"]
 
-            transfers.append(
-                {
-                    "submit_id": submit.pk,
-                    "before": prev_dir,
-                    "after": submit.dir(),
-                }
-            )
+            transfers.append(Transfer(submit.id, prev_dir, submit.dir()))
             shutil.move(prev_dir, submit.dir())
             submit.save()
 
     # remove student from previous class
     src.students.remove(student)
 
-    return JsonResponse({"transfers": transfers})
+    return JsonResponse(serde.to_dict({"transfers": transfers}))
 
 
 @user_passes_test(is_teacher)

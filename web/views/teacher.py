@@ -323,6 +323,14 @@ def student_list(request):
 
 
 @user_passes_test(is_teacher)
+def student_transfer(request):
+    """
+    Page that renders a Vue component to transfer students between classes.
+    """
+    return render(request, "web/teacher/student_transfer.html")
+
+
+@user_passes_test(is_teacher)
 def reevaluate(request, submit_id):
     submit = Submit.objects.get(pk=submit_id)
     try:
