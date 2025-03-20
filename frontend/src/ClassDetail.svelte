@@ -235,7 +235,9 @@ let showSummary = false;
               <tbody>
                 {#each clazz.students as student}
                   <tr>
-                    <td>{student.username}</td>
+                    <td
+                      ><a href="/student/{student.username}" target="_blank">{student.username}</a
+                      ></td>
                     <td>{student.last_name} {student.first_name}</td>
                     {#each clazz.assignments.map((i) => i.students[student.username]) as result, i}
                       <td>
