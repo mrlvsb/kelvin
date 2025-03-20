@@ -16,7 +16,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from django.db.models import QuerySet, Q
-from django.http import HttpRequest, HttpResponseBadRequest
+from django.http import (
+    HttpRequest,
+    HttpResponseBadRequest,
+)
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, resolve_url
 from django.urls import reverse
