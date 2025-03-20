@@ -7,6 +7,7 @@ from notifications.models import Notification
 from notifications.signals import notify
 
 from common.evaluate import evaluate_submit
+from common.event_log import record_submit_event
 from common.models import AssignedTask, Submit
 from common.upload import upload_submit_files
 from common.utils import is_teacher, get_client_ip_address
@@ -73,6 +74,8 @@ def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     s.save()
     s.jobid = evaluate_submit(request, s).id
     s.save()
+
+    record_submit_event(request=request, user=request.user, task=assignment)
 
     # delete previous notifications
     Notification.objects.filter(

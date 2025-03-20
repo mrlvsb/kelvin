@@ -1,6 +1,7 @@
 import dataclasses
 import datetime
 import logging
+from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -8,6 +9,8 @@ from django.db import models
 from django.db.models import JSONField
 from django.http import HttpRequest
 
+if TYPE_CHECKING:
+    from .models import AssignedTask
 from .utils import get_client_ip_address, IPAddressString
 
 
@@ -28,7 +31,12 @@ class UserEventLogin(UserEventBase):
     pass
 
 
-UserEvent = UserEventLogin
+@dataclasses.dataclass(frozen=True)
+class UserEventSubmit(UserEventBase):
+    assigned_task_id: int
+
+
+UserEvent = UserEventLogin | UserEventSubmit
 
 
 class UserEventModel(models.Model):
@@ -43,6 +51,7 @@ class UserEventModel(models.Model):
 
     class Action(models.TextChoices):
         Login = ("login", "Login")
+        Submit = ("submit", "Submit")
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     action = models.CharField(max_length=10, choices=Action.choices)
@@ -63,6 +72,13 @@ class UserEventModel(models.Model):
                     ip_address=IPAddressString(self.ip_address),
                     created_at=self.created_at,
                 )
+            case UserEventModel.Action.Submit.value:
+                return UserEventSubmit(
+                    user=self.user,
+                    ip_address=IPAddressString(self.ip_address),
+                    created_at=self.created_at,
+                    assigned_task_id=self.metadata["task"],
+                )
         logging.error(f"Invalid UserEvent action {self.action} found")
         return None
 
@@ -70,5 +86,15 @@ class UserEventModel(models.Model):
 def record_login_event(request: HttpRequest, user: User):
     event = UserEventModel(
         user=user, action=UserEventModel.Action.Login, ip_address=get_client_ip_address(request)
+    )
+    event.save()
+
+
+def record_submit_event(request: HttpRequest, user: User, task: "AssignedTask"):
+    event = UserEventModel(
+        user=user,
+        action=UserEventModel.Action.Submit,
+        metadata=dict(task=task.id),
+        ip_address=get_client_ip_address(request),
     )
     event.save()
