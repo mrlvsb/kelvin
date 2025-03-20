@@ -144,6 +144,7 @@ admin.site.register(models.Submit, SubmitAdmin)
 admin.site.register(models.AssignedTask, AssignedTaskAdmin)
 admin.site.register(models.Semester)
 admin.site.register(models.Subject)
+admin.site.register(models.UserEventModel)
 
 admin.site.unregister(User)
 admin.site.register(User, MyUserAdmin)
