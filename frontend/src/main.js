@@ -148,13 +148,14 @@ function focusTab() {
 window.addEventListener('hashchange', focusTab);
 window.addEventListener('DOMContentLoaded', focusTab);
 
-import { defineCustomElement, h } from 'vue';
+import { createApp, defineCustomElement, h } from 'vue';
 import SuspensionWrapper from './components/SuspensionWrapper.vue';
 import TaskList from './Teacher/TaskList.vue';
 import InbusImport from './Teacher/InbusImport.vue';
 import NotificationsNew from './components/Notifications.vue';
 import ColorThemeNew from './components/ColorTheme.vue';
 import StudentList from './Teacher/StudentList.vue';
+import StudentPage from './Teacher/StudentPage.vue';
 
 /**
  * Register new Vue component as a custom element.
@@ -195,3 +196,11 @@ registerVueComponent('student-list', StudentList);
 registerSuspendedVueComponent('inbus-import', InbusImport);
 registerVueComponent('notifications', NotificationsNew);
 if (enableNewUI) registerVueComponent('color-theme', ColorThemeNew);
+
+// Function that can be used outside the compiled JavaScript
+// to mount the student page with the passed props.
+function mountStudentPage(id, props) {
+    const app = createApp(StudentPage, props);
+    app.mount(id);
+}
+window.mountStudentPage = mountStudentPage;

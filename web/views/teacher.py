@@ -331,7 +331,12 @@ def student_page(request, login: int):
     student = get_object_or_404(User, username=login)
     if is_teacher(student):
         raise PermissionDenied()
-    return render(request, "web/student_page.html", dict(student=student))
+
+    data = dict(
+        login=student.username,
+        name=student.get_full_name(),
+    )
+    return render(request, "web/student_page.html", dict(data=data))
 
 
 @user_passes_test(is_teacher)
