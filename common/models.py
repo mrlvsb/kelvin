@@ -79,7 +79,7 @@ class Task(models.Model):
     announce = models.BooleanField(default=False)
     # Key used to combine plagiarism checks for multiple relevant tasks
     # All tasks with the same key will be checked together
-    plagiarism_key = models.CharField(max_length=255, null=True)
+    plagiarism_key = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def path_to_code(path):
