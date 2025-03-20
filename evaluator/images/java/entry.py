@@ -39,10 +39,26 @@ def parse_tests_report(path):
                 success = True
                 message = ""
                 failure = testcase.find("./failure")
-
+                error = testcase.find("./error")
+                sysoutNode = testcase.find("./system-out")
                 if failure is not None:
                     success = False
-                    message = failure.get("message", "") + "\n" + (failure.text or "").strip()
+                    message = (
+                        "Test FAILURE:\n"
+                        + failure.get("message", "")
+                        + "\n"
+                        + (failure.text or "").strip()
+                    )
+                if error is not None:
+                    success = False
+                    message = (
+                        "Test ERROR:\n"
+                        + error.get("message", "")
+                        + "\n"
+                        + (error.text or "").strip()
+                    )
+                if sysoutNode is not None:
+                    message = message + "\n\n" + (sysoutNode.text or "").strip()
 
                 tests.append(
                     {
@@ -88,7 +104,7 @@ def build_java_project(run_tests: bool) -> BuildResult:
     # build or build+run tests
     tests_path = "target/surefire-reports"
     env = os.environ.copy()
-    cmd = ["mvn", "clean"]
+    cmd = ["mvn", "--no-transfer-progress", "clean"]
     if run_tests:
         cmd += ["test", "-Dmaven.test.failure.ignore=true"]
     else:
