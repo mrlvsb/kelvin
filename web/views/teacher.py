@@ -324,10 +324,11 @@ def student_list(request):
 
 
 @user_passes_test(is_teacher)
-def student_page(request, login: int):
+def student_page(request, login: str):
     """
     Page that renders a Vue component with a detail of a single student.
     """
+    login = login.upper()
     student = get_object_or_404(User, username=login)
     if is_teacher(student):
         raise PermissionDenied()
