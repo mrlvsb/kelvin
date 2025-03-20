@@ -14,6 +14,7 @@ import django.http
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from notifications.models import Notification
@@ -320,6 +321,17 @@ def student_list(request):
     Page that renders a Vue component with a list of students.
     """
     return render(request, "web/student_list.html")
+
+
+@user_passes_test(is_teacher)
+def student_page(request, login: int):
+    """
+    Page that renders a Vue component with a detail of a single student.
+    """
+    student = get_object_or_404(User, username=login)
+    if is_teacher(student):
+        raise PermissionDenied()
+    return render(request, "web/student_page.html", dict(student=student))
 
 
 @user_passes_test(is_teacher)
