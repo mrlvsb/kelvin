@@ -6,6 +6,7 @@ import { clickOutside } from './utils.js';
 const dispatch = createEventDispatcher();
 
 export let value;
+export let subject;
 export let onChange = () => {};
 
 let items = [];
@@ -14,8 +15,9 @@ let focused = false;
 let highlight_row = -1;
 
 onMount(async () => {
-  // TODO: this only fetches the 100 newest tasks, that doesn't really work..
-  let res = await fetch('api/task-list?sort=desc');
+  // Load last 100 tasks of the given subject.
+  // Hopefully they will contain some useful paths to autocomplete :)
+  let res = await fetch(`api/task-list/${subject}?sort=desc`);
   res = await res.json();
   items = res['tasks'];
 });
