@@ -903,7 +903,7 @@ def raw_result_content(request, submit_id, test_name, result_type, file):
     raise Http404()
 
 
-def submit_download(request, assignment_id, login, submit_num):
+def submit_download(request, assignment_id: int, login: str, submit_num: int):
     submit = get_object_or_404(
         Submit, assignment_id=assignment_id, student__username=login, submit_num=submit_num
     )
@@ -922,6 +922,7 @@ def submit_download(request, assignment_id, login, submit_num):
             for source in submit.all_sources():
                 info = tarfile.TarInfo(source.virt)
                 info.size = os.path.getsize(source.phys)
+                info.mtime = os.path.getmtime(source.phys)
                 with open(source.phys, "rb") as fr:
                     tar.addfile(info, fileobj=fr)
 
