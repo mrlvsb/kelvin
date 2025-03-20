@@ -5,7 +5,7 @@
   {% if result.html or result.tests %}
   <h5{% if result.failed %} class="text-danger"{% endif %}>
       {{ result.title }}
-      {% if result.failed %} 
+      {% if result.failed %}
         - FAILED
       {% endif %}
       {% if result.tests %}
@@ -27,7 +27,7 @@
                 {% if test.title %}{{ test.title }}{% else %} {{ test.name }} {% endif %}
                 {% if test.title and test.title != test.name %} <span>({{ test.name }})</span>{% endif %}
             </h5>
-            
+
         </div>
         <div class="card-body">
 {% if test.errors %}
@@ -38,7 +38,7 @@
 </ul>
 {% endif %}
 {% if test.command or test.message %}
-<pre style="filter: opacity(.7);">
+<pre style="filter: opacity(.7);max-height: 15rem;">
 {% if test.command %}$ {{ test.command }}{% endif %}{% if test.message %}
 {{ test.message }}{%endif%}
 </pre>
