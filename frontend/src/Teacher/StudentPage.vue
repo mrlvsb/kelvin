@@ -16,9 +16,9 @@ const props = defineProps<{
 </script>
 
 <template>
-    <div>
-        <div><b>Name</b>: {{ props.student.name }}</div>
-        <div><b>Login</b>: {{ props.student.login }}</div>
-        <div>This page is in progress, it will be filled with more useful information later.</div>
-    </div>
+  <div>
+    <div><b>Name</b>: {{ props.student.name }}</div>
+    <div><b>Login</b>: {{ props.student.login }}</div>
+    <div>This page is in progress, it will be filled with more useful information later.</div>
+  </div>
 </template>
