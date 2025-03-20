@@ -59,7 +59,8 @@ async function prepareCreatingTask() {
   task = {
     classes: json['classes'],
     path: [params.subject, $semester['abbr'], $user.username].join('/'),
-    subject_abbr: params.subject
+    subject_abbr: params.subject,
+    type: 'homework'
   };
   fs.createFile('readme.md', '# Task Title');
   fs.open('readme.md');
@@ -361,9 +362,34 @@ async function deleteTask(proceed) {
           {/if}
         </div>
 
-        <div title="All tasks with the same plagiarism key will be checked together">
-          <label for="plagiarism-key">Plagiarism key:</label>
-          <input type="text" id="plagiarism-key" maxlength="255" bind:value={task.plagiarism_key} />
+        <div class="row">
+          <div class="col">
+            <div
+              class="input-group mb-3"
+              title="All tasks with the same plagiarism key will be checked together">
+              <span class="input-group-text">Plagiarism key:</span>
+              <input
+                class="form-control"
+                type="text"
+                maxlength="255"
+                bind:value={task.plagiarism_key} />
+            </div>
+          </div>
+          <div class="col">
+            <div class="input-group mb-3">
+              <span class="input-group-text">Task type:</span>
+              <select class="form-control form-control-sm" bind:value={task.type}>
+                {#if task.type == null}
+                  <option value={null}>None</option>
+                {/if}
+                <option value="homework">Homework</option>
+                <option value="exam">Exam</option>
+                <option value="project">Project</option>
+                <option value="laboratory">Laboratory</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         <div class="mb-1">

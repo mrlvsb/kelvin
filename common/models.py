@@ -82,6 +82,16 @@ class Task(models.Model):
     plagiarism_key = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class TaskType(models.TextChoices):
+        # Add wanted task types here
+        HOMEWORK = ("homework", "Homework")
+        EXAM = ("exam", "Exam")
+        PROJECT = ("project", "Project")
+        LABORATORY = ("laboratory", "Laboratory")
+        OTHER = ("other", "Other")
+
+    type = models.CharField(max_length=10, choices=TaskType.choices, null=True, default=None)
+
     def path_to_code(path):
         path = os.path.realpath(os.path.abspath(path))
         return os.path.relpath(path, os.path.abspath("./tasks"))
