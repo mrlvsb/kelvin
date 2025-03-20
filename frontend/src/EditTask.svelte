@@ -1,6 +1,6 @@
 <script>
 import Manager from './Manager.svelte';
-import AutoComplete from './Autocomplete.svelte';
+import AutoCompleteTaskPath from './AutocompleteTaskPath.svelte';
 import TimeRange from './TimeRange.svelte';
 import { onMount } from 'svelte';
 import { push } from 'svelte-spa-router';
@@ -58,7 +58,8 @@ async function prepareCreatingTask() {
 
   task = {
     classes: json['classes'],
-    path: [params.subject, $semester['abbr'], $user.username].join('/')
+    path: [params.subject, $semester['abbr'], $user.username].join('/'),
+    subject_abbr: params.subject
   };
   fs.createFile('readme.md', '# Task Title');
   fs.open('readme.md');
@@ -242,8 +243,9 @@ async function deleteTask(proceed) {
         {/if}
 
         <div class="input-group mb-1">
-          <AutoComplete
+          <AutoCompleteTaskPath
             bind:value={task.path}
+            subject={task.subject_abbr}
             onChange={loadTask}
             on:click={() => (syncPathWithTitle = false)} />
           {#if taskLink}
