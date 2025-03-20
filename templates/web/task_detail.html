@@ -61,7 +61,7 @@
     {% endif %}
     -
 
-    {{ submit.student.get_full_name }} ({{ submit.student.username }}),
+    {{ submit.student.get_full_name }} (<a href="{% url 'student_page' login=submit.student.username %}">{{ submit.student.username }}</a>),
     {{ submit.created_at|date:'d.m.Y H:i' }}{% if submit.created_at > submit.assignment.deadline %},
     <span class="text-danger fw-bold" title="{{ stud.last_submit_date|date:'d.m.Y H:i' }}">
         {{ submit.created_at|timeuntil:submit.assignment.deadline }} after deadline
