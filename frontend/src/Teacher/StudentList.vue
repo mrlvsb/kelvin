@@ -49,7 +49,8 @@ const columns: ConfigColumns[] = [
     title: 'Login',
     data: 'login',
     orderable: false,
-    searchable: true
+    searchable: true,
+    render: (login: string) => `<a href="/student/${login}">${login}</a>`
   },
   {
     title: 'Name',

@@ -1,0 +1,14 @@
+{% extends 'web/layout.html' %}
+
+{% block content %}
+    <div id="student-page"></div>
+{% endblock %}
+
+{% block script %}
+{{ data|json_script:"student-data" }}
+
+<script type="text/javascript">
+    const student = JSON.parse(document.getElementById("student-data").textContent);
+    mountStudentPage("#student-page", {"student": student});
+</script>
+{% endblock %}
