@@ -28,6 +28,7 @@ interface ImportResult {
   firstname: string;
   lastname: string;
   created: boolean;
+  already_assigned: boolean;
 }
 
 interface Result {
@@ -374,6 +375,7 @@ function onTeacherSelected(event) {
               <th>First name</th>
               <th>Last name</th>
               <th>User created</th>
+              <th>Already assigned</th>
             </tr>
           </thead>
           <tbody>
@@ -382,6 +384,7 @@ function onTeacherSelected(event) {
               <td>{{ item.firstname }}</td>
               <td>{{ item.lastname }}</td>
               <td>{{ item.created }}</td>
+              <td>{{ item.already_assigned }}</td>
             </tr>
           </tbody>
         </table>
