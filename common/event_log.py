@@ -34,6 +34,7 @@ class UserEventLogin(UserEventBase):
 @dataclasses.dataclass(frozen=True)
 class UserEventSubmit(UserEventBase):
     assigned_task_id: int
+    submit_num: int
 
 
 UserEvent = UserEventLogin | UserEventSubmit
@@ -78,6 +79,7 @@ class UserEventModel(models.Model):
                     ip_address=IPAddressString(self.ip_address),
                     created_at=self.created_at,
                     assigned_task_id=self.metadata["task"],
+                    submit_num=self.metadata["submit_num"],
                 )
         logging.error(f"Invalid UserEvent action {self.action} found")
         return None
@@ -90,11 +92,11 @@ def record_login_event(request: HttpRequest, user: User):
     event.save()
 
 
-def record_submit_event(request: HttpRequest, user: User, task: "AssignedTask"):
+def record_submit_event(request: HttpRequest, user: User, task: "AssignedTask", submit_num: int):
     event = UserEventModel(
         user=user,
         action=UserEventModel.Action.Submit,
-        metadata=dict(task=task.id),
+        metadata=dict(task=task.id, submit_num=submit_num),
         ip_address=get_client_ip_address(request),
     )
     event.save()

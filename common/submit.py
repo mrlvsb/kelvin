@@ -75,7 +75,9 @@ def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     s.jobid = evaluate_submit(request, s).id
     s.save()
 
-    record_submit_event(request=request, user=request.user, task=assignment)
+    record_submit_event(
+        request=request, user=request.user, task=assignment, submit_num=s.submit_num
+    )
 
     # delete previous notifications
     Notification.objects.filter(
