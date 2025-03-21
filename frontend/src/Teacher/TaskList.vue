@@ -126,7 +126,7 @@ const columns = [
     data: 'date',
     orderable: true,
     searchable: false,
-    render: (data: Date) => format(data, 'yyyy-MM-dd hh:mm')
+    render: (data: Date) => format(data, 'yyyy-MM-dd HH:mm')
   },
   {
     title: 'Moss check',
