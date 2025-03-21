@@ -25,6 +25,8 @@ jobs:
         run: uv run ruff check --output-format=github
       - name: Check Python formatting
         run: uv run ruff format --check
+      - name: Check lockfile
+        run: uv lock --locked
   test-frontend:
     runs-on: ubuntu-latest
     steps:
