@@ -16,6 +16,7 @@ urlpatterns = [
     path("classes", default_view.class_detail_list),
     path("classes/all", default_view.all_classes),
     path("classes/<int:class_id>/add_students", default_view.add_student_to_class),
+    path("events/<login>", default_view.event_list),
     path("subject/<subject_abbr>", default_view.subject_list),
     path("subjects/all", default_view.subjects_all),
     path("teachers/all", default_view.teachers_all),
