@@ -15,6 +15,7 @@ import serde
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
+from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet, Q
 from django.http import (
     HttpRequest,
@@ -29,6 +30,12 @@ from django.views.decorators.http import require_GET, require_POST
 import common.bulk_import
 from common.bulk_import import ImportException
 from common.evaluate import evaluate_submit
+from common.event_log import (
+    UserEventModel,
+    UserEventLogin,
+    UserEventSubmit,
+    UserEvent,
+)
 from common.inbus import inbus
 from common.models import (
     Submit,
@@ -307,6 +314,54 @@ def class_detail_list(request):
 
     result.sort(key=sort_fn)
     return JsonResponse({"classes": result})
+
+
+@user_passes_test(is_teacher)
+def event_list(request: HttpRequest, login: str):
+    user = get_object_or_404(User, username=login.upper())
+    if is_teacher(user):
+        raise PermissionDenied()
+
+    params = SearchParams.from_request(
+        request,
+        max_count=100,
+        allowed_order_by_columns=["action", "created_at"],
+        default_order_by="created_at",
+    )
+
+    events = UserEventModel.objects.filter(user=user)
+    event_count = events.count()
+    events = params.apply(events)
+
+    result = []
+    for model in events:
+        event: UserEvent = model.deserialize()
+        action = None
+        metadata = dict()
+        match event:
+            case UserEventLogin():
+                action = "login"
+            case UserEventSubmit():
+                action = "submit"
+                metadata["link"] = reverse(
+                    "task_detail",
+                    kwargs=dict(
+                        assignment_id=event.assigned_task_id,
+                        login=user.username,
+                        submit_num=event.submit_num,
+                    ),
+                )
+                metadata["submit_num"] = event.assigned_task_id
+        data = dict(
+            action=action,
+            metadata=metadata,
+            login=event.user.username,
+            ip_address=event.ip_address,
+            created_at=event.created_at,
+        )
+        result.append(data)
+
+    return JsonResponse({"events": result, "count": event_count})
 
 
 @user_passes_test(is_teacher)

@@ -155,7 +155,7 @@ import InbusImport from './Teacher/InbusImport.vue';
 import NotificationsNew from './components/Notifications.vue';
 import ColorThemeNew from './components/ColorTheme.vue';
 import StudentList from './Teacher/StudentList.vue';
-import StudentPage from './Teacher/StudentPage.vue';
+import StudentPage from './Teacher/student-page/StudentPage.vue';
 
 /**
  * Register new Vue component as a custom element.

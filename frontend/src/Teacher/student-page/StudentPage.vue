@@ -4,6 +4,7 @@
  * It is only available to teachers, and it is accessible through links from various parts
  * of Kelvin.
  */
+import EventList from './EventList.vue';
 
 type Student = {
   login: string;
@@ -19,7 +20,12 @@ const props = defineProps<{
   <div>
     <div><b>Name</b>: {{ props.student.name }}</div>
     <div><b>Login</b>: {{ props.student.login }}</div>
-    <div><a :href="'/submits/' + props.student.login">List of submits</a></div>
-    <div>This page is in progress, it will be filled with more useful information later.</div>
+    <div><a :href="`/submits/${props.student.login}`">List of submits</a></div>
+    <div class="mt-4">
+      <h2>Event log</h2>
+      <EventList :login="props.student.login" />
+    </div>
   </div>
 </template>
+
+<style scoped lang="scss"></style>
