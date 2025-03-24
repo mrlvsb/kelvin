@@ -16,6 +16,8 @@ from kelvin.settings import BASE_DIR
 from .utils import is_teacher
 from jinja2 import Environment, FileSystemLoader
 
+from .event_log import UserEventModel  # noqa
+
 
 def current_semester() -> Optional["Semester"]:
     """
