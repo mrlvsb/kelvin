@@ -178,6 +178,7 @@ AUTHENTICATION_BACKENDS = [
     "django_cas_ng.backends.CASBackend",
 ]
 
+# This should be in sync with client_max_body_size from deploy/nginx.conf
 DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024
 
 LOGIN_REDIRECT_URL = "/"
