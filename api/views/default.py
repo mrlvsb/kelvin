@@ -355,6 +355,7 @@ def event_list(request: HttpRequest, login: str):
                     ),
                 )
                 metadata["submit_num"] = event.assigned_task_id
+                metadata["submit_num"] = event.submit_num
             case UserEventTaskDisplayed():
                 action = "task-view"
                 metadata["link"] = reverse(
