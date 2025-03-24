@@ -104,6 +104,7 @@ const columns: ConfigColumns[] = [
 const options: Config = {
   stripeClasses: ['table-striped', 'table-hover'],
   serverSide: true,
+  order: [[3, "desc"]],
   ajax: async (
     data: AjaxData,
     callback: (data: { data: Event[]; recordsTotal: number; recordsFiltered: number }) => void
