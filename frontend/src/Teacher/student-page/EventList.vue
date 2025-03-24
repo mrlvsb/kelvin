@@ -28,12 +28,14 @@ type SubmitEvent = EventBase & {
   metadata: {
     link: string;
     submit_num: number;
+    task_name: string;
   };
 };
 type TaskDisplayedEvent = EventBase & {
   action: 'task-view';
   metadata: {
     link: string;
+    task_name: string;
   };
 };
 
@@ -105,7 +107,7 @@ const columns: ConfigColumns[] = [
 const options: Config = {
   stripeClasses: ['table-striped', 'table-hover'],
   serverSide: true,
-  order: [[3, "desc"]],
+  order: [[3, 'desc']],
   ajax: async (
     data: AjaxData,
     callback: (data: { data: Event[]; recordsTotal: number; recordsFiltered: number }) => void
@@ -139,11 +141,13 @@ const options: Config = {
     <template #column-link="props">
       <div v-if="props.rowData.action === 'submit'">
         <a :href="props.rowData.metadata.link" target="_blank">
-          Submit #{{ props.rowData.metadata.submit_num }}
+          {{ props.rowData.metadata.task_name }}#{{ props.rowData.metadata.submit_num }}
         </a>
       </div>
       <div v-if="props.rowData.action === 'task-view'">
-        <a :href="props.rowData.metadata.link" target="_blank"> Task </a>
+        <a :href="props.rowData.metadata.link" target="_blank">{{
+          props.rowData.metadata.task_name
+        }}</a>
       </div>
     </template>
   </DataTable>
