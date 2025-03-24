@@ -63,7 +63,7 @@ class UserEventModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.action} ({self.user.username}) at {self.created_at.strftime("%d. %m. %y %H:%M:%S")}"
+        return f"{self.action} ({self.user.username}) at {self.created_at.strftime("%d. %m. %y %H:%M:%S")} from {self.ip_address}"
 
     def deserialize(self) -> UserEventBase | None:
         match self.action:
