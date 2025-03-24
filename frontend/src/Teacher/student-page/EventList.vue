@@ -30,8 +30,14 @@ type SubmitEvent = EventBase & {
     submit_num: number;
   };
 };
+type TaskDisplayedEvent = EventBase & {
+  action: 'task-view';
+  metadata: {
+    link: string;
+  };
+};
 
-type Event = LoginEvent | SubmitEvent;
+type Event = LoginEvent | SubmitEvent | TaskDisplayedEvent;
 
 const getEvents = async (
   login: string,
@@ -58,11 +64,23 @@ const getEvents = async (
   return [0, []];
 };
 
+function formatAction(action: string): string {
+  if (action === 'login') {
+    return 'Login';
+  } else if (action === 'submit') {
+    return 'Submit';
+  } else if (action === 'task-view') {
+    return 'Assignment displayed';
+  }
+  return '<Unknown action>';
+}
+
 const columns: ConfigColumns[] = [
   {
     title: 'Action',
     name: 'action',
-    data: 'action'
+    data: 'action',
+    render: (action: string) => formatAction(action)
   },
   {
     title: 'Link',
@@ -121,6 +139,9 @@ const options: Config = {
         <a :href="props.rowData.metadata.link" target="_blank">
           Submit #{{ props.rowData.metadata.submit_num }}
         </a>
+      </div>
+      <div v-if="props.rowData.action === 'task-view'">
+        <a :href="props.rowData.metadata.link" target="_blank"> Task </a>
       </div>
     </template>
   </DataTable>
