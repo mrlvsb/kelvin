@@ -91,7 +91,8 @@ const columns: ConfigColumns[] = [
   {
     title: 'IP address',
     name: 'ip_address',
-    data: 'ip_address'
+    data: 'ip_address',
+    className: 'dt-right'
   },
   {
     title: 'Created At',
