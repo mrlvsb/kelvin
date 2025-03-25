@@ -32,6 +32,7 @@ from notifications.models import Notification
 from notifications.signals import notify
 
 from common.evaluate import get_meta
+from common.event_log import record_task_displayed
 from common.models import (
     AssignedTask,
     Class,
@@ -271,6 +272,9 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         is_announce = True
         if not assignment.task.announce:
             raise Http404()
+
+    if not user_is_teacher and request.method == "GET":
+        record_task_displayed(request, request.user, task=assignment)
 
     data = {
         # TODO: task and deadline can be combined into assignment ad deal with it in template

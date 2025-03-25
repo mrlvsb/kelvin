@@ -8,7 +8,7 @@ import traceback
 from collections import defaultdict
 from pathlib import Path
 from shutil import copytree, ignore_patterns
-from typing import Optional, List
+from typing import Optional, List, Set
 
 import django.http
 import serde
@@ -35,6 +35,7 @@ from common.event_log import (
     UserEventLogin,
     UserEventSubmit,
     UserEvent,
+    UserEventTaskDisplayed,
 )
 from common.inbus import inbus
 from common.models import (
@@ -316,6 +317,17 @@ def class_detail_list(request):
     return JsonResponse({"classes": result})
 
 
+def find_task_ids_from_events(events: List[UserEvent]) -> Set[int]:
+    task_ids = set()
+    for event in events:
+        match event:
+            case UserEventSubmit():
+                task_ids.add(event.assigned_task_id)
+            case UserEventTaskDisplayed():
+                task_ids.add(event.assigned_task_id)
+    return task_ids
+
+
 @user_passes_test(is_teacher)
 def event_list(request: HttpRequest, login: str):
     user = get_object_or_404(User, username=login.upper())
@@ -329,13 +341,18 @@ def event_list(request: HttpRequest, login: str):
         default_order_by="created_at",
     )
 
-    events = UserEventModel.objects.filter(user=user)
-    event_count = events.count()
-    events = params.apply(events)
+    query = UserEventModel.objects.filter(user=user)
+    event_count = query.count()
+    query = params.apply(query)
+    events: List[UserEvent] = [event.deserialize() for event in query]
+
+    # Try to provide a bit more useful data by fetching task information from the DB
+    # To avoid doing N+1 queries, first find the relevant tasks and then fetch them all at once
+    task_ids = find_task_ids_from_events(events)
+    tasks = {task.pk: task for task in AssignedTask.objects.filter(id__in=task_ids)}
 
     result = []
-    for model in events:
-        event: UserEvent = model.deserialize()
+    for event in events:
         action = None
         metadata = dict()
         match event:
@@ -351,7 +368,18 @@ def event_list(request: HttpRequest, login: str):
                         submit_num=event.submit_num,
                     ),
                 )
-                metadata["submit_num"] = event.assigned_task_id
+                metadata["submit_num"] = event.submit_num
+                metadata["task_name"] = tasks[event.assigned_task_id].task.name
+            case UserEventTaskDisplayed():
+                action = "task-view"
+                metadata["link"] = reverse(
+                    "task_detail",
+                    kwargs=dict(
+                        assignment_id=event.assigned_task_id,
+                        login=user.username,
+                    ),
+                )
+                metadata["task_name"] = tasks[event.assigned_task_id].task.name
         data = dict(
             action=action,
             metadata=metadata,

@@ -28,10 +28,18 @@ type SubmitEvent = EventBase & {
   metadata: {
     link: string;
     submit_num: number;
+    task_name: string;
+  };
+};
+type TaskDisplayedEvent = EventBase & {
+  action: 'task-view';
+  metadata: {
+    link: string;
+    task_name: string;
   };
 };
 
-type Event = LoginEvent | SubmitEvent;
+type Event = LoginEvent | SubmitEvent | TaskDisplayedEvent;
 
 const getEvents = async (
   login: string,
@@ -58,11 +66,23 @@ const getEvents = async (
   return [0, []];
 };
 
+function formatAction(action: string): string {
+  if (action === 'login') {
+    return 'Login';
+  } else if (action === 'submit') {
+    return 'Submit';
+  } else if (action === 'task-view') {
+    return 'Assignment displayed';
+  }
+  return '<Unknown action>';
+}
+
 const columns: ConfigColumns[] = [
   {
     title: 'Action',
     name: 'action',
-    data: 'action'
+    data: 'action',
+    render: (action: string) => formatAction(action)
   },
   {
     title: 'Link',
@@ -73,7 +93,8 @@ const columns: ConfigColumns[] = [
   {
     title: 'IP address',
     name: 'ip_address',
-    data: 'ip_address'
+    data: 'ip_address',
+    className: 'dt-right'
   },
   {
     title: 'Created At',
@@ -86,6 +107,7 @@ const columns: ConfigColumns[] = [
 const options: Config = {
   stripeClasses: ['table-striped', 'table-hover'],
   serverSide: true,
+  order: [[3, 'desc']],
   ajax: async (
     data: AjaxData,
     callback: (data: { data: Event[]; recordsTotal: number; recordsFiltered: number }) => void
@@ -119,8 +141,13 @@ const options: Config = {
     <template #column-link="props">
       <div v-if="props.rowData.action === 'submit'">
         <a :href="props.rowData.metadata.link" target="_blank">
-          Submit #{{ props.rowData.metadata.submit_num }}
+          {{ props.rowData.metadata.task_name }}#{{ props.rowData.metadata.submit_num }}
         </a>
+      </div>
+      <div v-if="props.rowData.action === 'task-view'">
+        <a :href="props.rowData.metadata.link" target="_blank">{{
+          props.rowData.metadata.task_name
+        }}</a>
       </div>
     </template>
   </DataTable>
