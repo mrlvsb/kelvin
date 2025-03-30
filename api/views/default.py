@@ -17,7 +17,10 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet, Q
-from django.http import HttpRequest
+from django.http import (
+    HttpRequest,
+    HttpResponseBadRequest,
+)
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, resolve_url
 from django.urls import reverse
@@ -152,7 +155,9 @@ def tasks_list_all(request: HttpRequest, subject_abbr: str | None = None):
 
 @user_passes_test(is_teacher)
 def student_list(request: HttpRequest):
-    params = SearchParams.from_request(request, max_count=100, allowed_sort_columns=[])
+    params = SearchParams.from_request(
+        request, max_count=100, allowed_order_by_columns=[], default_order_by="date_joined"
+    )
     params.sort = "asc"
     params.order_by = "username"
 

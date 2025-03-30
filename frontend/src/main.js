@@ -41,7 +41,6 @@ import '@iconify/iconify';
 import AnsiUp from 'ansi_up';
 import App from './App.svelte';
 import ColorTheme from './ColorTheme.svelte';
-import CtrlP from './CtrlP.svelte';
 import { safeMarkdown } from './markdown.js';
 import PipelineStatus from './PipelineStatus.svelte';
 import TaskDetail from './TaskDetail.svelte';
@@ -123,7 +122,6 @@ createElement('app', App);
 createElement('submit-sources', TaskDetail);
 createElement('upload-solution', UploadSolution);
 createElement('pipeline-status', PipelineStatus);
-createElement('ctrlp', CtrlP);
 if (!enableNewUI) createElement('color-theme', ColorTheme);
 
 function focusTab() {
