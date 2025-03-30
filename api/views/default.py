@@ -799,65 +799,6 @@ def reevaluate_task(request, task_id):
 
 
 @user_passes_test(is_teacher)
-def search(request):
-    results = [
-        {
-            "text": "All classes",
-            "url": "/",
-        }
-    ]
-
-    semester = current_semester()
-
-    def serialize(o, **kwargs):
-        if isinstance(o, Class):
-            return [
-                {
-                    "text": f"Class {o}",
-                    "url": f"/#/?semester={semester}&teacher={o.teacher.username}&subject={o.subject.abbr}&class={o.code}",
-                    **kwargs,
-                }
-            ]
-        elif isinstance(o, Task):
-            detail = {"text": f"Task {o.name} ({o.code})", "url": f"/teacher/task/{o.pk}", **kwargs}
-
-            edit = {
-                "text": f"Edit task {o.name} ({o.code})",
-                "url": f"/#/task/edit/{o.pk}",
-                **kwargs,
-            }
-
-            return [detail, edit]
-        elif isinstance(o, User):
-            return [
-                {
-                    "text": f"Student {o.first_name} {o.last_name} {o.username}",
-                    "url": f"/submits/{o.username}",
-                    **kwargs,
-                }
-            ]
-        raise Exception(f"Unknown object: {type(o)}")
-
-    conds = {}
-    if not request.user.is_superuser:
-        conds["assignedtask__clazz__teacher_id"] = request.user.pk
-    for task in Task.objects.filter(assignedtask__clazz__semester_id=semester.pk, **conds):
-        results += serialize(task)
-
-    conds = {}
-    if not request.user.is_superuser:
-        conds["students__teacher_id"] = request.user.id
-    for student in User.objects.filter(students__semester_id=semester.pk, **conds).distinct("pk"):
-        results += serialize(student)
-
-    return JsonResponse(
-        {
-            "results": results,
-        }
-    )
-
-
-@user_passes_test(is_teacher)
 def transfer_students(request):
     if request.method != "POST":
         return HttpResponseBadRequest()
