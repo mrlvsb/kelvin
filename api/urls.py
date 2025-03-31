@@ -21,7 +21,6 @@ urlpatterns = [
     path("subjects/all", default_view.subjects_all),
     path("teachers/all", default_view.teachers_all),
     path("reevaluate_task/<int:task_id>", default_view.reevaluate_task),
-    path("search", default_view.search),
     path("transfer_students", default_view.transfer_students),
     path("semesters", default_view.semesters),
     path("import/activities", default_view.import_activities),
