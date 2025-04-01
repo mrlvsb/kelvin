@@ -694,7 +694,7 @@ def submit_comments(request, assignment_id, login, submit_num):
     summary_comments = []
     for comment in Comment.objects.filter(submit_id=submit.id).order_by("id"):
         try:
-            if not comment.source:
+            if not comment.source or comment.source not in result:
                 summary_comments.append(dump_comment(comment))
             else:
                 max_lines = result[comment.source]["content"].count("\n")
