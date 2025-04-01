@@ -253,8 +253,9 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": False,
         },
-        # Disable logs from the serde crate, to avoid spam
+        # Disable logs from the serde and markdown crates, to avoid spam
         "serde": {"handlers": [], "level": "DEBUG", "propagate": False},
+        "markdown": {"handlers": [], "level": "DEBUG", "propagate": False},
     },
 }
 
