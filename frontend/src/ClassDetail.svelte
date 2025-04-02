@@ -9,9 +9,12 @@ import { user } from './global.js';
 import AddStudentsToClass from './AddStudentsToClass.svelte';
 import Markdown from './Markdown.svelte';
 import AssignmentPoints from './AssignmentPoints.svelte';
+import TaskFilter from './TaskFilter.svelte';
+import { task_types } from './taskTypes.js';
 
 export let clazz;
 export let showStudentsList = clazz['students'].length < 50;
+export let task_type;
 
 let showAddStudents = clazz.students.length == 0;
 
@@ -82,6 +85,26 @@ Total points: ${assignmentPoints.toFixed(2)}/${totalMaximumPoints}
 Average points: ${average}`;
 }
 
+function createTaskTypeSummary(clazz) {
+  let summaryParts = [];
+  summaryParts.push(
+    `Total: ${clazz.assignments.reduce((sum, task) => sum + task.max_points, 0)} pts`
+  );
+  task_types.forEach(({ key, value }) => {
+    const totalPoints = clazz.assignments
+      .filter((asg) => asg.task_type === key)
+      .reduce((sum, task) => sum + task.max_points, 0);
+
+    if (totalPoints > 0) {
+      summaryParts.push(`${value}: ${totalPoints} pts`);
+    }
+  });
+
+  return summaryParts.length > 0
+    ? `Task Summary: \n${summaryParts.join('\n')}`
+    : 'Task Summary - No tasks assigned';
+}
+
 let showFullTaskNames = localStorageStore('classDetail/showFullTaskNames', false);
 let showSummary = false;
 </script>
@@ -117,13 +140,16 @@ let showSummary = false;
         </a>
       {/if}
     </div>
-    <button class="btn" on:click={() => (showStudentsList = !showStudentsList)}>
+    <button class="float-start btn" on:click={() => (showStudentsList = !showStudentsList)}>
       {clazz.subject_abbr}
       {clazz.timeslot}
       {clazz.code}
       {clazz.teacher_username}
       <span class="text-muted d-none d-md-inline">({clazz.students.length} students)</span>
     </button>
+    <div class="float-start">
+      <TaskFilter bind:task_type />
+    </div>
   </div>
   <div>
     {#if showStudentsList || showAddStudents}
@@ -160,75 +186,84 @@ let showSummary = false;
                   </th>
                   <th>Student</th>
                   {#each clazz.assignments as assignment, index}
-                    <th class="more-hover">
-                      <a
-                        href={assignment.task_link}
-                        class:text-muted={assignment.assigned > new Date()}
-                        class:text-success={assignment.deadline > new Date()}>
-                        {$showFullTaskNames
-                          ? assignment.short_name
-                          : `#${index + 1}`}{#if assignment.max_points > 0}&nbsp;({assignment.max_points}b){/if}
-                      </a>
-                      <div class="more-content border shadow rounded bg-body p-1">
-                        {assignment.name}
-                        <a href="/task/edit/{assignment.task_id}" use:link title="Edit"
-                          ><span class="iconify" data-icon="clarity:edit-solid"></span></a>
-                        <div style="display: flex; align-items: center;">
-                          <a href={assignment.plagcheck_link} title="Plagiarism check"
-                            ><span class="iconify" data-icon="bx:bx-check-double"></span></a>
-                          <a href={assignment.sources_link} title="Download all source codes"
-                            ><span class="iconify" data-icon="fe:download" data-inline="false"
-                            ></span
-                            ></a>
-                          <a href={assignment.csv_link} title="Download CSV with results"
-                            ><span class="iconify" data-icon="la:file-csv-solid"></span></a>
-                          <a
-                            href="/assignment/show/{assignment.assignment_id}"
-                            title="Show all source codes"
-                            ><span class="iconify" data-icon="bx-bx-code-alt"></span></a>
-                          <button
-                            class="btn btn-link p-0"
-                            class:spin={reevaluateLoading}
-                            title="Reevaluate latest submits"
-                            on:click={() => reevaluateAssignment(assignment)}>
-                            <span class="iconify" data-icon="bx:bx-refresh"></span>
-                          </button>
-                          <a
-                            href="/statistics/assignment/{assignment.assignment_id}"
-                            title="Show assignment stats"
-                            ><span class="iconify" data-icon="bx-bx-bar-chart-alt-2"></span></a>
-                        </div>
-                        <dl>
-                          <dt>Assigned</dt>
-                          <dd>
-                            {assignment.assigned.toLocaleString(
-                              'cs'
-                            )}{#if assignment.assigned > new Date()}, <TimeAgo
-                                datetime={assignment.assigned} />{/if}
-                          </dd>
-
-                          {#if assignment.deadline}
-                            <dt>Deadline</dt>
+                    {#if assignment.task_type === task_type || task_type === null}
+                      <th class="more-hover">
+                        <a
+                          href={assignment.task_link}
+                          class:text-muted={assignment.assigned > new Date()}
+                          class:text-success={assignment.deadline > new Date()}>
+                          {$showFullTaskNames
+                            ? assignment.short_name
+                            : `#${index + 1}`}{#if assignment.max_points > 0}&nbsp;({assignment.max_points}b){/if}
+                        </a>
+                        <div class="more-content border shadow rounded bg-body p-1">
+                          {assignment.name}
+                          <a href="/task/edit/{assignment.task_id}" use:link title="Edit"
+                            ><span class="iconify" data-icon="clarity:edit-solid"></span></a>
+                          <div style="display: flex; align-items: center;">
+                            <a href={assignment.plagcheck_link} title="Plagiarism check"
+                              ><span class="iconify" data-icon="bx:bx-check-double"></span></a>
+                            <a href={assignment.sources_link} title="Download all source codes"
+                              ><span class="iconify" data-icon="fe:download" data-inline="false"
+                              ></span
+                              ></a>
+                            <a href={assignment.csv_link} title="Download CSV with results"
+                              ><span class="iconify" data-icon="la:file-csv-solid"></span></a>
+                            <a
+                              href="/assignment/show/{assignment.assignment_id}"
+                              title="Show all source codes"
+                              ><span class="iconify" data-icon="bx-bx-code-alt"></span></a>
+                            <button
+                              class="btn btn-link p-0"
+                              class:spin={reevaluateLoading}
+                              title="Reevaluate latest submits"
+                              on:click={() => reevaluateAssignment(assignment)}>
+                              <span class="iconify" data-icon="bx:bx-refresh"></span>
+                            </button>
+                            <a
+                              href="/statistics/assignment/{assignment.assignment_id}"
+                              title="Show assignment stats"
+                              ><span class="iconify" data-icon="bx-bx-bar-chart-alt-2"></span></a>
+                          </div>
+                          <dl>
+                            <dt>Assigned</dt>
                             <dd>
-                              {assignment.deadline.toLocaleString(
+                              {assignment.assigned.toLocaleString(
                                 'cs'
-                              )}{#if assignment.deadline > new Date()}, <TimeAgo
-                                  datetime={assignment.deadline} />{/if}
+                              )}{#if assignment.assigned > new Date()}, <TimeAgo
+                                  datetime={assignment.assigned} />{/if}
                             </dd>
-                          {/if}
 
-                          {#if assignment.max_points}
-                            <dt>Max points</dt>
-                            <dd>
-                              {assignment.max_points}
-                            </dd>
-                          {/if}
-                        </dl>
-                      </div>
-                    </th>
+                            {#if assignment.deadline}
+                              <dt>Deadline</dt>
+                              <dd>
+                                {assignment.deadline.toLocaleString(
+                                  'cs'
+                                )}{#if assignment.deadline > new Date()}, <TimeAgo
+                                    datetime={assignment.deadline} />{/if}
+                              </dd>
+                            {/if}
+
+                            {#if assignment.max_points}
+                              <dt>Max points</dt>
+                              <dd>
+                                {assignment.max_points}
+                              </dd>
+                            {/if}
+                          </dl>
+                        </div>
+                      </th>
+                    {:else}
+                      <th> <!-- This is here, to keep the layout right --> </th>
+                    {/if}
                   {/each}
                   <th
-                    >Total ({clazz.assignments.reduce((sum, task) => sum + task.max_points, 0)} pts)</th>
+                    class="more-hover"
+                    title={task_type === null ? createTaskTypeSummary(clazz) : ''}>
+                    Total ({clazz.assignments
+                      .filter((as) => task_type === null || as.task_type === task_type)
+                      .reduce((sum, task) => sum + task.max_points, 0)} pts)
+                  </th>
                 </tr>
               </thead>
 
@@ -240,16 +275,20 @@ let showSummary = false;
                       ></td>
                     <td>{student.last_name} {student.first_name}</td>
                     {#each clazz.assignments.map((i) => i.students[student.username]) as result, i}
-                      <td>
-                        <AssignmentPoints
-                          submit_id={result.accepted_submit_id}
-                          submits={result.submits}
-                          link={result.link}
-                          login={student.username}
-                          task={clazz.assignments[i].name}
-                          color={result.color}
-                          assigned_points={result.assigned_points} />
-                      </td>
+                      {#if clazz.assignments[i].type === task_type}
+                        <td>
+                          <AssignmentPoints
+                            submit_id={result.accepted_submit_id}
+                            submits={result.submits}
+                            link={result.link}
+                            login={student.username}
+                            task={clazz.assignments[i].name}
+                            color={result.color}
+                            assigned_points={result.assigned_points} />
+                        </td>
+                      {:else}
+                        <td> <!-- This is here, to keep the layout right --> </td>
+                      {/if}
                     {/each}
                     <td>{studentPoints(clazz, student)}</td>
                   </tr>
@@ -258,8 +297,12 @@ let showSummary = false;
                   <td></td>
                   <td></td>
                   {#each clazz.assignments as assignment, k}
-                    <td title={createTaskSummary(clazz, k)}
-                      >{totalTaskPoints(clazz, k).toFixed(2)}</td>
+                    {#if assignment.task_type === task_type || task_type === null}
+                      <td title={createTaskSummary(clazz, k)}
+                        >{totalTaskPoints(clazz, k).toFixed(2)}</td>
+                    {:else}
+                      <td> <!-- This is here, to keep the layour right --> </td>
+                    {/if}
                   {/each}
                   <td></td>
                 </tr>
