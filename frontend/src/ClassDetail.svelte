@@ -9,10 +9,14 @@ import { user } from './global.js';
 import AddStudentsToClass from './AddStudentsToClass.svelte';
 import Markdown from './Markdown.svelte';
 import AssignmentPoints from './AssignmentPoints.svelte';
+import TaskFilter from './TaskFilter.svelte';
+import { task_types } from './taskTypes.js';
 
 export let clazz;
 export let showStudentsList = clazz['students'].length < 50;
+let task_type = null;
 
+let activeTaskList = [];
 let showAddStudents = clazz.students.length == 0;
 
 let reevaluateLoading = false;
@@ -28,8 +32,14 @@ async function reevaluateAssignment(assignment) {
   reevaluateLoading = false;
 }
 
-function studentPoints(clazz, student) {
-  return clazz.assignments
+$: {
+  activeTaskList = clazz.assignments.filter(
+    (as) => task_type === null || as.task_type === task_type
+  );
+}
+
+function studentPoints(activeTaskList, student) {
+  return activeTaskList
     .map((i) => i.students[student.username])
     .filter((result) => result && result.submits != 0 && !isNaN(parseFloat(result.assigned_points)))
     .map((result) => parseFloat(result.assigned_points))
@@ -37,24 +47,20 @@ function studentPoints(clazz, student) {
     .toFixed(2);
 }
 
-function totalTaskPoints(clazz, assignment_index) {
+function totalTaskPoints(activeTaskList, assignment_index) {
   let assignmentPoints = 0;
 
-  for (let i = 0; i < clazz.students.length; i++) {
-    const student = clazz.students[i];
-    if (!isNaN(clazz.assignments[assignment_index].students[student.username].assigned_points)) {
-      assignmentPoints += Math.max(
-        0,
-        clazz.assignments[assignment_index].students[student.username].assigned_points
-      );
+  Object.entries(activeTaskList[assignment_index].students).forEach(([name, info]) => {
+    if (!isNaN(info.assigned_points)) {
+      assignmentPoints += Math.max(0, info.assigned_points);
     }
-  }
+  });
 
   return assignmentPoints;
 }
 
-function createTaskSummary(clazz, assignment_index) {
-  let maxPoints = clazz.assignments[assignment_index].max_points;
+function createTaskSummary(activeTaskList, clazz, assignment_index) {
+  let maxPoints = activeTaskList[assignment_index].max_points;
   if (isNaN(maxPoints)) {
     maxPoints = 0;
   }
@@ -63,14 +69,12 @@ function createTaskSummary(clazz, assignment_index) {
   let assignmentPoints = 0;
   let gradedStudents = 0;
 
-  for (let i = 0; i < clazz.students.length; i++) {
-    const student = clazz.students[i];
-    const points = clazz.assignments[assignment_index].students[student.username].assigned_points;
-    if (!isNaN(points) && points !== null) {
-      assignmentPoints += Math.max(0, points);
+  Object.entries(activeTaskList[assignment_index].students).forEach(([name, info]) => {
+    if (!isNaN(info.points) && info.points !== null) {
+      assignmentPoints += Math.max(0, info.points);
       gradedStudents += 1;
     }
-  }
+  });
 
   let average = 'N/A';
   if (gradedStudents > 0) {
@@ -80,6 +84,24 @@ function createTaskSummary(clazz, assignment_index) {
   return `Graded ${gradedStudents}/${clazz.students.length} student(s)
 Total points: ${assignmentPoints.toFixed(2)}/${totalMaximumPoints}
 Average points: ${average}`;
+}
+
+function createTaskTypeSummary(activeTaskList) {
+  let summaryParts = [];
+  summaryParts.push(`Total: ${activeTaskList.reduce((sum, task) => sum + task.max_points, 0)} pts`);
+  task_types.forEach(({ key, value }) => {
+    const totalPoints = activeTaskList
+      .filter((asg) => asg.task_type === key)
+      .reduce((sum, task) => sum + task.max_points, 0);
+
+    if (totalPoints > 0) {
+      summaryParts.push(`${key === null ? 'None' : value}: ${totalPoints} pts`);
+    }
+  });
+
+  return summaryParts.length > 0
+    ? `Task Summary: \n${summaryParts.join('\n')}`
+    : 'Task Summary - No tasks assigned';
 }
 
 let showFullTaskNames = localStorageStore('classDetail/showFullTaskNames', false);
@@ -117,13 +139,16 @@ let showSummary = false;
         </a>
       {/if}
     </div>
-    <button class="btn" on:click={() => (showStudentsList = !showStudentsList)}>
+    <button class="float-start btn" on:click={() => (showStudentsList = !showStudentsList)}>
       {clazz.subject_abbr}
       {clazz.timeslot}
       {clazz.code}
       {clazz.teacher_username}
       <span class="text-muted d-none d-md-inline">({clazz.students.length} students)</span>
     </button>
+    <div class="float-start">
+      <TaskFilter bind:task_type />
+    </div>
   </div>
   <div>
     {#if showStudentsList || showAddStudents}
@@ -159,7 +184,7 @@ let showSummary = false;
                       </CopyToClipboard></span>
                   </th>
                   <th>Student</th>
-                  {#each clazz.assignments as assignment, index}
+                  {#each activeTaskList as assignment, index}
                     <th class="more-hover">
                       <a
                         href={assignment.task_link}
@@ -167,7 +192,7 @@ let showSummary = false;
                         class:text-success={assignment.deadline > new Date()}>
                         {$showFullTaskNames
                           ? assignment.short_name
-                          : `#${index + 1}`}{#if assignment.max_points > 0}&nbsp;({assignment.max_points}b){/if}
+                          : `#${clazz.assignments.indexOf(assignment) + 1}`}{#if assignment.max_points > 0}&nbsp;({assignment.max_points}b){/if}
                       </a>
                       <div class="more-content border shadow rounded bg-body p-1">
                         {assignment.name}
@@ -228,7 +253,10 @@ let showSummary = false;
                     </th>
                   {/each}
                   <th
-                    >Total ({clazz.assignments.reduce((sum, task) => sum + task.max_points, 0)} pts)</th>
+                    class="more-hover"
+                    title={task_type === null ? createTaskTypeSummary(activeTaskList) : ''}>
+                    Total ({activeTaskList.reduce((sum, task) => sum + task.max_points, 0)} pts)
+                  </th>
                 </tr>
               </thead>
 
@@ -239,7 +267,7 @@ let showSummary = false;
                       ><a href="/student/{student.username}" target="_blank">{student.username}</a
                       ></td>
                     <td>{student.last_name} {student.first_name}</td>
-                    {#each clazz.assignments.map((i) => i.students[student.username]) as result, i}
+                    {#each activeTaskList.map((i) => i.students[student.username]) as result, i}
                       <td>
                         <AssignmentPoints
                           submit_id={result.accepted_submit_id}
@@ -251,15 +279,15 @@ let showSummary = false;
                           assigned_points={result.assigned_points} />
                       </td>
                     {/each}
-                    <td>{studentPoints(clazz, student)}</td>
+                    <td>{studentPoints(activeTaskList, student)}</td>
                   </tr>
                 {/each}
                 <tr>
                   <td></td>
                   <td></td>
-                  {#each clazz.assignments as assignment, k}
-                    <td title={createTaskSummary(clazz, k)}
-                      >{totalTaskPoints(clazz, k).toFixed(2)}</td>
+                  {#each activeTaskList as assignment, k}
+                    <td title={createTaskSummary(activeTaskList, clazz, k)}
+                      >{totalTaskPoints(activeTaskList, k).toFixed(2)}</td>
                   {/each}
                   <td></td>
                 </tr>

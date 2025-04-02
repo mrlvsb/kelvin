@@ -240,6 +240,7 @@ def class_detail_list(request):
                 "deadline": assignment.deadline,
                 "max_points": assignment.max_points,
                 "students": {s["username"]: {"username": s["username"]} for s in students},
+                "task_type": assignment.task.type,
             }
 
             for score in assignedtask_results(
