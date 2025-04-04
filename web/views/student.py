@@ -181,7 +181,12 @@ def get_submit_job_status(jobid):
         )
         status = job.get_status()
         if status == "queued":
-            return JobStatus(finished=False, status=f"in queue: {job.get_position() + 1}")
+            position = job.get_position()
+            if position is None:
+                position = "unknown"
+            else:
+                position = str(position + 1)
+            return JobStatus(finished=False, status=f"in queue: {position}")
         elif status == "started":
             if "actions" in job.meta and job.meta["actions"] > 0:
                 percent = job.meta["current_action"] * 100 // job.meta["actions"]
