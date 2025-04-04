@@ -9,6 +9,7 @@ import { fetch } from './api.js';
 import { fs, currentPath, cwd, openedFiles } from './fs.js';
 import SyncLoader from './SyncLoader.svelte';
 import Modal from './Modal.svelte';
+import { task_types } from './taskTypes';
 
 export let params = {};
 
@@ -379,14 +380,13 @@ async function deleteTask(proceed) {
             <div class="input-group mb-3">
               <span class="input-group-text">Task type:</span>
               <select class="form-control form-control-sm" bind:value={task.type}>
-                {#if task.type == null}
-                  <option value={null}>None</option>
-                {/if}
-                <option value="homework">Homework</option>
-                <option value="exam">Exam</option>
-                <option value="project">Project</option>
-                <option value="laboratory">Laboratory</option>
-                <option value="other">Other</option>
+                {#each task_types as { key, value }}
+                  {#if task.type === null && key === null}
+                    <option value={null}>None</option>
+                  {:else if key !== null}
+                    <option value={key}>{value}</option>
+                  {/if}
+                {/each}
               </select>
             </div>
           </div>

@@ -199,7 +199,8 @@ def all_classes(request):
 @user_passes_test(is_teacher)
 def class_detail_list(request):
     class_conditions = {}
-
+    task_type = None
+    task_filter = Q()
     if "teacher" in request.GET:
         class_conditions["teacher__username"] = request.GET["teacher"]
     if "semester" in request.GET:
@@ -217,6 +218,10 @@ def class_detail_list(request):
     if not request.user.is_superuser:
         class_conditions["teacher_id"] = request.user.id
 
+    if "task_type" in request.GET:
+        task_type = None if request.GET["task_type"] == "null" else request.GET["task_type"]
+        task_filter &= Q() if task_type is None else Q(task__type=task_type)
+
     classess = Class.objects.filter(**class_conditions)
 
     result = []
@@ -225,7 +230,9 @@ def class_detail_list(request):
         students = list(
             clazz.students.all().order_by("username").values("username", "first_name", "last_name")
         )
-        for assignment in clazz.assignedtask_set.all().order_by("id").select_related("task"):
+        for assignment in (
+            clazz.assignedtask_set.all().order_by("id").select_related("task").filter(task_filter)
+        ):
             assignment_data = {
                 "task_id": assignment.task_id,
                 "task_link": reverse(
@@ -248,6 +255,7 @@ def class_detail_list(request):
                 "deadline": assignment.deadline,
                 "max_points": assignment.max_points,
                 "students": {s["username"]: {"username": s["username"]} for s in students},
+                "task_type": "" if assignment.task.type is None else assignment.task.type,
             }
 
             for score in assignedtask_results(

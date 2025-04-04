@@ -6,6 +6,7 @@ import { querystring, link } from 'svelte-spa-router';
 import SyncLoader from './SyncLoader.svelte';
 import ClassFilter from './ClassFilter.svelte';
 import { semester, user } from './global.js';
+import TaskFilter from './TaskFilter.svelte';
 
 let classes = null;
 let loading = true;
@@ -16,6 +17,7 @@ let filter = {
   teacher: $user.username,
   class: null
 };
+let task_type = null;
 
 onMount(async () => {
   await refetch();
@@ -23,9 +25,12 @@ onMount(async () => {
 
 let prevParams;
 async function refetch() {
-  const params = new URLSearchParams(
+  let params = new URLSearchParams(
     Object.fromEntries(Object.entries(filter).filter(([_, v]) => v))
-  ).toString();
+  );
+
+  params.set('task_type', task_type);
+  params = params.toString();
   if (prevParams === params) {
     return;
   }
@@ -57,6 +62,8 @@ $: {
 
 <div class="container-fluid p-1">
   <div class="d-flex mb-1">
+    <TaskFilter bind:task_type onChange={refetch} />
+
     <ClassFilter
       semester={filter.semester}
       subject={filter.subject}
@@ -84,6 +91,7 @@ $: {
         {#each classes as clazz (clazz.id)}
           <ClassDetail
             {clazz}
+            {task_type}
             on:update={async () => {
               prevParams = null;
               await refetch();
