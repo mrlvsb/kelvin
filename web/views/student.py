@@ -23,7 +23,14 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.core import signing
 from django.core.exceptions import PermissionDenied
-from django.http import FileResponse, Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.http import (
+    FileResponse,
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    JsonResponse,
+    HttpResponseNotFound,
+)
 from django.shortcuts import get_object_or_404, redirect, render, resolve_url
 from django.urls import reverse
 from django.utils import timezone as datetime
@@ -843,9 +850,12 @@ def task_asset(request, task_name, path):
             if ".." in dst:
                 raise PermissionDenied()
             system_dst = os.path.join("tasks", task_name, dst.lstrip("/"))
-            os.makedirs(os.path.dirname(system_dst), exist_ok=True)
-            shutil.move(system_path, system_dst)
-            return HttpResponse(status=204)
+            if os.path.exists(system_path):
+                os.makedirs(os.path.dirname(system_dst), exist_ok=True)
+                shutil.move(system_path, system_dst)
+                return HttpResponse(status=204)
+            else:
+                return HttpResponseNotFound()
         else:
             return HttpResponseBadRequest()
 
