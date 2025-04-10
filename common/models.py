@@ -1,6 +1,7 @@
 import os
 import re
 import logging
+import datetime
 
 from typing import List, Optional
 
@@ -226,11 +227,21 @@ class AssignedTask(models.Model):
     clazz = models.ForeignKey(Class, on_delete=models.CASCADE)
     assigned = models.DateTimeField()
     deadline = models.DateTimeField(null=True, blank=True)
+    hard_deadline = models.BooleanField(default=False)
     max_points = models.IntegerField(null=True, blank=True)
     moss_url = models.URLField(null=True, blank=True, editable=False)
 
     def is_visible(self):
         return timezone.now() >= self.assigned
+
+    def has_hard_deadline(self):
+        return self.deadline is not None and self.hard_deadline
+
+    def is_past_deadline(self):
+        return (
+            self.deadline is not None
+            and datetime.datetime.now(datetime.timezone.utc) > self.deadline
+        )
 
     def __str__(self):
         return f"{self.task.name} {self.clazz}"

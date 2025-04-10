@@ -50,7 +50,7 @@ from common.models import (
     current_semester,
 )
 from common.plagcheck.moss import PlagiarismMatch, moss_result
-from common.submit import SubmitRateLimited, store_submit
+from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher
 from evaluator.results import EvaluationResult
@@ -288,17 +288,21 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
     if not user_is_teacher and request.method == "GET":
         record_task_displayed(request, request.user, task=assignment)
 
+    hard_deadline = assignment.hard_deadline and not user_is_teacher
+
     data = {
         # TODO: task and deadline can be combined into assignment ad deal with it in template
         "task": assignment.task,
         "assigned": assignment.assigned if is_announce else None,
         "deadline": assignment.deadline,
+        "hard_deadline": hard_deadline,
         "submits": submits,
         "text": testset.load_readme().announce if is_announce else testset.load_readme(),
         "inputs": None if is_announce else testset,
         "max_inline_content_bytes": MAX_INLINE_CONTENT_BYTES,
         "has_pipeline": bool(testset.pipeline),
-        "upload": not user_is_teacher or request.user.username == login,
+        "upload": (not user_is_teacher or request.user.username == login)
+        and not (hard_deadline and assignment.is_past_deadline()),
     }
 
     current_submit = None
@@ -372,6 +376,11 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
             return HttpResponse(
                 f"Too many submits. You need to wait {e.time_until_limit_expires.total_seconds():.0f}s before sending another submit",
                 status=429,
+            )
+        except SubmitPastHardDeadline:
+            return HttpResponse(
+                "Your submit was sent after the deadline, which is not allowed for this task.",
+                status=409,
             )
 
         return redirect(
