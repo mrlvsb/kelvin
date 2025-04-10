@@ -347,5 +347,6 @@ tr td:not(:nth-of-type(1)):not(:nth-of-type(2)):not(:last-child) {
   position: absolute;
   display: block;
   font-weight: normal;
+  z-index: 3;
 }
 </style>
