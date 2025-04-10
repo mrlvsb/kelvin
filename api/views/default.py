@@ -49,7 +49,7 @@ from common.models import (
     current_semester,
     submit_assignment_path,
 )
-from common.submit import SubmitRateLimited, store_submit
+from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher, points_to_color, inbus_search_user, user_from_inbus_person
 
@@ -640,6 +640,7 @@ def task_detail(request, task_id=None):
                         if cl.get("deadline", None)
                         else None,
                         "max_points": cl.get("max_points", None),
+                        "hard_deadline": cl.get("hard_deadline"),
                     },
                 )
             else:
@@ -763,6 +764,7 @@ def task_detail(request, task_id=None):
             item["assigned"] = assigned.assigned
             item["deadline"] = assigned.deadline
             item["max_points"] = assigned.max_points
+            item["hard_deadline"] = assigned.hard_deadline
 
         result["classes"].append(item)
 
@@ -982,6 +984,13 @@ def create_submit(request: django.http.HttpRequest, task_assignment: int) -> Jso
         return JsonResponse(
             {
                 "error": f"You need to wait at least {e.time_until_limit_expires.total_seconds():.0f}s before sending another submit."
+            },
+            status=400,
+        )
+    except SubmitPastHardDeadline:
+        return JsonResponse(
+            {
+                "error": "The submission was sent after the deadline, which was final, so it is not a valid submission."
             },
             status=400,
         )

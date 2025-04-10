@@ -159,7 +159,7 @@
                             <input type="file" name="solution" multiple hidden id="upload-choose"
                                    onclick="this.value=null;"
                                    onchange="this.form.submit()">
-                            <span class="btn btn-sm btn-primary" onclick="document.getElementById('upload-choose').click()">Upload</span>
+                            <span id="upload_button" class="btn btn-sm btn-primary" onclick="document.getElementById('upload-choose').click()" data-deadline="{{ deadline|date:'c' }}" data-hard-deadline="{{hard_deadline}}">Upload</span>
                             <span class="morehover" style="position: relative">
                               <span class="iconify" data-icon="bx:bx-help-circle"></span>
                               <div class="morehover-content" style="position: absolute; right: 0px; top: 15px; background: white; padding: 4px; display: none">
@@ -266,7 +266,34 @@
             window.location.href = keyTabMap[e.code];
         }
     });
+
+    const uploadButton = document.getElementById('upload_button');
+    if (uploadButton !== null) {
+      const deadlineStr = uploadButton.getAttribute('data-deadline');
+      const deadline = deadlineStr ? new Date(deadlineStr) : null;
+      const hardDeadline = uploadButton.getAttribute('data-hard-deadline') === "True";
+      if (deadline !== null && hardDeadline){
+        function updateUploadState() {
+          const now = new Date();
+          if (now > deadline) {
+            uploadButton.classList.add("disabled");
+          } else {
+            uploadButton.classList.remove("disabled");
+          }
+        }
+        updateUploadState();
+
+        setInterval(updateUploadState, 1000);
+      }
+    }
   })();
 </script>
+
+<style>
+.disabled {
+    pointer-events: "none",
+    cursor: "not-allowed",
+}
+</style>
 
 {% endblock %}
