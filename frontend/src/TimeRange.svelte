@@ -6,6 +6,7 @@ export let timeOffsetInWeek;
 export let semesterBeginDate;
 export let onFromDuplicateClick;
 export let onToDuplicateClick;
+export let onToRelativeClick;
 
 let fromEl, toEl;
 let instanceFrom, instanceTo;
@@ -108,5 +109,12 @@ $: if (instanceTo) {
     disabled={!to}
     on:click|preventDefault={() => onToDuplicateClick(to)}>
     <span class="iconify" data-icon="mdi:content-duplicate"></span>
+  </button>
+  <button
+    class="btn btn-sm btn-secondary"
+    title="Set relative deadline to all assigned classes"
+    disabled={!to}
+    on:click|preventDefault={() => onToRelativeClick(from, to)}>
+    <span class="iconify" data-icon="mdi:calendar-sync"></span>
   </button>
 </div>

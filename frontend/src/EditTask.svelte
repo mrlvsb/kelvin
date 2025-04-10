@@ -193,6 +193,16 @@ function assignSameToAll(templateClass) {
   });
 }
 
+function setRelativeDeadlineToAssigned(assigned, deadline) {
+  const diff = new Date(deadline) - new Date(assigned);
+  task.classes = task.classes.map((cl) => {
+    if (cl.assigned) {
+      cl.deadline = new Date(new Date(cl.assigned).getTime() + diff);
+    }
+    return cl;
+  });
+}
+
 async function duplicateTask() {
   let res = await fetch(`/api/tasks/${task.id}/duplicate`, {
     method: 'POST'
@@ -312,7 +322,8 @@ async function deleteTask(proceed) {
                         bind:to={clazz.deadline}
                         semesterBeginDate={$semester.begin}
                         onFromDuplicateClick={setAssignedDateToVisible}
-                        onToDuplicateClick={setDeadlineToAssigned} />
+                        onToDuplicateClick={setDeadlineToAssigned}
+                        onToRelativeClick={setRelativeDeadlineToAssigned} />
                       <div class="col-md">
                         <div class="input-group">
                           <input
