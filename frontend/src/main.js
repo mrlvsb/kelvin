@@ -159,6 +159,7 @@ import Quiz from './Quiz/Quiz.vue';
 import QuizEdit from './Quiz/QuizEdit.vue';
 import QuizList from './Quiz/Lists/QuizList.vue';
 import QuizSubmitList from './Quiz/Lists/QuizSubmitList.vue';
+import ClassList from './Teacher/ClassList.vue';
 
 /**
  * Register new Vue component as a custom element.
@@ -204,6 +205,7 @@ registerVueComponent('quiz-edit', QuizEdit);
 registerSuspendedVueComponent('quiz-list', QuizList);
 registerSuspendedVueComponent('quiz-submit-list', QuizSubmitList);
 if (enableNewUI) registerVueComponent('color-theme', ColorThemeNew);
+registerSuspendedVueComponent('vue-app', ClassList);
 
 // Function that can be used outside the compiled JavaScript
 // to mount the student page with the passed props.
