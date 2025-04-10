@@ -226,6 +226,7 @@ class AssignedTask(models.Model):
     clazz = models.ForeignKey(Class, on_delete=models.CASCADE)
     assigned = models.DateTimeField()
     deadline = models.DateTimeField(null=True, blank=True)
+    hard_deadline = models.BooleanField(null=True, blank=True)
     max_points = models.IntegerField(null=True, blank=True)
     moss_url = models.URLField(null=True, blank=True, editable=False)
 

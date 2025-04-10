@@ -25,6 +25,11 @@ class SubmitRateLimited(Exception):
         self.time_until_limit_expires = time_until_limit_expires
 
 
+class SubmitPastHardDeadline(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
 def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     """
     Creates a new submit for the given `assignment` and the user logged in the `request`.
@@ -33,6 +38,11 @@ def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     Optionally, the request can also contain a "paths" field that contains a string with a single
     path per line, assigning paths to the uploaded "solution" files.
     """
+    if (
+        assignment.hard_deadline
+        and datetime.datetime.now(datetime.timezone.utc) > assignment.deadline
+    ):
+        raise SubmitPastHardDeadline("Submit was submitted after deadline")
 
     # get existing submits of the student
     submits = Submit.objects.filter(assignment__pk=assignment.id, student__pk=request.user.id)
