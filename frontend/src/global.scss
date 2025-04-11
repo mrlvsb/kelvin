@@ -42,4 +42,9 @@ html[data-bs-theme='dark'] {
     .d2h-file-header {
         background-color: #343434;
     }
+    th,
+    td,
+    .btn-dark {
+        color: var(--bs-body-color);
+    }
 }
