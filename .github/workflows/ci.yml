@@ -14,7 +14,7 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: |
-          sudo apt-get install libgraphviz-dev
+          sudo apt-get install libgraphviz-dev build-essential
           python -m pip install --upgrade pip
           pip install uv==0.4.4
           uv sync --frozen
