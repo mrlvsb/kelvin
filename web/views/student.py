@@ -50,7 +50,7 @@ from common.models import (
     current_semester,
 )
 from common.plagcheck.moss import PlagiarismMatch, moss_result
-from common.submit import SubmitRateLimited, store_submit
+from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher
 from evaluator.results import EvaluationResult
@@ -293,6 +293,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         "task": assignment.task,
         "assigned": assignment.assigned if is_announce else None,
         "deadline": assignment.deadline,
+        "hard_deadline": assignment.hard_deadline and not user_is_teacher,
         "submits": submits,
         "text": testset.load_readme().announce if is_announce else testset.load_readme(),
         "inputs": None if is_announce else testset,
@@ -372,6 +373,11 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
             return HttpResponse(
                 f"Too many submits. You need to wait {e.time_until_limit_expires.total_seconds():.0f}s before sending another submit",
                 status=429,
+            )
+        except SubmitPastHardDeadline:
+            return HttpResponse(
+                "Your submit was sent after the deadline, which is not allowed for this task.",
+                status=409,
             )
 
         return redirect(
