@@ -91,6 +91,7 @@ jobs:
       packages: write
     needs: [test-backend, test-frontend, build-docker]
     environment: production
+    concurrency: production
     if: ${{ github.event_name == 'merge_group' }}
     steps:
       - name: Set up Docker
