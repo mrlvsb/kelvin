@@ -293,16 +293,13 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         "task": assignment.task,
         "assigned": assignment.assigned if is_announce else None,
         "deadline": assignment.deadline,
-        "hard_deadline": assignment.hard_deadline,
+        "hard_deadline": assignment.hard_deadline and not user_is_teacher,
         "submits": submits,
         "text": testset.load_readme().announce if is_announce else testset.load_readme(),
         "inputs": None if is_announce else testset,
         "max_inline_content_bytes": MAX_INLINE_CONTENT_BYTES,
         "has_pipeline": bool(testset.pipeline),
-        "upload": (not user_is_teacher or request.user.username == login)
-        and not (
-            assignment.has_hard_deadline() and assignment.is_past_deadline() and not user_is_teacher
-        ),
+        "upload": not user_is_teacher or request.user.username == login,
     }
 
     current_submit = None
