@@ -182,12 +182,20 @@ function assignPointsToAll(max_pts) {
   });
 }
 
+function assignHardDeadlineToAll(hard_deadline) {
+  task.classes = task.classes.map((cl) => {
+    if (cl.assigned) cl.hard_deadline = hard_deadline;
+    return cl;
+  });
+}
+
 function assignSameToAll(templateClass) {
   task.classes = task.classes.map((cl) => {
     if (isClassVisible(cl)) {
       cl.max_points = templateClass.max_points;
       cl.assigned = templateClass.assigned;
       cl.deadline = templateClass.deadline;
+      cl.hard_deadline = templateClass.hard_deadline;
     }
     return cl;
   });
@@ -307,7 +315,7 @@ async function deleteTask(proceed) {
         <div class="mb-2">
           <table class="table table-hover table-striped mb-0">
             <tbody>
-              {#each shownClasses as clazz}
+              {#each shownClasses as clazz, idx}
                 <tr class:table-success={clazz.assigned}>
                   <td>
                     {clazz.timeslot}
@@ -324,6 +332,28 @@ async function deleteTask(proceed) {
                         onFromDuplicateClick={setAssignedDateToVisible}
                         onToDuplicateClick={setDeadlineToAssigned}
                         onToRelativeClick={setRelativeDeadlineToAssigned} />
+                      {#if clazz.deadline}
+                        <div
+                          class="col-md"
+                          title="Forbids students to make submissions after the deadline has passed.">
+                          <div class="input-group input-group-sm col-md">
+                            <input
+                              class="form-check-input checkbox-md"
+                              type="checkbox"
+                              id="hardDeadline_{idx}"
+                              bind:checked={clazz.hard_deadline} />
+                            <label class="form-check-label check_box_label" for="hardDeadline_{idx}"
+                              >Hard Deadline</label>
+                            <button
+                              class="btn btn-sm btn-secondary"
+                              on:click|preventDefault={() =>
+                                assignHardDeadlineToAll(clazz.hard_deadline)}
+                              title="Copy hard deadline setting to all classes">
+                              <span class="iconify" data-icon="mdi:content-duplicate"></span>
+                            </button>
+                          </div>
+                        </div>
+                      {/if}
                       <div class="col-md">
                         <div class="input-group">
                           <input
@@ -349,7 +379,7 @@ async function deleteTask(proceed) {
                     <button
                       class="btn btn-sm p-0"
                       on:click={() => assignSameToAll(clazz)}
-                      title="Set same assigned date, deadline and points to all visible classes">
+                      title="Set same assigned date, deadline, deadline type and points to all visible classes">
                       <span class="iconify" data-icon="mdi:content-duplicate"></span>
                     </button>
                     <button
@@ -424,5 +454,16 @@ td:not(:nth-of-type(3)) {
 .btn > a:hover,
 .btn > a:active {
   color: inherit;
+}
+.check_box_label {
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  padding: 0.25rem 0.5rem;
+}
+.form-check-input.checkbox-md {
+  height: 2rem;
+  margin-top: 0;
+  background-color: #0d6efd;
+  width: 1.5rem;
 }
 </style>
