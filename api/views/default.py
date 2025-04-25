@@ -633,7 +633,7 @@ def task_detail(request, task_id=None):
                         if cl.get("deadline", None)
                         else None,
                         "max_points": cl.get("max_points", None),
-                        "hard_deadline": cl.get("hard_deadline"),
+                        "hard_deadline": cl.get("hard_deadline", False),
                     },
                 )
             else:
