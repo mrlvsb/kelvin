@@ -154,6 +154,8 @@ import NotificationsNew from './components/Notifications.vue';
 import ColorThemeNew from './components/ColorTheme.vue';
 import StudentList from './Teacher/StudentList.vue';
 import StudentPage from './Teacher/student-page/StudentPage.vue';
+import Quiz from './Quiz/Quiz.vue';
+import QuizEdit from './Quiz/QuizEdit.vue';
 
 /**
  * Register new Vue component as a custom element.
@@ -193,6 +195,8 @@ registerSuspendedVueComponent('task-list', TaskList);
 registerVueComponent('student-list', StudentList);
 registerSuspendedVueComponent('inbus-import', InbusImport);
 registerVueComponent('notifications', NotificationsNew);
+registerSuspendedVueComponent('quiz', Quiz);
+registerSuspendedVueComponent('quiz-edit', QuizEdit);
 if (enableNewUI) registerVueComponent('color-theme', ColorThemeNew);
 
 // Function that can be used outside the compiled JavaScript

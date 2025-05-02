@@ -50,7 +50,13 @@
         "vite": "^5.4.17",
         "vitest": "^3.0.9",
         "vue": "^3.5.10",
-        "vue-tsc": "^2.1.6"
+        "vue-tsc": "^2.1.6",
+        "@vuepic/vue-datepicker": "^10.0.0",
+        "bootstrap-vue-next": "^0.26.3",
+        "vue3-toastify": "^0.2.4",
+        "vuedraggable": "^4.1.0",
+        "yaml": "^2.6.1",
+        "@chenfengyuan/vue-countdown": "^2.1.2"
     },
     "dependencies": {
         "@dodona/dolos-web": "^2.7.1"
