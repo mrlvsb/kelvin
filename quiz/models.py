@@ -1,5 +1,4 @@
 import os
-import errno
 from shutil import copytree, rmtree
 
 from django.db import models
@@ -10,8 +9,11 @@ from api.dto import QuizDto
 from quiz.settings import QUIZ_PATH
 
 
-# Model that represents a quiz
 class Quiz(models.Model):
+    """
+    Model that represents a quiz.
+    """
+
     name = models.CharField(max_length=100)
     # path for quiz relative to path defined in settings.py
     src = models.CharField(max_length=255, verbose_name="Directory", unique=True)
@@ -21,34 +23,48 @@ class Quiz(models.Model):
     def __str__(self):
         return self.name
 
-    # Method that writes content to the quiz file.
     def write(self, yaml_content: str):
+        """
+        Method that writes content to the quiz file.
+        """
         with open(self.get_file_path(), "w", encoding="utf-8") as file:
             file.write(yaml_content)
 
-    # Method that reads content from the quiz file.
     def read(self):
+        """
+        Method that reads content from the quiz file.
+        """
         with open(self.get_file_path(), "r", encoding="utf-8") as file:
             return file.read()
 
-    # Method that returns the directory path of the quiz.
     def get_directory_path(self):
+        """
+        Method that returns the directory path of the quiz.
+        """
         return os.path.join(QUIZ_PATH, self.src)
 
-    # Method that returns the file path of the quiz.
     def get_file_path(self):
+        """
+        Method that returns the file path of the quiz.
+        """
         return os.path.join(self.get_directory_path(), "quiz.yml")
 
-    # Method that returns the identifier file path of the quiz.
     def get_identifier_path(self):
+        """
+        Method that returns the identifier file path of the quiz.
+        """
         return os.path.join(self.get_directory_path(), ".quiz_id")
 
-    # Method that returns a DTO of the quiz
     def get_dto(self):
+        """
+        Method that returns a DTO of the quiz.
+        """
         return from_yaml(QuizDto, self.read())
 
-    # Method that tries to set up the new directory for the quiz
     def set_up_directory(self, new_src: str):
+        """
+        Method that tries to set up the new directory for the quiz.
+        """
         copytree(os.path.join(QUIZ_PATH, self.src), os.path.join(QUIZ_PATH, new_src))
 
         old_src = self.src
@@ -63,8 +79,11 @@ class Quiz(models.Model):
         verbose_name_plural = "Quizzes"
 
 
-# Model that represents an assigned quiz
 class AssignedQuiz(models.Model):
+    """
+    Model that represents an assigned quiz.
+    """
+
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
     clazz = models.ForeignKey(Class, on_delete=models.CASCADE)
     assigned = models.DateTimeField()
@@ -77,12 +96,23 @@ class AssignedQuiz(models.Model):
     def __str__(self):
         return f"{self.quiz.name} {self.clazz}"
 
+    def max_points(self):
+        """
+        Method that returns the maximum points of the assigned quiz.
+        """
+        quiz_dto = self.quiz.get_dto()
+
+        return sum(map(lambda q: q.points, quiz_dto.questions))
+
     class Meta:
         verbose_name_plural = "Assigned quizzes"
 
 
-# Model that represents a template of enrolled quiz
 class TemplateQuiz(models.Model):
+    """
+    Model that represents a template of enrolled quiz.
+    """
+
     content = models.JSONField(default=dict)
     # computed hash of enrolled quiz template
     hash = models.CharField(max_length=255, unique=True)
@@ -96,8 +126,11 @@ class TemplateQuiz(models.Model):
         verbose_name_plural = "Quiz templates"
 
 
-# Model that represents an enrolled quiz
 class EnrolledQuiz(models.Model):
+    """
+    Model that represents an enrolled quiz.
+    """
+
     assigned_quiz = models.ForeignKey(AssignedQuiz, on_delete=models.CASCADE)
     template = models.ForeignKey(TemplateQuiz, on_delete=models.CASCADE)
     student = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -114,8 +147,10 @@ class EnrolledQuiz(models.Model):
     def __str__(self):
         return f"{self.assigned_quiz.quiz.name} {self.student} {self.id}"
 
-    # Method that sums assigned scores of questions and returns the total score of the quiz.
     def score(self):
+        """
+        Method that sums assigned scores of questions and returns the total score of the quiz.
+        """
         score = 0.0
         for key in self.scoring:
             score += float(self.scoring[key]["points"])
@@ -123,5 +158,3 @@ class EnrolledQuiz(models.Model):
 
     class Meta:
         verbose_name_plural = "Enrolled quizzes"
-
-

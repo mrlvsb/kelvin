@@ -1,0 +1,30 @@
+{% extends 'web/layout.html' %}
+
+{% block title %}
+    {{ quiz.title }}
+{% endblock %}
+
+{% block content %}
+    <div id="page-content-wrapper">
+        <div class="content-header">
+            <h2>
+                {{ quiz.title }}
+                {% if is_teacher and scoring is None %}
+                    <a href="{% url 'quiz_edit' quiz_id=data.quiz_id %}" class="text-muted" title="Edit quiz"><span
+                            class="iconify"
+                            data-icon="fa-solid:pen"></span></a>
+                {% endif %}
+            </h2>
+        </div>
+        <div id="quiz-wrapper"></div>
+    </div>
+{% endblock %}
+
+{% block script %}
+{{ data|json_script:"quiz-data" }}
+
+<script type="text/javascript">
+    const quizData = JSON.parse(document.getElementById("quiz-data").textContent);
+    mountQuiz("#quiz-wrapper", {"quizData": quizData});
+</script>
+{% endblock %}

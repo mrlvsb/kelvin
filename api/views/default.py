@@ -23,6 +23,7 @@ from django.shortcuts import get_object_or_404, resolve_url
 from django.urls import reverse
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.http import require_GET, require_POST
+from unidecode import unidecode
 
 import common.bulk_import
 from common.bulk_import import ImportException
@@ -49,6 +50,7 @@ from common.models import (
 from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher, points_to_color, inbus_search_user, user_from_inbus_person
+from quiz.models import EnrolledQuiz
 
 logger = logging.getLogger(__name__)
 
@@ -311,6 +313,66 @@ def class_detail_list(request):
 
             assignments.append(assignment_data)
 
+        quizzes = []
+
+        for assigned_quiz in clazz.assignedquiz_set.all().order_by("id").select_related("quiz"):
+            try:
+                max_points = assigned_quiz.max_points()
+            except Exception:
+                continue
+
+            quiz_data = {
+                "quiz_id": assigned_quiz.quiz_id,
+                "quiz_link": reverse(
+                    "quiz_detail",
+                    kwargs={"quiz_id": assigned_quiz.quiz_id},
+                ),
+                "quiz_edit_link": reverse(
+                    "quiz_edit",
+                    kwargs={"quiz_id": assigned_quiz.quiz_id},
+                ),
+                "assigned_id": assigned_quiz.id,
+                "name": assigned_quiz.quiz.name,
+                "name_lower": unidecode(assigned_quiz.quiz.name.replace(" ", "_")).lower(),
+                "assigned": assigned_quiz.assigned,
+                "deadline": assigned_quiz.deadline,
+                "max_points": max_points,
+                "students": {s["username"]: {"username": s["username"]} for s in students},
+            }
+
+            for student in students:
+                student_user = User.objects.get(username=student["username"])
+
+                try:
+                    enrolled_quiz = EnrolledQuiz.objects.get(
+                        assigned_quiz_id=assigned_quiz.id, student=student_user, submitted=True
+                    )
+
+                    quiz_data["students"][student["username"]] = {
+                        "id": enrolled_quiz.id,
+                        "student": student["username"],
+                        "score": enrolled_quiz.score(),
+                        "scoring_link": reverse(
+                            "quiz_scoring", kwargs={"enrolled_id": enrolled_quiz.id}
+                        ),
+                        "max_points": enrolled_quiz.template.max_points,
+                        "color": points_to_color(
+                            enrolled_quiz.score(), enrolled_quiz.template.max_points
+                        ),
+                        "submitted": enrolled_quiz.submitted,
+                        "submitted_at": enrolled_quiz.submitted_at,
+                    }
+                except EnrolledQuiz.DoesNotExist:
+                    quiz_data["students"][student["username"]] = {
+                        "student": student["username"],
+                        "score": None,
+                        "max_points": quiz_data["max_points"],
+                        "submitted": False,
+                        "submitted_at": None,
+                    }
+
+            quizzes.append(quiz_data)
+
         result.append(
             {
                 "id": clazz.pk,
@@ -320,6 +382,7 @@ def class_detail_list(request):
                 "subject_abbr": clazz.subject.abbr,
                 "csv_link": reverse("download_csv_per_class", kwargs={"class_id": clazz.pk}),
                 "assignments": assignments,
+                "quizzes": quizzes,
                 "summary": clazz.summary(request.user.username, show_output=True),
                 "students": students,
             }

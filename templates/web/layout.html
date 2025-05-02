@@ -50,6 +50,7 @@
                 {% if is_teacher %}
                   <li class="nav-item"><a class="nav-link" href="{% url 'submits' %}">Submits</a></li>
                   <li class="nav-item"><a class="nav-link" href="{% url 'tasks' %}">Tasks</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'quiz_list' %}">Quizzes</a></li>
                   <li class="nav-item"><a class="nav-link" href="{% url 'students' %}">Students</a></li>
                   {% if request.path != student_index_url %}
                     <li class="nav-item"><a class="nav-link" href="{% url 'student_index' %}">Student view</a></li>

@@ -1,0 +1,41 @@
+{% extends 'web/layout.html' %} {% block content %}
+    <div class="container">
+        <h1><strong>Quiz: </strong>{{ quiz.title }}</h1>
+        <div class="mt-4 ms-3">
+            <h5><strong>Max points:</strong> {{ assignment.max_points }}</h5>
+            <h5 class="mt-4"><strong>Duration:</strong> {{ assignment.duration }} minutes</h5>
+            <h5><strong>Assigned from:</strong> {{ assignment.assigned|date:"d.m.Y, H:i" }}</h5>
+            <h5><strong>Deadline:</strong> {{ assignment.deadline|date:"d.m.Y, H:i" }}</h5>
+            <h6 class="my-4"><strong>Information:</strong> You can start a quiz by clicking on an <strong>Enroll
+                quiz</strong> button. Deadline is finite and quiz can not exceed it, so you should start a quiz early
+                enough to not get quiz duration time reduced. Please keep in mind that
+                enrolling into quiz is an <strong>irreversible</strong>
+                operation. Keep in mind that during filling a quiz, your access to system Kelvin will be limited. For
+                more information, please, contact your teacher.
+            </h6>
+            <button class="btn btn-danger" onclick="enrollQuiz()">Enroll quiz</button>
+        </div>
+    </div>
+
+    <script>
+        function enrollQuiz() {
+            if (confirm('Do you really want to start a quiz?')) {
+                fetch("{% url 'api_quiz_enroll' assigned_quiz_id=assignment.id %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)[1]
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.redirect) {
+                            window.location.href = data.redirect;
+                        } else {
+                            alert(data.message);
+                        }
+                    });
+            }
+        }
+    </script>
+{% endblock %}

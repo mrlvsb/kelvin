@@ -30,10 +30,11 @@ from django.http import (
     HttpResponseBadRequest,
     JsonResponse,
     HttpResponseNotFound,
+    HttpResponseRedirect,
 )
 from django.shortcuts import get_object_or_404, redirect, render, resolve_url
 from django.urls import reverse
-from django.utils import timezone as datetime
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from notifications.models import Notification
 from notifications.signals import notify
@@ -56,6 +57,9 @@ from common.utils import is_teacher
 from evaluator.results import EvaluationResult
 from evaluator.testsets import TestSet
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES, MAX_INLINE_LINES
+from quiz.models import AssignedQuiz, EnrolledQuiz
+from quiz.quiz_utils import quiz_to_html, score_quiz
+from quiz.settings import QUIZ_PATH
 from web.markdown_utils import load_readme
 from .test_script import render_test_script
 from .utils import file_response
@@ -103,10 +107,11 @@ def student_index(request):
 
     for clazz in classess:
         tasks = []
+        quizzes = []
         max_points = 0
         earned_points = 0
         for assignment in AssignedTask.objects.filter(clazz_id=clazz.id).order_by("-id"):
-            if not assignment.task.announce and assignment.assigned > datetime.now():
+            if not assignment.task.announce and assignment.assigned > timezone.now():
                 continue
 
             data = {
@@ -114,7 +119,7 @@ def student_index(request):
                 "name": assignment.task.name,
                 "deadline": assignment.deadline,
                 "assigned": assignment.assigned,
-                "assigned_show_remaining": assignment.assigned > datetime.now(),
+                "assigned_show_remaining": assignment.assigned > timezone.now(),
                 "assignment": assignment,
             }
 
@@ -127,12 +132,64 @@ def student_index(request):
                 max_points += assignment.max_points
 
             tasks.append(data)
+        for assigned_quiz in AssignedQuiz.objects.filter(clazz_id=clazz.id).order_by("-id"):
+            if assigned_quiz.assigned > timezone.now():
+                continue
+
+            try:
+                enrolled_quiz = EnrolledQuiz.objects.get(
+                    assigned_quiz=assigned_quiz, student=request.user, submitted=True
+                )
+            except EnrolledQuiz.DoesNotExist:
+                enrolled_quiz = None
+
+            if enrolled_quiz is None or not assigned_quiz.publish_results:
+                try:
+                    quiz_max = assigned_quiz.max_points()
+                except Exception:
+                    continue
+
+                max_points += quiz_max
+
+                data = {
+                    "assignment_id": assigned_quiz.id,
+                    "name": assigned_quiz.quiz.name,
+                    "student": request.user.username,
+                    "max_points": quiz_max,
+                    "earned_points": None,
+                    "deadline": assigned_quiz.deadline,
+                    "assigned": assigned_quiz.assigned,
+                    "enrolled": enrolled_quiz is not None,
+                    "publishable": False,
+                }
+            else:
+                earned = enrolled_quiz.score()
+
+                earned_points += earned
+
+                max_points += enrolled_quiz.template.max_points
+
+                data = {
+                    "assignment_id": assigned_quiz.id,
+                    "name": assigned_quiz.quiz.name,
+                    "student": request.user.username,
+                    "max_points": enrolled_quiz.template.max_points,
+                    "earned_points": earned,
+                    "deadline": assigned_quiz.deadline,
+                    "assigned": assigned_quiz.assigned,
+                    "enrolled": True,
+                    "publishable": True,
+                    "enrolled_id": enrolled_quiz.pk,
+                }
+
+            quizzes.append(data)
 
         result.append(
             {
                 "class": clazz,
                 "summary": clazz.summary(request.user.username),
                 "tasks": tasks,
+                "quizzes": quizzes,
                 "max_points": max_points,
                 "earned_points": earned_points,
             }
@@ -278,7 +335,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
 
     is_announce = False
     if (
-        assignment.assigned > datetime.now()
+        assignment.assigned > timezone.now()
         or not assignment.clazz.students.filter(username=request.user.username)
     ) and not user_is_teacher:
         is_announce = True
@@ -772,7 +829,7 @@ def create_taskset(task, user, meta: Optional[Dict[str, Any]] = None):
 def check_is_task_accessible(request, task):
     if not is_teacher(request.user):
         assigned_tasks = AssignedTask.objects.filter(
-            task_id=task.id, clazz__students__id=request.user.id, assigned__lte=datetime.now()
+            task_id=task.id, clazz__students__id=request.user.id, assigned__lte=timezone.now()
         )
         if not assigned_tasks:
             raise PermissionDenied()
@@ -1010,3 +1067,152 @@ def teacher_task_tar(request, task_id):
     res = FileResponse(f)
     res["Content-Type"] = "application/x-tar"
     return res
+
+
+@login_required
+def quiz_fill(request):
+    """
+    Function that allows filling a quiz.
+    """
+    if request.method != "GET":
+        return HttpResponseBadRequest()
+
+    try:
+        enrolled_quiz = EnrolledQuiz.objects.get(student=request.user.id, submitted=False)
+
+        now = timezone.now()
+
+        # If enrolled quiz is after deadline and still not submitted, it's marked as submitted
+        if now > enrolled_quiz.deadline:
+            enrolled_quiz.submitted = True
+            enrolled_quiz.submitted_at = now
+            score_quiz(enrolled_quiz)
+
+        # If enrolled quiz is submitted, it redirects to the results page if and only if results are allowed to be published,
+        # otherwise redirects to main page.
+        if enrolled_quiz.submitted:
+            if enrolled_quiz.assigned_quiz.publish_results:
+                return HttpResponseRedirect(reverse("quiz_result", args=[enrolled_quiz.id]))
+            else:
+                return HttpResponseRedirect("/")
+
+        # Student will continue solving active quiz.
+        remaining = enrolled_quiz.deadline - now
+
+        data = dict(
+            is_teacher=is_teacher(request.user),
+            quiz_id=enrolled_quiz.assigned_quiz.quiz.pk,
+            enrolled_id=enrolled_quiz.id,
+            remaining=remaining.total_seconds(),
+            scoring=None,
+            student=None,
+            answers=json.dumps(enrolled_quiz.submit),
+            quiz_html=json.dumps(
+                quiz_to_html(enrolled_quiz.assigned_quiz.quiz.src, enrolled_quiz.template.content)
+            ),
+        )
+
+        return render(request, "web/quiz/quiz.html", dict(data=data))
+
+    except EnrolledQuiz.DoesNotExist:  # no active quiz
+        return HttpResponseRedirect("/")
+
+
+@login_required
+def quiz_enrolling(request, assignment_id):
+    """
+    Function that renders informative enrolling page.
+    """
+    assigned_quiz = get_object_or_404(AssignedQuiz, pk=assignment_id)
+
+    now = timezone.now()
+
+    # If student is not member of a class, or quiz is not able to be enrolled yet, it redirects to the main page.
+    if (
+        assigned_quiz.clazz.students.filter(username=request.user.username).count() == 0
+        or assigned_quiz.assigned > now
+    ):
+        return HttpResponseRedirect("/")
+
+    return render(
+        request,
+        "web/quiz/quiz_enrolling.html",
+        {"assignment": assigned_quiz, "quiz": assigned_quiz.quiz},
+    )
+
+
+@login_required
+def quiz_result(request, enrolled_id):
+    """
+    Function that renders the results of a quiz for student if possible, otherwise redirects to main page, or returns 404
+    if enroll for quiz not exists.
+    """
+    enrolled_quiz = get_object_or_404(EnrolledQuiz, pk=enrolled_id)
+
+    if (
+        request.user != enrolled_quiz.student
+        or not enrolled_quiz.submitted
+        or not enrolled_quiz.assigned_quiz.publish_results
+    ):
+        return HttpResponseRedirect("/")
+
+    scored_by = "System Kelvin"
+
+    if enrolled_quiz.scored_by is not None:
+        scored_by = enrolled_quiz.scored_by.username
+
+    data = dict(
+        is_teacher=is_teacher(request.user),
+        quiz_id=enrolled_quiz.assigned_quiz.quiz.pk,
+        enrolled_id=enrolled_quiz.id,
+        scoring=json.dumps(enrolled_quiz.scoring),
+        answers=json.dumps(enrolled_quiz.submit),
+        student=None,
+        scored_by=scored_by,
+        quiz_html=json.dumps(
+            quiz_to_html(enrolled_quiz.assigned_quiz.quiz.src, enrolled_quiz.template.content)
+        ),
+    )
+
+    return render(request, "web/quiz/quiz.html", dict(data=data))
+
+
+@login_required
+def quiz_asset(request, quiz_src, asset_path):
+    """
+    Function that returns an asset of a quiz folder if asset is found, 404 otherwise.
+    Raises permission denied if user is trying to access something he can't.
+    """
+    path = quiz_src + asset_path
+
+    teacher_user = is_teacher(request.user)
+
+    if ".." in path or ("quiz.yml" in path and not teacher_user):
+        raise PermissionDenied()
+
+    system_path = os.path.join(QUIZ_PATH, quiz_src, asset_path)
+
+    if not Path(system_path).is_relative_to(QUIZ_PATH):
+        raise PermissionDenied()
+
+    if not teacher_user:
+        try:
+            with open(os.path.join(QUIZ_PATH, quiz_src, ".quiz_id")) as f:
+                quiz_id = int(f.read())
+        except FileNotFoundError:
+            raise Http404()
+
+        has_access = request.user.enrolledquiz_set.filter(assigned_quiz__quiz__id=quiz_id).exists()
+
+        if not has_access:
+            raise PermissionDenied()
+
+    try:
+        with open(system_path, "rb") as f:
+            resp = HttpResponse(f)
+            mime = mimedetector.from_file(system_path)
+            if mime:
+                resp["Content-Type"] = f"{mime};charset=utf-8"
+            return resp
+    except FileNotFoundError:
+        raise Http404()
