@@ -60,7 +60,7 @@ from evaluator.results import EvaluationResult
 from evaluator.testsets import TestSet
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES, MAX_INLINE_LINES
 from quiz.models import AssignedQuiz, EnrolledQuiz, TemplateQuiz
-from quiz.quiz_utils import quiz_to_html
+from quiz.quiz_utils import quiz_to_html, score_quiz
 from quiz.settings import QUIZ_PATH
 from web.markdown_utils import load_readme
 from .test_script import render_test_script
@@ -1108,7 +1108,7 @@ def quiz_enroll(request, assignment_id):
     if now > enrolled_quiz.deadline:
         enrolled_quiz.submitted = True
         enrolled_quiz.submitted_at = now
-        enrolled_quiz.score_questions()
+        score_quiz(enrolled_quiz)
 
     # If enrolled quiz is submitted, it redirects to the results page if and only if results are allowed to be published,
     # otherwise redirects to main page.
