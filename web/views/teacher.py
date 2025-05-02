@@ -426,25 +426,3 @@ def quiz_detail(request, quiz_id):
             "quiz_html": json.dumps(quiz_to_html(quiz.src, json.loads(to_json(quiz_dto)))),
         },
     )
-
-
-# Function that renders tool allowing to score student's quiz manually.
-@user_passes_test(is_teacher)
-def quiz_scoring(request, enrolled_id):
-    enrolled_quiz = get_object_or_404(EnrolledQuiz, pk=enrolled_id, submitted=True)
-
-    return render(
-        request,
-        "web/quiz/quiz.html",
-        {
-            "quiz": enrolled_quiz.assigned_quiz.quiz,
-            "enrolled_id": enrolled_quiz.id,
-            "remaining": None,
-            "scoring": json.dumps(enrolled_quiz.scoring),
-            "student": enrolled_quiz.student.username,
-            "answers": json.dumps(enrolled_quiz.submit),
-            "quiz_html": json.dumps(
-                quiz_to_html(enrolled_quiz.assigned_quiz.quiz.src, enrolled_quiz.template.content)
-            ),
-        },
-    )
