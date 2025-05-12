@@ -4,7 +4,6 @@ import io
 import itertools
 import json
 import os
-import random
 import shutil
 import tarfile
 import tempfile
@@ -386,17 +385,15 @@ def quiz_scoring(request, enrolled_id):
 def quiz_edit(request, quiz_id: int):
     quiz = get_object_or_404(Quiz, pk=quiz_id)
 
-    return render(
-        request,
-        "web/quiz/quiz_edit.html",
-        {
-            "id": quiz_id,
-            "assignments": json.dumps(quiz_assigned_classes(quiz, request.user.id)),
-            "teacher": request.user.username,
-            "deletable": quiz.assignedquiz_set.count() == 0,
-            "quiz_directory": quiz.src,
-        },
+    data = dict(
+        id=quiz.id,
+        assignments=json.dumps(quiz_assigned_classes(quiz, request.user.id)),
+        teacher=request.user.username,
+        deletable=quiz.assignedquiz_set.count() == 0,
+        quiz_directory=quiz.src,
     )
+
+    return render(request, "web/quiz/quiz_edit.html", dict(data=data))
 
 
 # Function that renders detail of a quiz.
