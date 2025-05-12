@@ -1191,9 +1191,7 @@ def quiz_asset(request, quiz_src, asset_path):
         except FileNotFoundError:
             raise Http404()
 
-        has_access = request.user.enrolledquiz_set.filter(
-            assigned_quiz__quiz__id=quiz_id
-        ).exists()
+        has_access = request.user.enrolledquiz_set.filter(assigned_quiz__quiz__id=quiz_id).exists()
 
         if not has_access:
             raise PermissionDenied()
