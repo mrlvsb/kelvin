@@ -406,13 +406,6 @@ def quiz_detail(request, quiz_id):
 
     quiz_dto = quiz.get_dto()
 
-    if quiz_dto.shuffle:
-        random.shuffle(quiz_dto.questions)
-
-        for question in quiz_dto.questions:
-            if question.answers is not None:
-                random.shuffle(question.answers)
-
     return render(
         request,
         "web/quiz/quiz.html",
