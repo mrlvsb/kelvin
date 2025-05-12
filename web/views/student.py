@@ -1042,15 +1042,15 @@ def quiz_enroll(request, assignment_id):
         if now <= assigned_quiz.deadline:
             quiz_dto = assigned_quiz.quiz.get_dto()
 
-            question_id = 1
+            id_counter = 1
 
             for question in quiz_dto.questions:
-                question._id = str(question_id)
-                question_id += 1
+                question._id = str(id_counter)
+                id_counter += 1
                 if question.answers is not None:
                     for answer in question.answers:
-                        answer._id = str(question_id)
-                        question_id += 1
+                        answer._id = str(id_counter)
+                        id_counter += 1
 
             if quiz_dto.shuffle:
                 random.shuffle(quiz_dto.questions)
@@ -1059,7 +1059,7 @@ def quiz_enroll(request, assignment_id):
                     if question.answers is not None:
                         random.shuffle(question.answers)
 
-            quiz_json = to_json(quiz_dto).encode("utf-8")
+            quiz_json = to_json(quiz_dto, sort_keys=True).encode("utf-8")
 
             quiz_json_hash = hashlib.sha256(quiz_json).hexdigest()
 
@@ -1174,10 +1174,29 @@ def quiz_result(request, enrolled_id):
 def quiz_asset(request, quiz_src, asset_path):
     path = quiz_src + asset_path
 
-    if ".." in path or ("quiz.yml" in path and not is_teacher(request.user)):
+    teacher_user = is_teacher(request.user)
+
+    if ".." in path or ("quiz.yml" in path and not teacher_user):
         raise PermissionDenied()
 
     system_path = os.path.join(QUIZ_PATH, quiz_src, asset_path)
+
+    if not Path(system_path).is_relative_to(QUIZ_PATH):
+        raise PermissionDenied()
+
+    if not teacher_user:
+        try:
+            with open(os.path.join(QUIZ_PATH, quiz_src, ".quiz_id")) as f:
+                quiz_id = int(f.read())
+        except FileNotFoundError:
+            raise Http404()
+
+        has_access = request.user.enrolledquiz_set.filter(
+            assigned_quiz__quiz__id=quiz_id
+        ).exists()
+
+        if not has_access:
+            raise PermissionDenied()
 
     try:
         with open(system_path, "rb") as f:

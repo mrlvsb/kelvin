@@ -10,7 +10,7 @@
             <h2>
                 {{ quiz.title }}
                 {% if is_teacher and scoring is None %}
-                    <a href="/teacher/quiz/{{ quiz.id }}/edit" class="text-muted" title="Edit quiz"><span
+                    <a href="{% url 'quiz_edit' quiz_id=quiz.id %}" class="text-muted" title="Edit quiz"><span
                             class="iconify"
                             data-icon="fa-solid:pen"></span></a>
                 {% endif %}
