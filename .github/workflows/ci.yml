@@ -16,7 +16,7 @@ jobs:
         run: |
           sudo apt-get install libgraphviz-dev build-essential
           python -m pip install --upgrade pip
-          pip install uv==0.4.4
+          pip install uv==0.7.8
           uv sync --frozen
       - name: Check migrations
         run: uv run manage.py makemigrations api common web survey quiz --check
