@@ -21,6 +21,7 @@ marked.setOptions({
 
 const sanitizeOpts = {
     ALLOWED_TAGS: [
+        'blockquote',
         'img',
         'p',
         'b',
