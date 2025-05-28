@@ -59,6 +59,7 @@
         "@chenfengyuan/vue-countdown": "^2.1.2"
     },
     "dependencies": {
-        "@dodona/dolos-web": "^2.7.1"
+        "@dodona/dolos-web": "^2.7.1",
+        "ipaddr.js": "^2.2.0"
     }
 }
