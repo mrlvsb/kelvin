@@ -1,0 +1,26 @@
+{% extends 'web/layout.html' %}
+
+{% block title %}
+    {{ quiz.title }}
+{% endblock %}
+
+{% block content %}
+    <div id="page-content-wrapper">
+        <div class="content-header">
+            <h2>
+                {{ quiz.title }}
+                {% if is_teacher and scoring is None %}
+                    <a href="{% url 'quiz_edit' quiz_id=quiz.id %}" class="text-muted" title="Edit quiz"><span
+                            class="iconify"
+                            data-icon="fa-solid:pen"></span></a>
+                {% endif %}
+            </h2>
+        </div>
+        <kelvin-quiz quiz_html="{{ quiz_html }}" is_teacher="{{ is_teacher|lower }}"
+                      student="{{ student|default_if_none:"" }}" enrolled_id="{{ enrolled_id|default_if_none:"0" }}"
+                      remaining="{{ remaining }}" answers="{{ answers|default_if_none:"{}" }}"
+                      scoring="{{ scoring|default_if_none:"{}" }}"
+                      scored_by="{{ scored_by|default_if_none:"System Kelvin" }}">
+        </kelvin-quiz>
+    </div>
+{% endblock %}

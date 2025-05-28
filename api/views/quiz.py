@@ -252,13 +252,13 @@ def quiz_add(request: HttpRequest):
     while True:
         # Assign postfix _X to potential new working directory, where X is natural number
         postfix_dir_name = dir_name + "_" + str(postfix)
-        postfix_src = os.path.join(src, postfix_dir_name)
+        disk_dir_src = os.path.join(src, postfix_dir_name)
 
-        count = Quiz.objects.filter(src=postfix_src).count()
+        count = Quiz.objects.filter(src=os.path.join(abbr, username, postfix_dir_name)).count()
 
         if count == 0:
             try:
-                os.makedirs(postfix_src)
+                os.makedirs(disk_dir_src)
 
                 break
             except OSError as e:
