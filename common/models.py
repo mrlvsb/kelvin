@@ -281,7 +281,7 @@ class Submit(models.Model):
             f"{self.submit_num}",
         ]
 
-    def dir(self):
+    def dir(self) -> str:
         return "/".join(
             [
                 "submits",
