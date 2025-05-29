@@ -14,10 +14,10 @@ $ apt-get install libsasl2-dev libgraphviz-dev graphviz gcc libxml2-dev libxslt1
 Secondly, you need to prepare a Python virtual environment and install dependencies of Kelvin, which is
 a Django app. The easiest way of doing that is to use [uv](https://github.com/astral-sh/uv),
 which manages the dependencies of this project. As a first step for working
-with the Python code, install `uv 0.4.4` using some [supported approach](https://docs.astral.sh/uv/getting-started/installation/), for example:
+with the Python code, install `uv` using some [supported approach](https://docs.astral.sh/uv/getting-started/installation/), for example:
 
 ```bash
-$ curl -LsSf https://astral.sh/uv/0.4.4/install.sh | sh
+$ curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 Then, use `uv` to create a virtual environment and install the necessary dependencies into it:
 ```bash
