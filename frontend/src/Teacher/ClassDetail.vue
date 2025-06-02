@@ -128,6 +128,7 @@ export default {
               </tbody>
             </table>
           </div>
+          <p v-if="clazz.students.length === 0" class="text-center" >No student added yet.</p>
         </div>
       </div>
     </div>
