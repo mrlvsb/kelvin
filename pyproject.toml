@@ -48,6 +48,7 @@ dependencies = [
 dev-dependencies = [
     "pre-commit>=3.8.0",
     "ruff==0.6.3",
+    "pyrefly==0.18.0",
 ]
 
 [tool.ruff]
@@ -65,4 +66,10 @@ include = [
 ]
 extend-exclude = [
     "**/migrations/**"
+]
+[tool.pyrefly]
+project_includes = ["**/*"]
+project_excludes = [
+    "**/.[!/.]*",
+    "**/*venv/**/*",
 ]
