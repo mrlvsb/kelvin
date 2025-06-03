@@ -1,11 +1,36 @@
-<script lang="ts">
-import { ref, computed, PropType } from 'vue';
+<script setup lang="ts">
+import { ref, computed } from 'vue';
 //import AddStudentsToClass from './AddStudentsToClass.vue';
 //import Markdown from './Markdown.vue';
 import AssignmentPoints from './AssignmentPoints.vue';
-import Class from './ClassList.vue';
-import Student from './ClassList.vue';
+import { type Class, type StudentIdentity } from './frontendtypes';
 
+const { clazz } = defineProps<{
+  clazz: Class;
+}>();
+
+const showStudentsList = ref(clazz.students.length < 50);
+const showAddStudents = ref(clazz.students.length === 0);
+const showFullTaskNames = ref(false);
+const showSummary = ref(false);
+const user = ref({ is_staff: true });
+
+const totalMaxPoints = computed(() =>
+  clazz.assignments.reduce((sum, task) => sum + task.max_points, 0)
+);
+
+const studentPoints = (student: StudentIdentity) => {
+  return clazz.assignments
+    .map((i) => i.students[student.username])
+    .filter(
+      (result) => result && result.submits !== 0 && !isNaN(parseFloat(result.assigned_points))
+    )
+    .map((result) => parseFloat(result.assigned_points))
+    .reduce((acc, val) => acc + val, 0)
+    .toFixed(2);
+};
+
+/*
 export default {
   name: 'ClassDetail',
   components: {AssignmentPoints}, //{ AddStudentsToClass, Markdown },
@@ -48,6 +73,7 @@ export default {
     };
   }
 };
+*/
 </script>
 
 <template>
@@ -126,14 +152,22 @@ export default {
                   </td>
                   <td>{{ student.last_name }} {{ student.first_name }}</td>
                   <td v-for="(assignment, i) in clazz.assignments" :key="i">
-                    <AssignmentPoints :submit_id="assignment.students[student.username]?.accepted_submit_id" :submits="assignment.students[student.username]?.submits" :link="assignment.students[student.username]?.link" :login="student.username" :task="assignment.name" :color="assignment.students[student.username]?.color" :assigned_points="assignment.students[student.username]?.assigned_points" />
+                    <AssignmentPoints
+                      :submit_id="assignment.students[student.username]?.accepted_submit_id"
+                      :submits="assignment.students[student.username]?.submits"
+                      :link="assignment.students[student.username]?.link"
+                      :login="student.username"
+                      :task="assignment.name"
+                      :color="assignment.students[student.username]?.color"
+                      :assigned_points="assignment.students[student.username]?.assigned_points"
+                    />
                   </td>
                   <td>{{ studentPoints(student) }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <p v-if="clazz.students.length === 0" class="text-center" >No student added yet.</p>
+          <p v-if="clazz.students.length === 0" class="text-center">No student added yet.</p>
         </div>
       </div>
     </div>

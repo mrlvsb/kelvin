@@ -8,7 +8,7 @@ export default {
     submits: Number,
     link: String,
     color: String,
-    assigned_points: Number,
+    assigned_points: String,
     login: String,
     task: String,
     submit_id: Number
@@ -41,10 +41,6 @@ export default {
       form.append('assigned_points', this.value);
 
       await getFromAPI(`/submit/${this.submit_id}/points`, 'POST', form);
-      //await apiFetch(`/submit/${this.submit_id}/points`, {
-      //  method: 'POST',
-      //  body: form,
-      //});
 
       this.assigned_points = this.value;
       this.saving = false;
@@ -65,7 +61,7 @@ export default {
         <h2>{{ login }}</h2>
         <h3>{{ task }}</h3>
         <form @submit.prevent="save">
-          <input class="form-control" type="number" v-model.number="value" autofocus />
+          <input class="form-control" v-model.number="value" type="number" autofocus />
           <button class="btn btn-success mt-1" :disabled="saving">
             <div v-if="saving" class="spinner-border spinner-border-sm" role="status"></div>
             Save
