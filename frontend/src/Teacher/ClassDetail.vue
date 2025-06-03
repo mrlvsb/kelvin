@@ -1,15 +1,20 @@
 <script lang="ts">
-import { ref, computed } from 'vue';
-//import { useRouter } from 'vue-router';
-//import { fetch } from './api.js';
+import { ref, computed, PropType } from 'vue';
 //import AddStudentsToClass from './AddStudentsToClass.vue';
 //import Markdown from './Markdown.vue';
-//import AssignmentPoints from './AssignmentPoints.vue';
+import AssignmentPoints from './AssignmentPoints.vue';
+import Class from './ClassList.vue';
+import Student from './ClassList.vue';
 
 export default {
-  components: {}, //{ AddStudentsToClass, Markdown, AssignmentPoints },
-  props: ['clazz'],
   name: 'ClassDetail',
+  components: {AssignmentPoints}, //{ AddStudentsToClass, Markdown },
+  props: {
+    clazz: {
+      type: Object as PropType<typeof Class>,
+      required: true
+    }
+  },
   setup(props) {
     const showStudentsList = ref(props.clazz.students.length < 50);
     const showAddStudents = ref(props.clazz.students.length === 0);
@@ -21,7 +26,7 @@ export default {
       props.clazz.assignments.reduce((sum, task) => sum + task.max_points, 0)
     );
 
-    const studentPoints = (student) => {
+    const studentPoints = (student: typeof Student) => {
       return props.clazz.assignments
         .map((i) => i.students[student.username])
         .filter(
@@ -121,7 +126,7 @@ export default {
                   </td>
                   <td>{{ student.last_name }} {{ student.first_name }}</td>
                   <td v-for="(assignment, i) in clazz.assignments" :key="i">
-                    <!--<AssignmentPoints :submit_id="assignment.students[student.username]?.accepted_submit_id" :submits="assignment.students[student.username]?.submits" :link="assignment.students[student.username]?.link" :login="student.username" :task="assignment.name" :color="assignment.students[student.username]?.color" :assigned_points="assignment.students[student.username]?.assigned_points" />-->
+                    <AssignmentPoints :submit_id="assignment.students[student.username]?.accepted_submit_id" :submits="assignment.students[student.username]?.submits" :link="assignment.students[student.username]?.link" :login="student.username" :task="assignment.name" :color="assignment.students[student.username]?.color" :assigned_points="assignment.students[student.username]?.assigned_points" />
                   </td>
                   <td>{{ studentPoints(student) }}</td>
                 </tr>
