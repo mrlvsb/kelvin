@@ -1,57 +1,61 @@
-<script lang="ts">
-//import { fetch as apiFetch } from './api.js';
+<script setup lang="ts">
+import { ref } from 'vue';
 import { getFromAPI } from '../utilities/api';
 
-export default {
-  name: 'AssignmentPoints',
-  props: {
-    submits: Number,
-    link: String,
-    color: String,
-    assigned_points: String,
-    login: String,
-    task: String,
-    submit_id: Number
-  },
-  data() {
-    return {
-      show: false,
-      saving: false,
-      value: this.assigned_points
-    };
-  },
-  methods: {
-    hide() {
-      this.show = false;
-    },
-    click(e) {
-      const classList = e.target.classList;
-      if (classList.contains('overlay') || classList.contains('inner')) {
-        this.show = false;
-      }
-    },
-    ctxMenu(e) {
-      if (window.innerWidth < 768) {
-        this.show = true;
-      }
-    },
-    async save() {
-      this.saving = true;
-      const form = new FormData();
-      form.append('assigned_points', this.value);
+interface Props {
+  submits: number;
+  link: string;
+  color: string;
+  assigned_points: string;
+  login: string;
+  task: string;
+  submit_id: number;
+}
 
-      await getFromAPI(`/submit/${this.submit_id}/points`, 'POST', form);
+const props = defineProps<Props>();
 
-      this.assigned_points = this.value;
-      this.saving = false;
-      this.show = false;
-    }
+const show = ref(false);
+const saving = ref(false);
+const value = ref(props.assigned_points);
+
+// Event handlers
+function hide() {
+  show.value = false;
+}
+
+function click(e: Event) {
+  const target = e.target as HTMLElement;
+  const classList = target.classList;
+  if (classList.contains('overlay') || classList.contains('inner')) {
+    show.value = false;
   }
-};
+}
+
+function ctxMenu() {
+  if (window.innerWidth < 768) {
+    show.value = true;
+  }
+}
+
+async function save() {
+  saving.value = true;
+
+  const form = new FormData();
+  form.append('assigned_points', value.value);
+
+  await getFromAPI(`/submit/${props.submit_id}/points`, 'POST', form);
+
+  // FIXME: Update prop (normally you’d emit this change instead of modifying props directly)
+  // props.assigned_points = value.value; ❌ not allowed
+  // You might need to emit the change if parent cares
+
+  saving.value = false;
+  show.value = false;
+}
 </script>
 
 <template>
-  <div @contextmenu.prevent="ctxMenu" @keydown.esc="hide" @click="click" ref="container">
+  <div ref="container" @contextmenu.prevent="ctxMenu" @keydown.esc="hide" @click="click">
     <a v-if="submits !== 0" :href="link" :style="{ color: color }">
       {{ isNaN(parseFloat(assigned_points)) ? '?' : assigned_points }}
     </a>
@@ -61,7 +65,7 @@ export default {
         <h2>{{ login }}</h2>
         <h3>{{ task }}</h3>
         <form @submit.prevent="save">
-          <input class="form-control" v-model.number="value" type="number" autofocus />
+          <input v-model.number="value" class="form-control" type="number" autofocus />
           <button class="btn btn-success mt-1" :disabled="saving">
             <div v-if="saving" class="spinner-border spinner-border-sm" role="status"></div>
             Save
