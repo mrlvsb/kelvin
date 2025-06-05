@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-//import AddStudentsToClass from './AddStudentsToClass.vue';
+import AddStudentsToClass from './AddStudentsToClass.vue';
 //import Markdown from './Markdown.vue';
+import { getFromAPI } from '../utilities/api';
 import AssignmentPoints from './AssignmentPoints.vue';
 import { type Class, type StudentIdentity } from './frontendtypes';
 
@@ -13,7 +14,13 @@ const showStudentsList = ref(clazz.students.length < 50);
 const showAddStudents = ref(clazz.students.length === 0);
 const showFullTaskNames = ref(false);
 const showSummary = ref(false);
-const user = ref({ is_staff: true });
+const user = ref({ is_staff: true }); // FIXME: Get user from /api/info
+const emit = defineEmits<{ (e: 'update'): void }>();
+
+async function handleUpdate() {
+  showAddStudents.value = false;
+  emit('update');
+}
 
 const totalMaxPoints = computed(() =>
   clazz.assignments.reduce((sum, task) => sum + task.max_points, 0)
@@ -116,7 +123,7 @@ export default {
     </div>
     <div v-if="showStudentsList || showAddStudents">
       <div class="card-body p-1">
-        <!--<AddStudentsToClass v-if="showAddStudents" :class_id="clazz.id" @update="fetchClassData" />-->
+        <AddStudentsToClass v-if="showAddStudents" :class-id="clazz.id" @update="handleUpdate" />
         <div v-if="showStudentsList">
           <button v-if="clazz.summary" class="p-0 btn btn-link" @click="showSummary = !showSummary">
             {{ showSummary ? 'Hide' : 'Show' }} class summary
