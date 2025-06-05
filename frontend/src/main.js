@@ -155,6 +155,7 @@ import ColorThemeNew from './components/ColorTheme.vue';
 import StudentList from './Teacher/StudentList.vue';
 import StudentPage from './Teacher/student-page/StudentPage.vue';
 import StudentTransfer from './Teacher/StudentTransfer.vue';
+import ClassList from './Teacher/ClassList.vue';
 
 /**
  * Register new Vue component as a custom element.
@@ -196,6 +197,7 @@ registerSuspendedVueComponent('student-transfer', StudentTransfer);
 registerSuspendedVueComponent('inbus-import', InbusImport);
 registerVueComponent('notifications', NotificationsNew);
 if (enableNewUI) registerVueComponent('color-theme', ColorThemeNew);
+registerSuspendedVueComponent('vue-app', ClassList);
 
 // Function that can be used outside the compiled JavaScript
 // to mount the student page with the passed props.
