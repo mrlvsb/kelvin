@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import AddStudentsToClass from './AddStudentsToClass.vue';
-//import Markdown from './Markdown.vue';
+import Markdown from '../components/Markdown.vue';
 import { getFromAPI } from '../utilities/api';
 import AssignmentPoints from './AssignmentPoints.vue';
 import { type Class, type StudentIdentity } from './frontendtypes';
@@ -128,7 +128,7 @@ export default {
           <button v-if="clazz.summary" class="p-0 btn btn-link" @click="showSummary = !showSummary">
             {{ showSummary ? 'Hide' : 'Show' }} class summary
           </button>
-          <!--<Markdown v-if="showSummary" :content="clazz.summary" />-->
+          <Markdown v-if="showSummary" :content="clazz.summary" />
           <div style="overflow: auto">
             <table class="table table-sm table-hover table-striped">
               <thead>
