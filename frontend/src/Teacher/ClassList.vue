@@ -25,15 +25,7 @@ const filter: FilterParams = {
 
 let prevParams;
 
-async function refetch(): Promise<Class[]> {
-  const params = new URLSearchParams(
-    Object.fromEntries(Object.entries(filter).filter(([_, v]) => v))
-  ).toString();
-  if (prevParams === params) {
-    return;
-  }
-  prevParams = params;
-
+async function loadClasses() {
   const req = await getFromAPI<{ classes: Class[] }>(
     `/api/classes?semester=${filter.semester}&teacher=${filter.teacher}`
   );
@@ -50,6 +42,18 @@ async function refetch(): Promise<Class[]> {
   });
 }
 
+async function refetch(): Promise<Class[]> {
+  const params = new URLSearchParams(
+    Object.fromEntries(Object.entries(filter).filter(([_, v]) => v))
+  ).toString();
+  if (prevParams === params) {
+    return;
+  }
+  prevParams = params;
+
+  await loadClasses();
+}
+
 onMounted(() => {
   refetch();
 });
@@ -60,7 +64,12 @@ onMounted(() => {
     <div class="d-flex mb-1"></div>
     <div class="classes">
       <div class="classes-inner">
-        <ClassDetail v-for="clazz in classes" :key="clazz.id" :clazz="clazz" />
+        <ClassDetail
+          v-for="clazz in classes"
+          :key="clazz.id"
+          :clazz="clazz"
+          @update="loadClasses"
+        />
       </div>
     </div>
   </div>
