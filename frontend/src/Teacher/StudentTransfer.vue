@@ -1,20 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { getDataWithCSRF, getFromAPI } from '../utilities/api';
-
-type ClassName = string;
-
-interface Teacher {
-  [login: string]: ClassName[];
-}
-
-interface ClassesByTeacher {
-  [abbrev: string]: Teacher;
-}
-
-interface Classes {
-  [semester: string]: ClassesByTeacher[];
-}
+import { Classes } from './frontendtypes';
 
 interface StudentSubmit {
   student: string; // login
