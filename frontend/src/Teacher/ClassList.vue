@@ -2,8 +2,9 @@
 import { onMounted } from 'vue';
 import { ref } from 'vue';
 import { getFromAPI } from '../utilities/api';
-
+import { user, semester } from '../utilities/global';
 import ClassDetail from './ClassDetail.vue';
+import ClassFilter from './ClassFilter.vue';
 
 import { type Class } from './frontendtypes';
 
@@ -17,9 +18,9 @@ interface FilterParams {
 }
 
 const filter: FilterParams = {
-  semester: '2024S', //semester.abbr
+  semester: semester.value.abbr, //semester.abbr
   subject: null,
-  teacher: 'GAU01', //user.username
+  teacher: user.value.username, //user.username
   class: null
 };
 
@@ -27,7 +28,8 @@ let prevParams;
 
 async function loadClasses() {
   const req = await getFromAPI<{ classes: Class[] }>(
-    `/api/classes?semester=${filter.semester}&teacher=${filter.teacher}`
+    //`/api/classes?semester=${filter.semester}&subject=${filter.subject}&teacher=${filter.teacher}`
+    '/api/classes?' + prevParams
   );
 
   classes.value = req.classes.map((c) => {
@@ -61,7 +63,14 @@ onMounted(() => {
 
 <template>
   <div class="container-fluid p-1">
-    <div class="d-flex mb-1"></div>
+    <div class="d-flex mb-1">
+      <ClassFilter
+        :semester="filter.semester"
+        :subject="filter.subject"
+        :teacher="filter.teacher"
+        :clazz="filter.class"
+      />
+    </div>
     <div class="classes">
       <div class="classes-inner">
         <ClassDetail
