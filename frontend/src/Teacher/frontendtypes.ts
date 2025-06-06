@@ -45,3 +45,17 @@ export interface Class {
     summary: string;
     students: StudentIdentity[];
 }
+
+export type ClassName = string;
+
+export interface Teacher {
+    [login: string]: ClassName[];
+}
+
+export interface ClassesByTeacher {
+    [abbrev: string]: Teacher;
+}
+
+export interface Classes {
+    [semester: string]: ClassesByTeacher[];
+}
