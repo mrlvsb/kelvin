@@ -2,122 +2,148 @@
 
 {% block content %}
 
-<div class="container">
-    <div class="row">
-        <form class="mb-1 col-sm-3 offset-sm-9 p-0">
-            <select name="semester" class="form-select form-select-sm" onchange="this.value != '' && this.form.submit()">
-                <option value='' disabled>Semester</option>
-                {% for s in semesters %}
-                    <option value="{{ s.value }}"{% if selected_semester == s.value %} selected{% endif %}>
-                        {{ s.label }}
-                    </option>
-                {% endfor %}
-            </select>
-        </form>
-    </div>
-</div>
-
-{% if not classes %}
-<p class="alert alert-info">
-    No class available in this semester.
-</p>
-{% endif %}
-
-{% for node in classes %}
-<div class="card mb-2">
-    <div class="card-header"><h5 class="mb-0">{{ node.class }}</h5></div>
-    <div class="card-body">
-        {% if node.summary %}
-          <button class="btn btn-outline-info mb-1" data-bs-toggle="collapse" data-bs-target="#summary-{{ forloop.counter0 }}">
-            Class notes
-          </button>
-          <div id="summary-{{ forloop.counter0 }}" class="collapse">
-            <kelvin-markdown hidden>{{ node.summary }}</kelvin-markdown>
-          </div>
-        {% endif %}
-        {% if node.tasks %}
-        <div class="table-responsive">
-            <table class="table table-sm table-hover table-striped">
-                <thead>
-                    <tr>
-                        <th>Task</th>
-                        <th>Assigned</th>
-                        <th>Deadline</th>
-                        <th>Submitted</th>
-                        <th class="text-end">Earned points</th>
-                        <th class="text-end">Max points</th>
-                    </tr>
-                </thead>
-                {% for task in node.tasks  %}
-                <tr>
-                    <td>
-                        {% if task.accepted_submit_num %}
-                            <a href="{% url 'task_detail' login=task.student assignment_id=task.id submit_num=task.accepted_submit_num %}">{{ task.name }}</a>
-                        {% else %}
-                            <a href="{% url 'task_detail' login=task.student assignment_id=task.id %}">{{ task.name }}</a>
-                        {% endif %}
-                    </td>
-                    {% comment %}
-                    TODO: Add remaining time to deadline by creating simple tag:
-                    https://stackoverflow.com/questions/52296306/django-template-is-there-a-built-in-way-to-get-current-date-as-type-date-ins
-                    https://docs.djangoproject.com/en/1.11/howto/custom-template-tags/#django.template.Library.simple_tag
-                    {% endcomment %}
-                    <td>
-                        {{ task.assigned|date:"d.m.Y, H:i" }}
-                        {% if task.assigned_show_remaining %} <span class="text-muted">({{ task.assigned|timeuntil }} left)</span>{% endif %}
-                    </td>
-                    <td>
-                        {% if task.deadline %}
-                        {{ task.deadline|date:"d.m.Y, H:i" }} <span class="text-muted">({{ task.deadline|timeuntil }} left)</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-center">
-                        {% if task.accepted_submit_num %}
-                            <a href="{% url 'task_detail' login=task.student assignment_id=task.id submit_num=task.accepted_submit_num %}"
-                               title="Go to evaluated submit">
-                                <span class="iconify" data-icon="bx:bx-check"></span>
-                            </a>
-                        {% else %}
-                            <span class="iconify" data-icon="bi:dash"></span>
-                        {%  endif  %}
-                    </td>
-                    <td class="text-end">
-                        {% if task.assigned_points is not None %}
-                        {{ task.assigned_points|floatformat:2 }}
-                        {% endif %}
-                    </td>
-                    <td class="text-end">
-                        {% if task.assignment.max_points is not None %}
-                        {{ task.assignment.max_points|floatformat:2 }}
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-                <tr>
-                <th colspan="4">Total</th>
-                <th class="text-end">{{ node.earned_points|floatformat:2 }}</th>
-                <th class="text-end">{{ node.max_points|floatformat:2 }}</th>
-                </tr>
-            </table>
+    <div class="container">
+        <div class="row">
+            <form class="mb-1 col-sm-3 offset-sm-9 p-0">
+                <select name="semester" class="form-select form-select-sm"
+                        onchange="this.value != '' && this.form.submit()">
+                    <option value='' disabled>Semester</option>
+                    {% for s in semesters %}
+                        <option value="{{ s.value }}"{% if selected_semester == s.value %} selected{% endif %}>
+                            {{ s.label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
         </div>
-        {% else %}
-        <p class="alert alert-info mb-0">No task assigned.</p>
-        {% endif %}
     </div>
-</div>
-{% endfor %}
 
-{% comment %}
-<div class="card">
-    <div class="card-header"><h5>Submit script installation</h5></div>
-    <div class="card-body">
-        Installation from terminal:
+    {% if not classes %}
+        <p class="alert alert-info">
+            No class available in this semester.
+        </p>
+    {% endif %}
 
-        <pre>
-$ wget -q {{request.scheme}}://{{request.META.HTTP_HOST}}{% url 'install.sh' token %} -O - | bash && bash
+    {% for node in classes %}
+        <div class="card mb-2">
+            <div class="card-header"><h5 class="mb-0">{{ node.class }}</h5></div>
+            <div class="card-body">
+                {% if node.summary %}
+                    <button class="btn btn-outline-info mb-1" data-bs-toggle="collapse"
+                            data-bs-target="#summary-{{ forloop.counter0 }}">
+                        Class notes
+                    </button>
+                    <div id="summary-{{ forloop.counter0 }}" class="collapse">
+                        <kelvin-markdown hidden>{{ node.summary }}</kelvin-markdown>
+                    </div>
+                {% endif %}
+                {% if node.tasks or node.quizzes %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover table-striped">
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Assigned</th>
+                                <th>Deadline</th>
+                                <th class="text-end">Earned points</th>
+                                <th class="text-end">Max points</th>
+                            </tr>
+                            </thead>
+                            {% for task in node.tasks %}
+                                <tr>
+                                    <td>
+                                        {% if task.accepted_submit_num %}
+                                            <a href="{% url 'task_detail' login=task.student assignment_id=task.id submit_num=task.accepted_submit_num %}">{{ task.name }}</a>
+                                        {% else %}
+                                            <a href="{% url 'task_detail' login=task.student assignment_id=task.id %}">{{ task.name }}</a>
+                                        {% endif %}
+                                    </td>
+                                    <td>Task</td>
+                                    {% comment %}
+                                        TODO: Add remaining time to deadline by creating simple tag:
+                                        https://stackoverflow.com/questions/52296306/django-template-is-there-a-built-in-way-to-get-current-date-as-type-date-ins
+                                        https://docs.djangoproject.com/en/1.11/howto/custom-template-tags/#django.template.Library.simple_tag
+                                    {% endcomment %}
+                                    <td>
+                                        {{ task.assigned|date:"d.m.Y, H:i" }}
+                                        {% if task.assigned_show_remaining %}
+                                            <span class="text-muted">({{ task.assigned|timeuntil }} left)</span>{% endif %}
+                                    </td>
+                                    <td>
+                                        {% if task.deadline %}
+                                            {{ task.deadline|date:"d.m.Y, H:i" }}
+                                            <span class="text-muted">({{ task.deadline|timeuntil }} left)</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        {% if task.assigned_points is not None %}
+                                            {{ task.assigned_points|floatformat:2 }}
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        {% if task.assignment.max_points is not None %}
+                                            {{ task.assignment.max_points|floatformat:2 }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            {% for quiz in node.quizzes %}
+                                <tr>
+                                    <td>
+                                        {% if not quiz.enrolled %}
+                                            <a href="{% url 'quiz_enrolling' assignment_id=quiz.assignment_id %}">{{ quiz.name }}</a>
+                                        {% elif quiz.publishable %}
+                                            <a href="{% url 'quiz_result' enrolled_id=quiz.enrolled_id %}">{{ quiz.name }}</a>
+                                        {% else %}
+                                            <span>{{ quiz.name }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>Quiz</td>
+                                    <td>
+                                        {{ quiz.assigned|date:"d.m.Y, H:i" }}
+                                    </td>
+                                    <td>
+                                        {{ quiz.deadline|date:"d.m.Y, H:i" }} <span
+                                            class="text-muted">({{ quiz.deadline|timeuntil }} left)</span>
+                                    </td>
+                                    <td class="text-end">
+                                        {% if quiz.earned_points is not None %}
+                                            {{ quiz.earned_points|floatformat:2 }}
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        {% if quiz.max_points is not None %}
+                                            {{ quiz.max_points|floatformat:2 }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            <tr>
+                                <th colspan="4">Total</th>
+                                <th class="text-end">{{ node.earned_points|floatformat:2 }}</th>
+                                <th class="text-end">{{ node.max_points|floatformat:2 }}</th>
+                            </tr>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="alert alert-info mb-0">No task or quiz assigned.</p>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+
+    {% comment %}
+        <div class="card">
+            <div class="card-header"><h5>Submit script installation</h5></div>
+            <div class="card-body">
+                Installation from terminal:
+
+                <pre>
+$ wget -q {{ request.scheme }}://{{ request.META.HTTP_HOST }}{% url 'install.sh' token %} -O - | bash && bash
         </pre>
-    </div>
-</div>
-{% endcomment %}
+            </div>
+        </div>
+    {% endcomment %}
 
 {% endblock %}

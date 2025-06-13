@@ -155,6 +155,10 @@ import ColorThemeNew from './components/ColorTheme.vue';
 import StudentList from './Teacher/StudentList.vue';
 import StudentPage from './Teacher/student-page/StudentPage.vue';
 import StudentTransfer from './Teacher/StudentTransfer.vue';
+import Quiz from './Quiz/Quiz.vue';
+import QuizEdit from './Quiz/QuizEdit.vue';
+import QuizList from './Quiz/Lists/QuizList.vue';
+import QuizSubmitList from './Quiz/Lists/QuizSubmitList.vue';
 
 /**
  * Register new Vue component as a custom element.
@@ -195,6 +199,10 @@ registerVueComponent('student-list', StudentList);
 registerSuspendedVueComponent('student-transfer', StudentTransfer);
 registerSuspendedVueComponent('inbus-import', InbusImport);
 registerVueComponent('notifications', NotificationsNew);
+registerVueComponent('quiz', Quiz);
+registerVueComponent('quiz-edit', QuizEdit);
+registerSuspendedVueComponent('quiz-list', QuizList);
+registerSuspendedVueComponent('quiz-submit-list', QuizSubmitList);
 if (enableNewUI) registerVueComponent('color-theme', ColorThemeNew);
 
 // Function that can be used outside the compiled JavaScript
@@ -203,4 +211,17 @@ function mountStudentPage(id, props) {
     const app = createApp(StudentPage, props);
     app.mount(id);
 }
+
+function mountQuiz(id, props) {
+    const app = createApp(Quiz, props);
+    app.mount(id);
+}
+
+function mountQuizEdit(id, props) {
+    const app = createApp(QuizEdit, props);
+    app.mount(id);
+}
+
 window.mountStudentPage = mountStudentPage;
+window.mountQuiz = mountQuiz;
+window.mountQuizEdit = mountQuizEdit;

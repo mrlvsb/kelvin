@@ -2,6 +2,7 @@ import csv
 import dataclasses
 import io
 import itertools
+import json
 import os
 import shutil
 import tarfile
@@ -27,8 +28,11 @@ from common.utils import is_teacher
 from evaluator.results import EvaluationResult
 from evaluator.testsets import TestSet
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
+from quiz.models import Quiz, EnrolledQuiz
+from quiz.quiz_utils import quiz_to_html, quiz_assigned_classes
 from . import statistics
 from .utils import file_response
+from serde.json import to_json
 
 
 @user_passes_test(is_teacher)
@@ -359,3 +363,92 @@ def reevaluate(request, submit_id):
     submit.jobid = evaluate_submit(request, submit).id
     submit.save()
     return redirect(request.META.get("HTTP_REFERER", reverse("submits")) + "#result")
+
+
+@user_passes_test(is_teacher)
+def quiz_scoring(request, enrolled_id):
+    """
+    Function that renders tool allowing to score student's quiz manually.
+    """
+    enrolled_quiz = get_object_or_404(EnrolledQuiz, pk=enrolled_id, submitted=True)
+
+    data = dict(
+        is_teacher=is_teacher(request.user),
+        quiz_id=enrolled_quiz.assigned_quiz.quiz.pk,
+        enrolled_id=enrolled_quiz.id,
+        remaining=None,
+        scoring=json.dumps(enrolled_quiz.scoring),
+        student=enrolled_quiz.student.username,
+        answers=json.dumps(enrolled_quiz.submit),
+        quiz_html=json.dumps(
+            quiz_to_html(enrolled_quiz.assigned_quiz.quiz.src, enrolled_quiz.template.content)
+        ),
+    )
+
+    return render(request, "web/quiz/quiz.html", dict(data=data))
+
+
+@user_passes_test(is_teacher)
+def quiz_edit(request, quiz_id: int):
+    """
+    Function that renders quiz edit page, or returns 404 if quiz not exists.
+    Raises an Exception if there are multiple assignments of one quiz for one class, which is not allowed.
+    """
+    quiz = get_object_or_404(Quiz, pk=quiz_id)
+
+    data = dict(
+        id=quiz.id,
+        assignments=json.dumps(quiz_assigned_classes(quiz, request.user.id)),
+        teacher=request.user.username,
+        deletable=quiz.assignedquiz_set.count() == 0,
+        quiz_directory=quiz.src,
+    )
+
+    return render(request, "web/quiz/quiz_edit.html", dict(data=data))
+
+
+@user_passes_test(is_teacher)
+def quiz_detail(request, quiz_id):
+    """
+    Function that renders detail of a quiz.
+    """
+    quiz = get_object_or_404(Quiz, pk=quiz_id)
+
+    quiz_dto = quiz.get_dto()
+
+    data = dict(
+        is_teacher=is_teacher(request.user),
+        quiz_id=quiz.pk,
+        enrolled_id=None,
+        answers=None,
+        remaining=None,
+        scoring=None,
+        student=None,
+        quiz_html=json.dumps(quiz_to_html(quiz.src, json.loads(to_json(quiz_dto)))),
+    )
+
+    return render(request, "web/quiz/quiz.html", dict(data=data))
+
+
+@user_passes_test(is_teacher)
+def quiz_list(request):
+    """
+    Function that renders page with all quizzes.
+    """
+    return render(request, "web/quiz/quiz_list.html")
+
+
+@user_passes_test(is_teacher)
+def quiz_submits(request, quiz_id: int):
+    """
+    Function that renders page with submits for quiz and its assigned classes.
+    """
+    quiz = get_object_or_404(Quiz, pk=quiz_id)
+
+    return render(
+        request,
+        "web/quiz/quiz_submit_list.html",
+        {
+            "quiz_id": quiz.id,
+        },
+    )

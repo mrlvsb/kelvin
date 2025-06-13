@@ -5,13 +5,18 @@ from quiz.models import Quiz, AssignedQuiz, EnrolledQuiz
 from web.markdown_utils import process_markdown
 
 
-# Exception that can be raised during invalid quiz operations
 class QuizException(Exception):
+    """
+    Exception that can be raised during invalid quiz operations
+    """
+
     pass
 
 
-# Function that returns a list of classes that are/can be assigned to the quiz.
 def quiz_assigned_classes(quiz: Quiz, requested_by: int):
+    """
+    Function that returns a list of classes that are/can be assigned to the quiz.
+    """
     classes = Class.objects.current_semester().filter(subject=quiz.subject)
     user = User.objects.get(pk=requested_by)
 
@@ -61,9 +66,11 @@ def quiz_assigned_classes(quiz: Quiz, requested_by: int):
     return assignments_dtos
 
 
-# Method that computes the score of a submitted quiz for questions that are possible to score automatically.
-# Automatically scored questions are of type: abcd, abcd.multiple
 def score_quiz(enrolled_quiz: EnrolledQuiz):
+    """
+    Method that computes the score of a submitted quiz for questions that are possible to score automatically.
+    Automatically scored questions are of type: abcd, abcd.multiple
+    """
     if not enrolled_quiz.submitted:
         raise QuizException("Attempt to score non submitted quiz.")
     template = enrolled_quiz.template.content
@@ -107,8 +114,10 @@ def score_quiz(enrolled_quiz: EnrolledQuiz):
     enrolled_quiz.save()
 
 
-# Helper function that renders a markdown content of question and its possible answers to HTML and returns it.
 def quiz_to_html(quiz_directory: str, quiz: dict):
+    """
+    Helper function that renders a markdown content of question and its possible answers to HTML and returns it.
+    """
     result = []
 
     for question in quiz["questions"]:

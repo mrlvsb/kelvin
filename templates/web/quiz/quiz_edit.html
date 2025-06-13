@@ -1,0 +1,15 @@
+{% extends 'web/layout.html' %}
+
+{% block content %}
+    <div id="quiz-editor"></div>
+{% endblock %}
+
+{% block script %}
+{{ data|json_script:"quiz-edit-data" }}
+
+<script type="text/javascript">
+    const quizEditData = JSON.parse(document.getElementById("quiz-edit-data").textContent);
+    mountQuizEdit("#quiz-editor", {"quizEditData": quizEditData});
+</script>
+{% endblock %}
+

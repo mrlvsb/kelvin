@@ -47,6 +47,15 @@ urlpatterns = [
     path("quiz/<int:enrolled_id>/scoring", quiz_view.quiz_scoring, name="api_quiz_scoring"),
     path("quiz/<int:quiz_id>/classes", quiz_view.quiz_classes, name="api_quiz_classes"),
     path("quiz/add", quiz_view.quiz_add, name="api_quiz_add"),
+    path("quiz/enroll/<int:assigned_quiz_id>", quiz_view.quiz_enroll, name="api_quiz_enroll"),
     path("quiz/<int:quiz_id>/duplicate", quiz_view.quiz_duplicate),
     path("quiz/<int:quiz_id>/assignments", quiz_view.quiz_assignments, name="api_quiz_assignments"),
+    path("quiz/<int:quiz_id>/submits", quiz_view.quiz_submits, name="api_quiz_submits_list"),
+    path(
+        "quiz/<int:quiz_id>/submits/<class_id>",
+        quiz_view.quiz_submits,
+        name="api_quiz_submits_list_class",
+    ),
+    path("quiz-list", quiz_view.quizzes_list_all, name="api_quiz_list"),
+    path("quiz-list/<subject_abbr>", quiz_view.quizzes_list_all, name="api_quiz_list_subject"),
 ]

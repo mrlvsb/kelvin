@@ -79,6 +79,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_cas_ng.middleware.CASMiddleware",
+    "quiz.middleware.QuizRedirectMiddleware",
 ]
 
 ROOT_URLCONF = "kelvin.urls"

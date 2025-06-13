@@ -17,6 +17,7 @@ export let showStudentsList = clazz['students'].length < 50;
 let task_type = null;
 
 let activeTaskList = [];
+let activeQuizList = [];
 let showAddStudents = clazz.students.length == 0;
 
 let reevaluateLoading = false;
@@ -38,13 +39,25 @@ $: {
   );
 }
 
-function studentPoints(activeTaskList, student) {
-  return activeTaskList
-    .map((i) => i.students[student.username])
-    .filter((result) => result && result.submits != 0 && !isNaN(parseFloat(result.assigned_points)))
-    .map((result) => parseFloat(result.assigned_points))
-    .reduce((acc, val) => acc + val, 0)
-    .toFixed(2);
+$: {
+  activeQuizList = task_type === null ? clazz.quizzes : [];
+}
+
+function studentPoints(activeTaskList, activeQuizList, student) {
+  return (
+    activeTaskList
+      .map((i) => i.students[student.username])
+      .filter(
+        (result) => result && result.submits != 0 && !isNaN(parseFloat(result.assigned_points))
+      )
+      .map((result) => parseFloat(result.assigned_points))
+      .reduce((acc, val) => acc + val, 0) +
+    activeQuizList
+      .map((i) => i.students[student.username])
+      .filter((result) => result && !isNaN(parseFloat(result.score)))
+      .map((result) => parseFloat(result.score))
+      .reduce((acc, val) => acc + val, 0)
+  ).toFixed(2);
 }
 
 function totalTaskPoints(activeTaskList, assignment_index) {
@@ -57,6 +70,19 @@ function totalTaskPoints(activeTaskList, assignment_index) {
   });
 
   return assignmentPoints;
+}
+
+function totalQuizPoints(clazz, quiz_index) {
+  let quizPoints = 0;
+
+  for (let i = 0; i < clazz.students.length; i++) {
+    const student = clazz.students[i];
+    if (!isNaN(clazz.quizzes[quiz_index].students[student.username].score)) {
+      quizPoints += Math.max(0, clazz.quizzes[quiz_index].students[student.username].score);
+    }
+  }
+
+  return quizPoints;
 }
 
 function createTaskSummary(activeTaskList, clazz, assignment_index) {
@@ -104,7 +130,7 @@ function createTaskTypeSummary(activeTaskList) {
     : 'Task Summary - No tasks assigned';
 }
 
-let showFullTaskNames = localStorageStore('classDetail/showFullTaskNames', false);
+let showFullNames = localStorageStore('classDetail/showFullNames', false);
 let showSummary = false;
 </script>
 
@@ -125,9 +151,9 @@ let showSummary = false;
       </a>
       <button
         class="p-0 btn btn-link"
-        on:click={() => ($showFullTaskNames = !$showFullTaskNames)}
+        on:click={() => ($showFullNames = !$showFullNames)}
         title="Show full task names">
-        {#if $showFullTaskNames}
+        {#if $showFullNames}
           <span><span class="iconify" data-icon="la:eye"></span></span>
         {:else}
           <span><span class="iconify" data-icon="la:eye-slash"></span></span>
@@ -190,9 +216,9 @@ let showSummary = false;
                         href={assignment.task_link}
                         class:text-muted={assignment.assigned > new Date()}
                         class:text-success={assignment.deadline > new Date()}>
-                        {$showFullTaskNames
+                        {$showFullNames
                           ? assignment.short_name
-                          : `#${clazz.assignments.indexOf(assignment) + 1}`}{#if assignment.max_points > 0}&nbsp;({assignment.max_points}b){/if}
+                          : `#T${clazz.assignments.indexOf(assignment) + 1}`}{#if assignment.max_points > 0}&nbsp;({assignment.max_points}b){/if}
                       </a>
                       <div class="more-content border shadow rounded bg-body p-1">
                         {assignment.name}
@@ -252,10 +278,50 @@ let showSummary = false;
                       </div>
                     </th>
                   {/each}
+                  {#each activeQuizList as quiz, index}
+                    <th class="more-hover">
+                      <a
+                        href={quiz.quiz_link}
+                        class:text-muted={quiz.assigned > new Date()}
+                        class:text-success={quiz.deadline > new Date()}>
+                        {$showFullNames
+                          ? quiz.name_lower
+                          : `#Q${index + 1}`}{#if quiz.max_points > 0}&nbsp;({quiz.max_points}b){/if}
+                      </a>
+                      <div class="more-content border shadow rounded bg-body p-1">
+                        {quiz.name}
+                        <a href={quiz.quiz_edit_link} title="Edit"
+                          ><span class="iconify" data-icon="clarity:edit-solid"></span></a>
+                        <dl>
+                          <dt>Assigned</dt>
+                          <dd>
+                            {quiz.assigned.toLocaleString('cs')}{#if quiz.assigned > new Date()}, <TimeAgo
+                                datetime={quiz.assigned} />{/if}
+                          </dd>
+
+                          {#if quiz.deadline}
+                            <dt>Deadline</dt>
+                            <dd>
+                              {quiz.deadline.toLocaleString('cs')}{#if quiz.deadline > new Date()}, <TimeAgo
+                                  datetime={quiz.deadline} />{/if}
+                            </dd>
+                          {/if}
+                          {#if quiz.max_points}
+                            <dt>Max points</dt>
+                            <dd>
+                              {quiz.max_points}
+                            </dd>
+                          {/if}
+                        </dl>
+                      </div>
+                    </th>
+                  {/each}
                   <th
                     class="more-hover"
                     title={task_type === null ? createTaskTypeSummary(activeTaskList) : ''}>
-                    Total ({activeTaskList.reduce((sum, task) => sum + task.max_points, 0)} pts)
+                    Total ({activeTaskList
+                      .concat(activeQuizList)
+                      .reduce((sum, task) => sum + task.max_points, 0)} pts)
                   </th>
                 </tr>
               </thead>
@@ -279,7 +345,15 @@ let showSummary = false;
                           assigned_points={result.assigned_points} />
                       </td>
                     {/each}
-                    <td>{studentPoints(activeTaskList, student)}</td>
+                    {#each activeQuizList.map((i) => i.students[student.username]) as result, i}
+                      <td>
+                        {#if result.score != null}<a
+                            href={result.scoring_link}
+                            style="color: {result.color};">{result.score}</a
+                          >{/if}
+                      </td>
+                    {/each}
+                    <td>{studentPoints(activeTaskList, activeQuizList, student)}</td>
                   </tr>
                 {/each}
                 <tr>
@@ -288,6 +362,9 @@ let showSummary = false;
                   {#each activeTaskList as assignment, k}
                     <td title={createTaskSummary(activeTaskList, clazz, k)}
                       >{totalTaskPoints(activeTaskList, k).toFixed(2)}</td>
+                  {/each}
+                  {#each activeQuizList as _, k}
+                    <td>{totalQuizPoints(clazz, k).toFixed(2)}</td>
                   {/each}
                   <td></td>
                 </tr>
