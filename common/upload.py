@@ -38,35 +38,40 @@ class Uploader:
             raise Exception(f"Invalid file type {type(file)}")
 
 
-class ArchiveUploader(Uploader):
-    def __init__(self, file, format):
+class ZipUploader(Uploader):
+    def __init__(self, file):
         super().__init__()
-        self.format = format
-        self.archive = None
-
-        if format == "zip":
-            self.archive = zipfile.ZipFile(file,"r")
-        elif format == "7z":
-            self.archive = py7zr.sevenzipfile(file, mode="r")
-
+        self.archive = self.archive = zipfile.ZipFile(file,"r")
 
     def get_files(self):
-        if self.format == "zip":
-            return [(f.filename, f) for f in self.archive.filelist if not f.is_dir()]
-        elif self.format == "7z":
-            return [(name, None) for name in self.archive.getnames()]
-        return []
+        return [(f.filename, f) for f in self.archive.filelist if not f.is_dir()]
 
     def upload_file(self, path: str, file, submit: Submit):
         target_path = submit.source_path(path)
         os.makedirs(dirname(target_path), exist_ok=True)
 
-        if self.format == "zip":
-            self.archive.extract(path, path=submit.dir())
-        elif self.format == "7z":
-            extracted = self.archive.read([path])
-            with open(target_path, 'wb') as f:
-               f.write(extracted[path].read())
+        self.archive.extract(path, path=submit.dir())
+        self.count += 1
+        return target_path
+
+    def close(self):
+        self.archive.close()
+
+class SevenZUploader(Uploader):
+    def __init__(self, file):
+        super().__init__()
+        self.archive = self.archive = py7zr.sevenzipfile(file, mode="r")
+
+    def get_files(self):
+        return [(name, None) for name in self.archive.getnames()]        
+
+    def upload_file(self, path: str, file, submit: Submit):
+        target_path = submit.source_path(path)
+        os.makedirs(dirname(target_path), exist_ok=True)
+
+        extracted = self.archive.read([path])
+        with open(target_path, 'wb') as f:
+            f.write(extracted[path].read())
 
         self.count += 1
         return target_path
@@ -138,9 +143,10 @@ class TooManyFilesError(BaseException):
 
 def upload_submit_files(submit: Submit, paths: List[str], files: List[UploadedFile]):
     if len(paths) == 1 and (zipfile.is_zipfile(files[0]) or py7zr.is_7zfile(files[0])):
-        format = ("zip","7z")[py7zr.is_7zfile(files[0])]
-        uploader = ArchiveUploader(files[0],format)
-
+        if py7zr.is_7zfile(files[0]):
+            uploader = SevenZUploader(files[0])
+        else:
+            uploader = ZipUploader(files[0])
     else:
         uploader = FileUploader(paths, files)
 
