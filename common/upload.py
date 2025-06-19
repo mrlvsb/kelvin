@@ -41,7 +41,7 @@ class Uploader:
 class ZipUploader(Uploader):
     def __init__(self, file):
         super().__init__()
-        self.archive = self.archive = zipfile.ZipFile(file,"r")
+        self.archive = zipfile.ZipFile(file,"r")
 
     def get_files(self):
         return [(f.filename, f) for f in self.archive.filelist if not f.is_dir()]
@@ -60,7 +60,7 @@ class ZipUploader(Uploader):
 class SevenZUploader(Uploader):
     def __init__(self, file):
         super().__init__()
-        self.archive = self.archive = py7zr.sevenzipfile(file, mode="r")
+        self.archive = py7zr.sevenzipfile(file, mode="r")
 
     def get_files(self):
         return [(name, None) for name in self.archive.getnames()]        
