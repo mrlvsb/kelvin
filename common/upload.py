@@ -47,6 +47,8 @@ class ZipUploader(Uploader):
         return [(f.filename, f) for f in self.archive.filelist if not f.is_dir()]
 
     def upload_file(self, path: str, file, submit: Submit):
+        self.check_file_type(file, zipfile.ZipInfo)
+
         target_path = submit.source_path(path)
         os.makedirs(dirname(target_path), exist_ok=True)
 
@@ -63,9 +65,11 @@ class SevenZUploader(Uploader):
         self.archive = py7zr.sevenzipfile(file, mode="r")
 
     def get_files(self):
-        return [(name, None) for name in self.archive.getnames()]        
+        return [(name, name) for name in self.archive.getnames()]        
 
     def upload_file(self, path: str, file, submit: Submit):
+        self.check_file_type(file, str)
+
         target_path = submit.source_path(path)
         os.makedirs(dirname(target_path), exist_ok=True)
 
