@@ -41,7 +41,7 @@ class Uploader:
 class ZipUploader(Uploader):
     def __init__(self, file):
         super().__init__()
-        self.archive = zipfile.ZipFile(file,"r")
+        self.archive = zipfile.ZipFile(file, "r")
 
     def get_files(self):
         return [(f.filename, f) for f in self.archive.filelist if not f.is_dir()]
@@ -59,22 +59,21 @@ class ZipUploader(Uploader):
     def close(self):
         self.archive.close()
 
+
 class SevenZUploader(Uploader):
     def __init__(self, file):
         super().__init__()
         self.archive = py7zr.sevenzipfile(file, mode="r")
 
     def get_files(self):
-        return [(name, name) for name in self.archive.getnames()]        
+        return [(name, name) for name in self.archive.getnames()]
 
     def upload_file(self, path: str, file, submit: Submit):
-        self.check_file_type(file, str)
-
         target_path = submit.source_path(path)
         os.makedirs(dirname(target_path), exist_ok=True)
 
         extracted = self.archive.read([path])
-        with open(target_path, 'wb') as f:
+        with open(target_path, "wb") as f:
             f.write(extracted[path].read())
 
         self.count += 1
