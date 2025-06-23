@@ -6,6 +6,8 @@ from os.path import basename, dirname
 from typing import List
 
 import magic
+import tempfile
+from pathlib import Path
 from django.core.exceptions import SuspiciousOperation
 from django.core.files.uploadedfile import UploadedFile
 
@@ -36,6 +38,15 @@ class Uploader:
     def check_file_type(self, file, type):
         if not isinstance(file, type):
             raise Exception(f"Invalid file type {type(file)}")
+
+    def check_7z_file(self, file):
+        if isinstance(file, UploadedFile):
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".7z") as tmp:
+                tmp.write(file.read())
+                tmp_path = Path(tmp.name)
+            return py7zr.is_7zfile(tmp_path)
+        else:
+            raise TypeError(f"Invalid file type: {type(file)}")
 
 
 class ZipUploader(Uploader):
@@ -69,6 +80,7 @@ class SevenZUploader(Uploader):
         return [(name, name) for name in self.archive.getnames()]
 
     def upload_file(self, path: str, file, submit: Submit):
+        self.check_7z_file(file)
         target_path = submit.source_path(path)
         os.makedirs(dirname(target_path), exist_ok=True)
 
@@ -145,8 +157,8 @@ class TooManyFilesError(BaseException):
 
 
 def upload_submit_files(submit: Submit, paths: List[str], files: List[UploadedFile]):
-    if len(paths) == 1 and (zipfile.is_zipfile(files[0]) or py7zr.is_7zfile(files[0])):
-        if py7zr.is_7zfile(files[0]):
+    if len(paths) == 1 and (get_extension(paths[0]) == ".zip" or get_extension(paths[0]) == ".7z"):
+        if get_extension(paths[0]) == ".7z":
             uploader = SevenZUploader(files[0])
         else:
             uploader = ZipUploader(files[0])
