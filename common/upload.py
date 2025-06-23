@@ -39,16 +39,6 @@ class Uploader:
         if not isinstance(file, type):
             raise Exception(f"Invalid file type {type(file)}")
 
-    def check_7z_file(self, file):
-        if isinstance(file, UploadedFile):
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".7z") as tmp:
-                tmp.write(file.read())
-                tmp_path = Path(tmp.name)
-            return py7zr.is_7zfile(tmp_path)
-        else:
-            raise TypeError(f"Invalid file type: {type(file)}")
-
-
 class ZipUploader(Uploader):
     def __init__(self, file):
         super().__init__()
@@ -80,7 +70,6 @@ class SevenZUploader(Uploader):
         return [(name, name) for name in self.archive.getnames()]
 
     def upload_file(self, path: str, file, submit: Submit):
-        self.check_7z_file(file)
         target_path = submit.source_path(path)
         os.makedirs(dirname(target_path), exist_ok=True)
 
