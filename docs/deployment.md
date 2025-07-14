@@ -10,7 +10,7 @@ graph TD
         direction TB
         A1("Code Merged to Merge queue") --> A2{"GitHub <br/> Workflow <br/> triggered"};
         A2 --> A3["Build & Tag Docker Image<br/>(ghcr.io/mrlvsb/&lt;service_name&gt;:${{ github.sha}})"];
-        A3 --> A4["Push Docker Image to Container Registry (GHCR)"];
+        A3 --> A4["Push Docker Image to Container Registry (GHCR) with image_sha only"];
         A4 --> A5["POST request to Deployment Endpoint<br/>(sends image_sha and service_name and HMAC signature)"];
     end
 
@@ -45,8 +45,10 @@ graph TD
       direction TB
       B4 -- "4xx Response" --> D1["Workflow Fails"];
       B6 --> D2{"Process <br/> Response"};
-      D2 -- 200 OK --> D3["Workflow Succeeds"];
       D2 -- 4xx or 5xx Error --> D1;
+      D2 -- 200 OK --> D3["Deployment Succeeded"];
+      D3 --> D4["Updates 'latest' tag in Container Registry (GHCR) to point to new image"];
+      D4 --> D5["Workflow Succeeds"];
     end
 ```
 
@@ -61,7 +63,7 @@ graph TD
 #### 1. **Build & Push Docker Image**
 
 - Builds the Docker image and tags it with the unique commit SHA: `ghcr.io/mrlvsb/<service_name>:${{ github.sha }}`.
-- Pushes the tagged image to the GitHub Container Registry (GHCR).
+- Pushes the tagged image to the GitHub Container Registry (GHCR). At this point, the latest tag is not touched.
 
 #### 2. **Call Deployment Endpoint**
 
@@ -109,7 +111,7 @@ The service captures all output from the deployment script and includes it in th
          ```
     2. Starts the updated container (without dependencies):
          ```bash
-         docker compose up -d --no-deps <service_name>
+         IMAGE_TAG=${image_sha} docker compose up -d --no-deps <service_name>
          ```
 
 #### **3. Health Check**
@@ -126,14 +128,14 @@ The service captures all output from the deployment script and includes it in th
     - Removes the old container and image to free up resources:
         ```bash
         docker compose rm -f <service_name>
-        docker image rm <service_name>:<previous_image_sha>
+        docker image rm ${PREVIOUS_IMAGE_ID}
         ```
 
 - **If unhealthy**:
     - Rolls back by stopping the new container and restarting the previous version:
         ```bash
         docker compose stop <service_name>
-        docker compose up -d --no-deps <service_name>@previous_image_sha
+        IMAGE_TAG=${PREVIOUS_IMAGE_ID} docker compose up -d --no-deps <service_name>
         ```
     - Returns a `5xx` response.
 
@@ -141,6 +143,6 @@ The service captures all output from the deployment script and includes it in th
 
 The GitHub Actions workflow waits for the HTTP response from the Kelvin Deployment Service.
 
-- A `200 OK` response marks the workflow as successful.
+- A `200 OK` response confirms the deployment was successful. The workflow proceeds to update the latest tag in GHCR to point to an image previously tagged by commit SHA (image_sha) and then marks the entire run as successful.
 
 - Any other status code (`4xx` or `5xx`) marks the workflow as failed, providing clear and immediate feedback directly in the merge queue. The detailed logs returned from the deployment script are printed to the workflow output for diagnostics.
