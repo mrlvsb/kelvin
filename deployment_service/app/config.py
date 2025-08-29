@@ -1,0 +1,53 @@
+# File with environment variables and general configuration logic.
+# Env variables are combined in nested groups like "Security" etc.
+# So environment variable (case-insensitive) for "webhook_secret" will be "security__webhook_secret"
+#
+# Pydantic priority ordering:
+#
+# 1. (Most important, will overwrite everything) - environment variables
+# 2. `.env` file in root folder of project
+# 3. Default values
+#
+#
+# See https://pydantic-docs.helpmanual.io/usage/settings/
+# Note, complex types like lists are read as json-encoded strings.
+
+
+from functools import lru_cache
+from pathlib import Path
+
+from pydantic import AnyHttpUrl, BaseModel, SecretStr, FilePath
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+PROJECT_DIR = Path(__file__).parent.parent
+
+
+class Security(BaseModel):
+    """Settings related to security and authentication."""
+
+    webhook_secret: SecretStr
+    allowed_hosts: list[str] = ["localhost", "127.0.0.1"]
+    backend_cors_origins: list[AnyHttpUrl] = []
+
+
+class Docker(BaseModel):
+    """Settings related to Docker and Docker Compose."""
+
+    compose_file_path: FilePath
+    ghcr_base_url: str = "ghcr.io/mrlvsb"
+
+
+class Settings(BaseSettings):
+    security: Security
+    docker: Docker
+
+    model_config = SettingsConfigDict(
+        env_file=f"{PROJECT_DIR}/.env",
+        case_sensitive=False,
+        env_nested_delimiter="__",
+    )
+
+
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    return Settings()  # type: ignore

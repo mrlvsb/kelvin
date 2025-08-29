@@ -1,3 +1,5 @@
+name: kelvin
+
 services:
   app:
     container_name: kelvin_app
@@ -9,7 +11,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runtime
-    image: ghcr.io/mrlvsb/kelvin:latest
+    image: "ghcr.io/mrlvsb/kelvin:${APP_IMAGE_TAG:-latest}" # Interpolation for Deployment Service
     pull_policy: always
     restart: unless-stopped
     environment:
