@@ -11,7 +11,10 @@ HMAC_SIGNATURE_HEADER = "X-Hub-Signature-256"
 
 api_key_header = APIKeyHeader(name=HMAC_SIGNATURE_HEADER, scheme_name="HMACSignature")
 
-async def validate_signature(request: Request, signature_header: str = Security(api_key_header)) -> None:
+
+async def validate_signature(
+    request: Request, signature_header: str = Security(api_key_header)
+) -> None:
     """
     Validates the HMAC signature of the incoming webhook request.
 

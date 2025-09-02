@@ -77,6 +77,26 @@ services:
       - app_static:/app/static:ro
       - app_socket:/socket
 
+  deployment:
+    container_name: deployment_app
+    profiles: [ prod ]
+    build:
+      context: deployment_service
+      dockerfile: Dockerfile
+      target: runtime
+    image: "ghcr.io/mrlvsb/deployment:${DEPLOYMENT_IMAGE_TAG:-latest}" # Interpolation for Deployment Service
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      - DOCKER__GHCR_BASE_URL=ghcr.io/mrlvsb
+      - DOCKER__COMPOSE_FILE_PATH=/kelvin/docker-compose.yml
+    env_file:
+      - deployment_service/.env
+    volumes:
+      - ${REPO__DIRECTORY_PATH}:/kelvin
+      - /usr/bin/docker:/usr/bin/docker
+      - /var/run/docker.sock:/var/run/docker.sock
+
 volumes:
   app_static:
   app_socket:
