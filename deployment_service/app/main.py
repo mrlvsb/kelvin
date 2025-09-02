@@ -30,6 +30,7 @@ app.add_middleware(
     allowed_hosts=get_settings().security.allowed_hosts,
 )
 
+
 @app.post(
     "/",
     summary="Trigger Deployment for a specified service",
@@ -43,11 +44,11 @@ app.add_middleware(
                     "example": {
                         "logs": [
                             "[2025-09-01 13:45:12] [INFO] Starting deployment for commit 0474329d785bbb2c928b257f104847dc4f8f80f6",
-                            "[2025-09-01 13:46:27] [INFO] Deployment successful for app:0474329d785bbb2c928b257f104847dc4f8f80f6"
+                            "[2025-09-01 13:46:27] [INFO] Deployment successful for app:0474329d785bbb2c928b257f104847dc4f8f80f6",
                         ],
                     }
                 }
-            }
+            },
         },
         status.HTTP_400_BAD_REQUEST: {
             "description": "Deployment failed due to an error while pulling the Docker image.",
@@ -56,12 +57,12 @@ app.add_middleware(
                     "example": {
                         "logs": [
                             "[2025-09-01 13:45:12] [INFO] Starting deployment for commit 0474329d785bbb2c928b257f104847dc4f8f80f6",
-                            "[2025-09-01 13:46:10] [INFO] Pulling new image: 0474329d785bbb2c928b257f104847dc4f8f80f6..."
+                            "[2025-09-01 13:46:10] [INFO] Pulling new image: 0474329d785bbb2c928b257f104847dc4f8f80f6...",
                         ],
-                        "error": "Failed to pull Docker image: not found"
+                        "error": "Failed to pull Docker image: not found",
                     }
                 }
-            }
+            },
         },
         status.HTTP_500_INTERNAL_SERVER_ERROR: {
             "description": "Critical deployment failure, rollback may be partial, manual intervention may be required",
@@ -70,12 +71,12 @@ app.add_middleware(
                     "example": {
                         "logs": [
                             "[2025-09-01 13:45:12] [INFO] Starting deployment for commit 0474329d785bbb2c928b257f104847dc4f8f80f6",
-                            "[2025-09-01 13:46:05] [INFO] Fetching latest data from git origin..."
+                            "[2025-09-01 13:46:05] [INFO] Fetching latest data from git origin...",
                         ],
-                        "error": "Failed to create git worktree. Is the commit SHA valid?"
+                        "error": "Failed to create git worktree. Is the commit SHA valid?",
                     }
                 }
-            }
+            },
         },
         status.HTTP_502_BAD_GATEWAY: {
             "description": "Deployment failure, rollback completed successfully",
@@ -84,15 +85,14 @@ app.add_middleware(
                     "example": {
                         "logs": [
                             "[2025-09-01 13:45:12] [INFO] Starting deployment for commit 0474329d785bbb2c928b257f104847dc4f8f80f6",
-                            "[2025-09-01 13:46:05] [ERROR] An error occurred: Health check timed out. Initiating rollback."
+                            "[2025-09-01 13:46:05] [ERROR] An error occurred: Health check timed out. Initiating rollback.",
                         ],
-                        "error": "Health check timed out."
+                        "error": "Health check timed out.",
                     }
                 }
-            }
+            },
         },
     },
-
 )
 async def deploy(request: DeploymentRequest, response: Response):
     """

@@ -74,7 +74,9 @@ class DeploymentManager:
         self.logs: deque = deque(maxlen=500)
         handler = BufferHandler(self.logs)
         handler.setFormatter(
-            logging.Formatter("[%(asctime)s] [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+            logging.Formatter(
+                "[%(asctime)s] [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+            )
         )
         self.logger = logging.getLogger(f"deploy-{service_name}")
         self.logger.setLevel(logging.INFO)
