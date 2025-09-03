@@ -10,8 +10,8 @@ graph TD
         direction TB
         A1("Code Merged to Merge queue") --> A2{"GitHub <br/> Workflow <br/> triggered"};
         A2 --> A3["Build & Tag Docker Image<br/>(ghcr.io/mrlvsb/&lt;service_name&gt;:${{ github.sha}})"];
-        A3 --> A4["Push Docker Image to Container Registry (GHCR) with image_sha only"];
-        A4 --> A5["POST request to Deployment Endpoint<br/>(sends image_sha and service_name and HMAC signature)"];
+        A3 --> A4["Push Docker Image to Container Registry (GHCR) with image only"];
+        A4 --> A5["POST request to Deployment Endpoint<br/>(sends image and service_name and HMAC signature)"];
     end
 
     subgraph "B. Kelvin VM: Service"
@@ -21,7 +21,7 @@ graph TD
         B1 -- "Valid IP" ----> B2["Secure FastAPI Endpoint (/deploy)"];
         B2 --> B3{"Validate HMAC <br/>Signature"};
         B3 -- "Invalid Signature" ----> B4;
-        B3 -- "Valid Signature" ----> B5["Invoke script<br/>(Passes image_sha and service_name)"];
+        B3 -- "Valid Signature" ----> B5["Invoke script<br/>(Passes image and service_name)"];
         B5 -- "Script Output (stdout/stderr)" --> B6["Stream Logs & Return Final HTTP Status<br/>(200 OK or 4xx /5xx Error)"];
     end
 
@@ -68,7 +68,7 @@ graph TD
 #### 2. **Call Deployment Endpoint**
 
 - Computes an HMAC signature over the GitHub event payload using `WEBHOOK_SECRET`.
-- Sends a `POST` request to the Kelvin VM’s `/deploy` with the `X-Hub-Signature-256` header and `image_sha` and `service_name` in request body.
+- Sends a `POST` request to the Kelvin VM’s `/deploy` with the `X-Hub-Signature-256` header and `image` and `service_name` in request body.
 - Uses `curl -f` to fail the Action on any non-200 response.
 
 
@@ -86,7 +86,7 @@ This lightweight container runs the FastAPI endpoint. To manage deployments, it 
 
 #### 3. **Invoke Deployment Script:**
 
-Upon successful IP and HMAC validation, the service invokes script, passing the `image_sha` and `service_name` as an argument.
+Upon successful IP and HMAC validation, the service invokes script, passing the `image` and `service_name` as an argument.
 
 #### 4. **Stream Logs & Return Status**
 
@@ -111,7 +111,7 @@ The service captures all output from the deployment script and includes it in th
          ```
     2. Starts the updated container (without dependencies):
          ```bash
-         IMAGE_TAG=${image_sha} docker compose up -d --no-deps <service_name>
+         IMAGE_TAG=${image["tag"]} docker compose up -d --no-deps <service_name>
          ```
 
 #### **3. Health Check**
@@ -143,6 +143,6 @@ The service captures all output from the deployment script and includes it in th
 
 The GitHub Actions workflow waits for the HTTP response from the Kelvin Deployment Service.
 
-- A `200 OK` response confirms the deployment was successful. The workflow proceeds to update the latest tag in GHCR to point to an image previously tagged by commit SHA (image_sha) and then marks the entire run as successful.
+- A `200 OK` response confirms the deployment was successful. The workflow proceeds to update the latest tag in GHCR to point to an image previously tagged by commit SHA (image) and then marks the entire run as successful.
 
 - Any other status code (`4xx` or `5xx`) marks the workflow as failed, providing clear and immediate feedback directly in the merge queue. The detailed logs returned from the deployment script are printed to the workflow output for diagnostics.

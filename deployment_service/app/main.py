@@ -104,11 +104,10 @@ async def deploy(request: DeploymentRequest, response: Response):
 
     manager = DeploymentManager(
         service_name=request.service_name,
-        image_sha=request.image_sha,
+        image=request.image,
         commit_sha=request.commit_sha,
         compose_path=get_settings().docker.compose_file_path,
         container_name=request.container_name,
-        ghcr_base_url=get_settings().docker.ghcr_base_url,
     )
     try:
         logs = await manager.run()

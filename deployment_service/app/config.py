@@ -34,7 +34,6 @@ class Docker(BaseModel):
     """Settings related to Docker and Docker Compose."""
 
     compose_file_path: FilePath
-    ghcr_base_url: str = "ghcr.io/mrlvsb"
 
 
 class Settings(BaseSettings):
