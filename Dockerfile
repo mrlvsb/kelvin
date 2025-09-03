@@ -69,6 +69,11 @@ RUN python manage.py collectstatic --no-input --clear
 
 COPY --chown=webserver deploy/entrypoint.sh ./
 
+COPY --chown=webserver deploy/healthcheck.py ./
+
 STOPSIGNAL SIGINT
 
 ENTRYPOINT ["/app/entrypoint.sh"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD ["python3", "/app/healthcheck.py"]

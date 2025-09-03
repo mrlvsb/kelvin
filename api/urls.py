@@ -58,4 +58,5 @@ urlpatterns = [
     ),
     path("quiz-list", quiz_view.quizzes_list_all, name="api_quiz_list"),
     path("quiz-list/<subject_abbr>", quiz_view.quizzes_list_all, name="api_quiz_list_subject"),
+    path("health", default_view.health_check),
 ]

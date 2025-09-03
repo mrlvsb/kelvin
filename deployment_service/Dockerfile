@@ -32,6 +32,8 @@ RUN groupadd --gid 101 webserver && \
 
 COPY --from=build --chown=webserver:webserver /app /app
 
+COPY --chown=webserver:webserver healthcheck.py /app/healthcheck.py
+
 USER webserver
 
 WORKDIR /app
@@ -45,3 +47,6 @@ EOT
 ENTRYPOINT [ "uvicorn" , "app.main:app", "--workers", "2", "--loop", "uvloop", "--host", "0.0.0.0" ]
 
 CMD ["--port", "9000", "--root-path", "/deployment"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD ["python3", "/app/healthcheck.py"]
