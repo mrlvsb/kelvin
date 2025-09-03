@@ -56,19 +56,19 @@ class DeploymentManager:
     def __init__(
         self,
         service_name: str,
-        image_sha: str,
+        image: dict[str, str],
         commit_sha: str,
         compose_path: Path,
         container_name: str,
-        ghcr_base_url: str,
     ):
         self.service_name = service_name
         self.container_name = container_name
-        self.image_sha = image_sha
+        self.image_tag = image["tag"]
         self.commit_sha = commit_sha
         self.stable_compose_path = str(compose_path)
         self.stable_repository_dir = os.path.dirname(compose_path)
-        self.new_image_tag = f"{ghcr_base_url}/{self.service_name}:{self.image_sha}"
+        repo = image.get("repository")
+        self.new_image_tag = f"{repo + '/' if repo else ''}{image['image']}:{self.image_tag}"
         self.client = docker.from_env()
 
         self.logs: deque = deque(maxlen=500)
@@ -135,7 +135,7 @@ class DeploymentManager:
         image_tag_override: str | None = None,
     ) -> None:
         """Stops the current service and starts a new one using a specific docker-compose file."""
-        tag = image_tag_override or self.image_sha
+        tag = image_tag_override or self.image_tag
         self.logger.info(f"Stopping service '{self.service_name}'...")
         stop_cmd = [
             "docker",
@@ -256,7 +256,7 @@ class DeploymentManager:
 
             if previous_image_id:
                 self._cleanup(previous_image_id)
-            self.logger.info(f"Deployment successful for {self.service_name}:{self.image_sha}")
+            self.logger.info(f"Deployment successful for {self.service_name}:{self.image_tag}")
             return self.logs
         except FallbackError as e:
             self.logger.error(f"An error occurred: {e} Initiating rollback.")

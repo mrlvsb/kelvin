@@ -9,7 +9,7 @@ from app.config import get_settings
 HMAC_SIGNATURE_PATTERN = re.compile(r"^sha256=([0-9a-fA-F]{64})$")
 HMAC_SIGNATURE_HEADER = "X-Hub-Signature-256"
 
-api_key_header = APIKeyHeader(name=HMAC_SIGNATURE_HEADER, scheme_name="HMACSignature")
+api_key_header = APIKeyHeader(name=HMAC_SIGNATURE_HEADER, scheme_name="HMAC Signature")
 
 
 async def validate_signature(
