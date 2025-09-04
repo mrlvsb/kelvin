@@ -19,7 +19,7 @@ from pathlib import Path
 from pydantic import AnyHttpUrl, BaseModel, SecretStr, FilePath
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-PROJECT_DIR = Path(__file__).parent.parent
+PROJECT_DIR = Path(__file__).parent.parent.parent
 
 
 class Security(BaseModel):
@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     docker: Docker
 
     model_config = SettingsConfigDict(
+        extra="ignore",
         env_file=f"{PROJECT_DIR}/.env",
         case_sensitive=False,
         env_nested_delimiter="__",

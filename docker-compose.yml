@@ -11,7 +11,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runtime
-    image: "ghcr.io/mrlvsb/kelvin:${APP_IMAGE_TAG:-latest}" # Interpolation for Deployment Service
+    image: "ghcr.io/mrlvsb/kelvin:${APP_IMAGE_TAG:-7a1db619c1a72d81d45c31970a880b1677b007c56ec175c41b244a36481f1f25}" # Interpolation for Deployment Service
     pull_policy: always
     restart: unless-stopped
     environment:
@@ -21,8 +21,10 @@ services:
       - DATABASE__PORT=5432
       - REDIS__HOST=redis
       - REDIS__PORT=6379
-    env_file:
-      - .env
+      # Passed through the interpolation from the .env file in the project directory
+      - DATABASE__DB=${DATABASE__DB}
+      - DATABASE__USERNAME=${DATABASE__USERNAME}
+      - DATABASE__PASSWORD=${DATABASE__PASSWORD}
     volumes:
       - app_static:/app/static
       - app_socket:/socket
@@ -39,8 +41,6 @@ services:
       - POSTGRES_DB=${DATABASE__DB}
       - POSTGRES_USER=${DATABASE__USERNAME}
       - POSTGRES_PASSWORD=${DATABASE__PASSWORD}
-    env_file:
-      - .env
     volumes:
       - ${DATABASE__DATA_PATH}:/var/lib/postgresql/data
     ports:
@@ -50,8 +50,6 @@ services:
     container_name: kelvin_redis
     image: redis:7
     restart: unless-stopped
-    env_file:
-      - .env
     volumes:
       - ${REDIS__DATA_PATH}:/data
     ports:
@@ -90,8 +88,6 @@ services:
     environment:
       - DOCKER__GHCR_BASE_URL=ghcr.io/mrlvsb
       - DOCKER__COMPOSE_FILE_PATH=/kelvin/docker-compose.yml
-    env_file:
-      - deployment_service/.env
     volumes:
       - ${REPO__DIRECTORY_PATH}:/kelvin
       - /usr/bin/docker:/usr/bin/docker
