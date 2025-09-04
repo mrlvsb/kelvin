@@ -65,8 +65,8 @@ class DeploymentManager:
         self.container_name = container_name
         self.image_tag = image["tag"]
         self.commit_sha = commit_sha
-        self.stable_compose_path = str(compose_path)
-        self.stable_repository_dir = os.path.dirname(compose_path)
+        self.stable_compose_path = str(compose_path.resolve())
+        self.stable_repository_dir = compose_path.resolve().parent
         repo = image.get("repository")
         self.new_image_tag = f"{repo + '/' if repo else ''}{image['image']}:{self.image_tag}"
         self.client = docker.from_env()
@@ -147,7 +147,7 @@ class DeploymentManager:
             "stop",
             self.service_name,
         ]
-        if not await self._run_command(stop_cmd, os.path.dirname(current_compose_file)):
+        if not await self._run_command(stop_cmd, self.stable_repository_dir):
             self.logger.warning(
                 f"Failed to stopped the service '{self.service_name}'. Is the service_name valid or first deployment?"
             )
@@ -167,8 +167,8 @@ class DeploymentManager:
         ]
         env = os.environ.copy()
         env[f"{self.service_name.upper()}_IMAGE_TAG"] = tag
-
-        if not await self._run_command(up_cmd, os.path.dirname(candidate_compose_file), env=env):
+        a = await self._run_command(up_cmd, self.stable_repository_dir, env=env)
+        if not a:
             if not image_tag_override:  # Not rollback attempt
                 raise FallbackError(
                     f"Failed to start the service '{self.service_name}' with candidate config.",
