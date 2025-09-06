@@ -4,12 +4,12 @@ import os
 import shutil
 import tempfile
 import time
-from fastapi import status
 from collections import deque
 from pathlib import Path
 
 import docker
 from docker.errors import APIError, ImageNotFound, NotFound
+from fastapi import status
 
 HEALTH_CHECK_TIMEOUT = 60  # seconds
 HEALTH_CHECK_INTERVAL = 5  # seconds
@@ -24,7 +24,7 @@ class BufferHandler(logging.Handler):
         self.buffer.append(self.format(record))
 
 
-class DeploymentException(Exception):
+class DeploymentError(Exception):
     """Base class for all deployment errors."""
 
     def __init__(self, message: str, logs: deque, status_code: int):
@@ -34,14 +34,14 @@ class DeploymentException(Exception):
         super().__init__(self.message)
 
 
-class FallbackError(DeploymentException):
+class FallbackError(DeploymentError):
     """A recoverable error that should trigger a rollback."""
 
     def __init__(self, message: str, logs: deque):
         super().__init__(message, logs=logs, status_code=status.HTTP_502_BAD_GATEWAY)
 
 
-class CriticalError(DeploymentException):
+class CriticalError(DeploymentError):
     """A non-recoverable error."""
 
     def __init__(
@@ -83,7 +83,7 @@ class DeploymentManager:
         self.logger.addHandler(handler)
 
     async def _run_command(
-        self, command: list[str], cwd: str, env: dict[str, str] | None = None
+        self, command: list[str], cwd: Path, env: dict[str, str] | None = None
     ) -> bool:
         """Runs a shell command in a specified directory and logs its output."""
         process = await asyncio.create_subprocess_exec(
@@ -110,7 +110,7 @@ class DeploymentManager:
                 )
                 return None
             self.logger.debug(f"Found previous image ID for rollback: {container_image.id}")
-            return container_image.id.split(":")[-1]
+            return str(container_image.id).split(":")[-1]
         except NotFound:
             self.logger.warning("No running container found. Rollback will not be possible.")
             return None
@@ -121,7 +121,6 @@ class DeploymentManager:
         try:
             image = self.client.images.get(self.new_image)
             self.logger.info(f"Image {self.new_image} already exists locally: {image.id}")
-            return
         except (ImageNotFound, APIError):
             try:
                 self.client.images.pull(self.new_image)
@@ -172,8 +171,7 @@ class DeploymentManager:
         ]
         env = os.environ.copy()
         env[f"{self.service_name.upper()}_IMAGE_TAG"] = tag
-        a = await self._run_command(up_cmd, self.stable_repository_dir, env=env)
-        if not a:
+        if not await self._run_command(up_cmd, self.stable_repository_dir, env=env):
             if not image_tag_override:  # Not rollback attempt
                 raise FallbackError(
                     f"Failed to start the service '{self.service_name}' with candidate config.",
@@ -216,8 +214,11 @@ class DeploymentManager:
     async def run(self) -> deque:
         """Executes the full deployment flow with a temporary Git worktree and atomic state update."""
         self.logger.info(f"Starting deployment for commit {self.commit_sha}")
+        try:
+            candidate_dir = tempfile.mkdtemp(prefix=f"deploy-{self.commit_sha}")
+        except OSError as e:
+            raise CriticalError(f"Failed to create temporary directory: {e}", self.logs) from e
 
-        candidate_dir = tempfile.mkdtemp(prefix=f"deploy-{self.commit_sha}")
         worktree_path = os.path.join(candidate_dir, self.service_name)
         candidate_compose_path = os.path.join(
             worktree_path, os.path.basename(self.stable_compose_path)

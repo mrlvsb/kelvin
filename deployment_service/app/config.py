@@ -16,7 +16,7 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import AnyHttpUrl, BaseModel, SecretStr, FilePath
+from pydantic import AnyHttpUrl, BaseModel, FilePath, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_DIR = Path(__file__).parent.parent.parent

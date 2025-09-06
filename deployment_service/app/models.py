@@ -1,5 +1,5 @@
-from typing import Annotated
 import re
+from typing import Annotated
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -43,7 +43,7 @@ class DeploymentRequest(BaseModel):
     def parse_image(cls, value: str) -> dict[str, str]:
         m = IMAGE_PATTERN.match(value)
         if not m:
-            raise ValueError("Invalid image format. Expected [repository/]<image>[:tag]")
+            raise ValueError("Invalid image format. Expected [repository/]<image>:<tag>.")
         parts = m.groupdict()
         parts["image"] = parts["image"].rstrip("/")
         return parts
@@ -63,7 +63,7 @@ class DeploymentResponse(BaseModel):
         Annotated[
             str,
             Field(
-                decription="Error message if the deployment failed; omitted on success.",
+                description="Error message if the deployment failed; omitted on success.",
             ),
         ]
         | None
@@ -73,4 +73,4 @@ class DeploymentResponse(BaseModel):
 class HealthCheckResponse(BaseModel):
     """Response model to validate and return when performing a health check."""
 
-    status: str = "ok"
+    status: str = "OK"

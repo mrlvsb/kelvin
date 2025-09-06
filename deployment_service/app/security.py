@@ -2,8 +2,9 @@ import hashlib
 import hmac
 import re
 
-from fastapi import HTTPException, Request, status, Security
+from fastapi import HTTPException, Request, Security, status
 from fastapi.security import APIKeyHeader
+
 from app.config import get_settings
 
 HMAC_SIGNATURE_PATTERN = re.compile(r"^sha256=([0-9a-fA-F]{64})$")
