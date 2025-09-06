@@ -68,7 +68,7 @@ class DeploymentManager:
         self.stable_compose_path = str(compose_path.resolve())
         self.stable_repository_dir = compose_path.resolve().parent
         repo = image.get("repository")
-        self.new_image_tag = f"{repo + '/' if repo else ''}{image['image']}:{self.image_tag}"
+        self.new_image = f"{repo + '/' if repo else ''}{image['image']}:{self.image_tag}"
         self.client = docker.from_env()
 
         self.logs: deque = deque(maxlen=500)
@@ -110,22 +110,22 @@ class DeploymentManager:
                 )
                 return None
             self.logger.debug(f"Found previous image ID for rollback: {container_image.id}")
-            return container_image.id
+            return container_image.id.split(":")[-1]
         except NotFound:
             self.logger.warning("No running container found. Rollback will not be possible.")
             return None
 
     def _pull_new_image(self) -> None:
         """Pulls the new Docker image from the registry."""
-        self.logger.info(f"Pulling new image: {self.new_image_tag}...")
+        self.logger.info(f"Pulling new image: {self.new_image}...")
         try:
-            self.client.images.pull(self.new_image_tag)
+            self.client.images.pull(self.new_image)
             self.logger.info("Successfully pulled new image.")
         except (ImageNotFound, APIError) as e:
             raise CriticalError(
                 f"Failed to pull Docker image: {e}",
                 self.logs,
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status.HTTP_400_BAD_REQUEST,
             ) from e
 
     async def _swap_service(
@@ -200,13 +200,13 @@ class DeploymentManager:
 
     def _cleanup(self, old_image_id: str) -> None:
         """Removes the old Docker image after a successful deployment."""
-        if not old_image_id:
+        if not old_image_id or old_image_id == self.image_tag:
             return
         try:
             self.client.images.remove(old_image_id, force=True)
             self.logger.info(f"Successfully removed old image: {old_image_id}")
         except APIError:
-            self.logger.exception("Could not remove old image. It may be in use.")
+            self.logger.error("Could not remove old image. It may be in use.")
 
     async def run(self) -> deque:
         """Executes the full deployment flow with a temporary Git worktree and atomic state update."""
@@ -261,15 +261,17 @@ class DeploymentManager:
         except FallbackError as e:
             self.logger.error(f"An error occurred: {e} Initiating rollback.")
             if previous_image_id:
-                rollback_tag = previous_image_id.split(":")[-1]
                 await self._swap_service(
                     candidate_compose_path,
                     self.stable_compose_path,
-                    image_tag_override=rollback_tag,
+                    image_tag_override=previous_image_id,
                 )
                 self.logger.info("Rollback completed successfully.")
             else:
                 self.logger.error("No previous image ID available. Cannot perform rollback.")
+            raise e
+        except CriticalError as e:
+            self.logger.error(f"{e}. Deployment aborted.")
             raise e
         except Exception as e:
             raise CriticalError(f"Unexpected deployment failure: {e}", self.logs) from e
