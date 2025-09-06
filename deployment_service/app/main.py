@@ -58,8 +58,9 @@ app.add_middleware(
                         "logs": [
                             "[2025-09-01 13:45:12] [INFO] Starting deployment for commit 0474329d785bbb2c928b257f104847dc4f8f80f6",
                             "[2025-09-01 13:46:10] [INFO] Pulling new image: 0474329d785bbb2c928b257f104847dc4f8f80f6...",
+                            '[2025-09-01 13:46:15] [ERROR] Failed to pull Docker image: 404 Client Error for http+docker://: Not Found ("manifest unknown")',
                         ],
-                        "error": "Failed to pull Docker image: not found",
+                        "error": 'Failed to pull Docker image: 404 Client Error for http+docker://: Not Found ("manifest unknown")',
                     }
                 }
             },
@@ -72,6 +73,7 @@ app.add_middleware(
                         "logs": [
                             "[2025-09-01 13:45:12] [INFO] Starting deployment for commit 0474329d785bbb2c928b257f104847dc4f8f80f6",
                             "[2025-09-01 13:46:05] [INFO] Fetching latest data from git origin...",
+                            "[2025-09-01 13:46:10] [ERROR] Failed to create git worktree. Is the commit SHA valid?",
                         ],
                         "error": "Failed to create git worktree. Is the commit SHA valid?",
                     }
