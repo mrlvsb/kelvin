@@ -12,8 +12,12 @@ dependencies = [
 
 [tool.uv]
 dev-dependencies = [
+    "httpx>=0.28.1",
     "mypy>=1.17.1",
     "pre-commit>=4.3.0",
+    "pytest-asyncio>=1.1.0",
+    "pytest-cov>=6.3.0",
+    "pytest>=8.4.2",
     "ruff>=0.12.11",
     "types-docker>=7.1.0.20250822",
 ]
@@ -30,3 +34,34 @@ module-root = ""
 target-version = "py313"
 line-length = 100
 indent-width = 4
+
+[tool.ruff.lint]
+extend-select = [
+    "C4", # flake8-comprehensions
+    "I", # isort
+    "F", # pyflakes
+    "N", # pep8-naming
+    "Q", # flake8-quotes
+    "SIM", # flake8-simplify
+    "UP", # pyupgrade
+    "W", # Warning
+    "YTT", # flake8-2020
+]
+
+[tool.ruff.lint.isort]
+known-third-party = ["fastapi", "pydantic", "starlette"]
+
+[tool.mypy]
+python_version = "3.12"
+exclude = ["tests/",]
+
+[tool.pytest.ini_options]
+addopts = "--cov --cov-report term-missing --cov-fail-under=80"
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+omit = ["tests/*"]
+relative_files = true
+source = ["app"]
+branch = true

@@ -1,12 +1,11 @@
-from fastapi import FastAPI, Security, status, Response
-
+from fastapi import FastAPI, Response, Security, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from app.config import get_settings
+from app.deployment import DeploymentError, DeploymentManager
 from app.models import DeploymentRequest, DeploymentResponse, HealthCheckResponse
 from app.security import validate_signature
-from app.deployment import DeploymentManager, DeploymentException
 
 app = FastAPI(
     title="Deployment Service",
@@ -109,6 +108,7 @@ async def deploy(request: DeploymentRequest, response: Response):
         image=request.image,
         commit_sha=request.commit_sha,
         compose_path=get_settings().docker.compose_file_path,
+        compose_env_file=get_settings().docker.compose_env_file,
         container_name=request.container_name,
     )
     try:
@@ -117,7 +117,7 @@ async def deploy(request: DeploymentRequest, response: Response):
         return DeploymentResponse(
             logs=list(logs),
         )
-    except DeploymentException as e:
+    except DeploymentError as e:
         response.status_code = e.status_code
         return DeploymentResponse(logs=list(e.logs), error=e.message)
 

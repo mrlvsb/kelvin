@@ -16,7 +16,7 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import AnyHttpUrl, BaseModel, SecretStr, FilePath
+from pydantic import AnyHttpUrl, BaseModel, FilePath, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_DIR = Path(__file__).parent.parent.parent
@@ -34,6 +34,7 @@ class Docker(BaseModel):
     """Settings related to Docker and Docker Compose."""
 
     compose_file_path: FilePath
+    compose_env_file: FilePath | None = None
 
 
 class Settings(BaseSettings):

@@ -25,18 +25,41 @@ RUN uv sync \
 
 FROM python:3.13-slim-trixie AS runtime
 
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt-get update && \
+    apt-get install -y \
+    -o APT::Install-Recommends=false \
+    -o APT::Install-Suggests=false \
+    git \
+    ca-certificates \
+    curl
+
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+RUN chmod a+r /etc/apt/keyrings/docker.asc
+
+RUN echo \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+    $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+    tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt-get update && \
+    apt-get install -y \
+    -o APT::Install-Recommends=false \
+    -o APT::Install-Suggests=false \
+    docker-ce docker-ce-cli containerd.io docker-compose-plugin && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 ENV PATH="/app/bin:$PATH"
 
-RUN groupadd --gid 101 webserver && \
-    useradd --uid 1000 --gid 101 --shell /bin/false --system webserver
+COPY --from=build /app /app
 
-COPY --from=build --chown=webserver:webserver /app /app
-
-COPY --chown=webserver:webserver healthcheck.py /app/healthcheck.py
-
-USER webserver
+COPY healthcheck.py /app/healthcheck.py
 
 WORKDIR /app
+
+RUN git config --global --add safe.directory "*"
 
 # Test if the application can be imported
 RUN <<EOT
