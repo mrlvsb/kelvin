@@ -119,14 +119,19 @@ class DeploymentManager:
         """Pulls the new Docker image from the registry."""
         self.logger.info(f"Pulling new image: {self.new_image}...")
         try:
-            self.client.images.pull(self.new_image)
-            self.logger.info("Successfully pulled new image.")
-        except (ImageNotFound, APIError) as e:
-            raise CriticalError(
-                f"Failed to pull Docker image: {e}",
-                self.logs,
-                status.HTTP_400_BAD_REQUEST,
-            ) from e
+            image = self.client.images.get(self.new_image)
+            self.logger.info(f"Image {self.new_image} already exists locally: {image.id}")
+            return
+        except (ImageNotFound, APIError):
+            try:
+                self.client.images.pull(self.new_image)
+                self.logger.info("Successfully pulled new image.")
+            except (ImageNotFound, APIError) as e:
+                raise CriticalError(
+                    f"Failed to pull Docker image: {e}",
+                    self.logs,
+                    status.HTTP_400_BAD_REQUEST,
+                ) from e
 
     async def _swap_service(
         self,
