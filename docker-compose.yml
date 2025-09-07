@@ -11,7 +11,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runtime
-    image: "ghcr.io/mrlvsb/kelvin:${APP_IMAGE_TAG:-7a1db619c1a72d81d45c31970a880b1677b007c56ec175c41b244a36481f1f25}" # Interpolation for Deployment Service
+    image: "ghcr.io/mrlvsb/kelvin:${APP_IMAGE_TAG:-latest}" # Interpolation for Deployment Service
     pull_policy: always
     restart: unless-stopped
     environment:
