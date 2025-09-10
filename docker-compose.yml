@@ -82,7 +82,7 @@ services:
       context: deployment_service
       dockerfile: Dockerfile
       target: runtime
-    image: "ghcr.io/mrlvsb/deployment:${DEPLOYMENT_IMAGE_TAG:-latest}" # Interpolation for Deployment Service
+    image: "ghcr.io/mrlvsb/deployment:latest"
     pull_policy: always
     restart: unless-stopped
     environment:
@@ -92,7 +92,6 @@ services:
       - SECURITY__ALLOWED_HOSTS=${SECURITY__ALLOWED_HOSTS}
     volumes:
       - ${REPO__DIRECTORY_PATH}:/kelvin
-      - /usr/bin/docker:/usr/bin/docker
       - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:

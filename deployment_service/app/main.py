@@ -108,6 +108,7 @@ async def deploy(request: DeploymentRequest, response: Response):
         image=request.image,
         commit_sha=request.commit_sha,
         compose_path=get_settings().docker.compose_file_path,
+        compose_env_file=get_settings().docker.compose_env_file,
         container_name=request.container_name,
     )
     try:

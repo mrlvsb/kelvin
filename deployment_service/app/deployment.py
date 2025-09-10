@@ -59,6 +59,7 @@ class DeploymentManager:
         image: dict[str, str],
         commit_sha: str,
         compose_path: Path,
+        compose_env_file: Path | None,
         container_name: str,
     ):
         self.service_name = service_name
@@ -66,6 +67,9 @@ class DeploymentManager:
         self.image_tag = image["tag"]
         self.commit_sha = commit_sha
         self.stable_compose_path = str(compose_path.resolve())
+        self.stable_compose_env_file = compose_env_file or str(
+            compose_path.resolve().parent / ".env"
+        )
         self.stable_repository_dir = compose_path.resolve().parent
         repo = image.get("repository")
         self.new_image = f"{repo + '/' if repo else ''}{image['image']}:{self.image_tag}"
@@ -144,6 +148,8 @@ class DeploymentManager:
         stop_cmd = [
             "docker",
             "compose",
+            "--env-file",
+            self.stable_compose_env_file,
             "-f",
             current_compose_file,
             "--profile",
@@ -160,6 +166,8 @@ class DeploymentManager:
         up_cmd = [
             "docker",
             "compose",
+            "--env-file",
+            self.stable_compose_env_file,
             "-f",
             candidate_compose_file,
             "--profile",

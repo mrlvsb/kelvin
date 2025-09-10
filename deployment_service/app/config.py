@@ -34,6 +34,7 @@ class Docker(BaseModel):
     """Settings related to Docker and Docker Compose."""
 
     compose_file_path: FilePath
+    compose_env_file: FilePath | None = None
 
 
 class Settings(BaseSettings):
