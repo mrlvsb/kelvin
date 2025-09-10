@@ -8,6 +8,7 @@ import DataTablesCore from 'datatables.net-bs5';
 import DataTable from 'datatables.net-vue3';
 import { getFromAPI } from '../../utilities/api';
 import { format } from 'date-fns';
+import * as ipaddr from 'ipaddr.js';
 
 DataTable.use(DataTablesCore);
 
@@ -77,6 +78,30 @@ function formatAction(action: string): string {
   return '<Unknown action>';
 }
 
+function isInRange(ip_address: string): string {
+  const ip = ipaddr.parse(ip_address);
+
+  const rangeList = {
+    labs: [
+      ipaddr.parseCIDR('158.196.22.0/24'),
+      ipaddr.parseCIDR('158.196.15.128/25'),
+      ipaddr.parseCIDR('158.196.96.32/27'), // RV203
+      ipaddr.parseCIDR('158.196.135.64/26') // EB425
+    ]
+  };
+
+  return ipaddr.subnetMatch(ip, rangeList, 'non-labs');
+}
+
+function formatIPAddress(ip_address: string): string {
+  console.log('range:', isInRange(ip_address));
+  if (isInRange(ip_address) == 'labs') {
+    return '<b>' + ip_address + ' (Labs)</b>';
+  } else {
+    return ip_address;
+  }
+}
+
 const columns: ConfigColumns[] = [
   {
     title: 'Action',
@@ -94,7 +119,8 @@ const columns: ConfigColumns[] = [
     title: 'IP address',
     name: 'ip_address',
     data: 'ip_address',
-    className: 'dt-right'
+    className: 'dt-left',
+    render: (ip_address: string) => formatIPAddress(ip_address)
   },
   {
     title: 'Created At',
