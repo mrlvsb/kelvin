@@ -86,8 +86,10 @@ services:
     pull_policy: always
     restart: unless-stopped
     environment:
-      - DOCKER__GHCR_BASE_URL=ghcr.io/mrlvsb
       - DOCKER__COMPOSE_FILE_PATH=/kelvin/docker-compose.yml
+      - SECURITY__WEBHOOK_SECRET=${SECURITY__WEBHOOK_SECRET}
+      - SECURITY__BACKEND_CORS_ORIGINS=${SECURITY__BACKEND_CORS_ORIGINS}
+      - SECURITY__ALLOWED_HOSTS=${SECURITY__ALLOWED_HOSTS}
     volumes:
       - ${REPO__DIRECTORY_PATH}:/kelvin
       - /usr/bin/docker:/usr/bin/docker
