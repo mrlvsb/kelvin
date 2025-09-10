@@ -38,9 +38,9 @@ RUN curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings
 RUN chmod a+r /etc/apt/keyrings/docker.asc
 
 RUN echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  tee /etc/apt/sources.list.d/docker.list > /dev/null
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+    $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+    tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
@@ -58,6 +58,8 @@ COPY --from=build /app /app
 COPY healthcheck.py /app/healthcheck.py
 
 WORKDIR /app
+
+RUN git config --global --add safe.directory "*"
 
 # Test if the application can be imported
 RUN <<EOT
