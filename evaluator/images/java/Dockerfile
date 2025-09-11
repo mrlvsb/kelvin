@@ -6,7 +6,8 @@ RUN apt-get update && \
     python3-pip \
     wget && \
     rm -rf /var/lib/apt/lists/*
-RUN wget https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz -P /tmp
+#RUN wget https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz -P /tmp
+RUN wget https://repo1.maven.org/maven2/org/apache/maven/apache-maven/3.9.4/apache-maven-3.9.4-bin.tar.gz -P /tmp
 RUN tar xf /tmp/apache-maven-*-bin.tar.gz -C /opt
 RUN ln -s /opt/apache-maven-3.9.9/ /opt/maven
 RUN echo 'export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))\n\
