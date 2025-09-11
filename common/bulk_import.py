@@ -22,6 +22,7 @@ class ImportResult:
     firstname: str
     lastname: str
     created: bool
+    already_assigned: bool
 
 
 def run(
@@ -103,6 +104,7 @@ def run(
             firstname, lastname = student.firstName, student.secondName
 
             created = False
+            already_assigned = False
 
             student_user = None
             try:
@@ -111,6 +113,9 @@ def run(
                 student_user = user_from_login(login)
                 created = True
 
-            class_in_db[c].students.add(student_user)
+            if Class.objects.filter(subject=class_in_db[c].subject, students=user).exists():
+                already_assigned = True
+            else:
+                class_in_db[c].students.add(student_user)
 
-            yield ImportResult(login, firstname, lastname, created)
+            yield ImportResult(login, firstname, lastname, created, already_assigned)
