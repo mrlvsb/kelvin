@@ -131,7 +131,9 @@ async function loadInbusSubjects(kelvin_subjects: KelvinSubject[]): Promise<Inbu
   const res = await fetch('/api/inbus/subject_versions', {});
 
   const subjects_inbus: InbusSubjectVersion[] = await res.json();
-  const subject_kelvin_abbrs = kelvin_subjects.map((s) => s.abbr);
+
+  // Kelvin abbrev for C# subject is CSI, so in the filtering of Edison subjects, it doesn't appear. This is a workaround.
+  const subject_kelvin_abbrs = kelvin_subjects.map((s) => (s.abbr === 'CSI' ? 'C# I' : s.abbr));
 
   const subjects_inbus_filtered = subjects_inbus.filter((subject_inbus) =>
     subject_kelvin_abbrs.includes(subject_inbus.subject.abbrev)
