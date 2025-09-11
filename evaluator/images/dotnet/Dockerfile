@@ -2,8 +2,14 @@ FROM kelvin/base
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    dotnet8 \
-    aspnetcore-runtime-8.0 \
+    software-properties-common
+
+RUN add-apt-repository ppa:dotnet/backports
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    dotnet-sdk-9.0 \
+    aspnetcore-runtime-9.0 \
     python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
