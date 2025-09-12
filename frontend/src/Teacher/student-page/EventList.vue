@@ -9,9 +9,11 @@ import DataTable from 'datatables.net-vue3';
 import { getFromAPI } from '../../utilities/api';
 import { format } from 'date-fns';
 import * as ipaddr from 'ipaddr.js';
-import { onMounted, ref } from 'vue';
+import { watch, ref } from 'vue';
 
 DataTable.use(DataTablesCore);
+
+const dt = ref();
 
 const props = defineProps<{
   login: string;
@@ -25,6 +27,7 @@ type EventBase = {
 type LoginEvent = EventBase & {
   action: 'login';
 };
+
 type SubmitEvent = EventBase & {
   action: 'submit';
   metadata: {
@@ -33,6 +36,7 @@ type SubmitEvent = EventBase & {
     task_name: string;
   };
 };
+
 type TaskDisplayedEvent = EventBase & {
   action: 'task-view';
   metadata: {
@@ -43,6 +47,7 @@ type TaskDisplayedEvent = EventBase & {
 
 type Event = LoginEvent | SubmitEvent | TaskDisplayedEvent;
 
+// ----------------- API -----------------
 const getEvents = async (
   login: string,
   count: number,
@@ -57,17 +62,13 @@ const getEvents = async (
   params.append('sort', sort);
   params.append('order_column', sortCol);
 
-  const data = await getFromAPI<{
-    events: Event[];
-    count: number;
-  }>(`/api/events/${login}?${params.toString()}`);
-  if (data) {
-    return [data.count, data.events];
-  }
-
-  return [0, []];
+  const data = await getFromAPI<{ events: Event[]; count: number }>(
+    `/api/events/${login}?${params.toString()}`
+  );
+  return data ? [data.count, data.events] : [0, []];
 };
 
+// ----------------- Format helpers -----------------
 function formatAction(action: string): string {
   if (action === 'login') {
     return 'Login';
@@ -95,7 +96,6 @@ function isInRange(ip_address: string): string {
 }
 
 function formatIPAddress(ip_address: string): string {
-  console.log('range:', isInRange(ip_address));
   if (isInRange(ip_address) == 'labs') {
     return '<b>' + ip_address + ' (Labs)</b>';
   } else {
@@ -103,6 +103,7 @@ function formatIPAddress(ip_address: string): string {
   }
 }
 
+// ----------------- Columns -----------------
 const columns: ConfigColumns[] = [
   {
     title: 'Action',
@@ -131,20 +132,21 @@ const columns: ConfigColumns[] = [
   }
 ];
 
+// ------------ Options & Custom IP filter ------------
+const ipFilter = ref('');
+
 const options: Config = {
   stripeClasses: ['table-striped', 'table-hover'],
   serverSide: true,
   order: [[3, 'desc']],
-  ajax: async (
-    data: AjaxData,
-    callback: (data: { data: Event[]; recordsTotal: number; recordsFiltered: number }) => void
-  ) => {
+  ajax: async (data: AjaxData, callback) => {
     let sortColumn = 'created_at';
     let sortOrder = 'desc';
     if (data.order.length !== 0) {
       sortColumn = data.order[0]['name'];
       sortOrder = data.order[0].dir;
     }
+
     const [count, items] = await getEvents(
       props.login,
       data.length,
@@ -153,40 +155,57 @@ const options: Config = {
       sortOrder
     );
 
-    callback({ data: items, recordsTotal: count, recordsFiltered: count });
+    // --- apply client-side IP filtering here ---
+    let filtered = items;
+    if (ipFilter.value) {
+      try {
+        // Split by comma and trim whitespace
+        const filters = ipFilter.value
+          .split(',')
+          .map((f) => f.trim())
+          .filter((f) => f.length > 0);
+
+        filtered = items.filter((event) => {
+          const eventIp = ipaddr.parse(event.ip_address);
+
+          // Check if event IP matches any of the filters
+          return filters.some((filter) => {
+            try {
+              if (filter.includes('/')) {
+                // CIDR range
+                const range = ipaddr.parseCIDR(filter);
+                return eventIp.match(range);
+              } else {
+                // Single IP address
+                const filterIp = ipaddr.parse(filter);
+                return eventIp.toString() === filterIp.toString();
+              }
+            } catch {
+              // invalid filter entry -> skip this filter
+              return false;
+            }
+          });
+        });
+      } catch {
+        // invalid input -> don't filter
+      }
+    }
+
+    callback({
+      data: filtered,
+      recordsTotal: count,
+      recordsFiltered: filtered.length
+    });
   },
   pageLength: 50,
-  layout: {
-    topStart: null,
-    topEnd: 'pageLength'
+  layout: { topStart: null, topEnd: 'pageLength' }
+};
+
+// trigger redraw whenever ipFilter changes
+watch(ipFilter, () => {
+  if (dt.value?.dt) {
+    dt.value.dt.draw();
   }
-} satisfies Config;
-
-// ----------------- Custom IP filter -----------------
-const ipFilter = ref('');
-
-onMounted(() => {
-  // Add a custom search function
-  DataTablesCore.ext.search.push((settings, data, dataIndex) => {
-    if (!ipFilter.value) return true;
-
-    const ipStr = data[2]; // column index 2 = ip_address
-    try {
-      const ip = ipaddr.parse(ipStr);
-
-      // If user entered CIDR (range)
-      if (ipFilter.value.includes('/')) {
-        const range = ipaddr.parseCIDR(ipFilter.value);
-        return ip.match(range);
-      }
-
-      // Else treat as single IP
-      const filterIp = ipaddr.parse(ipFilter.value);
-      return ip.toString() === filterIp.toString();
-    } catch {
-      return true; // invalid filter = ignore
-    }
-  });
 });
 </script>
 
@@ -198,12 +217,11 @@ onMounted(() => {
         v-model="ipFilter"
         type="text"
         class="form-control"
-        placeholder="Filter by IP or CIDR (e.g. 158.196.22.5 or 158.196.22.0/24)"
-        @input="$refs.dt?.dt?.draw()"
+        placeholder="Filter by IP or CIDR (comma-separated, e.g. 158.196.22.5, 158.196.22.0/24, 192.168.1.1)"
       />
     </div>
 
-    <DataTable class="table table-striped" :columns="columns" :options="options">
+    <DataTable ref="dt" class="table table-striped" :columns="columns" :options="options">
       <template #column-link="props">
         <div v-if="props.rowData.action === 'submit'">
           <a :href="props.rowData.metadata.link" target="_blank">
@@ -211,9 +229,9 @@ onMounted(() => {
           </a>
         </div>
         <div v-if="props.rowData.action === 'task-view'">
-          <a :href="props.rowData.metadata.link" target="_blank">{{
-            props.rowData.metadata.task_name
-          }}</a>
+          <a :href="props.rowData.metadata.link" target="_blank">
+            {{ props.rowData.metadata.task_name }}
+          </a>
         </div>
       </template>
     </DataTable>
