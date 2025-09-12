@@ -9,6 +9,7 @@ import DataTable from 'datatables.net-vue3';
 import { getFromAPI } from '../../utilities/api';
 import { format } from 'date-fns';
 import * as ipaddr from 'ipaddr.js';
+import { onMounted, ref } from 'vue';
 
 DataTable.use(DataTablesCore);
 
@@ -160,23 +161,63 @@ const options: Config = {
     topEnd: 'pageLength'
   }
 } satisfies Config;
+
+// ----------------- Custom IP filter -----------------
+const ipFilter = ref('');
+
+onMounted(() => {
+  // Add a custom search function
+  DataTablesCore.ext.search.push((settings, data, dataIndex) => {
+    if (!ipFilter.value) return true;
+
+    const ipStr = data[2]; // column index 2 = ip_address
+    try {
+      const ip = ipaddr.parse(ipStr);
+
+      // If user entered CIDR (range)
+      if (ipFilter.value.includes('/')) {
+        const range = ipaddr.parseCIDR(ipFilter.value);
+        return ip.match(range);
+      }
+
+      // Else treat as single IP
+      const filterIp = ipaddr.parse(ipFilter.value);
+      return ip.toString() === filterIp.toString();
+    } catch {
+      return true; // invalid filter = ignore
+    }
+  });
+});
 </script>
 
 <template>
-  <DataTable class="table table-striped" :columns="columns" :options="options">
-    <template #column-link="props">
-      <div v-if="props.rowData.action === 'submit'">
-        <a :href="props.rowData.metadata.link" target="_blank">
-          {{ props.rowData.metadata.task_name }}#{{ props.rowData.metadata.submit_num }}
-        </a>
-      </div>
-      <div v-if="props.rowData.action === 'task-view'">
-        <a :href="props.rowData.metadata.link" target="_blank">{{
-          props.rowData.metadata.task_name
-        }}</a>
-      </div>
-    </template>
-  </DataTable>
+  <div>
+    <!-- IP filter box -->
+    <div class="mb-2">
+      <input
+        v-model="ipFilter"
+        type="text"
+        class="form-control"
+        placeholder="Filter by IP or CIDR (e.g. 158.196.22.5 or 158.196.22.0/24)"
+        @input="$refs.dt?.dt?.draw()"
+      />
+    </div>
+
+    <DataTable class="table table-striped" :columns="columns" :options="options">
+      <template #column-link="props">
+        <div v-if="props.rowData.action === 'submit'">
+          <a :href="props.rowData.metadata.link" target="_blank">
+            {{ props.rowData.metadata.task_name }}#{{ props.rowData.metadata.submit_num }}
+          </a>
+        </div>
+        <div v-if="props.rowData.action === 'task-view'">
+          <a :href="props.rowData.metadata.link" target="_blank">{{
+            props.rowData.metadata.task_name
+          }}</a>
+        </div>
+      </template>
+    </DataTable>
+  </div>
 </template>
 
 <style>
