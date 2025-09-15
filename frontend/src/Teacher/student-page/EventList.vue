@@ -39,7 +39,16 @@ type TaskDisplayedEvent = EventBase & {
   };
 };
 
-type Event = LoginEvent | SubmitEvent | TaskDisplayedEvent;
+type FinalSubmitEvent = EventBase & {
+  action: 'final-submit';
+  metadata: {
+    link: string;
+    submit_num: number;
+    task_name: string;
+  }
+}
+
+type Event = LoginEvent | SubmitEvent | TaskDisplayedEvent | FinalSubmitEvent;
 
 const getEvents = async (
   login: string,
@@ -62,7 +71,6 @@ const getEvents = async (
   if (data) {
     return [data.count, data.events];
   }
-
   return [0, []];
 };
 
@@ -73,6 +81,8 @@ function formatAction(action: string): string {
     return 'Submit';
   } else if (action === 'task-view') {
     return 'Assignment displayed';
+  }  else if (action === 'final-submit') {
+    return 'Submit marked as final';
   }
   return '<Unknown action>';
 }
@@ -139,15 +149,11 @@ const options: Config = {
 <template>
   <DataTable class="table table-striped" :columns="columns" :options="options">
     <template #column-link="props">
-      <div v-if="props.rowData.action === 'submit'">
+      <div v-if="props.rowData.metadata && props.rowData.metadata.link">
         <a :href="props.rowData.metadata.link" target="_blank">
-          {{ props.rowData.metadata.task_name }}#{{ props.rowData.metadata.submit_num }}
+          {{ props.rowData.metadata.task_name }}
+          {{ props.rowData.metadata.submit_num != null ? '#' + props.rowData.metadata.submit_num : ''}}
         </a>
-      </div>
-      <div v-if="props.rowData.action === 'task-view'">
-        <a :href="props.rowData.metadata.link" target="_blank">{{
-          props.rowData.metadata.task_name
-        }}</a>
       </div>
     </template>
   </DataTable>

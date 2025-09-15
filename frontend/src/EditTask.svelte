@@ -22,6 +22,8 @@ let syncing = false;
 let errors = [];
 let savedPath = null;
 
+let rowspan = 1; //when "test" task is selected table will have two rows, some cols then need to span
+
 function isClassVisible(cls) {
   return cls.teacher === $user.username || cls.assignment_id || showAllClasses;
 }
@@ -51,6 +53,12 @@ $: {
       taskLink = task.task_link;
     }
   }
+}
+
+$: {
+    if (task) {
+        rowspan = task.type === 'test' ? 2 : 1;
+    }
 }
 
 async function prepareCreatingTask() {
@@ -182,6 +190,25 @@ function assignPointsToAll(max_pts) {
   });
 }
 
+function assignIPStartAddressToAll(ip) {
+  task.classes = task.classes.map((cl) => {
+    if (cl.assigned) {
+      cl.begin_ip = ip;
+    }
+    return cl;
+  });
+}
+
+function assignIPEndAddressToAll(ip) {
+  task.classes = task.classes.map((cl) => {
+    if (cl.assigned) {
+      cl.end_ip = ip;
+    }
+    return cl;
+  });
+}
+
+
 function assignHardDeadlineToAll(hard_deadline) {
   task.classes = task.classes.map((cl) => {
     if (cl.assigned) cl.hard_deadline = hard_deadline;
@@ -196,6 +223,8 @@ function assignSameToAll(templateClass) {
       cl.assigned = templateClass.assigned;
       cl.deadline = templateClass.deadline;
       cl.hard_deadline = templateClass.hard_deadline;
+      cl.begin_ip = templateClass.begin_ip;
+      cl.end_ip = templateClass.end_ip;
     }
     return cl;
   });
@@ -313,15 +342,15 @@ async function deleteTask(proceed) {
         </div>
 
         <div class="mb-2">
-          <table class="table table-hover table-striped mb-0">
+          <table class="table table-active mb-0">
             <tbody>
               {#each shownClasses as clazz, idx}
-                <tr class:table-success={clazz.assigned}>
-                  <td>
+                <tr>
+                  <td rowspan={rowspan}>
                     {clazz.timeslot}
                     <span class="opacity-50">({clazz.code})</span>
                   </td>
-                  <td>{clazz.teacher}</td>
+                  <td rowspan={rowspan}>{clazz.teacher}</td>
                   <td>
                     <div class="row">
                       <TimeRange
@@ -375,7 +404,7 @@ async function deleteTask(proceed) {
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td rowspan={rowspan}>
                     <button
                       class="btn btn-sm p-0"
                       on:click={() => assignSameToAll(clazz)}
@@ -388,11 +417,51 @@ async function deleteTask(proceed) {
                         clazz.assigned = null;
                         clazz.deadline = null;
                         clazz.max_points = null;
+                        clazz.begin_ip = null;
+                        clazz.end_ip = null;
                       }}
                       aria-label="Unassign class"
                       disabled={!(clazz.assigned || clazz.deadline)}></button>
                   </td>
-                </tr>{/each}
+                </tr>
+                  {#if task.type === 'test'}
+                <tr>
+                    <td>
+                    <div class="row">
+                        <div class="input-group input-group-sm col-md">
+                          <input
+                            class="form-control"
+                            type="text"
+                            bind:value={clazz.begin_ip}
+                            placeholder="IP address range start (192.168.8.1)" />
+                          <button
+                            class="btn btn-sm btn-secondary"
+                            disabled={!clazz.assigned}
+                            on:click|preventDefault={() => assignIPStartAddressToAll(clazz.begin_ip)}
+                            title="Set same IP address range start to all classes">
+                            <span class="iconify" data-icon="mdi:content-duplicate"></span>
+                          </button>
+                        </div>
+
+                        <div class="input-group input-group-sm col-md">
+                          <input
+                            class="form-control"
+                            type="text"
+                            bind:value={clazz.end_ip}
+                            placeholder="IP address range start" />
+                          <button
+                            class="btn btn-sm btn-secondary"
+                            disabled={!clazz.assigned}
+                            on:click|preventDefault={() => assignIPEndAddressToAll(clazz.end_ip)}
+                            title="Set same IP address range end to all classes">
+                            <span class="iconify" data-icon="mdi:content-duplicate"></span>
+                          </button>
+                        </div>
+                    </div>
+                    </td>
+                </tr>
+                  {/if}
+              {/each}
             </tbody>
           </table>
           {#if task && (task.classes.length > shownClasses.length || showAllClasses)}
@@ -446,7 +515,6 @@ async function deleteTask(proceed) {
 <style>
 td:not(:nth-of-type(3)) {
   vertical-align: middle;
-  width: 1%;
   white-space: nowrap;
 }
 .btn > a,

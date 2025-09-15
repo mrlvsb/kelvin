@@ -34,6 +34,7 @@ from common.event_log import (
     UserEventSubmit,
     UserEvent,
     UserEventTaskDisplayed,
+    UserEventFinalSubmit,
 )
 from common.inbus import inbus
 from common.models import (
@@ -459,12 +460,22 @@ def event_list(request: HttpRequest, login: str):
                 action = "task-view"
                 metadata["link"] = reverse(
                     "task_detail",
+                    kwargs=dict(assignment_id=event.assigned_task_id, login=user.username),
+                )
+                metadata["task_name"] = tasks[event.assigned_task_id].task.name
+            case UserEventFinalSubmit():
+                action = "final-submit"
+                metadata["link"] = reverse(
+                    "task_detail",
                     kwargs=dict(
                         assignment_id=event.assigned_task_id,
                         login=user.username,
+                        submit_num=event.submit_num,
                     ),
                 )
+                metadata["submit_num"] = event.submit_num
                 metadata["task_name"] = tasks[event.assigned_task_id].task.name
+
         data = dict(
             action=action,
             metadata=metadata,
@@ -718,6 +729,8 @@ def task_detail(request, task_id=None):
                         else None,
                         "max_points": cl.get("max_points", None),
                         "hard_deadline": cl.get("hard_deadline", False),
+                        "allowed_IP_start": cl.get("begin_ip"),
+                        "allowed_IP_end": cl.get("end_ip"),
                     },
                 )
             else:
@@ -842,6 +855,8 @@ def task_detail(request, task_id=None):
             item["deadline"] = assigned.deadline
             item["max_points"] = assigned.max_points
             item["hard_deadline"] = assigned.hard_deadline
+            item["begin_ip"] = assigned.allowed_IP_start
+            item["end_ip"] = assigned.allowed_IP_end
 
         result["classes"].append(item)
 

@@ -40,7 +40,7 @@ from notifications.models import Notification
 from notifications.signals import notify
 
 from common.evaluate import get_meta
-from common.event_log import record_task_displayed
+from common.event_log import record_task_displayed, record_final_submit_event
 from common.models import (
     AssignedTask,
     Class,
@@ -314,6 +314,13 @@ def build_plagiarism_entries(login: str, matches: List[PlagiarismMatch]) -> List
 
 @login_required()
 def task_detail(request, assignment_id, submit_num=None, login=None):
+    assignment = get_object_or_404(AssignedTask, id=assignment_id)
+
+    if assignment.allowed_IP_start is not None and assignment.allowed_IP_end is not None:
+        client_ip = request.META.get("REMOTE_ADDR")
+        if not assignment.is_ip_allowed(client_ip):
+            raise PermissionDenied()
+
     submits = Submit.objects.filter(
         assignment__pk=assignment_id,
     ).order_by("-id")
@@ -326,7 +333,6 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         if login != request.user.username:
             raise PermissionDenied()
 
-    assignment = get_object_or_404(AssignedTask, id=assignment_id)
     testset = create_taskset(
         assignment.task,
         login if login else request.user.username,
@@ -1047,6 +1053,21 @@ def upload_results(request, assignment_id, submit_num, login):
                 submit.save()
 
     return JsonResponse({"success": True})
+
+
+def mark_solution_as_final(request, assignment_id, login, submit_num):
+    submit = get_object_or_404(
+        Submit, assignment_id=assignment_id, submit_num=submit_num, student__username=login
+    )
+
+    submit.is_final = True
+
+    submit.save()
+
+    assignment = get_object_or_404(AssignedTask, id=assignment_id)
+    record_final_submit_event(request, request.user, task=assignment, submit_num=submit_num)
+
+    return redirect("task_detail", assignment_id, login, submit_num)
 
 
 def teacher_task_tar(request, task_id):

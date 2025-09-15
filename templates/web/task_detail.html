@@ -119,6 +119,8 @@
             </li>
             {% endif %}
             {% if submit %}
+
+            {% if is_teacher or task.type != 'test' or not submits.first.is_final %}
             <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#src">
                   Source code
@@ -127,6 +129,8 @@
                   {% endif %}
                 </a>
             </li>
+            {% endif %}
+
             {% if has_pipeline %}
             <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#result">
@@ -138,10 +142,15 @@
             {% endif %}
 
             {% if is_teacher and not upload%}
-              {% if submit and submit.assignment.max_points is not None %}
+                {% if submit and submit.assignment.max_points is not None %}
                 <li class="nav-item ms-auto">
                   {% include 'web/teacher/form_assign_points.html' %}
-
+                    {% if task.type == 'test' and submit != null and submit.submit_num == submits.first.submit_num %}
+                  <form class="d-inline" action="{% url 'mark_solution_as_final' submit.assignment.pk submit.student submit.submit_num%}" method="post">
+                      {% csrf_token %}
+                      <input type="submit" value="Mark as final" class="btn btn-sm btn-primary mt-1 me-2" {% if submits.first.is_final%} disabled {% endif %}/>
+                  </form>
+                {% endif %}
                 <li>
               {% endif %}
             {% else %}
@@ -154,12 +163,21 @@
                     {% endif %}
                     {% if upload != False %}
                     <li class="nav-item">
-                        <form method="post" enctype="multipart/form-data">
+                        {% if not submits.first.is_final%}
+                        <form method="post" enctype="multipart/form-data" class="d-inline">
                             {% csrf_token %}
                             <input type="file" name="solution" multiple hidden id="upload-choose"
                                    onclick="this.value=null;"
                                    onchange="this.form.submit()">
-                            <span id="upload_button" class="btn btn-sm btn-primary" onclick="document.getElementById('upload-choose').click()" data-deadline="{{ deadline|date:'c' }}" data-hard-deadline="{{hard_deadline}}">Upload</span>
+
+                            <span id="upload_button"
+                                  class="btn btn-sm btn-primary"
+                                  onclick="document.getElementById('upload-choose').click()"
+                                  data-deadline="{{ deadline|date:'c' }}"
+                                  data-hard-deadline="{{hard_deadline}}">
+                            Upload
+                            </span>
+
                             <span class="morehover" style="position: relative">
                               <span class="iconify" data-icon="bx:bx-help-circle"></span>
                               <div class="morehover-content" style="position: absolute; right: 0px; top: 15px; background: white; padding: 4px; display: none">
@@ -168,6 +186,13 @@
                               </div>
                             </span>
                         </form>
+                        {% endif %}
+                        {% if task.type == 'test' and submit != null and submit.submit_num == submits.first.submit_num %}
+                            <form class="d-inline" action="{% url 'mark_solution_as_final' submit.assignment.pk submit.student submit.submit_num%}" method="post">
+                            {% csrf_token %}
+                                <input type="submit" value="Mark as final" class="btn btn-sm btn-primary" {% if submits.first.is_final%} disabled {% endif %}/>
+                            </form>
+                        {% endif %}
                         <kelvin-upload-solution cooldown="0"></kelvin-upload-solution>
                     </li>
                     {% endif %}
@@ -226,6 +251,7 @@
             </div>
 
             {% if submit %}
+
             <div class="tab-pane overflow-auto" id="tab_src">
               <kelvin-submit-sources url="{% url 'submit_comments' submit.assignment.id submit.student submit.submit_num %}"></kelvin-submit-sources>
             </div>
@@ -294,6 +320,7 @@
     pointer-events: "none",
     cursor: "not-allowed",
 }
+
 </style>
 
 {% endblock %}

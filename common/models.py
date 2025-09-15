@@ -1,3 +1,4 @@
+import ipaddress
 import os
 import re
 import logging
@@ -92,6 +93,7 @@ class Task(models.Model):
         PROJECT = ("project", "Project")
         LABORATORY = ("laboratory", "Laboratory")
         OTHER = ("other", "Other")
+        TEST = ("test", "Test")
 
     type = models.CharField(max_length=10, choices=TaskType.choices, null=True, default=None)
 
@@ -231,6 +233,9 @@ class AssignedTask(models.Model):
     max_points = models.IntegerField(null=True, blank=True)
     moss_url = models.URLField(null=True, blank=True, editable=False)
 
+    allowed_IP_start = models.GenericIPAddressField(null=True, blank=True)
+    allowed_IP_end = models.GenericIPAddressField(null=True, blank=True)
+
     def is_visible(self):
         return timezone.now() >= self.assigned
 
@@ -241,6 +246,13 @@ class AssignedTask(models.Model):
         return (
             self.deadline is not None
             and datetime.datetime.now(datetime.timezone.utc) > self.deadline
+        )
+
+    def is_ip_allowed(self, ip: str) -> bool:
+        return (
+            ipaddress.ip_address(self.allowed_IP_start)
+            <= ipaddress.ip_address(ip)
+            <= ipaddress.ip_address(self.allowed_IP_end)
         )
 
     def __str__(self):
@@ -272,6 +284,8 @@ class Submit(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     jobid = models.CharField(max_length=64, null=True)
     ip_address = models.GenericIPAddressField(null=True, verbose_name="IP address")
+
+    is_final = models.BooleanField(default=False)
 
     def path_parts(self):
         return [
@@ -385,6 +399,9 @@ def assignedtask_results(assignment, students=None, **kwargs):
         ensure_student(submit.student.username)
         student_submit_stats = results[submit.student.username]
         student_submit_stats["submits"] += 1
+
+        if submit.is_final:
+            student_submit_stats["has_final_submit"] = True
 
         if "first_submit_date" not in student_submit_stats:
             student_submit_stats["first_submit_date"] = submit.created_at
