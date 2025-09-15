@@ -316,7 +316,7 @@ def build_plagiarism_entries(login: str, matches: List[PlagiarismMatch]) -> List
 def task_detail(request, assignment_id, submit_num=None, login=None):
     assignment = get_object_or_404(AssignedTask, id=assignment_id)
 
-    if assignment.allowed_IP_start is not None and assignment.allowed_IP_end is not None:
+    if assignment.allowed_IP_start is not None and assignment.allowed_IP_end is not None and not is_teacher(request.user):
         client_ip = request.META.get("REMOTE_ADDR")
         if not assignment.is_ip_allowed(client_ip):
             raise PermissionDenied()
