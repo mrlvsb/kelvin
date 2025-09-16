@@ -134,7 +134,7 @@ def run_cargo(command: str, args: List[str]) -> BuildResult:
 [package]
 name = "submit"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 """
         lib_target = get_param("lib", default="False") == "True"
         if lib_target:
