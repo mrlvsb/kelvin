@@ -1,4 +1,4 @@
-FROM rust:1.82.0
+FROM rust:1.90.0
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
