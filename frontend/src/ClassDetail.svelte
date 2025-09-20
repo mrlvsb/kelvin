@@ -222,7 +222,7 @@ let showSummary = false;
                       </a>
                       <div class="more-content border shadow rounded bg-body p-1">
                         {assignment.name}
-                        <a href="/task/edit/{assignment.task_id}" use:link title="Edit"
+                        <a href="/#/task/edit/{assignment.task_id}" title="Edit"
                           ><span class="iconify" data-icon="clarity:edit-solid"></span></a>
                         <div style="display: flex; align-items: center;">
                           <a href={assignment.plagcheck_link} title="Plagiarism check"
