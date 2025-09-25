@@ -117,6 +117,7 @@ def student_index(request):
             data = {
                 "id": assignment.id,
                 "name": assignment.task.name,
+                "type": assignment.task.get_type_display() if assignment.task.type else None,
                 "deadline": assignment.deadline,
                 "assigned": assignment.assigned,
                 "assigned_show_remaining": assignment.assigned > timezone.now(),
