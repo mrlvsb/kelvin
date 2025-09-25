@@ -28,6 +28,7 @@ interface StudentSubmit {
   accepted_submit_num: number;
   accepted_submit_id: number;
   link: string;
+  has_final_submit: boolean;
 }
 
 interface Assignment {
