@@ -362,6 +362,29 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         and not (hard_deadline and assignment.is_past_deadline()),
     }
 
+    # Provide a link to a student with the same assignment who doesn't yet have any assigned points
+    # The order is determined by login, same as in class detail.
+    # If there is no "following" student, the ordering wraps back to the beginning of the
+    # unevaluated list of students
+    if user_is_teacher and login is not None:
+        assignment_results = assignedtask_results(assignment)
+        unevaluated_students = [
+            s
+            for s in assignment_results
+            if s["submits"] > 0 and s["submits_with_assigned_pts"] == 0 and s["student"] != login
+        ]
+        unevaluated_students = sorted(unevaluated_students, key=lambda s: s["student"])
+        if len(unevaluated_students) > 0:
+            next_by_order = [s["student"] for s in unevaluated_students if s["student"] > login]
+            if len(next_by_order) > 0:
+                next_student_to_evaluate = next_by_order[0]
+            else:
+                next_student_to_evaluate = unevaluated_students[0]["student"]
+            data["next_url_to_evaluate"] = reverse(
+                task_detail,
+                kwargs=dict(assignment_id=assignment.id, login=next_student_to_evaluate),
+            )
+
     current_submit = None
     if submit_num:
         try:

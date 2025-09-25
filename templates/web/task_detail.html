@@ -138,12 +138,18 @@
             {% endif %}
 
             {% if is_teacher and not upload%}
-              {% if submit and submit.assignment.max_points is not None %}
-                <li class="nav-item ms-auto">
-                  {% include 'web/teacher/form_assign_points.html' %}
-
-                <li>
-              {% endif %}
+                <li class="nav-item ms-auto d-flex align-items-center">
+                    {% if next_url_to_evaluate %}
+                    <div class="me-1" title="Link to the next student thas has unevaluated submit(s) for the same task.">
+                        <a class="btn btn-sm btn-info" href="{{ next_url_to_evaluate }}">Next student to evaluate</a>
+                    </div>
+                    {% endif %}
+                    {% if submit and submit.assignment.max_points is not None %}
+                    <div>
+                    {% include 'web/teacher/form_assign_points.html' %}
+                    </div>
+                    {% endif %}
+                </li>
             {% else %}
             <li class="nav-item ms-auto">
                 <ul class="navbar-nav">

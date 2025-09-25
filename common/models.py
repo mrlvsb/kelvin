@@ -357,6 +357,14 @@ User.add_to_class("notification_str", lambda self: self.get_full_name())
 
 
 def assignedtask_results(assignment, students=None, **kwargs):
+    """
+    Returns a list of students to gether with their submits.
+    [{
+        "student": login,
+        "submits": <count of submits>,
+        "submits_with_assigned_pts": <count of submits without assigned points>,
+    }]
+    """
     results = {}
 
     if not students:
