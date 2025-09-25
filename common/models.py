@@ -272,6 +272,7 @@ class Submit(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     jobid = models.CharField(max_length=64, null=True)
     ip_address = models.GenericIPAddressField(null=True, verbose_name="IP address")
+    is_final = models.BooleanField(default=False)
 
     def path_parts(self):
         return [

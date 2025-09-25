@@ -1072,6 +1072,17 @@ def upload_results(request, assignment_id, submit_num, login):
 
     return JsonResponse({"success": True})
 
+def mark_solution_as_final(request, assignment_id, login, submit_num):
+    submit = get_object_or_404(
+        Submit, assignment_id=assignment_id, submit_num=submit_num, student__username=login
+    )
+
+    submit.is_final = True
+
+    submit.save()
+
+    return redirect("task_detail", assignment_id, login, submit_num)
+
 
 def teacher_task_tar(request, task_id):
     task = get_object_or_404(Task, id=task_id)

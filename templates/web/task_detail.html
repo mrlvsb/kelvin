@@ -119,6 +119,8 @@
             </li>
             {% endif %}
             {% if submit %}
+
+            {% if is_teacher or task.type != 'exam' or not submits.first.is_final %}
             <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#src">
                   Source code
@@ -127,6 +129,8 @@
                   {% endif %}
                 </a>
             </li>
+            {% endif %}
+
             {% if has_pipeline %}
             <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#result">
@@ -138,7 +142,7 @@
             {% endif %}
 
             {% if is_teacher and not upload%}
-                <li class="nav-item ms-auto d-flex align-items-center">
+              <li class="nav-item ms-auto d-flex align-items-center">
                     {% if next_url_to_evaluate %}
                     <div class="me-1" title="Link to the next student thas has unevaluated submit(s) for the same task.">
                         <a class="btn btn-sm btn-info" href="{{ next_url_to_evaluate }}#src">Next student to evaluate</a>
@@ -146,10 +150,17 @@
                     {% endif %}
                     {% if submit and submit.assignment.max_points is not None %}
                     <div>
-                    {% include 'web/teacher/form_assign_points.html' %}
+                        {% include 'web/teacher/form_assign_points.html' %}
                     </div>
-                    {% endif %}
-                </li>
+
+                     {% if task.type == 'exam' and submit != null and submit.submit_num == submits.first.submit_num %}
+                      <form class="d-inline" action="{% url 'mark_solution_as_final' submit.assignment.pk submit.student submit.submit_num%}" method="post">
+                          {% csrf_token %}
+                          <input type="submit" value="Mark as final" class="btn btn-sm btn-primary mt-1 me-2" {% if submits.first.is_final%} disabled {% endif %}/>
+                      </form>
+                      {% endif %}
+              {% endif %}
+              <li>
             {% else %}
             <li class="nav-item ms-auto">
                 <ul class="navbar-nav">
@@ -160,12 +171,20 @@
                     {% endif %}
                     {% if upload != False %}
                     <li class="nav-item">
-                        <form method="post" enctype="multipart/form-data">
+                        {% if not submits.first.is_final %}
+                        <form method="post" enctype="multipart/form-data" class="d-inline">
                             {% csrf_token %}
                             <input type="file" name="solution" multiple hidden id="upload-choose"
                                    onclick="this.value=null;"
                                    onchange="this.form.submit()">
-                            <span id="upload_button" class="btn btn-sm btn-primary" onclick="document.getElementById('upload-choose').click()" data-deadline="{{ deadline|date:'c' }}" data-hard-deadline="{{hard_deadline}}">Upload</span>
+
+                            <span id="upload_button"
+                                  class="btn btn-sm btn-primary"
+                                  onclick="document.getElementById('upload-choose').click()" data-deadline="{{ deadline|date:'c' }}"
+                                  data-hard-deadline="{{hard_deadline}}">
+                                Upload
+                            </span>
+
                             <span class="morehover" style="position: relative">
                               <span class="iconify" data-icon="bx:bx-help-circle"></span>
                               <div class="morehover-content" style="position: absolute; right: 0px; top: 15px; background: white; padding: 4px; display: none">
@@ -174,6 +193,13 @@
                               </div>
                             </span>
                         </form>
+                        {% endif %}
+                        {% if task.type == 'exam' and submit != null and submit.submit_num == submits.first.submit_num and submit.created_at < submit.assignment.deadline%}
+                            <form class="d-inline" action="{% url 'mark_solution_as_final' submit.assignment.pk submit.student submit.submit_num%}" method="post">
+                            {% csrf_token %}
+                                <input type="submit" value="Mark as final" class="btn btn-sm btn-primary" {% if submits.first.is_final%} disabled {% endif %}/>
+                            </form>
+                        {% endif %}
                         <kelvin-upload-solution cooldown="0"></kelvin-upload-solution>
                     </li>
                     {% endif %}
