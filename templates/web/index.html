@@ -59,7 +59,7 @@
                                             <a href="{% url 'task_detail' login=task.student assignment_id=task.id %}">{{ task.name }}</a>
                                         {% endif %}
                                     </td>
-                                    <td>Task</td>
+                                    <td>{% if task.type %}{{ task.type }}{% else %}-{% endif %}</td>
                                     {% comment %}
                                         TODO: Add remaining time to deadline by creating simple tag:
                                         https://stackoverflow.com/questions/52296306/django-template-is-there-a-built-in-way-to-get-current-date-as-type-date-ins
