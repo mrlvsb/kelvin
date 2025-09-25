@@ -34,6 +34,7 @@ from common.event_log import (
     UserEventSubmit,
     UserEvent,
     UserEventTaskDisplayed,
+    UserEventMarkAsFinal
 )
 from common.inbus import inbus
 from common.models import (
@@ -464,6 +465,18 @@ def event_list(request: HttpRequest, login: str):
                         login=user.username,
                     ),
                 )
+                metadata["task_name"] = tasks[event.assigned_task_id].task.name
+            case UserEventMarkAsFinal():
+                action = "mark-submit"
+                metadata["link"] = reverse(
+                "task_detail",
+                    kwargs=dict(
+                        assignment_id=event.assigned_task_id,
+                        login=user.username,
+                        submit_num=event.submit_num,
+                    ),
+                )
+                metadata["submit_num"] = event.submit_num
                 metadata["task_name"] = tasks[event.assigned_task_id].task.name
         data = dict(
             action=action,
