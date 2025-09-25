@@ -452,7 +452,6 @@ dependencies = [
     { name = "psycopg", extra = ["binary"] },
     { name = "pygraphviz" },
     { name = "pymdown-extensions" },
-    { name = "pyrefly" },
     { name = "pyserde" },
     { name = "python-dotenv" },
     { name = "python-magic" },
@@ -469,6 +468,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "pre-commit" },
+    { name = "pyrefly" },
     { name = "ruff" },
 ]
 
@@ -499,7 +499,6 @@ requires-dist = [
     { name = "psycopg", extras = ["binary"], specifier = "==3.2.1" },
     { name = "pygraphviz", specifier = "==1.7" },
     { name = "pymdown-extensions", specifier = "==10.10.1" },
-    { name = "pyrefly", specifier = "==0.18.0" },
     { name = "pyserde", specifier = "==0.13.1" },
     { name = "python-dotenv", specifier = "==1.0.1" },
     { name = "python-magic", specifier = "==0.4.27" },
@@ -516,6 +515,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "pre-commit", specifier = ">=3.8.0" },
+    { name = "pyrefly", specifier = "==0.18.0" },
     { name = "ruff", specifier = "==0.6.3" },
 ]
 
