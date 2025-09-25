@@ -7,7 +7,9 @@ export let color;
 export let assigned_points;
 export let login;
 export let task;
+export let task_type;
 export let submit_id;
+export let has_final_submit;
 
 let show = false;
 let saving = false;
@@ -52,7 +54,15 @@ async function save() {
 <div on:contextmenu={ctxMenu} on:keydown={keydown} on:click={click} bind:this={container}>
   {#if submits != 0}
     <a href={link} style="color: {color}">
-      {isNaN(parseFloat(assigned_points)) ? '?' : assigned_points}
+      {#if isNaN(parseFloat(assigned_points)) }
+            {#if task_type === 'exam' && !has_final_submit}
+                !
+            {:else}
+                ?
+            {/if}
+        {:else}
+            {assigned_points}
+        {/if}
     </a>
   {/if}
   {#if show}

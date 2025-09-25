@@ -395,6 +395,9 @@ def assignedtask_results(assignment, students=None, **kwargs):
         student_submit_stats = results[submit.student.username]
         student_submit_stats["submits"] += 1
 
+        if submit.is_final:
+            student_submit_stats["has_final_submit"] = True
+
         if "first_submit_date" not in student_submit_stats:
             student_submit_stats["first_submit_date"] = submit.created_at
         student_submit_stats["last_submit_date"] = submit.created_at
