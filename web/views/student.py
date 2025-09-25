@@ -40,7 +40,7 @@ from notifications.models import Notification
 from notifications.signals import notify
 
 from common.evaluate import get_meta
-from common.event_log import record_task_displayed
+from common.event_log import record_task_displayed, record_final_submit_event
 from common.models import (
     AssignedTask,
     Class,
@@ -1080,6 +1080,9 @@ def mark_solution_as_final(request, assignment_id, login, submit_num):
     submit.is_final = True
 
     submit.save()
+
+    assignment = get_object_or_404(AssignedTask, id=assignment_id)
+    record_final_submit_event(request, request.user, task=assignment, submit_num=submit_num)
 
     return redirect("task_detail", assignment_id, login, submit_num)
 
