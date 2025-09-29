@@ -110,6 +110,7 @@ async def deploy(request: DeploymentRequest, response: Response):
         compose_path=get_settings().docker.compose_file_path,
         compose_env_file=get_settings().docker.compose_env_file,
         container_name=request.container_name,
+        healthcheck_url=str(request.healthcheck_url),
     )
     try:
         logs = await manager.run()

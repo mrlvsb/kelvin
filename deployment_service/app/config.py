@@ -26,7 +26,7 @@ class Security(BaseModel):
     """Settings related to security and authentication."""
 
     webhook_secret: SecretStr
-    allowed_hosts: list[str] = ["localhost", "127.0.0.1"]
+    allowed_hosts: list[str] = ["localhost", "127.0.0.1", "nginx"]
     backend_cors_origins: list[AnyHttpUrl] = []
 
 

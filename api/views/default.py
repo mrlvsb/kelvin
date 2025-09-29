@@ -1030,4 +1030,4 @@ def create_submit(request: django.http.HttpRequest, task_assignment: int) -> Jso
 
 
 def health_check(request):
-    return JsonResponse({"status": "ok"})
+    return JsonResponse({"status": "OK"})

@@ -11,7 +11,7 @@ from tests.test_security import calculate_signature
 
 # Mock settings before importing the app
 mock_settings = AsyncMock()
-mock_settings.security.allowed_hosts = ["testserver"]
+mock_settings.security.allowed_hosts = ["testserver", "nginx"]
 mock_settings.security.backend_cors_origins = ["http://localhost"]
 mock_settings.docker.compose_file_path = "/tmp/docker-compose.yml"
 config.get_settings = lambda: mock_settings
