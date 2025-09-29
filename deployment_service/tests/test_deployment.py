@@ -1,4 +1,3 @@
-from collections import deque
 from pathlib import Path
 from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
@@ -30,6 +29,8 @@ async def manager_instance(mock_docker_client):
         image={"repository": "ghcr.io/mrlvsb", "image": "kelvin", "tag": "test-sha"},
         commit_sha="a" * 40,
         compose_path=Path("/tmp/test/repo/docker-compose.yml"),
+        compose_env_file=Path("/test/repo/.env"),
+        healthcheck_url="http://test.local/health",
     )
     manager._run_command = AsyncMock(return_value=True)
     return manager
@@ -111,32 +112,32 @@ async def test_cleanup_handles_apierror(manager_instance):
 
 
 @pytest.mark.asyncio
-async def test_health_check_healthy(manager_instance):
-    container = MagicMock()
-    container.attrs = {"State": {"Health": {"Status": "healthy"}}}
-    manager_instance.client.containers.get.return_value = container
-    manager_instance._health_check()  # Should not raise
+@patch("httpx.AsyncClient")
+async def test_health_check_healthy(mock_async_client, manager_instance):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_async_client.return_value.__aenter__.return_value.get = AsyncMock(
+        return_value=mock_response
+    )
+    result = await manager_instance._health_check()
+    assert result is True
 
 
 @pytest.mark.asyncio
-async def test_health_check_timeout(manager_instance, monkeypatch):
-    container = MagicMock()
-    container.attrs = {"State": {"Health": {"Status": "unhealthy"}}}
-    manager_instance.client.containers.get.return_value = container
-    monkeypatch.setattr("time.sleep", lambda x: None)
-    monkeypatch.setattr("time.time", lambda: 0)
-    # Simulate time passing
-    times = [0, 10, 20, 30, 40, 50, 61]
-    monkeypatch.setattr("time.time", lambda: times.pop(0))
-    with pytest.raises(FallbackError):
-        await manager_instance._health_check()
+@patch("httpx.AsyncClient")
+@patch("time.time", side_effect=[0, 1, 62])  # Start, first check, timeout
+@patch("asyncio.sleep", new_callable=AsyncMock)
+async def test_health_check_timeout(mock_sleep, mock_time, mock_async_client, manager_instance):
+    """Tests a health check that fails due to timeout."""
+    mock_response = MagicMock()
+    mock_response.status_code = 503  # Service unavailable
+    mock_async_client.return_value.__aenter__.return_value.get = AsyncMock(
+        return_value=mock_response
+    )
 
-
-@pytest.mark.asyncio
-async def test_swap_service_fallback_error(manager_instance):
-    manager_instance._run_command = AsyncMock(side_effect=[True, False])
-    with pytest.raises(FallbackError):
-        await manager_instance._swap_service("cur.yml", "cand.yml")
+    result = await manager_instance._health_check()
+    assert result is False
+    assert "Health check timed out" in manager_instance.logs[-1]
 
 
 @pytest.mark.asyncio
@@ -155,30 +156,34 @@ async def test_run_success(mock_rmtree, mock_mkdtemp, manager_instance):
     """Tests the entire successful deployment workflow."""
     manager_instance._get_current_image_id = MagicMock(return_value="previous_image_id")
     manager_instance._pull_new_image = MagicMock()
-    manager_instance._swap_service = AsyncMock()
-    manager_instance._health_check = MagicMock()
+    manager_instance._swap_service = AsyncMock(return_value=True)
+    manager_instance._health_check = AsyncMock(return_value=True)
     manager_instance._cleanup = MagicMock()
 
     logs = await manager_instance.run()
 
     manager_instance._run_command.assert_any_call(["git", "fetch", "origin"], cwd=ANY)
     manager_instance._run_command.assert_any_call(
-        ["git", "worktree", "add", "--force", ANY, manager_instance.commit_sha], cwd=ANY
+        [
+            "git",
+            "show",
+            f"{manager_instance.commit_sha}:{Path(manager_instance.stable_compose_path).name}",
+            ">",
+            ANY,
+        ],
+        cwd=ANY,
     )
 
     manager_instance._get_current_image_id.assert_called_once()
     manager_instance._pull_new_image.assert_called_once()
-    manager_instance._swap_service.assert_awaited_once_with(ANY, ANY)
-    manager_instance._health_check.assert_called_once()
+    manager_instance._swap_service.assert_awaited_once()
+    manager_instance._health_check.assert_awaited_once()
 
     manager_instance._run_command.assert_any_call(
         ["git", "reset", "--hard", manager_instance.commit_sha], cwd=ANY
     )
     manager_instance._cleanup.assert_called_once_with("previous_image_id")
 
-    manager_instance._run_command.assert_any_call(
-        ["git", "worktree", "remove", "--force", ANY], cwd=ANY
-    )
     mock_rmtree.assert_called_once_with("/tmp/mock/temp_dir", ignore_errors=True)
     assert "Deployment successful" in list(logs)[-2]
 
@@ -188,10 +193,10 @@ async def test_run_rollback_on_health_check_failure(manager_instance):
     """Tests that a rollback is triggered if the health check fails."""
     manager_instance._get_current_image_id = MagicMock(return_value="previous123")
     manager_instance._pull_new_image = MagicMock()
-    manager_instance._health_check = MagicMock(side_effect=FallbackError("Timeout", logs=deque()))
+    manager_instance._health_check = AsyncMock(return_value=False)
 
     # Mock _swap_service to inspect its calls
-    mock_swap = AsyncMock()
+    mock_swap = AsyncMock(return_value=True)
     manager_instance._swap_service = mock_swap
 
     with pytest.raises(FallbackError):
@@ -202,7 +207,7 @@ async def test_run_rollback_on_health_check_failure(manager_instance):
     deploy_call, rollback_call = mock_swap.await_args_list
 
     # Call 1: Standard deployment
-    assert deploy_call.kwargs == {}
+    assert "image_tag_override" not in deploy_call.kwargs
 
     # Call 2: Rollback deployment
     assert rollback_call.kwargs["image_tag_override"] == "previous123"
@@ -221,14 +226,14 @@ async def test_run_fails_on_git_fetch(manager_instance):
 
 
 @pytest.mark.asyncio
-async def test_run_fails_on_worktree_creation(manager_instance):
-    """Tests that a critical error is raised if `git worktree add` fails."""
-    # Return False when 'git [worktree] add' is called
-    manager_instance._run_command.side_effect = lambda cmd, **kwargs: cmd[1] != "worktree"
+async def test_run_fails_on_show_creation(manager_instance):
+    """Tests that a critical error is raised if `git show` fails."""
+    # Return False when 'git [show]' is called
+    manager_instance._run_command.side_effect = lambda cmd, **kwargs: cmd[1] != "show"
 
     with pytest.raises(CriticalError) as excinfo:
         await manager_instance.run()
-    assert "Failed to create git worktree" in excinfo.value.message
+    assert "Failed to create candidate docker-compose.yml file" in excinfo.value.message
 
 
 @pytest.mark.asyncio
@@ -239,26 +244,3 @@ async def test_run_fails_on_tempdir_creation(mock_mkdtemp, manager_instance):
         await manager_instance.run()
     assert "Failed to create temporary directory" in excinfo.value.message
     assert "Access denied" in str(excinfo.value)
-
-
-@pytest.mark.asyncio
-@patch("shutil.rmtree")
-async def test_run_always_cleans_up_worktree(mock_rmtree, manager_instance):
-    """Ensures the worktree and temp dir are cleaned up even on failure."""
-    manager_instance._pull_new_image = MagicMock(
-        side_effect=CriticalError("Pull failed", logs=deque())
-    )
-
-    with pytest.raises(CriticalError):
-        await manager_instance.run()
-
-    cmds = manager_instance._run_command.call_args_list[2].args[0]
-    assert cmds == [
-        "git",
-        "worktree",
-        "remove",
-        "--force",
-        ANY,
-    ], "Expected git worktree remove command to be called"
-
-    mock_rmtree.assert_called_once()

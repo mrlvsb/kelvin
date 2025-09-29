@@ -86,7 +86,7 @@ services:
     pull_policy: always
     restart: unless-stopped
     environment:
-      - DOCKER__COMPOSE_FILE_PATH=/kelvin/docker-compose.yml
+      - DOCKER__COMPOSE_FILE_PATH=${DOCKER__COMPOSE_FILE_PATH}
       - SECURITY__WEBHOOK_SECRET=${SECURITY__WEBHOOK_SECRET}
       - SECURITY__BACKEND_CORS_ORIGINS=${SECURITY__BACKEND_CORS_ORIGINS}
       - SECURITY__ALLOWED_HOSTS=${SECURITY__ALLOWED_HOSTS}

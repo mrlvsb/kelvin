@@ -1,7 +1,9 @@
 import re
 from typing import Annotated
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import AnyHttpUrl, BaseModel, Field, field_validator
+
+from app.config import get_settings
 
 IMAGE_PATTERN = re.compile(
     r"^(?P<repository>[\w.\-_]+((?::\d+|)(?=/[a-z0-9._-]+/[a-z0-9._-]+))|)"
@@ -37,6 +39,24 @@ class DeploymentRequest(BaseModel):
         description="The full commit SHA to check out for the configuration. This is the source of truth.",
         examples=["ffac537e6cbbf934b08745a378932722df287a53"],
     )
+    healthcheck_url: Annotated[
+        AnyHttpUrl | None,
+        Field(
+            default="https://nginx/health",
+            description="The URL to check the health of the service.",
+            examples=["https://nginx/health", "https://kelvin.cs.vsb.cz/health"],
+        ),
+    ]
+
+    @field_validator("healthcheck_url", mode="after")
+    @classmethod
+    def validate_healthcheck_url(cls, value: AnyHttpUrl) -> AnyHttpUrl:
+        host = value.host
+        if host not in get_settings().security.allowed_hosts:
+            raise ValueError(
+                f"healthcheck_url host must be one of {get_settings().security.allowed_hosts}"
+            )
+        return value
 
     @field_validator("image", mode="before")
     @classmethod

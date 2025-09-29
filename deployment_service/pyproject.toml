@@ -7,6 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "docker>=7.1.0",
     "fastapi[standard]>=0.116.1",
+    "httpx>=0.28.1",
     "pydantic-settings>=2.10.1",
 ]
 

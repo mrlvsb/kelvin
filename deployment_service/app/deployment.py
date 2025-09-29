@@ -8,6 +8,7 @@ from collections import deque
 from pathlib import Path
 
 import docker
+import httpx
 from docker.errors import APIError, ImageNotFound, NotFound
 from fastapi import status
 
@@ -51,7 +52,7 @@ class CriticalError(DeploymentError):
 
 
 class DeploymentManager:
-    """Handles the core logic of the deployment process using Git worktrees."""
+    """Handles the core logic of the deployment process using candidate docker-compose.yml."""
 
     def __init__(
         self,
@@ -61,13 +62,15 @@ class DeploymentManager:
         compose_path: Path,
         compose_env_file: Path | None,
         container_name: str,
+        healthcheck_url: str,
     ):
         self.service_name = service_name
         self.container_name = container_name
+        self.healthcheck_url = healthcheck_url
         self.image_tag = image["tag"]
         self.commit_sha = commit_sha
         self.stable_compose_path = str(compose_path.resolve())
-        self.stable_compose_env_file = compose_env_file or str(
+        self.stable_compose_env_file = str(compose_env_file) or str(
             compose_path.resolve().parent / ".env"
         )
         self.stable_repository_dir = compose_path.resolve().parent
@@ -141,7 +144,7 @@ class DeploymentManager:
         current_compose_file: str,
         candidate_compose_file: str,
         image_tag_override: str | None = None,
-    ) -> None:
+    ) -> bool:
         """Stops the current service and starts a new one using a specific docker-compose file."""
         tag = image_tag_override or self.image_tag
         self.logger.info(f"Stopping service '{self.service_name}'...")
@@ -180,34 +183,34 @@ class DeploymentManager:
         env = os.environ.copy()
         env[f"{self.service_name.upper()}_IMAGE_TAG"] = tag
         if not await self._run_command(up_cmd, self.stable_repository_dir, env=env):
-            if not image_tag_override:  # Not rollback attempt
-                raise FallbackError(
-                    f"Failed to start the service '{self.service_name}' with candidate config.",
-                    self.logs,
+            if not image_tag_override:  # Non-rollback attempt
+                self.logger.error(
+                    f"Failed to start the service '{self.service_name}' with candidate config."
                 )
+                return False
             raise CriticalError(
                 f"Failed to rollback the service '{self.service_name}'! Manual intervention required.",
                 self.logs,
             )
+        return True
 
-    def _health_check(self) -> None:
-        """Performs a health check on the newly started container."""
-        self.logger.info("Performing health check...")
+    async def _health_check(self) -> bool:
+        """Performs a health check by making HTTP requests to a specified URL."""
+        self.logger.info(f"Performing health check on {self.healthcheck_url}...")
         end_time = time.time() + HEALTH_CHECK_TIMEOUT
-        while time.time() < end_time:
-            try:
-                container = self.client.containers.get(self.container_name)
-                container.reload()
-                status = container.attrs.get("State", {}).get("Health", {}).get("Status")
-                self.logger.info(f"Current health status: {status}")
-                if status == "healthy":
-                    self.logger.info("Health check passed.")
-                    return
-                time.sleep(HEALTH_CHECK_INTERVAL)
-            except NotFound:
-                self.logger.warning("Container not found during health check. Retrying...")
-                time.sleep(HEALTH_CHECK_INTERVAL)
-        raise FallbackError("Health check timed out.", self.logs)
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            while time.time() < end_time:
+                try:
+                    response = await client.get(self.healthcheck_url)
+                    self.logger.info(f"Health check response status: {response.status_code}")
+                    if response.status_code == 200:
+                        self.logger.info("Health check passed.")
+                        return True
+                except httpx.RequestError as exc:
+                    self.logger.warning(f"Health check request failed: {exc}")
+                await asyncio.sleep(HEALTH_CHECK_INTERVAL)
+        self.logger.error("Health check timed out.")
+        return False
 
     def _cleanup(self, old_image_id: str) -> None:
         """Removes the old Docker image after a successful deployment."""
@@ -220,16 +223,15 @@ class DeploymentManager:
             self.logger.error("Could not remove old image. It may be in use.")
 
     async def run(self) -> deque:
-        """Executes the full deployment flow with a temporary Git worktree and atomic state update."""
+        """Executes the full deployment flow with a temporary candidate of docker-compose.yml and atomic state update."""
         self.logger.info(f"Starting deployment for commit {self.commit_sha}")
         try:
             candidate_dir = tempfile.mkdtemp(prefix=f"deploy-{self.commit_sha}")
         except OSError as e:
             raise CriticalError(f"Failed to create temporary directory: {e}", self.logs) from e
 
-        worktree_path = os.path.join(candidate_dir, self.service_name)
         candidate_compose_path = os.path.join(
-            worktree_path, os.path.basename(self.stable_compose_path)
+            candidate_dir, os.path.basename(self.stable_compose_path)
         )
 
         try:
@@ -242,23 +244,49 @@ class DeploymentManager:
                     "Failed to fetch from git origin. The commit might not be available.", self.logs
                 )
             self.logger.info(
-                f"Creating temporary worktree at {worktree_path} for commit {self.commit_sha}"
+                f"Copying candidate docker-compose.yml file at {candidate_dir} for commit {self.commit_sha}"
             )
             if not await self._run_command(
-                ["git", "worktree", "add", "--force", worktree_path, self.commit_sha],
+                [
+                    "git",
+                    "show",
+                    f"{self.commit_sha}:{os.path.basename(self.stable_compose_path)}",
+                    ">",
+                    candidate_compose_path,
+                ],
                 cwd=self.stable_repository_dir,
             ):
                 raise CriticalError(
-                    "Failed to create git worktree. Is the commit SHA valid?", self.logs
+                    "Failed to create candidate docker-compose.yml file. Is the commit SHA valid?",
+                    self.logs,
                 )
 
             previous_image_id = self._get_current_image_id()
             self._pull_new_image()
 
             self.logger.info(f"Deploying service using config from commit {self.commit_sha}")
-            await self._swap_service(self.stable_compose_path, candidate_compose_path)
+            deployment_successful = False
+            if (
+                await self._swap_service(self.stable_compose_path, candidate_compose_path)
+                and await self._health_check()
+            ):
+                deployment_successful = True
+            if not deployment_successful:
+                self.logger.info(f"Initiating rollback to previous image ID: {previous_image_id}")
+                if previous_image_id:
+                    await self._swap_service(
+                        candidate_compose_path,
+                        self.stable_compose_path,
+                        image_tag_override=previous_image_id,
+                    )
+                    self.logger.info("Rollback completed successfully.")
+                else:
+                    self.logger.error("No previous image ID available. Cannot perform rollback.")
 
-            self._health_check()
+                raise FallbackError(
+                    f"Service '{self.service_name}' failed to start with candidate config or health check failed.",
+                    self.logs,
+                )
 
             self.logger.info(f"Updating stable configuration to commit {self.commit_sha}")
             if not await self._run_command(
@@ -273,16 +301,6 @@ class DeploymentManager:
             self.logger.info(f"Deployment successful for {self.service_name}:{self.image_tag}")
             return self.logs
         except FallbackError as e:
-            self.logger.error(f"An error occurred: {e} Initiating rollback.")
-            if previous_image_id:
-                await self._swap_service(
-                    candidate_compose_path,
-                    self.stable_compose_path,
-                    image_tag_override=previous_image_id,
-                )
-                self.logger.info("Rollback completed successfully.")
-            else:
-                self.logger.error("No previous image ID available. Cannot perform rollback.")
             raise e
         except CriticalError as e:
             self.logger.error(f"{e}. Deployment aborted.")
@@ -290,10 +308,6 @@ class DeploymentManager:
         except Exception as e:
             raise CriticalError(f"Unexpected deployment failure: {e}", self.logs) from e
         finally:
-            # ALWAYS clean up the worktree, no matter what happened.
-            self.logger.info("Cleaning up temporary worktree...")
-            await self._run_command(
-                ["git", "worktree", "remove", "--force", worktree_path],
-                cwd=self.stable_repository_dir,
-            )
+            # ALWAYS clean up the temporary directory, no matter what happened.
+            self.logger.info("Cleaning up temporary directory...")
             shutil.rmtree(candidate_dir, ignore_errors=True)

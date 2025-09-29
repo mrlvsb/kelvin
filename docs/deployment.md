@@ -123,7 +123,7 @@ To avoid disrupting the stable configuration, the manager first creates a tempor
 
 #### **4. Health Check**
 
-The manager continuously polls the new container's health status using the Docker SDK. It waits for the status to become healthy. If the health check times out, it triggers a rollback.
+The manager performs an active health check by repeatedly sending HTTP GET requests to a specified `healthcheck_url`. It continuously polls this endpoint until it receives a 200 OK status code, which indicates the service is ready. If the health check times out, it triggers a rollback.
 
 #### **5. Rollback (on Failure)**
 
