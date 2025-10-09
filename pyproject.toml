@@ -30,7 +30,7 @@ dependencies = [
     "psycopg[binary]==3.2.1",
     "pygraphviz==1.7",
     "pymdown-extensions==10.10.1",
-    "pyserde==0.13.1",
+    "pyserde==0.25.1",
     "python-dotenv==1.0.1",
     "python-magic==0.4.27",
     "pyyaml==6.0.1",

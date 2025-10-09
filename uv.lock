@@ -13,11 +13,11 @@ wheels = [
 
 [[package]]
 name = "beartype"
-version = "0.17.1"
+version = "0.22.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/c3/ea/e9d11faffebeed65c46d8b06b53d13d004fabd036cbe919fbd8644913f33/beartype-0.17.1.tar.gz", hash = "sha256:001df1ce51c76f0a21c2183215b26254b667fd8b688a6cbe8f013907cdaaf9b3", size = 1130580, upload-time = "2024-02-10T07:07:24.07Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/04/96/43ed27f27127155f24f5cf85df0c27fd2ac2ab67d94cecc8f76933f91679/beartype-0.22.2.tar.gz", hash = "sha256:ff3a7df26af8d15fa87f97934f0f6d41bbdadca971c410819104998dd26013d2", size = 1574491, upload-time = "2025-10-04T06:37:56.451Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ef/a6/64167d6b6884befaa8649f14f7062e4c05536bdfe220912cdf5bfd19226b/beartype-0.17.1-py3-none-any.whl", hash = "sha256:583deb076e312f5acc2e2928706af2facab1f4282be775ee619e6f42c290f423", size = 869667, upload-time = "2024-02-10T07:07:21.485Z" },
+    { url = "https://files.pythonhosted.org/packages/96/2a/a4773109619010192e72f48e95165b14790413a51f513c879c8d63f67e17/beartype-0.22.2-py3-none-any.whl", hash = "sha256:12077afe3528eba5c5b801f816712f7ff06f6da5509994c79561e29b48bcedb8", size = 1317280, upload-time = "2025-10-04T06:37:53.99Z" },
 ]
 
 [[package]]
@@ -499,7 +499,7 @@ requires-dist = [
     { name = "psycopg", extras = ["binary"], specifier = "==3.2.1" },
     { name = "pygraphviz", specifier = "==1.7" },
     { name = "pymdown-extensions", specifier = "==10.10.1" },
-    { name = "pyserde", specifier = "==0.13.1" },
+    { name = "pyserde", specifier = "==0.25.1" },
     { name = "python-dotenv", specifier = "==1.0.1" },
     { name = "python-magic", specifier = "==0.4.27" },
     { name = "pyyaml", specifier = "==6.0.1" },
@@ -547,10 +547,31 @@ wheels = [
 ]
 
 [[package]]
+name = "markdown-it-py"
+version = "4.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "mdurl" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5b/f5/4ec618ed16cc4f8fb3b701563655a69816155e79e24a17b651541804721d/markdown_it_py-4.0.0.tar.gz", hash = "sha256:cb0a2b4aa34f932c007117b194e945bd74e0ec24133ceb5bac59009cda1cb9f3", size = 73070, upload-time = "2025-08-11T12:57:52.854Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/94/54/e7d793b573f298e1c9013b8c4dade17d481164aa517d1d7148619c2cedbf/markdown_it_py-4.0.0-py3-none-any.whl", hash = "sha256:87327c59b172c5011896038353a81343b6754500a08cd7a4973bb48c6d578147", size = 87321, upload-time = "2025-08-11T12:57:51.923Z" },
+]
+
+[[package]]
 name = "markupsafe"
 version = "2.0.1"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/bf/10/ff66fea6d1788c458663a84d88787bae15d45daa16f6b3ef33322a51fc7e/MarkupSafe-2.0.1.tar.gz", hash = "sha256:594c67807fb16238b30c44bdf74f36c02cdf22d1c8cda91ef8a0ed8dabf5620a", size = 18596, upload-time = "2021-05-18T17:18:22.856Z" }
+
+[[package]]
+name = "mdurl"
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec958cb99bd3efefba235e65cdeb9c84d24a8293ba1d90/mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba", size = 8729, upload-time = "2022-08-14T12:40:10.846Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8", size = 9979, upload-time = "2022-08-14T12:40:09.779Z" },
+]
 
 [[package]]
 name = "mdx-truly-sane-lists"
@@ -691,14 +712,16 @@ wheels = [
 
 [[package]]
 name = "plum-dispatch"
-version = "2.2.2"
+version = "2.5.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beartype" },
+    { name = "rich" },
+    { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/63/28/000a7170ac92c9ae34d26049171455fa45d2fdff4eb4b237eb2bbb8af351/plum_dispatch-2.2.2.tar.gz", hash = "sha256:d5d180225c9fbf0277375bb558b649d97d0b651a91037bb7155cedbe9f52764b", size = 24261, upload-time = "2023-09-23T08:14:29.275Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a5/d7/2a2b418dd0a48400fd9a63df0a8e82de05a3642610675e8bd2870909685f/plum_dispatch-2.5.8.tar.gz", hash = "sha256:b1cc091873b94ec0075bbf9ccc91edce2f2bbad3cac4328eb8626284a50aef76", size = 35240, upload-time = "2025-10-07T17:54:24.462Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/45/07/95c6be6710207f4a2c83023f59889a86c58282c8367aa49a907e9e6deb57/plum_dispatch-2.2.2-py3-none-any.whl", hash = "sha256:d7ee415bd166ffa90eaa4b24d7c9dc7ca6f8875750586001e7c9baff706223bd", size = 30137, upload-time = "2023-09-23T08:14:27.734Z" },
+    { url = "https://files.pythonhosted.org/packages/d1/c1/8ccc8ba81154fb9c29c62032a1aa5e2f56045d1446a4605a249daf433974/plum_dispatch-2.5.8-py3-none-any.whl", hash = "sha256:02c6561718e83b5599c863d8c2bb4a64d8e852ac84ec09e49043145c3f48313a", size = 42061, upload-time = "2025-10-07T17:54:22.953Z" },
 ]
 
 [[package]]
@@ -772,6 +795,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pygments"
+version = "2.19.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b0/77/a5b8c569bf593b0140bde72ea885a803b82086995367bf2037de0159d924/pygments-2.19.2.tar.gz", hash = "sha256:636cb2477cec7f8952536970bc533bc43743542f70392ae026374600add5b887", size = 4968631, upload-time = "2025-06-21T13:39:12.283Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c7/21/705964c7812476f378728bdf590ca4b771ec72385c533964653c68e86bdc/pygments-2.19.2-py3-none-any.whl", hash = "sha256:86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b", size = 1225217, upload-time = "2025-06-21T13:39:07.939Z" },
+]
+
+[[package]]
 name = "pygraphviz"
 version = "1.7"
 source = { registry = "https://pypi.org/simple" }
@@ -808,18 +840,19 @@ wheels = [
 
 [[package]]
 name = "pyserde"
-version = "0.13.1"
+version = "0.25.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "beartype" },
     { name = "casefy" },
     { name = "jinja2" },
     { name = "plum-dispatch" },
     { name = "typing-extensions" },
     { name = "typing-inspect" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b8/0b/c2842739433dbabb4aa94e3728ebc0354dec83d680fcfcd0ab14cbed121d/pyserde-0.13.1.tar.gz", hash = "sha256:8d1644f44aa50ce671dce74958a4d2f2bf5db2e96e8965695b4481c9a0b857c3", size = 41405, upload-time = "2024-02-02T13:11:47.907Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6e/1a/fa708c550e6e36eb9e6f29524ea77f956e5cc89ba891bec1b89a9666d9b9/pyserde-0.25.1.tar.gz", hash = "sha256:302a534e91d548a74722bfe1577f497ed3fd87790ac9bd4503985279622e0cd0", size = 40192, upload-time = "2025-09-10T10:42:49.653Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/15/c6/d72ade514307fb3addfdc198b7375ed044aeaba81c8e4f554188a2f53f86/pyserde-0.13.1-py3-none-any.whl", hash = "sha256:729a003e68bdb05cb4b52ce8bfeaa042de1dbc93c886fe0946589fed3ad7e96c", size = 42728, upload-time = "2024-02-02T13:11:45.572Z" },
+    { url = "https://files.pythonhosted.org/packages/73/4c/5c38bbd1da35df7c37d82508c5e60beb706176261c7779a35a78d4e2862e/pyserde-0.25.1-py3-none-any.whl", hash = "sha256:7bbb4321b76662a9c2eceee88f8beb40d6fdd905aef3ae04780e06f4f3cb6f4d", size = 43965, upload-time = "2025-09-10T10:42:48.217Z" },
 ]
 
 [[package]]
@@ -950,6 +983,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/95/52/531ef197b426646f26b53815a7d2a67cb7a331ef098bb276db26a68ac49f/requests-oauthlib-1.3.1.tar.gz", hash = "sha256:75beac4a47881eeb94d5ea5d6ad31ef88856affe2332b9aafb52c6452ccf0d7a", size = 52027, upload-time = "2022-01-29T18:52:24.037Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6f/bb/5deac77a9af870143c684ab46a7934038a53eb4aa975bc0687ed6ca2c610/requests_oauthlib-1.3.1-py2.py3-none-any.whl", hash = "sha256:2577c501a2fb8d05a304c09d090d6e47c306fef15809d102b327cf8364bddab5", size = 23892, upload-time = "2022-01-29T18:52:22.279Z" },
+]
+
+[[package]]
+name = "rich"
+version = "14.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "markdown-it-py" },
+    { name = "pygments" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fe/75/af448d8e52bf1d8fa6a9d089ca6c07ff4453d86c65c145d0a300bb073b9b/rich-14.1.0.tar.gz", hash = "sha256:e497a48b844b0320d45007cdebfeaeed8db2a4f4bcf49f15e455cfc4af11eaa8", size = 224441, upload-time = "2025-07-25T07:32:58.125Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e3/30/3c4d035596d3cf444529e0b2953ad0466f6049528a879d27534700580395/rich-14.1.0-py3-none-any.whl", hash = "sha256:536f5f1785986d6dbdea3c75205c473f970777b4a0d6c6dd1b696aa05a3fa04f", size = 243368, upload-time = "2025-07-25T07:32:56.73Z" },
 ]
 
 [[package]]
