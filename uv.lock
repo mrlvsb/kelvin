@@ -255,6 +255,19 @@ wheels = [
 ]
 
 [[package]]
+name = "django-debug-toolbar"
+version = "6.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "sqlparse" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c5/d5/5fc90234532088aeec5faa48d5b09951cc7eab6626030ed427d3bd8cd9bc/django_debug_toolbar-6.0.0.tar.gz", hash = "sha256:6eb9fa6f4a5884bf04004700ffb5a44043f1fff38784447fc52c1633448c8c14", size = 305331, upload-time = "2025-07-25T13:11:48.68Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/05/b5/4724a8c18fcc5b09dca7b7a0e70c34208317bb110075ad12484d6588ae91/django_debug_toolbar-6.0.0-py3-none-any.whl", hash = "sha256:0cf2cac5c307b77d6e143c914e5c6592df53ffe34642d93929e5ef095ae56841", size = 266967, upload-time = "2025-07-25T13:11:47.265Z" },
+]
+
+[[package]]
 name = "django-ipware"
 version = "7.0.1"
 source = { registry = "https://pypi.org/simple" }
@@ -467,6 +480,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "django-debug-toolbar" },
     { name = "pre-commit" },
     { name = "pyrefly" },
     { name = "ruff" },
@@ -514,6 +528,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "django-debug-toolbar", specifier = ">=6.0.0" },
     { name = "pre-commit", specifier = ">=3.8.0" },
     { name = "pyrefly", specifier = "==0.18.0" },
     { name = "ruff", specifier = "==0.6.3" },
