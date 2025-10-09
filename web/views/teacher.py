@@ -62,8 +62,23 @@ def enrich_matches(
     used by the frontend to them.
     """
 
+    fullnames = {}
+
+    def get_fullname(login: str) -> str:
+        fullname = fullnames.get(login)
+        if fullname is not None:
+            return fullname
+        fullname = User.objects.get(username=login).get_full_name()
+        fullnames[login] = fullname
+        return fullname
+
+    assignments = {}
+
     def get_class_and_link(assignment_id: int, login: str) -> Tuple[str, str]:
-        assignment = AssignedTask.objects.get(pk=assignment_id)
+        assignment = assignments.get(assignment_id)
+        if assignment is None:
+            assignment = AssignedTask.objects.get(pk=assignment_id)
+            assignments[assignment_id] = assignment
         clazz = assignment.clazz
         code = clazz.code
         semester = clazz.semester
@@ -77,14 +92,12 @@ def enrich_matches(
     for match in matches:
         match_data = dataclasses.asdict(match)
         match_data["teaching"] = match.first.login in students or match.second.login in students
-        match_data["first_fullname"] = User.objects.get(username=match.first.login).get_full_name()
+        match_data["first_fullname"] = get_fullname(match.first.login)
 
         (first_class, first_link) = get_class_and_link(match.first.assignment_id, match.first.login)
         match_data["first_class"] = first_class
         match_data["first_link"] = first_link
-        match_data["second_fullname"] = User.objects.get(
-            username=match.second.login
-        ).get_full_name()
+        match_data["second_fullname"] = get_fullname(match.second.login)
 
         (second_class, second_link) = get_class_and_link(
             match.second.assignment_id, match.second.login
