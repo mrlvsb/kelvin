@@ -42,7 +42,6 @@ if settings.DEBUG:
     from django.contrib.auth import login as login_fn
     from django.contrib.auth.models import User
     from django.shortcuts import redirect
-    from debug_toolbar.toolbar import debug_toolbar_urls
 
     def su(request, login):
         login_fn(
@@ -53,4 +52,9 @@ if settings.DEBUG:
         return redirect("/")
 
     urlpatterns.append(path("su/<str:login>", su))
-    urlpatterns += debug_toolbar_urls()
+
+    try:
+        from debug_toolbar.toolbar import debug_toolbar_urls
+        urlpatterns += debug_toolbar_urls()
+    except ImportError:
+        pass
