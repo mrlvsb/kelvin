@@ -2,12 +2,14 @@ import dataclasses
 import logging
 import mimetypes
 from pathlib import Path
-from typing import List
+from typing import Dict, List, Tuple
 
 import django_rq
 import rq
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.models import User
 from django.core.cache import caches
+from django.db.models import Q
 from django.http import (
     Http404,
     HttpResponse,
@@ -25,7 +27,7 @@ from django.views.decorators.http import require_http_methods
 from django.views.static import serve
 from notifications.models import Notification
 
-from common.models import Semester, Submit, Task, current_semester
+from common.models import AssignedTask, Class, Semester, Submit, Task, current_semester
 from common.plagcheck.dolos import (
     get_dolos_log_path,
     get_dolos_result,
@@ -34,6 +36,7 @@ from common.plagcheck.dolos import (
     DolosResultPresent,
 )
 from common.plagcheck.moss import (
+    MatchedStudent,
     PlagiarismMatch,
     get_match_local_dir,
     moss_delete_job_from_cache,
@@ -46,7 +49,6 @@ from common.plagcheck import get_linked_tasks, enqueue_plagiarism_check
 from common.plagcheck.moss.local_result import download_moss_result
 from common.utils import is_teacher
 from kelvin.settings import BASE_DIR
-from web.views.teacher import enrich_matches
 from web.views.utils import file_response
 
 
@@ -57,10 +59,9 @@ class LinkedTask:
     semesters: str
 
 
-def get_linked_task_data(task_id: int) -> List[LinkedTask]:
-    tasks = get_linked_tasks(task_id)
-    linked_tasks = []
-    for task in tasks:
+def get_linked_task_data(linked_tasks: List[Task]) -> List[LinkedTask]:
+    task_data = []
+    for task in linked_tasks:
         semesters = (
             Semester.objects.filter(pk__in=task.assignedtask_set.values("clazz__semester"))
             .distinct()
@@ -69,9 +70,9 @@ def get_linked_task_data(task_id: int) -> List[LinkedTask]:
         semesters = ", ".join(
             str(s) for s in sorted(semesters, key=lambda s: (s.year, 0 if s.winter else 1))
         )
-        linked_tasks.append(LinkedTask(id=task.id, name=task.name, semesters=semesters))
+        task_data.append(LinkedTask(id=task.id, name=task.name, semesters=semesters))
 
-    return linked_tasks
+    return task_data
 
 
 @user_passes_test(is_teacher)
@@ -87,7 +88,9 @@ def task_plagcheck_index(request: HttpRequest, task_id: int):
     key_job = moss_job_cache_key(task_id)
 
     task = get_object_or_404(Task, pk=task_id)
-    linked_tasks = get_linked_task_data(task_id)
+
+    linked_tasks = get_linked_tasks(task_id)
+    linked_task_data = get_linked_task_data(linked_tasks)
 
     # Configure task options
     opts = moss_task_get_opts(task_id)
@@ -98,7 +101,7 @@ def task_plagcheck_index(request: HttpRequest, task_id: int):
 
     ctx = {
         "task": task,
-        "linked_tasks": linked_tasks,
+        "linked_tasks": linked_task_data,
         "semester": str(current_semester()),
         "opts": opts,
     }
@@ -142,9 +145,12 @@ def task_plagcheck_index(request: HttpRequest, task_id: int):
         newer_submit_count = Submit.objects.filter(
             assignment__task_id=task.id, created_at__gt=res.started_at
         ).count()
-        matches = enrich_matches(res.matches, request.user, task)
+        matches = enrich_matches(res.matches, request.user, task, linked_tasks)
         if not res.success:
             status = "failed"
+        ctx["has_any_past_student"] = any(
+            m["first_past_semester"] or m["second_past_semester"] for m in matches
+        )
         ctx["log"] = res.log
         ctx["matches"] = matches
         ctx["started_at"] = res.started_at
@@ -157,6 +163,93 @@ def task_plagcheck_index(request: HttpRequest, task_id: int):
         "web/plagcheck.html",
         ctx,
     )
+
+
+def enrich_matches(
+    matches: List[PlagiarismMatch],
+    teacher: User,
+    task: Task,
+    linked_tasks: List[Task],
+) -> List[Dict[str, str]]:
+    """
+    Converts PlagiarismMatches to dictionaries and adds additional information
+    used by the frontend to them.
+    """
+
+    logins = set([m.first.login for m in matches] + [m.second.login for m in matches])
+    students = User.objects.filter(username__in=logins).all()
+    fullnames = {s.username: s.get_full_name() for s in students}
+
+    # Find students who were assigned one of the linked tasks in a **past** semester
+    # We will show this information in the frontend to help find situations where a student has
+    # submitted their old solution from a previous year
+    past_assigned_students = set()
+    semester = current_semester()
+    for task in linked_tasks:
+        past_assigned_students |= set(
+            task.assignedtask_set.filter(~Q(clazz__semester=semester))
+            .select_related("clazz")
+            .select_related("clazz__semester")
+            .prefetch_related("clazz__students")
+            .values_list("clazz__students__username", flat=True)
+        )
+
+    assignment_ids = set(
+        [m.first.assignment_id for m in matches] + [m.second.assignment_id for m in matches]
+    )
+    assignments_by_id = {
+        a.id: a
+        for a in (
+            AssignedTask.objects.filter(id__in=assignment_ids)
+            .select_related("clazz", "task")
+            .select_related("clazz__semester")
+            .all()
+        )
+    }
+
+    def get_class_and_link(student: MatchedStudent) -> Tuple[str, str]:
+        assignment = assignments_by_id[student.assignment_id]
+        clazz = assignment.clazz
+        code = clazz.code
+        semester = clazz.semester
+        class_str = f"{code} ({semester})"
+        link = reverse(
+            "find_task_detail", kwargs=dict(task_id=assignment.task.id, login=student.login)
+        )
+        return (class_str, link)
+
+    def is_from_past_semester(student: MatchedStudent) -> bool:
+        """
+        Returns true if the student from the plagiarism match both:
+        - Has a plagiarism match in the **current semester**
+        - Also had this task assigned in a past semester
+        """
+        return (
+            student.login in past_assigned_students
+            and assignments_by_id[student.assignment_id].clazz.semester != semester
+        )
+
+    classes = Class.objects.current_semester().filter(teacher=teacher, assignedtask__task=task)
+    students = {v[0] for v in User.objects.filter(students__in=classes).values_list("username")}
+
+    match_items = []
+    for match in matches:
+        match_data = dataclasses.asdict(match)
+        match_data["teaching"] = match.first.login in students or match.second.login in students
+        match_data["first_fullname"] = fullnames[match.first.login]
+        match_data["first_past_semester"] = is_from_past_semester(match.first)
+
+        (first_class, first_link) = get_class_and_link(match.first)
+        match_data["first_class"] = first_class
+        match_data["first_link"] = first_link
+        match_data["second_fullname"] = fullnames[match.second.login]
+        match_data["second_past_semester"] = is_from_past_semester(match.second)
+
+        (second_class, second_link) = get_class_and_link(match.second)
+        match_data["second_class"] = second_class
+        match_data["second_link"] = second_link
+        match_items.append(match_data)
+    return match_items
 
 
 @user_passes_test(is_teacher)

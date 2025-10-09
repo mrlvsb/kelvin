@@ -152,14 +152,23 @@
           });
       </script>
 
-      <div style="display: flex; justify-content: end; margin-bottom: 5px;">
-        <span style="padding-right: 5px;">Filter mode:</span>
-        <select id="filter-mode">
-          <option value="one" selected="selected">At least one side from this semester</option>
-          <option value="both">Both sides from this semester</option>
-          <option value="all">All</option>
-        </select>
-      </div>
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-top: 10px;">
+            <div style="max-width: 750px;">
+                {% if has_any_past_student %}
+                Students marked with <code>*</code> were already assigned this task in a previous semester. It is
+                possible that they are submitting their own old solution (that might have been plagiarized
+                by someone else or submitted by a teacher). Please check their old solution.
+                {% endif %}
+            </div>
+            <div style="display: flex; justify-content: end; margin-bottom: 5px;">
+                <span style="padding-right: 5px;">Filter mode:</span>
+                <select id="filter-mode">
+                    <option value="one" selected="selected">At least one side from this semester</option>
+                    <option value="both">Both sides from this semester</option>
+                    <option value="all">All</option>
+                </select>
+            </div>
+        </div>
       <table class="table table-sm table-hover table-striped moss-table">
         <thead>
         <tr>
@@ -178,12 +187,12 @@
         {% for match in matches %}
           <tr>
             <td><a target="_blank" href="{{ match.first_link }}">{{ match.first.login }}</a>
-              ({{ match.first_fullname }})
+              ({{ match.first_fullname }}{% if match.first_past_semester %}*{% endif %})
             </td>
             <td>{{ match.first_class }}</td>
             <td class="cell-right">{{ match.first.percent }}%</td>
             <td><a target="_blank" href="{{ match.second_link }}">{{ match.second.login }}</a>
-              ({{ match.second_fullname }})
+              ({{ match.second_fullname }}{% if match.second_past_semester %}*{% endif %})
             </td>
             <td>{{ match.second_class }}</td>
             <td class="cell-right">{{ match.second.percent }}%</td>
