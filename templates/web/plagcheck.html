@@ -78,6 +78,9 @@
           .cell-right {
               text-align: right;
           }
+          .visited {
+              opacity: 0.5;
+          }
       </style>
       <link rel="stylesheet" type="text/css"
             href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css"/>
@@ -89,6 +92,17 @@
       <script src="//cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
       <script>
           var semesterRegex = /.*\((.*)\)$/;
+          var table = undefined;
+
+          function markAsVisited(link) {
+              localStorage.setItem(`kelvin-moss-link-visited-${link}`, "true");
+              if (table !== undefined) {
+                  table.draw();
+              }
+          }
+          function isVisited(link) {
+              return localStorage.getItem(`kelvin-moss-link-visited-${link}`) === "true";
+          }
 
           $(document).ready(function () {
               $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
@@ -110,9 +124,9 @@
                   }
               });
 
-              var table = $(".moss-table").DataTable({
-                  "paging": false,
-                  "order": [
+              table = $(".moss-table").DataTable({
+                  paging: false,
+                  order: [
                       [5, "desc"], // Percent B descending
                       [6, "desc"]  // Line count descending
                   ],
@@ -122,7 +136,14 @@
                   }, {
                       targets: [-2],
                       orderable: false
-                  }]
+                  }],
+                  rowCallback: function(row) {
+                      const cell = $(row).find("td").eq(7);
+                      const mossLink = cell.attr("data-moss-link");
+                      if (isVisited(mossLink)) {
+                          $(row).addClass("visited");
+                      }
+                  }
               });
 
               $("#filter-mode").change(function () {
@@ -167,9 +188,11 @@
             <td>{{ match.second_class }}</td>
             <td class="cell-right">{{ match.second.percent }}%</td>
             <td class="cell-right">{{ match.lines }}</td>
-            <td class="cell-center">
-              <a target="_blank" href="{{ match.link }}"><span class="iconify"
-                                                               data-icon="ant-design:search-outlined"></span></a>
+            <td class="cell-center" data-moss-link="{{ match.link }}">
+              <a target="_blank"
+                 href="{{ match.link }}"
+                 onclick='markAsVisited("{{ match.link }}")'
+              ><span class="iconify" data-icon="ant-design:search-outlined"></span></a>
             </td>
             <td class="cell-center">{{ match.teaching|yesno:"Yes,No" }}</td>
           </tr>
