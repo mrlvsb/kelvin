@@ -353,6 +353,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         "task": assignment.task,
         "assigned": assignment.assigned if is_announce else None,
         "deadline": assignment.deadline,
+        "now": timezone.now(),
         "hard_deadline": hard_deadline,
         "submits": submits,
         "text": testset.load_readme().announce if is_announce else testset.load_readme(),
