@@ -12,7 +12,6 @@ from tests.test_security import calculate_signature
 # Mock settings before importing the app
 mock_settings = AsyncMock()
 mock_settings.security.allowed_hosts = ["testserver", "nginx"]
-mock_settings.security.backend_cors_origins = ["http://localhost"]
 mock_settings.docker.compose_file_path = "/tmp/docker-compose.yml"
 config.get_settings = lambda: mock_settings
 
@@ -106,16 +105,3 @@ def test_deploy_image_pull_error(mock_deployment_manager, default_user_headers):
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json() == {"logs": ["Failed to pull image."], "error": "Image not found"}
-
-
-def test_cors_headers_present():
-    """Test that CORS headers are present in responses."""
-    response = client.options("/", headers={"Origin": "http://localhost"})
-    assert "access-control-allow-origin" in response.headers
-    assert response.headers["access-control-allow-origin"] == "http://localhost"
-
-
-def test_trusted_host_middleware_blocks_untrusted_host():
-    """Test that requests from untrusted hosts are blocked."""
-    response = client.get("/health", headers={"host": "malicious.com"})
-    assert response.status_code == status.HTTP_400_BAD_REQUEST

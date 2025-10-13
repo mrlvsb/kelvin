@@ -168,10 +168,9 @@ async def test_run_success(mock_rmtree, mock_mkdtemp, manager_instance):
             "git",
             "show",
             f"{manager_instance.commit_sha}:{Path(manager_instance.stable_compose_path).name}",
-            ">",
-            ANY,
         ],
         cwd=ANY,
+        output_file=ANY,
     )
 
     manager_instance._get_current_image_id.assert_called_once()

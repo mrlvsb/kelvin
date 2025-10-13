@@ -90,22 +90,37 @@ class DeploymentManager:
         self.logger.addHandler(handler)
 
     async def _run_command(
-        self, command: list[str], cwd: Path, env: dict[str, str] | None = None
+        self,
+        command: list[str],
+        cwd: Path,
+        env: dict[str, str] | None = None,
+        output_file: str | None = None,
     ) -> bool:
         """Runs a shell command in a specified directory and logs its output."""
-        process = await asyncio.create_subprocess_exec(
-            *command,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            cwd=cwd,
-            env=env,
-        )
-        stdout, stderr = await process.communicate()
-        if stdout:
-            self.logger.debug(f"stdout:\n{stdout.decode()}")
-        if stderr:
-            self.logger.debug(f"stderr:\n{stderr.decode()}")
-        return process.returncode == 0
+        if output_file:
+            with open(output_file, "w") as f:
+                process = await asyncio.create_subprocess_exec(
+                    *command,
+                    cwd=cwd,
+                    env=env,
+                    stdout=f,
+                    stderr=f,
+                )
+                await process.wait()
+        else:
+            process = await asyncio.create_subprocess_exec(
+                *command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=cwd,
+                env=env,
+            )
+            stdout, stderr = await process.communicate()
+            if stdout:
+                self.logger.debug(f"stdout:\n{stdout.decode()}")
+            if stderr:
+                self.logger.debug(f"stderr:\n{stderr.decode()}")
+            return process.returncode == 0
 
     def _get_current_image_id(self) -> str | None:
         """Gets the image ID of the currently running container for rollback."""
@@ -251,10 +266,9 @@ class DeploymentManager:
                     "git",
                     "show",
                     f"{self.commit_sha}:{os.path.basename(self.stable_compose_path)}",
-                    ">",
-                    candidate_compose_path,
                 ],
                 cwd=self.stable_repository_dir,
+                output_file=candidate_compose_path,
             ):
                 raise CriticalError(
                     "Failed to create candidate docker-compose.yml file. Is the commit SHA valid?",

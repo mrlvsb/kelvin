@@ -16,7 +16,7 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import AnyHttpUrl, BaseModel, FilePath, SecretStr
+from pydantic import BaseModel, FilePath, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_DIR = Path(__file__).parent.parent.parent
@@ -27,7 +27,6 @@ class Security(BaseModel):
 
     webhook_secret: SecretStr
     allowed_hosts: list[str] = ["localhost", "127.0.0.1", "nginx"]
-    backend_cors_origins: list[AnyHttpUrl] = []
 
 
 class Docker(BaseModel):
