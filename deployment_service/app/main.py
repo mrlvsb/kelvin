@@ -1,6 +1,4 @@
 from fastapi import FastAPI, Response, Security, status
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from app.config import get_settings
 from app.deployment import DeploymentError, DeploymentManager
@@ -10,23 +8,6 @@ from app.security import validate_signature
 app = FastAPI(
     title="Deployment Service",
     description="A Service to do on-premises deployments.",
-)
-
-# Sets all CORS enabled origins
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        str(origin).rstrip("/") for origin in get_settings().security.backend_cors_origins
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Guards against HTTP Host Header attacks
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=get_settings().security.allowed_hosts,
 )
 
 

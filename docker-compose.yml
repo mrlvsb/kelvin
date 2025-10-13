@@ -91,7 +91,7 @@ services:
       - SECURITY__BACKEND_CORS_ORIGINS=${SECURITY__BACKEND_CORS_ORIGINS}
       - SECURITY__ALLOWED_HOSTS=${SECURITY__ALLOWED_HOSTS}
     volumes:
-      - ${REPO__DIRECTORY_PATH}:/kelvin
+      - ${REPO__DIRECTORY_PATH}:${REPO__DIRECTORY_PATH_IN_CONTAINER}
       - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
