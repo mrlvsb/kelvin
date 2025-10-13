@@ -70,8 +70,8 @@ class DeploymentManager:
         self.image_tag = image["tag"]
         self.commit_sha = commit_sha
         self.stable_compose_path = str(compose_path.resolve())
-        self.stable_compose_env_file = str(compose_env_file) or str(
-            compose_path.resolve().parent / ".env"
+        self.stable_compose_env_file = str(
+            compose_env_file or compose_path.resolve().parent / ".env"
         )
         self.stable_repository_dir = compose_path.resolve().parent
         repo = image.get("repository")
@@ -120,7 +120,7 @@ class DeploymentManager:
                 self.logger.debug(f"stdout:\n{stdout.decode()}")
             if stderr:
                 self.logger.debug(f"stderr:\n{stderr.decode()}")
-            return process.returncode == 0
+        return process.returncode == 0
 
     def _get_current_image_id(self) -> str | None:
         """Gets the image ID of the currently running container for rollback."""
