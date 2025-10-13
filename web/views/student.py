@@ -913,6 +913,10 @@ def task_asset(request, task_name, path):
         if not path.split("/")[-1].startswith("announce."):
             raise PermissionDenied()
 
+    # Files and directories starting with . are private
+    if any(p.startswith(".") for p in path.split("/")):
+        raise PermissionDenied()
+
     deny_files = ["config.yml", "tests.yml", "script.py", "solution.c", "solution.cpp"]
     if ".." in path or (path in deny_files and not is_teacher(request.user)):
         raise PermissionDenied()
