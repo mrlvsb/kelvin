@@ -20,7 +20,10 @@
 <h6>Assigned: {{ assigned|date:"d.m.Y, G:i" }}, Time remaining: {{ assigned|timeuntil }}</h6>
 {% endif %}
 {% if deadline %}
-<h6>Deadline: {{ deadline|date:"d.m.Y, G:i" }}, Time remaining: {{ deadline|timeuntil }}</h6>
+  <h6>Deadline: {{ deadline|date:"d.m.Y, G:i" }}{% if deadline.timestamp > now.timestamp %}, Time remaining: <span class="text-success">{{ deadline|timeuntil }} left</span>
+    {% else %}
+      <span class="text-danger">(expired)</span>
+    {% endif %}</h6>
 {% endif %}
 
 {% if submit %}
