@@ -791,12 +791,15 @@ def task_detail(request, task_id=None):
         "type": task.type,
     }
 
-    ignore_list = [r"\.git", r"^\.taskid$", r"^\.$", r"__pycache__", r"\.pyc$"]
+    ignore_list = [r"__pycache__"]
     for root, subdirs, files in os.walk(task.dir()):
         rel = os.path.normpath(os.path.relpath(root, task.dir()))
 
         def is_allowed(path):
             path = os.path.normpath(path)
+            if path.startswith(".") or any(p.startswith(".") for p in Path(path).parts):
+                return False
+
             for pattern in ignore_list:
                 if re.search(pattern, path):
                     return False
