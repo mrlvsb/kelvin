@@ -44,6 +44,6 @@ defineProps<{
           relativeDate: rel
         }
       )
-    }}<template v-if="suffix">{{ suffix }}</template>
+    }}<template v-if="suffix">&nbsp;{{ suffix }}</template>
   </time>
 </template>
