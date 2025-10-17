@@ -149,20 +149,22 @@
                     </div>
                     {% endif %}
 
+                    {% if task.type == 'exam' and submit != null and submit.submit_num == submits.first.submit_num %}
+                      {% if submits.first.is_final %}
+                          <div class="me-1" title="Link to the next student thas has unevaluated submit(s) for the same task.">
+                            <a class="btn btn-sm btn-info" href="{% url 'unmark_solution_final_mark' submit.assignment.pk submit.student submit.submit_num%}">Unmark final flag</a>
+                          </div>
+                      {% else %}
+                          <div class="me-1" title="Link to the next student thas has unevaluated submit(s) for the same task.">
+                            <a class="btn btn-sm btn-info" href="{% url 'mark_solution_as_final' submit.assignment.pk submit.student submit.submit_num%}">Mark as final</a>
+                          </div>
+                      {% endif %}
+                    {% endif %}
+
                     {% if submit and submit.assignment.max_points is not None %}
                     <div>
                         {% include 'web/teacher/form_assign_points.html' %}
                      </div>
-                  {% if task.type == 'exam' and submit != null and submit.submit_num == submits.first.submit_num %}
-                  <form class="d-inline" action="{% url 'unmark_solution_final_mark' submit.assignment.pk submit.student submit.submit_num%}" method="post">
-                      {% csrf_token %}
-                      <input type="submit" value="Unmark final flag" class="btn btn-sm btn-primary mt-1 me-2" {% if not submits.first.is_final%} disabled {% endif %}/>
-                  </form>
-                  <form class="d-inline" action="{% url 'mark_solution_as_final' submit.assignment.pk submit.student submit.submit_num%}" method="post">
-                      {% csrf_token %}
-                      <input type="submit" value="Mark as final" class="btn btn-sm btn-primary mt-1 me-2" {% if submits.first.is_final%} disabled {% endif %}/>
-                  </form>
-                  {% endif %}
                 <li>
               {% endif %}
             {% else %}
@@ -175,6 +177,12 @@
                     {% endif %}
                     {% if upload != False %}
                     <li class="nav-item">
+                      {% if task.type == 'exam' and submit != null and submit.submit_num == submits.first.submit_num and submit.created_at < submit.assignment.deadline%}
+                            <form id="mark-form" class="d-inline" action="{% url 'mark_solution_as_final' submit.assignment.pk submit.student submit.submit_num%}" method="post">
+                            {% csrf_token %}
+                                <kelvin-mark-button form_id="mark-form" is_disabled="{{ submits.first.is_final }}"></kelvin-mark-button>
+                            </form>
+                        {% endif %}
                         {% if not submits.first.is_final %}
                         <form method="post" enctype="multipart/form-data" class="d-inline">
                             {% csrf_token %}
@@ -197,12 +205,6 @@
                               </div>
                             </span>
                         </form>
-                        {% endif %}
-                        {% if task.type == 'exam' and submit != null and submit.submit_num == submits.first.submit_num and submit.created_at < submit.assignment.deadline%}
-                            <form class="d-inline" action="{% url 'mark_solution_as_final' submit.assignment.pk submit.student submit.submit_num%}" method="post">
-                            {% csrf_token %}
-                                <input type="submit" value="Mark as final" class="btn btn-sm btn-primary" {% if submits.first.is_final%} disabled {% endif %}/>
-                            </form>
                         {% endif %}
                         <kelvin-upload-solution cooldown="0"></kelvin-upload-solution>
                     </li>

@@ -54,15 +54,15 @@ async function save() {
 <div on:contextmenu={ctxMenu} on:keydown={keydown} on:click={click} bind:this={container}>
   {#if submits != 0}
     <a href={link} style="color: {color}">
-      {#if isNaN(parseFloat(assigned_points)) }
-            {#if task_type === 'exam' && !has_final_submit}
-                !
-            {:else}
-                ?
-            {/if}
+      {#if isNaN(parseFloat(assigned_points))}
+        {#if task_type === 'exam' && has_final_submit}
+          F
         {:else}
-            {assigned_points}
+          ?
         {/if}
+      {:else}
+        {assigned_points}
+      {/if}
     </a>
   {/if}
   {#if show}

@@ -51,8 +51,8 @@ type MarkAsFinalEvent = EventBase & {
     link: string;
     submit_num: number;
     task_name: string;
-  }
-}
+  };
+};
 
 type Event = LoginEvent | SubmitEvent | TaskDisplayedEvent | MarkAsFinalEvent;
 
@@ -236,8 +236,12 @@ watch(ipFilter, () => {
       <template #column-link="props">
         <div v-if="props.rowData.metadata && props.rowData.metadata.link">
           <a :href="props.rowData.metadata.link" target="_blank">
-              {{ props.rowData.metadata.task_name }}
-              {{ props.rowData.metadata.submit_num != null ? '#' + props.rowData.metadata.submit_num : ''}}
+            {{ props.rowData.metadata.task_name }}
+            {{
+              props.rowData.metadata.submit_num != null
+                ? '#' + props.rowData.metadata.submit_num
+                : ''
+            }}
           </a>
         </div>
       </template>
