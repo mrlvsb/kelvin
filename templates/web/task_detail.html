@@ -178,10 +178,14 @@
                     {% if upload != False %}
                     <li class="nav-item">
                       {% if task.type == 'exam' and submit != null and submit.submit_num == submits.first.submit_num and submit.created_at < submit.assignment.deadline%}
-                            <form id="mark-form" class="d-inline" action="{% url 'mark_solution_as_final' submit.assignment.pk submit.student submit.submit_num%}" method="post">
-                            {% csrf_token %}
-                                <kelvin-mark-button form_id="mark-form" is_disabled="{{ submits.first.is_final }}"></kelvin-mark-button>
-                            </form>
+                            {% if not submits.first.is_final %}
+                                <form id="mark-form" class="d-inline" action="{% url 'mark_solution_as_final' submit.assignment.pk submit.student submit.submit_num%}" method="post">
+                                {% csrf_token %}
+                                <span id="mark-button"></span>
+                                </form>
+                            {% else %}
+                                <input type="button" disabled value="Marked as final" class="btn btn-sm btn-primary"  />
+                            {% endif %}
                         {% endif %}
                         {% if not submits.first.is_final %}
                         <form method="post" enctype="multipart/form-data" class="d-inline">
@@ -282,6 +286,8 @@
 </div>
 
 <script>
+    mountMarkButton("#mark-button", {"formId": "mark-form"});
+
   (function() {
     const tabControl = document.querySelector('.nav-tabs');
     if (!tabControl) return;

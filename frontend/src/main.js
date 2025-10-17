@@ -122,6 +122,7 @@ createElement('app', App);
 createElement('submit-sources', TaskDetail);
 createElement('upload-solution', UploadSolution);
 createElement('pipeline-status', PipelineStatus);
+
 if (!enableNewUI) createElement('color-theme', ColorTheme);
 
 function focusTab() {
@@ -159,6 +160,7 @@ import Quiz from './Quiz/Quiz.vue';
 import QuizEdit from './Quiz/QuizEdit.vue';
 import QuizList from './Quiz/Lists/QuizList.vue';
 import QuizSubmitList from './Quiz/Lists/QuizSubmitList.vue';
+import MarkButton from './components/MarkButton.vue';
 
 /**
  * Register new Vue component as a custom element.
@@ -222,6 +224,12 @@ function mountQuizEdit(id, props) {
     app.mount(id);
 }
 
+function mountMarkButton(id, props) {
+    const app = createApp(MarkButton, props);
+    app.mount(id);
+}
+
 window.mountStudentPage = mountStudentPage;
 window.mountQuiz = mountQuiz;
 window.mountQuizEdit = mountQuizEdit;
+window.mountMarkButton = mountMarkButton;
