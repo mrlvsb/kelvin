@@ -30,6 +30,11 @@ class SubmitPastHardDeadline(Exception):
         super().__init__(message)
 
 
+class SubmitAfterFinal(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
 def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     """
     Creates a new submit for the given `assignment` and the user logged in the `request`.
@@ -49,11 +54,13 @@ def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     submits = Submit.objects.filter(assignment__pk=assignment.id, student__pk=request.user.id)
 
     # Check submit date across all tasks, just to be a bit more defensive
-    last_submit_date = Submit.objects.filter(student=request.user).order_by("-created_at").first()
-    if last_submit_date is not None:
-        since_last_submit = (
-            datetime.datetime.now(datetime.timezone.utc) - last_submit_date.created_at
-        )
+    last_submit = Submit.objects.filter(student=request.user).order_by("-created_at").first()
+
+    if last_submit is not None:
+        if assignment.task.type == "exam" and last_submit.is_final:
+            raise SubmitAfterFinal("Attempt to create submit after marking previous as final")
+
+        since_last_submit = datetime.datetime.now(datetime.timezone.utc) - last_submit.created_at
         if since_last_submit < SUBMIT_RATELIMIT:
             raise SubmitRateLimited("Submit was rate limited", SUBMIT_RATELIMIT - since_last_submit)
 

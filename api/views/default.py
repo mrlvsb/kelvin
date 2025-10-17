@@ -34,7 +34,7 @@ from common.event_log import (
     UserEventSubmit,
     UserEvent,
     UserEventTaskDisplayed,
-    UserEventMarkAsFinal
+    UserEventMarkAsFinal,
 )
 from common.inbus import inbus
 from common.models import (
@@ -48,7 +48,7 @@ from common.models import (
     current_semester,
     submit_assignment_path,
 )
-from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline
+from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline, SubmitAfterFinal
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher, points_to_color, inbus_search_user, user_from_inbus_person
 from quiz.models import EnrolledQuiz
@@ -469,7 +469,7 @@ def event_list(request: HttpRequest, login: str):
             case UserEventMarkAsFinal():
                 action = "mark-submit"
                 metadata["link"] = reverse(
-                "task_detail",
+                    "task_detail",
                     kwargs=dict(
                         assignment_id=event.assigned_task_id,
                         login=user.username,
@@ -1016,6 +1016,12 @@ def create_submit(request: django.http.HttpRequest, task_assignment: int) -> Jso
                 "error": "The submission was sent after the deadline, which was final, so it is not a valid submission."
             },
             status=400,
+        )
+    except SubmitAfterFinal:
+        return JsonResponse(
+            {
+                "error": "The submission was sent after the final one, so it is not a valid submission."
+            }
         )
 
     url = (
