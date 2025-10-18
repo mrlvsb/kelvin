@@ -1,6 +1,10 @@
+import ipaddress
+
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
+
+from django import forms
 
 import common.models as models
 import common.utils
@@ -82,6 +86,8 @@ class AssignedTaskAdmin(admin.ModelAdmin):
     autocomplete_fields = ["task", "clazz"]
     search_fields = ["task__name", "clazz__teacher__username", "clazz__subject_abbr"]
 
+    filter_horizontal = ["allowed_classrooms"]
+
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "clazz":
             kwargs["queryset"] = models.Class.objects.current_semester()
@@ -138,6 +144,56 @@ class SubmitAdmin(admin.ModelAdmin):
     autocomplete_fields = ["assignment"]
 
 
+class ClassroomAdminForm(forms.ModelForm):
+    use_cidr = forms.BooleanField(required=False, label="Enter CIDR instead of range")
+
+    ip_range_start = forms.GenericIPAddressField(required=False)
+    ip_range_end = forms.GenericIPAddressField(required=False)
+    cidr = forms.CharField(required=False, label="CIDR address")
+
+    class Meta:
+        model = models.ClassroomIpRange
+        fields = ("name", "ip_range_start", "ip_range_end", "cidr")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.instance and self.instance.pk:
+            start_ip = ipaddress.ip_address(self.instance.ip_range_start)
+            end_ip = ipaddress.ip_address(self.instance.ip_range_end)
+
+            cidr = list(ipaddress.summarize_address_range(start_ip, end_ip))[0]
+
+            self.fields["cidr"].initial = str(cidr)
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if cleaned_data.get("name") is None:
+            raise forms.ValidationError("Please enter classroom code")
+
+        cidr = cleaned_data.get("use_cidr")
+
+        if cidr:
+            cidr_value = cleaned_data.get("cidr")
+            if not cidr_value:
+                raise forms.ValidationError("Cannot read CIDR field value")
+
+            network = ipaddress.ip_network(cidr_value, strict=False)
+
+            cleaned_data["ip_range_start"] = network.network_address
+            cleaned_data["ip_range_end"] = network.broadcast_address
+        else:
+            if not cleaned_data.get("ip_range_start") or not cleaned_data.get("ip_range_end"):
+                raise forms.ValidationError("You didn't enter IP range")
+
+        return cleaned_data
+
+
+class ClassroomAdmin(admin.ModelAdmin):
+    form = ClassroomAdminForm
+
+
 admin.site.register(models.Task, TaskAdmin)
 admin.site.register(models.Class, ClassAdmin)
 admin.site.register(models.Submit, SubmitAdmin)
@@ -145,6 +201,7 @@ admin.site.register(models.AssignedTask, AssignedTaskAdmin)
 admin.site.register(models.Semester)
 admin.site.register(models.Subject)
 admin.site.register(models.UserEventModel)
+admin.site.register(models.ClassroomIpRange, ClassroomAdmin)
 
 admin.site.unregister(User)
 admin.site.register(User, MyUserAdmin)
