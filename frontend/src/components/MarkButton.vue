@@ -10,7 +10,7 @@ const props = defineProps({
 
 function setFlag(proceed: boolean) {
   if (proceed) {
-    let form = document.getElementById(props.formId);
+    let form = document.getElementById(props.formId) as HTMLFormElement;
     form.submit();
   }
   showModal.value = false;

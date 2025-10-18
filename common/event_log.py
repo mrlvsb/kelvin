@@ -42,6 +42,7 @@ class UserEventSubmit(UserEventBase):
 class UserEventTaskDisplayed(UserEventBase):
     assigned_task_id: int
 
+
 @dataclasses.dataclass(frozen=True)
 class UserEventMarkAsFinal(UserEventBase):
     assigned_task_id: int
@@ -126,7 +127,10 @@ def record_submit_event(request: HttpRequest, user: User, task: "AssignedTask", 
     )
     event.save()
 
-def record_final_submit_event(request: HttpRequest, user: User, task: "AssignedTask", submit_num: int):
+
+def record_final_submit_event(
+    request: HttpRequest, user: User, task: "AssignedTask", submit_num: int
+):
     event = UserEventModel(
         user=user,
         action=UserEventModel.Action.SubmitMarkedAsFinal,

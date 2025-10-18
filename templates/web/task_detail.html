@@ -120,7 +120,6 @@
             {% endif %}
             {% if submit %}
 
-            {% if is_teacher or task.type != 'exam' or not submits.first.is_final %}
             <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#src">
                   Source code
@@ -129,7 +128,6 @@
                   {% endif %}
                 </a>
             </li>
-            {% endif %}
 
             {% if has_pipeline %}
             <li class="nav-item">
@@ -151,11 +149,11 @@
 
                     {% if task.type == 'exam' and submit != null and submit.submit_num == submits.first.submit_num %}
                       {% if submits.first.is_final %}
-                          <div class="me-1" title="Link to the next student thas has unevaluated submit(s) for the same task.">
+                          <div class="me-1" title="Allow student to create new submits. ">
                             <a class="btn btn-sm btn-info" href="{% url 'unmark_solution_final_mark' submit.assignment.pk submit.student submit.submit_num%}">Unmark final flag</a>
                           </div>
                       {% else %}
-                          <div class="me-1" title="Link to the next student thas has unevaluated submit(s) for the same task.">
+                          <div class="me-1" title="Prevents the student from sending further submits.">
                             <a class="btn btn-sm btn-info" href="{% url 'mark_solution_as_final' submit.assignment.pk submit.student submit.submit_num%}">Mark as final</a>
                           </div>
                       {% endif %}

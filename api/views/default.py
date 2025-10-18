@@ -407,9 +407,7 @@ def find_task_ids_from_events(events: List[UserEvent]) -> Set[int]:
     task_ids = set()
     for event in events:
         match event:
-            case UserEventSubmit():
-                task_ids.add(event.assigned_task_id)
-            case UserEventTaskDisplayed():
+            case UserEventSubmit() | UserEventTaskDisplayed() | UserEventMarkAsFinal():
                 task_ids.add(event.assigned_task_id)
     return task_ids
 
@@ -486,7 +484,7 @@ def event_list(request: HttpRequest, login: str):
             created_at=event.created_at,
         )
         result.append(data)
-
+    print(result)
     return JsonResponse({"events": result, "count": event_count})
 
 
