@@ -10,6 +10,7 @@ import { fs, currentPath, cwd, openedFiles } from './fs.js';
 import SyncLoader from './SyncLoader.svelte';
 import Modal from './Modal.svelte';
 import { task_types } from './taskTypes';
+import ClassroomsSelect from './ClassroomsSelect.svelte';
 
 export let params = {};
 
@@ -189,6 +190,15 @@ function assignHardDeadlineToAll(hard_deadline) {
   });
 }
 
+function assignClassesToAll(classes) {
+  task.classes = task.classes.map((cl) => {
+    if (cl.assigned) {
+      cl.allowed_classrooms = structuredClone(classes);
+    }
+    return cl;
+  });
+}
+
 function assignSameToAll(templateClass) {
   task.classes = task.classes.map((cl) => {
     if (isClassVisible(cl)) {
@@ -196,6 +206,7 @@ function assignSameToAll(templateClass) {
       cl.assigned = templateClass.assigned;
       cl.deadline = templateClass.deadline;
       cl.hard_deadline = templateClass.hard_deadline;
+      cl.allowed_classrooms = structuredClone(templateClass.allowed_classrooms);
     }
     return cl;
   });
@@ -334,7 +345,7 @@ async function deleteTask(proceed) {
                         onToRelativeClick={setRelativeDeadlineToAssigned} />
                       {#if clazz.deadline}
                         <div
-                          class="col-md"
+                          class="col-2"
                           title="Forbids students to make submissions after the deadline has passed.">
                           <div class="input-group input-group-sm col-md">
                             <input
@@ -354,7 +365,7 @@ async function deleteTask(proceed) {
                           </div>
                         </div>
                       {/if}
-                      <div class="col-md">
+                      <div class="col-2">
                         <div class="input-group">
                           <input
                             class="form-control form-control-sm"
@@ -373,6 +384,13 @@ async function deleteTask(proceed) {
                           </button>
                         </div>
                       </div>
+                      {#if task.type === 'exam'}
+                        <div class="col-2">
+                          <ClassroomsSelect
+                            bind:selected_classrooms={clazz.allowed_classrooms}
+                            onDuplicateClick={assignClassesToAll}></ClassroomsSelect>
+                        </div>
+                      {/if}
                     </div>
                   </td>
                   <td>
