@@ -17,7 +17,6 @@ from zipfile import ZIP_DEFLATED, ZipFile
 import django_rq
 import magic
 import rq
-from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
@@ -62,7 +61,7 @@ from quiz.quiz_utils import quiz_to_html, score_quiz
 from quiz.settings import QUIZ_PATH
 from web.markdown_utils import load_readme
 from .test_script import render_test_script
-from .utils import file_response
+from .utils import file_response, has_permission_for_submit
 
 mimedetector = magic.Magic(mime=True)
 
@@ -607,14 +606,12 @@ def submit_diff(request, login, assignment_id, submit_a, submit_b):
     return resp
 
 
-@login_required
 def submit_comments(request, assignment_id, login, submit_num):
     submit = get_object_or_404(
         Submit, assignment_id=assignment_id, student__username=login, submit_num=submit_num
     )
 
-    if not is_teacher(request.user) and request.user.username != submit.student.username:
-        raise PermissionDenied()
+    has_permission_for_submit(request, submit)
 
     submits = []
     for s in Submit.objects.filter(assignment_id=assignment_id, student__username=login).order_by(
@@ -1022,14 +1019,7 @@ def submit_download(request, assignment_id: int, login: str, submit_num: int):
         Submit, assignment_id=assignment_id, student__username=login, submit_num=submit_num
     )
 
-    if "token" in request.GET:
-        token = signing.loads(request.GET["token"], max_age=3600)
-        if token.get("submit_id") != submit.id:
-            raise PermissionDenied()
-    elif not request.user.is_authenticated:
-        return redirect(f"{settings.LOGIN_URL}?next={request.path}")
-    elif not is_teacher(request.user) and request.user.username != submit.student.username:
-        raise PermissionDenied()
+    has_permission_for_submit(request, submit)
 
     with io.BytesIO() as f:
         with tarfile.open(fileobj=f, mode="w:gz") as tar:
