@@ -347,7 +347,7 @@ async function deleteTask(proceed) {
                         <div
                           class="col-2"
                           title="Forbids students to make submissions after the deadline has passed.">
-                          <div class="input-group input-group-sm col-md">
+                          <div class="input-group input-group-sm">
                             <input
                               class="form-check-input checkbox-md"
                               type="checkbox"
@@ -384,7 +384,7 @@ async function deleteTask(proceed) {
                           </button>
                         </div>
                       </div>
-                      {#if task.type === 'exam'}
+                      {#if task.type === 'exam' && clazz.assigned}
                         <div class="col-2">
                           <ClassroomsSelect
                             bind:selected_classrooms={clazz.allowed_classrooms}
