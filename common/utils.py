@@ -6,6 +6,9 @@ import re
 from functools import lru_cache
 from ipware import get_client_ip
 from typing import NewType
+import requests
+import tarfile
+import io
 
 IPAddressString = NewType("IPAddressString", str)
 
@@ -81,3 +84,18 @@ def get_client_ip_address(request: HttpRequest) -> IPAddressString | None:
         return None
     else:
         return IPAddressString(client_ip)
+
+
+def download_source_to_path(source_url: str, destination_path: str) -> None:
+    """
+    Downloads content from source_url and saves it to destination_path.
+    """
+
+    session = requests.Session()
+    response = session.get(source_url)
+
+    if response.status_code != 200:
+        raise Exception(f"Failed to download source code: {response.status_code}")
+
+    with tarfile.open(fileobj=io.BytesIO(response.content)) as tar:
+        tar.extractall(destination_path)

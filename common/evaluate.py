@@ -1,6 +1,8 @@
 import django_rq
 from django.urls import reverse
 from django.core import signing
+
+from common.summary.summary import summary_job
 from kelvin.settings import BASE_DIR
 
 from evaluator.evaluator import Evaluation
@@ -11,7 +13,7 @@ import tempfile
 import tarfile
 import logging
 from django.utils import timezone
-from common.utils import is_teacher
+from common.utils import is_teacher, download_source_to_path
 
 from evaluator.testsets import TestSet
 
@@ -75,24 +77,16 @@ def get_meta(login):
 @django_rq.job
 def evaluate_job(submit_url, task_url, token, meta):
     logging.basicConfig(level=logging.DEBUG)
-    s = requests.Session()
+    session = requests.Session()
 
     logging.info(f"Evaluating {submit_url}")
 
     with tempfile.TemporaryDirectory() as workdir:
         os.chdir(workdir)
-
-        def untar(url, dest):
-            res = s.get(url)
-            if res.status_code != 200:
-                raise Exception(f"Failed to download source code: {res.status_code}")
-            with tarfile.open(fileobj=io.BytesIO(res.content)) as tar:
-                tar.extractall(dest)
-
-        untar(f"{submit_url}download?token={token}", "submit")
-        untar(f"{task_url}?token={token}", "task")
-
         base = os.getcwd()
+
+        download_source_to_path(f"{submit_url}download?token={token}", "submit")
+        download_source_to_path(f"{task_url}?token={token}", "task")
 
         Evaluation(
             os.path.join(base, "task"),
@@ -106,12 +100,17 @@ def evaluate_job(submit_url, task_url, token, meta):
             tar.add(os.path.join(base, "result"), "")
 
         f.seek(0, io.SEEK_SET)
-        res = s.put(
+        res = session.put(
             f"{submit_url}result?token={token}",
             data=f,
             headers={
                 "Content-Type": "application/x-tar",
             },
         )
+
         if res.status_code != 200:
             raise Exception(f"Failed to upload results: {res.status_code}")
+
+        return django_rq.get_queue("summary").enqueue(
+            summary_job, submit_url, token, job_timeout=300
+        )
