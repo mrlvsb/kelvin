@@ -58,7 +58,7 @@ $: if (instanceTo) {
 }
 </script>
 
-<div class="col-3">
+<div class="col">
   <div class="input-group input-group-sm">
     <button
       class="btn btn-primary dropdown-toggle"
@@ -87,7 +87,7 @@ $: if (instanceTo) {
   </div>
 </div>
 
-<div class="col-3">
+<div class="col">
   <div class="input-group input-group-sm">
     <button
       class="btn btn-primary dropdown-toggle"

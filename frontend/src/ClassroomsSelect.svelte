@@ -87,7 +87,7 @@ onDestroy(() => {
   {#if showDropdown}
     <div
       class="card p-3 mt-2"
-      style="position: absolute; z-index: 1000; width: 250px; max-height: 200px; overflow-y: auto;">
+      style="position: absolute; z-index: 1000; width: 250px; max-height: 300px; overflow-y: auto;">
       <input type="text" placeholder="Search..." bind:value={search} class="form-control mb-2" />
 
       {#each sortedClassroomList as classroom (classroom.id)}
