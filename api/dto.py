@@ -1,9 +1,9 @@
 from datetime import datetime
-from serde import serde, field, Strict
+from serde import serde, field
 
 
 # Class that represents a DTO for single answer in a question.
-@serde(type_check=Strict)
+@serde
 class AnswerDto:
     # Content of answer
     answer_content: str
@@ -24,7 +24,7 @@ class AnswerDto:
 
 
 # Class that represents a DTO for a question in a quiz.
-@serde(type_check=Strict)
+@serde
 class QuestionDto:
     # Content of quiz question
     content: str
@@ -45,7 +45,7 @@ class QuestionDto:
 
 
 # Class that represents a DTO for a quiz.
-@serde(type_check=Strict)
+@serde
 class QuizDto:
     # List of quiz questions
     questions: list[QuestionDto]
@@ -53,7 +53,7 @@ class QuizDto:
     shuffle: bool | None = field(default=None, skip_if=lambda x: x is None)
 
 
-@serde(type_check=Strict)
+@serde
 class QuizCreateDto:
     # abbr of subject quiz is linked to
     subject: str
@@ -62,7 +62,7 @@ class QuizCreateDto:
 
 
 # Class that represents a DTO to update a quiz.
-@serde(type_check=Strict)
+@serde
 class UpdateQuizDto:
     # Working relative directory of quiz
     quiz_directory: str
@@ -73,7 +73,7 @@ class UpdateQuizDto:
 
 
 # Class that represents a DTO to update an assignment
-@serde(type_check=Strict)
+@serde
 class QuizClassAssignmentUpdateDto:
     # ID of class quiz should be assigned to
     id: int
@@ -94,14 +94,14 @@ class QuizClassAssignmentUpdateDto:
 
 
 # Class that represents a DTO to update an assignments
-@serde(type_check=Strict)
+@serde
 class QuizClassAssignmentsUpdateDto:
     # List of possible assignments
     assignments: list[QuizClassAssignmentUpdateDto]
 
 
 # Class that represents score for a question
-@serde(type_check=Strict)
+@serde
 class ScoreDto:
     # Assigned points
     points: int | float
@@ -110,14 +110,14 @@ class ScoreDto:
 
 
 # Class that represents scoring for a quiz questions
-@serde(type_check=Strict)
+@serde
 class ScoringDto:
     # Dict of scores, key is ID of question
     scoring: dict[str, ScoreDto]
 
 
 # Class that represents submitted answer
-@serde(type_check=Strict)
+@serde
 class SubmitAnswerDto:
     # Answer, which can be text or boolean value
     answer: bool | str
@@ -126,7 +126,7 @@ class SubmitAnswerDto:
 
 
 # Class that represents submitted answers
-@serde(type_check=Strict)
+@serde
 class SubmitAnswersDto:
     # List of submitted answers, key is ID of question
     submit: dict[str, list[SubmitAnswerDto]]

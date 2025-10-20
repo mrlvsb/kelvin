@@ -72,8 +72,14 @@
               width: 1%;
           }
 
-          table td, th {
+          .cell-center {
               text-align: center;
+          }
+          .cell-right {
+              text-align: right;
+          }
+          .visited {
+              opacity: 0.5;
           }
       </style>
       <link rel="stylesheet" type="text/css"
@@ -86,6 +92,17 @@
       <script src="//cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
       <script>
           var semesterRegex = /.*\((.*)\)$/;
+          var table = undefined;
+
+          function markAsVisited(link) {
+              localStorage.setItem(`kelvin-moss-link-visited-${link}`, "true");
+              if (table !== undefined) {
+                  table.draw();
+              }
+          }
+          function isVisited(link) {
+              return localStorage.getItem(`kelvin-moss-link-visited-${link}`) === "true";
+          }
 
           $(document).ready(function () {
               $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
@@ -107,9 +124,9 @@
                   }
               });
 
-              var table = $(".moss-table").DataTable({
-                  "paging": false,
-                  "order": [
+              table = $(".moss-table").DataTable({
+                  paging: false,
+                  order: [
                       [5, "desc"], // Percent B descending
                       [6, "desc"]  // Line count descending
                   ],
@@ -119,7 +136,14 @@
                   }, {
                       targets: [-2],
                       orderable: false
-                  }]
+                  }],
+                  rowCallback: function(row) {
+                      const cell = $(row).find("td").eq(7);
+                      const mossLink = cell.attr("data-moss-link");
+                      if (isVisited(mossLink)) {
+                          $(row).addClass("visited");
+                      }
+                  }
               });
 
               $("#filter-mode").change(function () {
@@ -128,23 +152,32 @@
           });
       </script>
 
-      <div style="display: flex; justify-content: end; margin-bottom: 5px;">
-        <span style="padding-right: 5px;">Filter mode:</span>
-        <select id="filter-mode">
-          <option value="one" selected="selected">At least one side from this semester</option>
-          <option value="both">Both sides from this semester</option>
-          <option value="all">All</option>
-        </select>
-      </div>
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-top: 10px;">
+            <div style="max-width: 750px;">
+                {% if has_any_past_student %}
+                Students marked with <code>*</code> were already assigned this task in a previous semester. It is
+                possible that they are submitting their own old solution (that might have been plagiarized
+                by someone else or submitted by a teacher). Please check their old solution.
+                {% endif %}
+            </div>
+            <div style="display: flex; justify-content: end; margin-bottom: 5px;">
+                <span style="padding-right: 5px;">Filter mode:</span>
+                <select id="filter-mode">
+                    <option value="one" selected="selected">At least one side from this semester</option>
+                    <option value="both">Both sides from this semester</option>
+                    <option value="all">All</option>
+                </select>
+            </div>
+        </div>
       <table class="table table-sm table-hover table-striped moss-table">
         <thead>
         <tr>
           <th>Student A</th>
           <th>Class A</th>
-          <th>Percent A</th>
+          <th>Pct A</th>
           <th>Student B</th>
           <th>Class B</th>
-          <th>Percent B</th>
+          <th>Pct B</th>
           <th>Line count</th>
           <th>MOSS link</th>
           <th>My student</th>
@@ -154,21 +187,23 @@
         {% for match in matches %}
           <tr>
             <td><a target="_blank" href="{{ match.first_link }}">{{ match.first.login }}</a>
-              ({{ match.first_fullname }})
+              ({{ match.first_fullname }}{% if match.first_past_semester %}*{% endif %})
             </td>
             <td>{{ match.first_class }}</td>
-            <td>{{ match.first.percent }}%</td>
+            <td class="cell-right">{{ match.first.percent }}%</td>
             <td><a target="_blank" href="{{ match.second_link }}">{{ match.second.login }}</a>
-              ({{ match.second_fullname }})
+              ({{ match.second_fullname }}{% if match.second_past_semester %}*{% endif %})
             </td>
             <td>{{ match.second_class }}</td>
-            <td>{{ match.second.percent }}%</td>
-            <td>{{ match.lines }}</td>
-            <td>
-              <a target="_blank" href="{{ match.link }}"><span class="iconify"
-                                                               data-icon="ant-design:search-outlined"></span></a>
+            <td class="cell-right">{{ match.second.percent }}%</td>
+            <td class="cell-right">{{ match.lines }}</td>
+            <td class="cell-center" data-moss-link="{{ match.link }}">
+              <a target="_blank"
+                 href="{{ match.link }}"
+                 onclick='markAsVisited("{{ match.link }}")'
+              ><span class="iconify" data-icon="ant-design:search-outlined"></span></a>
             </td>
-            <td>{{ match.teaching|yesno:"Yes,No" }}</td>
+            <td class="cell-center">{{ match.teaching|yesno:"Yes,No" }}</td>
           </tr>
         {% endfor %}
         </tbody>

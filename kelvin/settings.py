@@ -277,3 +277,13 @@ try:
     from .local_settings import *  # noqa: F403
 except ModuleNotFoundError:
     pass
+
+if DEBUG:
+    # The debug toolbar is na optional dependency
+    try:
+        import debug_toolbar  # noqa
+
+        INSTALLED_APPS.append("debug_toolbar")
+        MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
+    except ImportError:
+        pass

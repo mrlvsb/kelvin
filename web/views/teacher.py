@@ -1,5 +1,4 @@
 import csv
-import dataclasses
 import io
 import itertools
 import json
@@ -8,7 +7,6 @@ import shutil
 import tarfile
 import tempfile
 from collections import OrderedDict
-from typing import Dict, List, Tuple
 
 import django.http
 
@@ -22,8 +20,13 @@ from notifications.models import Notification
 from notifications.signals import notify
 
 from common.evaluate import evaluate_submit, get_meta
-from common.models import AssignedTask, Class, Submit, Task, assignedtask_results
-from common.plagcheck.moss import PlagiarismMatch
+from common.models import (
+    AssignedTask,
+    Class,
+    Submit,
+    Task,
+    assignedtask_results,
+)
 from common.utils import is_teacher
 from evaluator.results import EvaluationResult
 from evaluator.testsets import TestSet
@@ -52,47 +55,6 @@ def teacher_task(request, task_id):
             "max_inline_content_bytes": MAX_INLINE_CONTENT_BYTES,
         },
     )
-
-
-def enrich_matches(
-    matches: List[PlagiarismMatch], teacher: User, task: Task
-) -> List[Dict[str, str]]:
-    """
-    Converts PlagiarismMatches to dictionaries and adds additional information
-    used by the frontend to them.
-    """
-
-    def get_class_and_link(assignment_id: int, login: str) -> Tuple[str, str]:
-        assignment = AssignedTask.objects.get(pk=assignment_id)
-        clazz = assignment.clazz
-        code = clazz.code
-        semester = clazz.semester
-        class_str = f"{code} ({semester})"
-        link = reverse("find_task_detail", kwargs=dict(task_id=assignment.task.id, login=login))
-        return (class_str, link)
-
-    classes = Class.objects.current_semester().filter(teacher=teacher, assignedtask__task=task)
-    students = {v[0] for v in User.objects.filter(students__in=classes).values_list("username")}
-    match_items = []
-    for match in matches:
-        match_data = dataclasses.asdict(match)
-        match_data["teaching"] = match.first.login in students or match.second.login in students
-        match_data["first_fullname"] = User.objects.get(username=match.first.login).get_full_name()
-
-        (first_class, first_link) = get_class_and_link(match.first.assignment_id, match.first.login)
-        match_data["first_class"] = first_class
-        match_data["first_link"] = first_link
-        match_data["second_fullname"] = User.objects.get(
-            username=match.second.login
-        ).get_full_name()
-
-        (second_class, second_link) = get_class_and_link(
-            match.second.assignment_id, match.second.login
-        )
-        match_data["second_class"] = second_class
-        match_data["second_link"] = second_link
-        match_items.append(match_data)
-    return match_items
 
 
 @user_passes_test(is_teacher)
