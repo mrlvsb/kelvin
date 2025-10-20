@@ -44,12 +44,12 @@ class UserEventTaskDisplayed(UserEventBase):
 
 
 @dataclasses.dataclass(frozen=True)
-class UserEventMarkAsFinal(UserEventBase):
+class UserEventMarkSubmitAsFinal(UserEventBase):
     assigned_task_id: int
     submit_num: int
 
 
-UserEvent = UserEventLogin | UserEventSubmit | UserEventTaskDisplayed | UserEventMarkAsFinal
+UserEvent = UserEventLogin | UserEventSubmit | UserEventTaskDisplayed | UserEventMarkSubmitAsFinal
 
 
 class UserEventModel(models.Model):
@@ -102,7 +102,7 @@ class UserEventModel(models.Model):
                     assigned_task_id=self.metadata["task"],
                 )
             case UserEventModel.Action.SubmitMarkedAsFinal.value:
-                return UserEventMarkAsFinal(
+                return UserEventMarkSubmitAsFinal(
                     **shared,
                     assigned_task_id=self.metadata["task"],
                     submit_num=self.metadata["submit_num"],

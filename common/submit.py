@@ -57,12 +57,18 @@ def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     last_submit = Submit.objects.filter(student=request.user).order_by("-created_at").first()
 
     if last_submit is not None:
-        if assignment.task.type == "exam" and last_submit.is_final:
-            raise SubmitAfterFinal("Attempt to create submit after marking previous as final")
-
         since_last_submit = datetime.datetime.now(datetime.timezone.utc) - last_submit.created_at
         if since_last_submit < SUBMIT_RATELIMIT:
             raise SubmitRateLimited("Submit was rate limited", SUBMIT_RATELIMIT - since_last_submit)
+
+    last_submit = (
+        Submit.objects.filter(assignment__pk=assignment.pk, student=request.user)
+        .order_by("-created_at")
+        .first()
+    )
+
+    if last_submit is not None and last_submit.is_final:
+        raise SubmitAfterFinal("Attempt to create submit after marking previous as final")
 
     # TODO: transaction/better submit_num checking
     s = Submit()

@@ -34,7 +34,7 @@ from common.event_log import (
     UserEventSubmit,
     UserEvent,
     UserEventTaskDisplayed,
-    UserEventMarkAsFinal,
+    UserEventMarkSubmitAsFinal,
 )
 from common.inbus import inbus
 from common.models import (
@@ -407,7 +407,7 @@ def find_task_ids_from_events(events: List[UserEvent]) -> Set[int]:
     task_ids = set()
     for event in events:
         match event:
-            case UserEventSubmit() | UserEventTaskDisplayed() | UserEventMarkAsFinal():
+            case UserEventSubmit() | UserEventTaskDisplayed() | UserEventMarkSubmitAsFinal():
                 task_ids.add(event.assigned_task_id)
     return task_ids
 
@@ -464,7 +464,7 @@ def event_list(request: HttpRequest, login: str):
                     ),
                 )
                 metadata["task_name"] = tasks[event.assigned_task_id].task.name
-            case UserEventMarkAsFinal():
+            case UserEventMarkSubmitAsFinal():
                 action = "mark-submit"
                 metadata["link"] = reverse(
                     "task_detail",
@@ -484,7 +484,7 @@ def event_list(request: HttpRequest, login: str):
             created_at=event.created_at,
         )
         result.append(data)
-    print(result)
+
     return JsonResponse({"events": result, "count": event_count})
 
 

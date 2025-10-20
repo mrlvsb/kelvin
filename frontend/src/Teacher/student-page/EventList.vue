@@ -238,7 +238,7 @@ watch(ipFilter, () => {
           <a :href="props.rowData.metadata.link" target="_blank">
             {{ props.rowData.metadata.task_name }}
             {{
-              props.rowData.metadata.submit_num != null
+              props.rowData.metadata.submit_num != undefined
                 ? '#' + props.rowData.metadata.submit_num
                 : ''
             }}
