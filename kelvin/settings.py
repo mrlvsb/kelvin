@@ -36,12 +36,13 @@ SECRET_KEY = "***REMOVED***"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", "app", KELVIN_ROOT_HOST]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "app", "nginx", KELVIN_ROOT_HOST]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://127.0.0.1",
     "https://localhost",
     "https://app",
+    "https://nginx",
     f"https://{KELVIN_ROOT_HOST}",
 ]
 
