@@ -1,3 +1,4 @@
+import ipaddress
 import os
 import re
 import logging
@@ -252,6 +253,22 @@ class AssignedTask(models.Model):
             self.deadline is not None
             and datetime.datetime.now(datetime.timezone.utc) > self.deadline
         )
+
+    def is_allowed_from_ip(self, ip):
+        ip = ipaddress.ip_address(ip)
+
+        if not self.allowed_classrooms.all().exists():
+            return True
+
+        allowed = False
+
+        for classroom in self.allowed_classrooms.all():
+            start = ipaddress.ip_address(classroom.ip_range_start)
+            end = ipaddress.ip_address(classroom.ip_range_end)
+
+            allowed |= start <= ip <= end
+
+        return allowed
 
     def __str__(self):
         return f"{self.task.name} {self.clazz}"
