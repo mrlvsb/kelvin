@@ -49,7 +49,13 @@ from common.models import (
     submit_assignment_path,
     ClassroomIpRange,
 )
-from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline, SubmitAfterFinal
+from common.submit import (
+    SubmitRateLimited,
+    store_submit,
+    SubmitPastHardDeadline,
+    SubmitAfterFinal,
+    SubmitFromUnauthorizedIPError,
+)
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher, points_to_color, inbus_search_user, user_from_inbus_person
 from quiz.models import EnrolledQuiz
@@ -1041,6 +1047,12 @@ def create_submit(request: django.http.HttpRequest, task_assignment: int) -> Jso
         return JsonResponse(
             {
                 "error": "The submission was sent after the final one, so it is not a valid submission."
+            }
+        )
+    except SubmitFromUnauthorizedIPError:
+        return JsonResponse(
+            {
+                "error": "The submission was sent from IP address that is not on the list of allowed IP addresses."
             }
         )
 

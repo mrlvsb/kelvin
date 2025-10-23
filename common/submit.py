@@ -35,6 +35,11 @@ class SubmitAfterFinal(Exception):
         super().__init__(message)
 
 
+class SubmitFromUnauthorizedIPError(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
 def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     """
     Creates a new submit for the given `assignment` and the user logged in the `request`.
@@ -80,6 +85,12 @@ def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     client_ip = get_client_ip_address(request)
     if client_ip:
         s.ip_address = client_ip
+
+    if assignment.allowed_classrooms:
+        if not assignment.is_allowed_from_ip(client_ip):
+            raise SubmitFromUnauthorizedIPError(
+                "It is forbidden to upload solutions from this IP address"
+            )
 
     solutions = request.FILES.getlist("solution")
     tmp = request.POST.get("paths", None)
