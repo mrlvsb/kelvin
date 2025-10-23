@@ -1,10 +1,14 @@
+import logging
+
 from django.core.management.base import BaseCommand
 
 from django.core.cache import cache
 
-from common.models import Class, Subject
+from common.models import Class, Subject, Semester
 from common.inbus import inbus
 from common.inbus.dto import SubjectVersionId
+
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
 class Command(BaseCommand):
@@ -14,6 +18,7 @@ class Command(BaseCommand):
     def handle(self, *args, **opts):
         subject = Subject.objects.get(abbr__icontains=opts["subject"])
         subject_versions = cache.get("subject_versions")
+        current_semester = Semester.objects.get(active=True)
 
         if not subject_versions:
             subject_versions = inbus.subject_versions()
@@ -25,26 +30,29 @@ class Command(BaseCommand):
         ]
         for subject_version in subject_versions:
             subject_version_schedule = inbus.schedule_subject_by_version_id(
-                SubjectVersionId(subject_version.subjectVersionId)
+                SubjectVersionId(subject_version.subjectVersionId),
+                current_semester.inbus_semester_id,
             )
+
+            # Cache students per activity to avoid repeated API calls
+            students_cache = {}
+            for ca in subject_version_schedule:
+                students_cache[ca.concreteActivityId] = [
+                    sr.login.upper()
+                    for sr in inbus.students_in_concrete_activity(ca.concreteActivityId)
+                ]
 
             # mapping of student -> class
             mapping = {}
             for ca in subject_version_schedule:
-                students_inbus = [
-                    sr.login.upper()
-                    for sr in inbus.students_in_concrete_activity(ca.concreteActivityId)
-                ]
+                students_inbus = students_cache[ca.concreteActivityId]
                 code = ca.code()
                 if code.startswith("C"):
                     for s in students_inbus:
                         mapping[s] = ca
 
             for ca in subject_version_schedule:
-                students_inbus = [
-                    sr.login.upper()
-                    for sr in inbus.students_in_concrete_activity(ca.concreteActivityId)
-                ]
+                students_inbus = students_cache[ca.concreteActivityId]
                 code = ca.code()
                 if code.startswith("C"):
                     try:
