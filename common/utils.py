@@ -2,6 +2,15 @@ import io
 import re
 import tarfile
 from datetime import timedelta
+
+from django.core.exceptions import PermissionDenied
+from django.http import HttpRequest
+from django.http.response import Http404
+from django.utils import timezone
+
+from .inbus import inbus
+import django.contrib.auth.models
+import re
 from functools import lru_cache
 from typing import NewType
 
@@ -90,6 +99,42 @@ def get_client_ip_address(request: HttpRequest) -> IPAddressString | None:
         return None
     else:
         return IPAddressString(client_ip)
+
+
+def ip_address_check(function):
+    def wrapper(*args, **kwargs):
+        # this import is here to prevent cyclic dependency (.models uses is_teacher)
+        from .models import AssignedTask
+
+        request = args[0]
+
+        if is_teacher(request.user):
+            return function(*args, **kwargs)
+
+        assignment_id = kwargs.get("assignment_id")
+
+        try:
+            assignment = AssignedTask.objects.get(pk=assignment_id)
+        except AssignedTask.DoesNotExist:
+            raise Http404(f"AssignedTask with id {assignment_id} not found")
+
+        # allow after deadline
+        if assignment.deadline is not None and timezone.now() > assignment.deadline:
+            return function(*args, **kwargs)
+
+        if assignment.allowed_classrooms:
+            x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+            if x_forwarded_for:
+                ip = x_forwarded_for.split(",")[0].strip()
+            else:
+                ip = request.META.get("REMOTE_ADDR")
+
+            if assignment.is_allowed_from_ip(ip):
+                return function(*args, **kwargs)
+            else:
+                raise PermissionDenied("Access from this IP is not allowed")
+
+    return wrapper
 
 
 def download_source_to_path(source_url: str, destination_path: str) -> None:
