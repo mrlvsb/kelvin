@@ -26,7 +26,6 @@ from django.http import (
     HttpResponseNotFound,
     HttpResponseRedirect,
 )
-from django.http.response import HttpResponseForbidden, Http404
 from django.shortcuts import get_object_or_404, redirect, render, resolve_url
 from django.urls import reverse
 from django.utils import timezone
@@ -54,7 +53,7 @@ from common.models import (
 from common.plagcheck.moss import PlagiarismMatch, moss_result
 from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline, is_file_small
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
-from common.utils import is_teacher
+from common.utils import is_teacher, ip_address_check
 from evaluator.results import EvaluationResult
 from evaluator.evaluation import EvaluationContext
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
@@ -67,39 +66,6 @@ from .utils import file_response
 from ..dto import SubmitData, PlagiarismEntry
 
 mimedetector = magic.Magic(mime=True)
-
-
-def ip_address_check():
-    def decorator(function):
-        def wrapper(*args, **kwargs):
-            request = args[0]
-
-            if is_teacher(request.user):
-                return function(*args, **kwargs)
-
-            assignment_id = kwargs.get("assignment_id")
-
-            try:
-                assignment = AssignedTask.objects.get(pk=assignment_id)
-            except AssignedTask.DoesNotExist:
-                raise Http404(f"AssignedTask with id {assignment_id} not found")
-
-            if assignment.allowed_classrooms:
-                x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-                if x_forwarded_for:
-                    ip = x_forwarded_for.split(",")[0].strip()
-                else:
-                    ip = request.META.get("REMOTE_ADDR")
-
-                if assignment.is_allowed_from_ip(ip):
-                    return function(*args, **kwargs)
-
-                else:
-                    return HttpResponseForbidden("Access from this IP is not allowed")
-
-        return wrapper
-
-    return decorator
 
 
 @login_required()
@@ -325,7 +291,7 @@ def build_plagiarism_entries(login: str, matches: List[PlagiarismMatch]) -> List
 
 
 @login_required()
-@ip_address_check()
+@ip_address_check
 def task_detail(
     request: HttpRequest,
     assignment_id: int,
@@ -560,7 +526,7 @@ def submit_source(request: HttpRequest, submit_id: int, path: str) -> HttpRespon
 
 
 @login_required
-@ip_address_check()
+@ip_address_check
 def submit_diff(
     request: HttpRequest, login: str, assignment_id: int, submit_a: int, submit_b: int
 ) -> HttpResponse:
@@ -860,13 +826,13 @@ def submit_download(
 
 
 @login_required
-@ip_address_check()
+@ip_address_check
 def ui(request: HttpRequest) -> HttpResponse:
     return render(request, "web/ui.html")
 
 
 @csrf_exempt
-@ip_address_check()
+@ip_address_check
 def upload_results(
     request: HttpRequest, assignment_id: int, submit_num: int, login: str
 ) -> HttpResponse:
@@ -899,7 +865,7 @@ def upload_results(
 
 
 @login_required()
-@ip_address_check()
+@ip_address_check
 def mark_solution_as_final(
     request: HttpRequest, assignment_id: int, login: str, submit_num: int
 ) -> HttpResponse:
