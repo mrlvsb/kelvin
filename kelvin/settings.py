@@ -143,7 +143,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/dev/topics/i18n/
 
@@ -154,7 +153,6 @@ TIME_ZONE = "Europe/Prague"
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/dev/howto/static-files/
@@ -215,6 +213,9 @@ RQ_QUEUES = {
     "evaluator": {
         "USE_REDIS_CACHE": "default",
     },
+    "summary": {
+        "USE_REDIS_CACHE": "default",
+    },
 }
 
 # For django-tasks-scheduler
@@ -266,12 +267,16 @@ MAX_INLINE_LINES = 2000
 # DSN for a Sentry instance. If `None`, Sentry will not be included
 SENTRY_URL = None
 
+# OpenAI
+OPENAI_API_KEY = os.getenv("OPENAI__API_KEY", "")
+OPENAI_API_URL = os.getenv("OPENAI__API_URL", "http://localhost:8080/v1")
+OPENAI_MODEL = os.getenv("OPENAI__MODEL", "openai/gpt-oss-120b")
+
 # Placeholder to ensure Kelvin runs locally without any configuration
 # Prefer configuring Inbus credentials in local_settings.py imported at
 # the end of this script
 INBUS_CLIENT_ID = "placeholder"
 INBUS_CLIENT_SECRET = "placeholder"
-
 
 try:
     from .local_settings import *  # noqa: F403
