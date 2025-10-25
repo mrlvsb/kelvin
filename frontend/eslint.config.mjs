@@ -10,7 +10,13 @@ export default [
     ...pluginVue.configs['flat/recommended'],
     prettier,
     {
-        ignores: ['node_modules', 'rollup.config.js', 'package-lock.json', 'pnpm-lock.yaml', 'rollup.config.js']
+        ignores: [
+            'node_modules',
+            'rollup.config.js',
+            'package-lock.json',
+            'pnpm-lock.yaml',
+            'rollup.config.js'
+        ]
     },
     {
         files: ['*.vue', '**/*.vue'],
