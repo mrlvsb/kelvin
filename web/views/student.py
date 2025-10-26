@@ -62,7 +62,7 @@ from common.models import (
 from common.plagcheck.moss import PlagiarismMatch, moss_result
 from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
-from common.utils import is_teacher
+from common.utils import is_teacher, prohibit_during_test
 from evaluator.results import EvaluationResult
 from evaluator.testsets import TestSet
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES, MAX_INLINE_LINES
@@ -318,6 +318,7 @@ def build_plagiarism_entries(login: str, matches: List[PlagiarismMatch]) -> List
 
 
 @login_required()
+@prohibit_during_test
 def task_detail(request, assignment_id, submit_num=None, login=None):
     submits = Submit.objects.filter(
         assignment__pk=assignment_id,
@@ -551,6 +552,7 @@ def submit_source(request, submit_id, path):
 
 
 @login_required
+@prohibit_during_test
 def submit_diff(request, login, assignment_id, submit_a, submit_b):
     submit = get_object_or_404(
         Submit, assignment_id=assignment_id, student__username=login, submit_num=submit_a
@@ -614,6 +616,7 @@ def submit_diff(request, login, assignment_id, submit_a, submit_b):
 
 
 @login_required
+@prohibit_during_test
 def submit_comments(request, assignment_id, login, submit_num):
     submit = get_object_or_404(
         Submit, assignment_id=assignment_id, student__username=login, submit_num=submit_num
@@ -1088,6 +1091,7 @@ def raw_result_content(request, submit_id, test_name, result_type, file):
     raise HttpException404()
 
 
+@prohibit_during_test
 def submit_download(request, assignment_id: int, login: str, submit_num: int):
     submit = get_object_or_404(
         Submit, assignment_id=assignment_id, student__username=login, submit_num=submit_num
@@ -1121,6 +1125,7 @@ def ui(request):
 
 
 @csrf_exempt
+@prohibit_during_test
 def upload_results(request, assignment_id, submit_num, login):
     submit = get_object_or_404(
         Submit, assignment_id=assignment_id, submit_num=submit_num, student__username=login
