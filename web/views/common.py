@@ -10,6 +10,39 @@ from common.utils import is_teacher
 from api.backends import hash_token
 
 
+def custom_403_page(request, exception=None):
+    previous_url = request.META.get("HTTP_REFERER", "/")  # return to last url or home
+    context = {
+        "status_code": 403,
+        "title": "Forbidden",
+        "message": str(exception) if exception else "You are not permitted to view this page.",
+        "return_url": previous_url,
+    }
+    return render(request, "error_page.html", context)
+
+
+def custom_400_page(request, exception=None):
+    previous_url = request.META.get("HTTP_REFERER", "/")  # return to last url or home
+    context = {
+        "status_code": 400,
+        "title": "Bad Request",
+        "message": str(exception) if exception else "Sorry, something was off in the request.",
+        "return_url": previous_url,
+    }
+    return render(request, "error_page.html", context)
+
+
+def custom_404_page(request, exception=None):
+    previous_url = request.META.get("HTTP_REFERER", "/")  # return to last url or home
+    context = {
+        "status_code": 404,
+        "title": "Page Not Found",
+        "message": str(exception) if exception else "The page you requested does not exist.",
+        "return_url": previous_url,
+    }
+    return render(request, "error_page.html", context)
+
+
 @login_required()
 def index(request):
     if is_teacher(request.user):
