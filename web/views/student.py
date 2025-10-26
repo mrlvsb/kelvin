@@ -53,7 +53,7 @@ from common.models import (
 from common.plagcheck.moss import PlagiarismMatch, moss_result
 from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline, is_file_small
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
-from common.utils import is_teacher
+from common.utils import is_teacher, prohibit_during_test
 from evaluator.results import EvaluationResult
 from evaluator.evaluation import EvaluationContext
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
@@ -188,8 +188,8 @@ def student_index(request: HttpRequest) -> HttpResponse:
     ):
         semesters.append(
             {
-                "label": f'{year}/{year + 1} {"winter" if winter else "summer"}',
-                "value": f'{year}{"W" if winter else "S"}',
+                "label": f"{year}/{year + 1} {'winter' if winter else 'summer'}",
+                "value": f"{year}{'W' if winter else 'S'}",
             }
         )
 
@@ -291,6 +291,7 @@ def build_plagiarism_entries(login: str, matches: List[PlagiarismMatch]) -> List
 
 
 @login_required()
+@prohibit_during_test
 def task_detail(
     request: HttpRequest,
     assignment_id: int,
@@ -525,6 +526,7 @@ def submit_source(request: HttpRequest, submit_id: int, path: str) -> HttpRespon
 
 
 @login_required
+@prohibit_during_test
 def submit_diff(
     request: HttpRequest, login: str, assignment_id: int, submit_a: int, submit_b: int
 ) -> HttpResponse:
@@ -793,7 +795,7 @@ def raw_result_content(
                             return file_response(file_content, file_name, "text/plain")
     raise HttpException404()
 
-
+@prohibit_during_test
 def submit_download(
     request: HttpRequest, assignment_id: int, login: str, submit_num: int
 ) -> HttpResponse:
@@ -829,6 +831,7 @@ def ui(request: HttpRequest) -> HttpResponse:
 
 
 @csrf_exempt
+@prohibit_during_test
 def upload_results(
     request: HttpRequest, assignment_id: int, submit_num: int, login: str
 ) -> HttpResponse:
