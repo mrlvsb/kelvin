@@ -1,11 +1,11 @@
 from django.urls import path
 
-from .views import plagcheck
-from .views import teacher as teacher_view
-from .views import student as student_view
-from .views import notification as notification_view
 from .views import common as common_view
+from .views import notification as notification_view
+from .views import plagcheck, llm
 from .views import statistics as statistics_view
+from .views import student as student_view
+from .views import teacher as teacher_view
 
 urlpatterns = [
     path("", common_view.index, name="index"),
@@ -39,6 +39,10 @@ urlpatterns = [
     ),
     path(
         "task/<int:assignment_id>/<str:login>/<int:submit_num>/result", student_view.upload_results
+    ),
+    path(
+        "task/<int:assignment_id>/<str:login>/<int:submit_num>/llm/result",
+        llm.post_submit_summary_result,
     ),
     path("task/<path:task_name>/asset/<path:path>", student_view.task_asset, name="task_asset"),
     path(
