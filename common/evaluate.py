@@ -73,7 +73,7 @@ def evaluate_submit(request, submit, meta=None):
     meta = {
         **get_meta(submit.student.username),
         "before_announce": not is_teacher(submit.student)
-        and submit.assignment.assigned > timezone.now(),
+                           and submit.assignment.assigned > timezone.now(),
         "deadline": submit.assignment.deadline,
         "max_points": submit.assignment.max_points,
         "submitted_at": submit.created_at,

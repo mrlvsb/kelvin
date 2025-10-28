@@ -7,7 +7,8 @@ from openai import OpenAI
 from openai.types.chat import ChatCompletionUserMessageParam, ChatCompletionSystemMessageParam
 from openai.types.shared_params import ResponseFormatJSONObject
 
-from common.summary.dto import EmbeddedFile, ReviewResult, Issue, Severity
+from common.summary.dto import EmbeddedFile, Issue, Severity
+from common.summary.dto import ReviewResult
 from kelvin import settings
 
 
