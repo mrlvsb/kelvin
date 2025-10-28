@@ -1,11 +1,16 @@
-from datetime import timedelta
-from django.http import HttpRequest
-from .inbus import inbus
-import django.contrib.auth.models
+import io
 import re
+import tarfile
+from datetime import timedelta
 from functools import lru_cache
-from ipware import get_client_ip
 from typing import NewType
+
+import django.contrib.auth.models
+import requests
+from django.http import HttpRequest
+from ipware import get_client_ip
+
+from .inbus import inbus
 
 IPAddressString = NewType("IPAddressString", str)
 
@@ -81,3 +86,18 @@ def get_client_ip_address(request: HttpRequest) -> IPAddressString | None:
         return None
     else:
         return IPAddressString(client_ip)
+
+
+def download_source_to_path(source_url: str, destination_path: str) -> None:
+    """
+    Downloads archived content from source_url and extracts it to destination_path.
+    """
+
+    session = requests.Session()
+    response = session.get(source_url)
+
+    if response.status_code != 200:
+        raise Exception(f"Failed to download source code: {response.status_code}")
+
+    with tarfile.open(fileobj=io.BytesIO(response.content)) as tar:
+        tar.extractall(destination_path)
