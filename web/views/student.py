@@ -52,8 +52,10 @@ from common.models import (
 )
 from common.plagcheck.moss import PlagiarismMatch, moss_result
 from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline
+from common.summary.models import ReviewResult
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher
+from common.serialization import dict_to_dataclass
 from evaluator.results import EvaluationResult
 from evaluator.testsets import TestSet
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES, MAX_INLINE_LINES
@@ -223,16 +225,29 @@ def student_index(request):
 
 def get(submit):
     results = []
+    summary = {
+        "summary": "",
+        "issues": [],
+    }
+
     try:
         results = EvaluationResult(submit.pipeline_path())
     except json.JSONDecodeError:
         # TODO: show error
         pass
 
-    data = {
-        "submit": submit,
-        "results": results,
-    }
+    try:
+        with open(os.path.join(submit.pipeline_path(), "summary.json")) as f:
+            result_dict = json.load(f)
+            summary = dict_to_dataclass(result_dict, ReviewResult)
+    except FileNotFoundError:
+        # File not found, no summary available, do nothing
+        pass
+    except json.JSONDecodeError:
+        # TODO: show error
+        pass
+
+    data = {"submit": submit, "results": results, "summary": summary}
     return data
 
 
@@ -807,6 +822,40 @@ def submit_comments(request, assignment_id, login, submit_num):
                 )
         except KeyError as e:
             logging.exception(e)
+
+    # add comments from llm summary
+    if is_teacher(request.user):  # Currently only teachers can view LLM summary comments
+        llm_summary = getattr(resultset["summary"], "summary", "")
+
+        if len(llm_summary) > 0:
+            summary_comments.append(
+                {
+                    "id": -1,
+                    "author": "LLM",
+                    "text": llm_summary,
+                    "can_edit": False,
+                    "type": "summary",
+                    "url": None,
+                }
+            )
+
+        for issue in getattr(resultset["summary"], "issues", []):
+            if issue.file not in result:
+                continue
+
+            try:
+                result[issue.file]["comments"].setdefault(int(issue.line) - 1, []).append(
+                    {
+                        "id": -1,
+                        "author": "LLM",
+                        "text": issue.explanation,
+                        "can_edit": False,
+                        "type": "summary",
+                        "url": None,
+                    }
+                )
+            except KeyError as e:
+                logging.exception(e)
 
     priorities = {
         "video": 0,
