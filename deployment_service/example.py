@@ -9,8 +9,9 @@ key = "yoursecretvalue"
 message_dict = {
     "service_name": "app",
     "container_name": "kelvin_app",
-    "image": "ghcr.io/mrlvsb/kelvin:8471977150c9542d6332379053acd5691175d1c9",
-    "commit_sha": "8471977150c9542d6332379053acd5691175d1c9",
+    "image": "ghcr.io/mrlvsb/kelvin:da196525cbbe8411ef3814174002b45a8cd77e11",
+    "commit_sha": "da196525cbbe8411ef3814174002b45a8cd77e11",
+    "healthcheck_url": "https://nginx/api/health",
 }
 
 message = json.dumps(message_dict).encode("utf-8")

@@ -88,7 +88,7 @@ async def test_validate_signature_missing_header(mock_settings):
     """Tests that missing signature header raises a 401 Unauthorized error."""
     request = create_mock_request(VALID_BODY, headers={})
     with pytest.raises(HTTPException) as excinfo:
-        await validate_signature(request, signature_header=None)
+        await validate_signature(request, signature_header="")
     assert excinfo.value.status_code == status.HTTP_401_UNAUTHORIZED
     assert "X-Hub-Signature-256 header is missing." in excinfo.value.detail
 

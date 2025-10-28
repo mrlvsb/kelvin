@@ -53,9 +53,9 @@ app = FastAPI(
                         "logs": [
                             "[2025-09-01 13:45:12] [INFO] Starting deployment for commit 0474329d785bbb2c928b257f104847dc4f8f80f6",
                             "[2025-09-01 13:46:05] [INFO] Fetching latest data from git origin...",
-                            "[2025-09-01 13:46:10] [ERROR] Failed to create git worktree. Is the commit SHA valid?",
+                            "[2025-09-01 13:46:10] [ERROR] Failed to create candidate docker-compose.yml file. Is the commit SHA valid?",
                         ],
-                        "error": "Failed to create git worktree. Is the commit SHA valid?",
+                        "error": "Failed to create candidate docker-compose.yml file. Is the commit SHA valid?",
                     }
                 }
             },

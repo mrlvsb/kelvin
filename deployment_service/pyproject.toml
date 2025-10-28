@@ -11,8 +11,8 @@ dependencies = [
     "pydantic-settings>=2.10.1",
 ]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "httpx>=0.28.1",
     "mypy>=1.17.1",
     "pre-commit>=4.3.0",

@@ -39,6 +39,7 @@ class Docker(BaseModel):
 class Settings(BaseSettings):
     security: Security
     docker: Docker
+    debug: bool = False
 
     model_config = SettingsConfigDict(
         extra="ignore",

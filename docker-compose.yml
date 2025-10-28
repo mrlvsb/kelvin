@@ -86,12 +86,13 @@ services:
     pull_policy: always
     restart: unless-stopped
     environment:
-      - DOCKER__COMPOSE_FILE_PATH=${DOCKER__COMPOSE_FILE_PATH}
+      # Hardcode the docker-compose.yml path inside the container to match the repository volume mount path (must be in sync with volume that mounts the repo)
+      - DOCKER__COMPOSE_FILE_PATH=/kelvin/docker-compose.yml
       - SECURITY__WEBHOOK_SECRET=${SECURITY__WEBHOOK_SECRET}
-      - SECURITY__BACKEND_CORS_ORIGINS=${SECURITY__BACKEND_CORS_ORIGINS}
       - SECURITY__ALLOWED_HOSTS=${SECURITY__ALLOWED_HOSTS}
     volumes:
-      - ${REPO__DIRECTORY_PATH}:${REPO__DIRECTORY_PATH_IN_CONTAINER}
+      # Mount the Kelvin repo to /kelvin inside the container,must be in sync with DOCKER__COMPOSE_FILE_PATH
+      - ${REPO__DIRECTORY_PATH}:/kelvin
       - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:

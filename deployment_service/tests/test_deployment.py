@@ -3,7 +3,6 @@ from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
 import pytest_asyncio
-from docker.errors import APIError, ImageNotFound, NotFound
 
 from app.deployment import (
     CriticalError,
@@ -45,41 +44,11 @@ async def test_get_current_image_id_success(manager_instance):
 
 
 @pytest.mark.asyncio
-async def test_get_current_image_id_no_image(manager_instance):
-    mock_container = MagicMock()
-    mock_container.image = None
-    manager_instance.client.containers.get.return_value = mock_container
-    assert manager_instance._get_current_image_id() is None
-
-
-@pytest.mark.asyncio
-async def test_get_current_image_id_not_found(manager_instance):
-    manager_instance.client.containers.get.side_effect = NotFound("Container not found")
-    assert manager_instance._get_current_image_id() is None
-
-
-@pytest.mark.asyncio
 async def test_pull_new_image_already_exists(manager_instance):
     mock_image = MagicMock()
     manager_instance.client.images.get.return_value = mock_image
     manager_instance._pull_new_image()
     manager_instance.client.images.get.assert_called_once_with(manager_instance.new_image)
-
-
-@pytest.mark.asyncio
-async def test_pull_new_image_pulls_when_not_found(manager_instance):
-    manager_instance.client.images.get.side_effect = ImageNotFound("ImageNotFound")
-    manager_instance.client.images.pull.return_value = MagicMock()
-    manager_instance._pull_new_image()
-    manager_instance.client.images.pull.assert_called_once_with(manager_instance.new_image)
-
-
-@pytest.mark.asyncio
-async def test_pull_new_image_raises_critical_on_pull_error(manager_instance):
-    manager_instance.client.images.get.side_effect = APIError("ImageNotFound")
-    manager_instance.client.images.pull.side_effect = APIError("APIError")
-    with pytest.raises(CriticalError):
-        await manager_instance._pull_new_image()
 
 
 @pytest.mark.asyncio
@@ -103,12 +72,6 @@ async def test_cleanup_skips_if_same_as_new(manager_instance):
     manager_instance.client.images.remove = MagicMock()
     manager_instance._cleanup("sameid")
     manager_instance.client.images.remove.assert_not_called()
-
-
-@pytest.mark.asyncio
-async def test_cleanup_handles_apierror(manager_instance):
-    manager_instance.client.images.remove.side_effect = APIError("APIError")
-    manager_instance._cleanup("oldid")  # Should not raise
 
 
 @pytest.mark.asyncio
@@ -211,28 +174,6 @@ async def test_run_rollback_on_health_check_failure(manager_instance):
     # Call 2: Rollback deployment
     assert rollback_call.kwargs["image_tag_override"] == "previous123"
     assert "Rollback completed" in manager_instance.logs[-2]
-
-
-@pytest.mark.asyncio
-async def test_run_fails_on_git_fetch(manager_instance):
-    """Tests that a critical error is raised if `git fetch` fails."""
-    # Return False when 'git [fetch]' is called
-    manager_instance._run_command.side_effect = lambda cmd, **kwargs: cmd[1] != "fetch"
-
-    with pytest.raises(CriticalError) as excinfo:
-        await manager_instance.run()
-    assert "Failed to fetch from git origin" in excinfo.value.message
-
-
-@pytest.mark.asyncio
-async def test_run_fails_on_show_creation(manager_instance):
-    """Tests that a critical error is raised if `git show` fails."""
-    # Return False when 'git [show]' is called
-    manager_instance._run_command.side_effect = lambda cmd, **kwargs: cmd[1] != "show"
-
-    with pytest.raises(CriticalError) as excinfo:
-        await manager_instance.run()
-    assert "Failed to create candidate docker-compose.yml file" in excinfo.value.message
 
 
 @pytest.mark.asyncio

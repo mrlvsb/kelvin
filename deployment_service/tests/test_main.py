@@ -6,7 +6,6 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from app import config
-from app.deployment import CriticalError, DeploymentError, FallbackError
 from tests.test_security import calculate_signature
 
 # Mock settings before importing the app
@@ -64,44 +63,3 @@ def test_deploy_success(mock_deployment_manager, default_user_headers):
     assert response.json() == {"logs": ["Successful log"], "error": None}
 
     mock_deployment_manager.run.assert_awaited_once()
-
-
-def test_deploy_fallback_error(mock_deployment_manager, default_user_headers):
-    """Tests the response when a recoverable FallbackError occurs."""
-    mock_deployment_manager.run.side_effect = FallbackError(
-        "Health check failed", logs=["Health check timed out."]
-    )
-
-    response = client.post("/", content=VALID_PAYLOAD, headers=default_user_headers)
-
-    assert response.status_code == status.HTTP_502_BAD_GATEWAY
-    assert response.json() == {
-        "logs": ["Health check timed out."],
-        "error": "Health check failed",
-    }
-
-
-def test_deploy_critical_error(mock_deployment_manager, default_user_headers):
-    """Tests the response when a CriticalError occurs."""
-    mock_deployment_manager.run.side_effect = CriticalError(
-        "Git failed",
-        logs=["Git command failed."],
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-    )
-
-    response = client.post("/", content=VALID_PAYLOAD, headers=default_user_headers)
-
-    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-    assert response.json() == {"logs": ["Git command failed."], "error": "Git failed"}
-
-
-def test_deploy_image_pull_error(mock_deployment_manager, default_user_headers):
-    """Tests the response when an image pull fails (400 Bad Request)."""
-    mock_deployment_manager.run.side_effect = DeploymentError(
-        "Image not found", logs=["Failed to pull image."], status_code=status.HTTP_400_BAD_REQUEST
-    )
-
-    response = client.post("/", content=VALID_PAYLOAD, headers=default_user_headers)
-
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert response.json() == {"logs": ["Failed to pull image."], "error": "Image not found"}

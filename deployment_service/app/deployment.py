@@ -12,6 +12,8 @@ import httpx
 from docker.errors import APIError, ImageNotFound, NotFound
 from fastapi import status
 
+from app.config import get_settings
+
 HEALTH_CHECK_TIMEOUT = 60  # seconds
 HEALTH_CHECK_INTERVAL = 5  # seconds
 
@@ -213,10 +215,10 @@ class DeploymentManager:
         """Performs a health check by making HTTP requests to a specified URL."""
         self.logger.info(f"Performing health check on {self.healthcheck_url}...")
         end_time = time.time() + HEALTH_CHECK_TIMEOUT
-        async with httpx.AsyncClient(timeout=2.0) as client:
+        async with httpx.AsyncClient(verify=not get_settings().debug) as client:
             while time.time() < end_time:
                 try:
-                    response = await client.get(self.healthcheck_url)
+                    response = await client.get(self.healthcheck_url, timeout=2.0)
                     self.logger.info(f"Health check response status: {response.status_code}")
                     if response.status_code == 200:
                         self.logger.info("Health check passed.")
