@@ -1,7 +1,5 @@
 import { getFromAPI } from './api';
 import { localStorageStore } from './storage';
-export const user = localStorageStore('user', {});
-export const semester = localStorageStore('semester', {});
 
 export interface Semester {
     begin: string | Date;
@@ -25,16 +23,20 @@ export interface APIInfoResponse {
     user: User;
 }
 
-getFromAPI<APIInfoResponse>('/api/info')
-    //.then(res)
-    .then((data) => {
+// TODO: cache data with expiry time
+export const loadInfo = async (forceDataRefresh = false) => {
+    const user = localStorageStore<User | undefined>('user', undefined);
+    const semester = localStorageStore<Semester | undefined>('semester', undefined);
+
+    if (!user.value || !semester.value || forceDataRefresh) {
+        let data = await getFromAPI<APIInfoResponse>('/api/info');
         console.log('data:', data);
         data['semester']['begin'] = new Date(data['semester']['begin']);
         data['semester']['begin'].setHours(0);
 
-        semester.value = data['semester'];
         user.value = data['user'];
+        semester.value = data['semester'];
+    }
 
-        console.log(semester.value);
-        console.log(user.value);
-    });
+    return [user, semester] as const;
+};

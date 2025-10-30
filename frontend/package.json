@@ -53,7 +53,7 @@
         "vite": "^5.4.17",
         "vitest": "^3.0.9",
         "vue": "^3.5.10",
-        "vue-router": "^4.5.1",
+        "vue-router": "^4.6.3",
         "vue-tsc": "^2.1.6",
         "vue3-toastify": "^0.2.4",
         "vuedraggable": "^4.1.0",
