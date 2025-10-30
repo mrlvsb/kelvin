@@ -2,11 +2,12 @@
 import { onMounted } from 'vue';
 import { ref } from 'vue';
 import { getFromAPI } from '../utilities/api';
-import { user, semester } from '../utilities/global';
+//import { user, semester } from '../utilities/global';
 import ClassDetail from './ClassDetail.vue';
 import ClassFilter from './ClassFilter.vue';
 
 import { type Class } from './frontendtypes';
+import { loadInfo } from '../utilities/global';
 
 const classes = ref<Class[]>([]);
 
@@ -16,6 +17,8 @@ interface FilterParams {
   teacher: string;
   class: string | null;
 }
+
+const [user, semester] = await loadInfo(true);
 
 const filter: FilterParams = {
   semester: semester.value.abbr, //semester.abbr
@@ -32,6 +35,8 @@ async function loadClasses() {
     '/api/classes?' + prevParams
   );
 
+  console.log('prevParams', prevParams);
+
   classes.value = req.classes.map((c) => {
     c.assignments = c.assignments.map((assignment) => {
       assignment.assigned = new Date(assignment.assigned);
@@ -45,6 +50,7 @@ async function loadClasses() {
 }
 
 async function refetch(): Promise<Class[]> {
+  console.log('refetching classes with filter', filter);
   const params = new URLSearchParams(
     Object.fromEntries(Object.entries(filter).filter(([_, v]) => v))
   ).toString();
