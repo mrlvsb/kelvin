@@ -11,7 +11,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runtime
-    image: "ghcr.io/mrlvsb/kelvin:${APP_IMAGE_TAG:-latest}" # Interpolation for Deployment Service
+    image: "ghcr.io/mrlvsb/kelvin:${APP_IMAGE_TAG:-95f6daa259ed5fbe8b92a87945864a26e5c2447f}" # Interpolation for Deployment Service
     pull_policy: always
     restart: unless-stopped
     environment:
@@ -88,6 +88,8 @@ services:
     environment:
       # Hardcode the docker-compose.yml path inside the container to match the repository volume mount path (must be in sync with volume that mounts the repo)
       - DOCKER__COMPOSE_FILE_PATH=/kelvin/docker-compose.yml
+      # For local development set debug to True in .env (e.g. disable TLS verification for HTTP client)
+      - DEBUG=${DEBUG:-false}
       - SECURITY__WEBHOOK_SECRET=${SECURITY__WEBHOOK_SECRET}
       - SECURITY__ALLOWED_HOSTS=${SECURITY__ALLOWED_HOSTS}
     volumes:
