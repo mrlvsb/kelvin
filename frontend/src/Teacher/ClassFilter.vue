@@ -1,61 +1,43 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { getFromAPI } from '../utilities/api';
-import { user } from '../utilities/global';
+import { loadInfo } from '../utilities/global';
 import { type ClassesByTeacher } from './frontendtypes';
 
 const router = useRouter();
+const route = useRoute();
 
-const semesters = ref({});
+const emit = defineEmits<{
+  (
+    e: 'filterChange',
+    filter: { semester: string; subject: string; teacher: string; class: string }
+  ): void;
+}>();
+
+const semesters = ref<ClassesByTeacher>({});
 const sem_sorted = ref<string[]>([]);
-const teachers = ref([]);
-const allTeachers = ref([]);
-const classes = ref([]);
-const allClasses = ref([]);
+const teachers = ref<string[]>([]);
+const allTeachers = ref<string[]>([]);
+const classes = ref<string[]>([]);
+const allClasses = ref<string[]>([]);
 
 const semester = ref('');
 const subject = ref('');
 const teacher = ref('');
 const clazz = ref('');
 
-/*
-const subjs = computed(() => {
-  console.log('computed subject');
-  const result = [];
-  const sem = semesters.value?.[semester.value];
-  if (sem) {
-    for (const subj in sem) {
-      if (Object.prototype.hasOwnProperty.call(sem[subj], user.value.username)) {
-        result.push(subj);
-      }
-    }
-  }
-  return result;
-});
-*/
+const isLoading = ref(true);
 
-/*
-watch([semesters], () => {
-  subjs.value = [];
-  const sem = semesters.value?.[semester.value];
-  if (sem) {
-    for (const subj in sem) {
-      if (Object.prototype.hasOwnProperty.call(sem[subj], user.value.username)) {
-        subjs.value.push(subj);
-      }
-    }
-  }
-});
-*/
+const [user] = await loadInfo(true);
 
 async function load() {
   const res = await getFromAPI<{ semesters: ClassesByTeacher }>('/api/classes/all');
   semesters.value = res.semesters;
 
   sem_sorted.value = sorted(Object.keys(semesters.value), compareSemester);
-  const allTeachersSet = new Set();
-  const allClassesSet = new Set();
+  const allTeachersSet = new Set<string>();
+  const allClassesSet = new Set<string>();
   for (const sem in semesters.value) {
     for (const subj in semesters.value[sem]) {
       for (const t in semesters.value[sem][subj]) {
@@ -69,9 +51,14 @@ async function load() {
   allTeachers.value = [...allTeachersSet];
   allClasses.value = [...allClassesSet];
 
-  //console.log('sem_sorted', sem_sorted.value);
-  semester.value = sem_sorted.value[sem_sorted.value.length - 1];
-  //console.log('semester', semester.value);
+  // Initialize from route query params
+  semester.value =
+    (route.query.semester as string) || sem_sorted.value[sem_sorted.value.length - 1] || '';
+  subject.value = (route.query.subject as string) || '';
+  teacher.value = (route.query.teacher as string) || '';
+  clazz.value = (route.query.class as string) || '';
+
+  isLoading.value = false;
 }
 
 function resetClass() {
@@ -100,8 +87,10 @@ function compareSemester(a: string, b: string) {
   return a[4] === 'W' ? -1 : 1;
 }
 
+// Update URL when filters change
 watch([semester, subject, teacher, clazz], () => {
-  console.log('watch 1');
+  if (isLoading.value) return;
+
   const params = new URLSearchParams(
     Object.fromEntries(
       Object.entries({
@@ -112,26 +101,49 @@ watch([semester, subject, teacher, clazz], () => {
       }).filter(([, v]) => v)
     )
   );
-  router.push({ path: '/', query: Object.fromEntries(params.entries()) });
+
+  router.replace({ path: '/', query: Object.fromEntries(params.entries()) }).catch(() => {});
+
+  // Emit filter change to parent
+  emit('filterChange', {
+    semester: semester.value,
+    subject: subject.value,
+    teacher: teacher.value,
+    class: clazz.value
+  });
 });
 
+// Update available options when semester/subject/teacher change
 watch([semester, subject, teacher], () => {
-  console.log('watch 2');
-  const sem = semesters.value[semester.value];
-  if (!sem) return;
+  if (isLoading.value) return;
 
+  const sem = semesters.value[semester.value];
+
+  if (!sem) {
+    teachers.value = allTeachers.value;
+    classes.value = allClasses.value;
+    return;
+  }
+
+  // Reset subject if it doesn't exist in selected semester
   if (subject.value && !sem[subject.value]) {
     subject.value = '';
-  } else if (subject.value && teacher.value && !sem[subject.value]?.hasOwnProperty(teacher.value)) {
+    return;
+  }
+
+  // Reset teacher if it doesn't exist for selected subject
+  if (subject.value && teacher.value && !sem[subject.value]?.hasOwnProperty(teacher.value)) {
     teacher.value = '';
   }
 
+  // Update available teachers and classes based on selection
   if (semester.value && subject.value && sem?.[subject.value]) {
-    teachers.value = Object.keys(sem[subject.value]);
+    teachers.value = sorted(Object.keys(sem[subject.value]));
+
     if (teacher.value && sem[subject.value][teacher.value]) {
       classes.value = sem[subject.value][teacher.value];
     } else {
-      const merged = [];
+      const merged: string[] = [];
       for (const t in sem[subject.value]) {
         merged.push(...sem[subject.value][t]);
       }

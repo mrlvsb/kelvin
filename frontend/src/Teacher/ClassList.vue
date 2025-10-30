@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { getFromAPI } from '../utilities/api';
-import { user, semester } from '../utilities/global';
 import ClassDetail from './ClassDetail.vue';
 import ClassFilter from './ClassFilter.vue';
 
 import { type Class } from './frontendtypes';
+import { loadInfo } from '../utilities/global';
 
+const route = useRoute();
 const classes = ref<Class[]>([]);
+const isLoading = ref(false);
 
 interface FilterParams {
   semester: string;
@@ -17,20 +19,22 @@ interface FilterParams {
   class: string | null;
 }
 
-const filter: FilterParams = {
-  semester: semester.value.abbr, //semester.abbr
-  subject: null,
-  teacher: user.value.username, //user.username
-  class: null
-};
+const [user, semester] = await loadInfo(true);
 
-let prevParams;
+const filter = ref<FilterParams>({
+  semester: (route.query.semester as string) || semester.value.abbr,
+  subject: (route.query.subject as string) || null,
+  teacher: (route.query.teacher as string) || user.value.username,
+  class: (route.query.class as string) || null
+});
 
 async function loadClasses() {
-  const req = await getFromAPI<{ classes: Class[] }>(
-    //`/api/classes?semester=${filter.semester}&subject=${filter.subject}&teacher=${filter.teacher}`
-    '/api/classes?' + prevParams
-  );
+  isLoading.value = true;
+  const params = new URLSearchParams(
+    Object.fromEntries(Object.entries(filter.value).filter(([_, v]) => v))
+  ).toString();
+
+  const req = await getFromAPI<{ classes: Class[] }>('/api/classes?' + params);
 
   classes.value = req.classes.map((c) => {
     c.assignments = c.assignments.map((assignment) => {
@@ -42,36 +46,40 @@ async function loadClasses() {
     });
     return c;
   });
+
+  isLoading.value = false;
 }
 
-async function refetch(): Promise<Class[]> {
-  const params = new URLSearchParams(
-    Object.fromEntries(Object.entries(filter).filter(([_, v]) => v))
-  ).toString();
-  if (prevParams === params) {
-    return;
+function handleFilterChange(newFilter: FilterParams) {
+  filter.value = newFilter;
+  loadClasses();
+}
+
+// Watch route query changes
+watch(
+  () => route.query,
+  (newQuery) => {
+    filter.value = {
+      semester: (newQuery.semester as string) || semester.value.abbr,
+      subject: (newQuery.subject as string) || null,
+      teacher: (newQuery.teacher as string) || user.value.username,
+      class: (newQuery.class as string) || null
+    };
+    loadClasses();
   }
-  prevParams = params;
-
-  await loadClasses();
-}
+);
 
 onMounted(() => {
-  refetch();
+  loadClasses();
 });
 </script>
 
 <template>
   <div class="container-fluid p-1">
     <div class="d-flex mb-1">
-      <ClassFilter
-        :semester="filter.semester"
-        :subject="filter.subject"
-        :teacher="filter.teacher"
-        :clazz="filter.class"
-      />
+      <ClassFilter @filter-change="handleFilterChange" />
     </div>
-    <div class="classes">
+    <div class="classes" :class="{ loading: isLoading }">
       <div class="classes-inner">
         <ClassDetail
           v-for="clazz in classes"
@@ -79,9 +87,17 @@ onMounted(() => {
           :clazz="clazz"
           @update="loadClasses"
         />
+        <p v-if="!isLoading && classes.length === 0" class="alert alert-info">
+          No class found, try different filter.
+        </p>
       </div>
     </div>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.loading .classes-inner {
+  opacity: 0.5;
+  pointer-events: none;
+}
+</style>

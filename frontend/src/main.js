@@ -163,6 +163,8 @@ import QuizSubmitList from './Quiz/Lists/QuizSubmitList.vue';
 import MarkButton from './components/MarkButton.vue';
 import ClassList from './Teacher/ClassList.vue';
 
+import router from './router';
+
 /**
  * Register new Vue component as a custom element.
  * @param {string} name Suffix to `kelvin-` as name of new custom element
@@ -207,7 +209,9 @@ registerVueComponent('quiz-edit', QuizEdit);
 registerSuspendedVueComponent('quiz-list', QuizList);
 registerSuspendedVueComponent('quiz-submit-list', QuizSubmitList);
 if (enableNewUI) registerVueComponent('color-theme', ColorThemeNew);
-registerSuspendedVueComponent('vue-app', ClassList);
+registerSuspendedVueComponent('vue-app', ClassList, (app) => {
+    app.use(router);
+});
 
 // Function that can be used outside the compiled JavaScript
 // to mount the student page with the passed props.
