@@ -404,7 +404,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         )
 
     if current_submit:
-        data = {**data, **get(current_submit)}
+        data = {**data, **get(current_submit).__dict__}
         has_failure = any(r.failed for r in data["results"])
         data["comment_count"] = current_submit.comment_set.count()
 
