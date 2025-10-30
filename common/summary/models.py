@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Dict
 
+from serde import serde
+
 
 class Severity(Enum):
     CRITICAL = "critical"
@@ -10,6 +12,7 @@ class Severity(Enum):
     LOW = "low"
 
 
+@serde
 @dataclass
 class Issue:
     file: str
@@ -18,12 +21,14 @@ class Issue:
     explanation: str
 
 
+@serde
 @dataclass
 class ReviewResult:
     summary: str
     issues: List[Issue]
 
 
+@serde
 @dataclass
 class EmbeddedFile:
     path: str
@@ -32,6 +37,7 @@ class EmbeddedFile:
     total_lines: int = 0
 
 
+@serde
 @dataclass
 class LlmConfig:
     enabled: bool

@@ -7,9 +7,9 @@ from typing import Dict, List, Optional
 import django_rq
 import requests
 
+from common.serialization import dataclass_to_dict
 from common.summary.models import EmbeddedFile, ReviewResult, LlmConfig
 from common.summary.summarizer import Summarizer
-from common.serialization import dataclass_to_dict
 from common.utils import download_source_to_path
 from kelvin import settings
 
@@ -24,6 +24,8 @@ EXTENSION_LANGUAGE_MAP: Dict[str, str] = {
     ".py": "python",
     ".java": "java",
 }
+
+SUMMARY_RESULT_FILE_NAME: str = "summary.json"
 
 
 def detect_language(filename: str) -> Optional[str]:
@@ -64,6 +66,7 @@ def embed_source_files(source_files_path: str) -> List[EmbeddedFile]:
             language = detect_language(file)
             if not language:
                 logging.warning(f"Skipping file with undetected language: {relpath}")
+                continue
 
             with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
                 content = f.read()
@@ -89,11 +92,8 @@ def summary_job(submit_url, token) -> None:
     logging.info(f"Summarizing {submit_url}")
 
     with tempfile.TemporaryDirectory() as workdir:
-        os.chdir(workdir)
-        current_directory = os.getcwd()
-
-        download_source_to_path(f"{submit_url}download?token={token}", ".")
-        embedded_files = embed_source_files(current_directory)
+        download_source_to_path(f"{submit_url}download?token={token}", workdir)
+        embedded_files = embed_source_files(workdir)
 
     summary: Summarizer = Summarizer(
         model=settings.OPENAI_MODEL,

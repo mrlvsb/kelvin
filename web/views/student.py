@@ -51,11 +51,12 @@ from common.models import (
     current_semester,
 )
 from common.plagcheck.moss import PlagiarismMatch, moss_result
+from common.serialization import dict_to_dataclass
 from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline
 from common.summary.models import ReviewResult
+from common.summary.summary import SUMMARY_RESULT_FILE_NAME
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher
-from common.serialization import dict_to_dataclass
 from evaluator.results import EvaluationResult
 from evaluator.testsets import TestSet
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES, MAX_INLINE_LINES
@@ -237,7 +238,7 @@ def get(submit):
         pass
 
     try:
-        with open(os.path.join(submit.pipeline_path(), "summary.json")) as f:
+        with open(os.path.join(submit.pipeline_path(), SUMMARY_RESULT_FILE_NAME)) as f:
             result_dict = json.load(f)
             summary = dict_to_dataclass(result_dict, ReviewResult)
     except FileNotFoundError:
@@ -843,19 +844,16 @@ def submit_comments(request, assignment_id, login, submit_num):
             if issue.file not in result:
                 continue
 
-            try:
-                result[issue.file]["comments"].setdefault(int(issue.line) - 1, []).append(
-                    {
-                        "id": -1,
-                        "author": "LLM",
-                        "text": issue.explanation,
-                        "can_edit": False,
-                        "type": "summary",
-                        "url": None,
-                    }
-                )
-            except KeyError as e:
-                logging.exception(e)
+            result[issue.file]["comments"].setdefault(int(issue.line) - 1, []).append(
+                {
+                    "id": -1,
+                    "author": "LLM",
+                    "text": issue.explanation,
+                    "can_edit": False,
+                    "type": "summary",
+                    "url": None,
+                }
+            )
 
     priorities = {
         "video": 0,
