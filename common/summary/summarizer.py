@@ -40,7 +40,10 @@ class Summarizer:
         lines: List[str] = []
 
         for file in self.files:
+            # Removing comments improves focus on code logic. Comments could be misleading.
             processed_line = remove_comments_from_code(file.content, file.language)
+
+            # Enumerate lines for reference
             processed_line = enumerate_file_lines(processed_line)
 
             lines.append(f"\n### FILE: {file.path}")
