@@ -15,8 +15,16 @@ Including another URLconf
 """
 
 from django.contrib import admin
+from django.contrib.auth.decorators import user_passes_test
 from django.urls import path, include
 from django.conf import settings
+
+from common.utils import is_teacher
+from ninja import NinjaAPI
+from api.v2.default import router as api_router
+
+api_v2 = NinjaAPI(title="Kelvin API", version="2.0.0", docs_decorator=user_passes_test(is_teacher))
+api_v2.add_router("", api_router)
 
 # import notifications.urls
 
@@ -31,6 +39,7 @@ urlpatterns = [
     path("accounts/logout/", auth_views.LogoutView.as_view(), name="cas_ng_logout"),
     path("accounts/login/", auth_views.LoginView.as_view(), name="cas_ng_login"),
     path("api/", include("api.urls")),
+    path("api/v2/", api_v2.urls),
     path("django-rq/", include("django_rq.urls")),
     path("survey/", include("survey.urls")),
     path("webpush/", include("webpush.urls")),
