@@ -19,7 +19,7 @@ from evaluator.testsets import TestSet
 from kelvin.settings import BASE_DIR
 
 
-def load_task_config(task_path) -> Optional[dict]:
+def load_task_config(task_path: str) -> Optional[dict]:
     """
     Loads the task configuration from a YAML file located in the specified task directory.
     If the configuration file does not exist or cannot be parsed, an empty dictionary is returned.
@@ -84,7 +84,7 @@ def evaluate_submit(request, submit, meta=None):
     task = TestSet(task_dir, meta)
 
     # Async configuration section
-    task_config = load_task_config(task_dir)
+    task_config = load_task_config(str(task_dir))
     summarize_submit(task_config, submit_url, token)
 
     # Enqueue the evaluation job

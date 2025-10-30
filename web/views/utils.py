@@ -15,10 +15,21 @@ def file_response(file, filename: str, mimetype: str) -> HttpResponse:
     return response
 
 
-def has_permission_for_submit(request, submit: Submit) -> None:
+def authenticate_submit_token_request(request, submit: Submit) -> None:
     if "token" in request.GET:
         token = signing.loads(request.GET["token"], max_age=3600)
-        if token.get("submit_id") != submit.id:
+        if token.get("submit_id") == submit.id:
+            return None
+
+    raise PermissionDenied()
+
+
+def authenticate_submit_user_request(request, submit: Submit, allow_token=False) -> None:
+    if "token" in request.GET and allow_token:
+        token = signing.loads(request.GET["token"], max_age=3600)
+        if token.get("submit_id") == submit.id:
+            return None
+        else:
             raise PermissionDenied()
 
     if not request.user.is_authenticated:
