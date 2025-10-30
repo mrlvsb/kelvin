@@ -66,6 +66,7 @@ from quiz.settings import QUIZ_PATH
 from web.markdown_utils import load_readme
 from .test_script import render_test_script
 from .utils import file_response
+from ..models import SubmitData
 
 mimedetector = magic.Magic(mime=True)
 
@@ -224,7 +225,7 @@ def student_index(request):
     )
 
 
-def get(submit):
+def get(submit: Submit) -> SubmitData:
     results = []
     summary = {
         "summary": "",
@@ -248,8 +249,7 @@ def get(submit):
         # TODO: show error
         pass
 
-    data = {"submit": submit, "results": results, "summary": summary}
-    return data
+    return SubmitData(submit=submit, results=results, summary=summary)
 
 
 JobStatus = namedtuple("JobStatus", ["finished", "status", "message"], defaults=[False, "", ""])
@@ -782,13 +782,15 @@ def submit_comments(request, assignment_id, login, submit_num):
                 "comments": {},
             }
 
+    submit_data: SubmitData = get(submit)
+
     # add comments from pipeline
-    resultset = get(submit)
-    for pipe in resultset["results"]:
+    for pipe in submit_data.results:
         for source, comments in pipe.comments.items():
             for comment in comments:
                 if source not in result:
                     continue
+
                 try:
                     line = min(result[source]["content"].count("\n"), int(comment["line"])) - 1
                     if not any(
@@ -1043,7 +1045,9 @@ def raw_result_content(request, submit_id, test_name, result_type, file):
     if submit.student_id != request.user.id and not is_teacher(request.user):
         raise PermissionDenied()
 
-    for pipe in get(submit)["results"]:
+    submit_data: SubmitData = get(submit)
+
+    for pipe in submit_data.results:
         for test in pipe.tests:
             if test.name == test_name:
                 if file in test.files:
@@ -1114,8 +1118,9 @@ def upload_results(request, assignment_id, submit_num, login):
     with tarfile.open(fileobj=io.BytesIO(request.body)) as tar:
         tar.extractall(result_path)
 
-    result = get(submit)["results"]
-    for pipe in result.pipelines:
+    submit_data: SubmitData = get(submit)
+
+    for pipe in submit_data.results.pipelines:
         if "points" in pipe:
             overwrite = "points_overwrite" in pipe and pipe.points_overwrite
             if (submit.assigned_points is not None and overwrite) or submit.assigned_points is None:
