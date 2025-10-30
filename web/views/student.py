@@ -38,6 +38,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from notifications.models import Notification
 from notifications.signals import notify
+from serde import from_dict
 
 from common.evaluate import get_meta
 from common.event_log import record_task_displayed
@@ -51,7 +52,6 @@ from common.models import (
     current_semester,
 )
 from common.plagcheck.moss import PlagiarismMatch, moss_result
-from common.serialization import dict_to_dataclass
 from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline
 from common.summary.models import ReviewResult
 from common.summary.summary import SUMMARY_RESULT_FILE_NAME
@@ -66,6 +66,7 @@ from quiz.settings import QUIZ_PATH
 from web.markdown_utils import load_readme
 from .test_script import render_test_script
 from .utils import file_response
+from ..models import SubmitData
 
 mimedetector = magic.Magic(mime=True)
 
@@ -224,12 +225,9 @@ def student_index(request):
     )
 
 
-def get(submit):
+def get(submit: Submit) -> SubmitData:
     results = []
-    summary = {
-        "summary": "",
-        "issues": [],
-    }
+    summary = ReviewResult(summary="", issues=[])
 
     try:
         results = EvaluationResult(submit.pipeline_path())
@@ -239,17 +237,21 @@ def get(submit):
 
     try:
         with open(os.path.join(submit.pipeline_path(), SUMMARY_RESULT_FILE_NAME)) as f:
-            result_dict = json.load(f)
-            summary = dict_to_dataclass(result_dict, ReviewResult)
+            json_data = json.load(f)
+            summary = from_dict(ReviewResult, json_data)
     except FileNotFoundError:
         # File not found, no summary available, do nothing
         pass
     except json.JSONDecodeError:
         # TODO: show error
+        logging.exception("Failed to parse summary result for submit %d", submit.id)
         pass
 
-    data = {"submit": submit, "results": results, "summary": summary}
-    return data
+    return SubmitData(
+        submit=submit,
+        results=results,
+        summary=summary,
+    )
 
 
 JobStatus = namedtuple("JobStatus", ["finished", "status", "message"], defaults=[False, "", ""])
@@ -423,7 +425,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         )
 
     if current_submit:
-        data = {**data, **get(current_submit)}
+        data = {**data, **(get(current_submit).__dict__)}
         has_failure = any(r.failed for r in data["results"])
         data["comment_count"] = current_submit.comment_set.count()
 
@@ -782,13 +784,15 @@ def submit_comments(request, assignment_id, login, submit_num):
                 "comments": {},
             }
 
+    submit_data: SubmitData = get(submit)
+
     # add comments from pipeline
-    resultset = get(submit)
-    for pipe in resultset["results"]:
+    for pipe in submit_data.results:
         for source, comments in pipe.comments.items():
             for comment in comments:
                 if source not in result:
                     continue
+
                 try:
                     line = min(result[source]["content"].count("\n"), int(comment["line"])) - 1
                     if not any(
@@ -826,25 +830,25 @@ def submit_comments(request, assignment_id, login, submit_num):
 
     # add comments from llm summary
     if is_teacher(request.user):  # Currently only teachers can view LLM summary comments
-        llm_summary = getattr(resultset["summary"], "summary", "")
+        llm_summary = submit_data.summary
 
-        if len(llm_summary) > 0:
+        if len(llm_summary.summary) > 0:
             summary_comments.append(
                 {
                     "id": -1,
                     "author": "LLM",
-                    "text": llm_summary,
+                    "text": llm_summary.summary,
                     "can_edit": False,
                     "type": "summary",
                     "url": None,
                 }
             )
 
-        for issue in getattr(resultset["summary"], "issues", []):
+        for issue in llm_summary.issues:
             if issue.file not in result:
                 continue
 
-            result[issue.file]["comments"].setdefault(int(issue.line) - 1, []).append(
+            result[issue.file]["comments"].setdefault(issue.line - 1, []).append(
                 {
                     "id": -1,
                     "author": "LLM",
@@ -1043,7 +1047,9 @@ def raw_result_content(request, submit_id, test_name, result_type, file):
     if submit.student_id != request.user.id and not is_teacher(request.user):
         raise PermissionDenied()
 
-    for pipe in get(submit)["results"]:
+    submit_data: SubmitData = get(submit)
+
+    for pipe in submit_data.results:
         for test in pipe.tests:
             if test.name == test_name:
                 if file in test.files:
@@ -1114,8 +1120,9 @@ def upload_results(request, assignment_id, submit_num, login):
     with tarfile.open(fileobj=io.BytesIO(request.body)) as tar:
         tar.extractall(result_path)
 
-    result = get(submit)["results"]
-    for pipe in result.pipelines:
+    submit_data: SubmitData = get(submit)
+
+    for pipe in submit_data.results.pipelines:
         if "points" in pipe:
             overwrite = "points_overwrite" in pipe and pipe.points_overwrite
             if (submit.assigned_points is not None and overwrite) or submit.assigned_points is None:
