@@ -198,11 +198,6 @@ async function load() {
   files = json['sources'].map((source) => new SourceFile(source));
   summaryComments = json['summary_comments'];
 
-  // Append summary to summary comments
-  if (json['summary']) {
-    summaryComments.push(json['summary']);
-  }
-
   // Hide all files by default if there is more than one file
   if (files.length > 1) {
     for (const file of files) {
@@ -225,15 +220,12 @@ function countComments(comments) {
   comments = comments || {};
   const counts = {
     user: 0,
-    automated: 0,
-    summary: 0
+    automated: 0
   };
   for (const line of Object.values(comments)) {
     for (const comment of Object.values(line)) {
       if (comment.type === 'automated' || comment.type === 'summary') {
         counts.automated += 1;
-      } else if (comment.type === 'summary') {
-        counts.summary += 1;
       } else {
         counts.user += 1;
       }
@@ -342,10 +334,6 @@ window.addEventListener('hashchange', goToSelectedLines);
           {#if comments.automated > 0}
             <span class="badge bg-primary" title="Automation comments" style="font-size: 60%;"
               >{comments.automated}</span>
-          {/if}
-          {#if comments.summary > 0}
-            <span class="badge bg-danger" title="Automation comments" style="font-size: 60%;"
-            >{comments.summary}</span>
           {/if}
         {/if}
       </span>{#if file.source.type == 'source' && file.source.content}<CopyToClipboard
