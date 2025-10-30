@@ -248,7 +248,7 @@ def get_submit_data(submit: Submit) -> SubmitData:
         # TODO: show error
         pass
 
-    return SubmitData(submit=submit, results=results)
+    return SubmitData(submit=submit, results=results, summary=summary)
 
 
 JobStatus = namedtuple("JobStatus", ["finished", "status", "message"], defaults=[False, "", ""])
