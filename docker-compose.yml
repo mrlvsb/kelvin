@@ -25,6 +25,7 @@ services:
       - DATABASE__DB=${DATABASE__DB}
       - DATABASE__USERNAME=${DATABASE__USERNAME}
       - DATABASE__PASSWORD=${DATABASE__PASSWORD}
+      - KELVIN__HOST_URL=${KELVIN__HOST_URL}
     volumes:
       - app_static:/app/static
       - app_socket:/socket
