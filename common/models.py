@@ -1,3 +1,4 @@
+import ipaddress
 import os
 import re
 import logging
@@ -222,6 +223,15 @@ class Class(models.Model):
         verbose_name_plural = "classes"
 
 
+class ClassroomIpRange(models.Model):
+    name = models.TextField()
+    ip_range_start = models.GenericIPAddressField()
+    ip_range_end = models.GenericIPAddressField()
+
+    def __str__(self):
+        return f"{self.name}: {self.ip_range_start} – {self.ip_range_end}"
+
+
 class AssignedTask(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
     clazz = models.ForeignKey(Class, on_delete=models.CASCADE)
@@ -230,6 +240,7 @@ class AssignedTask(models.Model):
     hard_deadline = models.BooleanField(default=False)
     max_points = models.IntegerField(null=True, blank=True)
     moss_url = models.URLField(null=True, blank=True, editable=False)
+    allowed_classrooms = models.ManyToManyField(ClassroomIpRange, related_name="assignments")
 
     def is_visible(self):
         return timezone.now() >= self.assigned
@@ -242,6 +253,22 @@ class AssignedTask(models.Model):
             self.deadline is not None
             and datetime.datetime.now(datetime.timezone.utc) > self.deadline
         )
+
+    def is_allowed_from_ip(self, ip: str) -> bool:
+        ip = ipaddress.ip_address(ip)
+
+        if not self.allowed_classrooms.all().exists():
+            return True
+
+        allowed = False
+
+        for classroom in self.allowed_classrooms.all():
+            start = ipaddress.ip_address(classroom.ip_range_start)
+            end = ipaddress.ip_address(classroom.ip_range_end)
+
+            allowed |= start <= ip <= end
+
+        return allowed
 
     def __str__(self):
         return f"{self.task.name} {self.clazz}"

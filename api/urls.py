@@ -8,6 +8,7 @@ urlpatterns = [
     path("tasks/<int:task_id>", default_view.task_detail),
     path("tasks/<int:task_id>/duplicate", default_view.duplicate_task),
     path("tasks/", default_view.task_detail),
+    path("classrooms-list/", default_view.classrooms_list),
     path("task-list", default_view.tasks_list_all),
     path("task-list/<subject_abbr>", default_view.tasks_list_all),
     path("student-list", default_view.student_list),
