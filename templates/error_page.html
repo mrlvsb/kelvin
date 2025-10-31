@@ -1,29 +1,14 @@
-<!doctype html>
-<html lang="en-us">
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        {% load static %}
-        <meta name="django-webpush-vapid-key" content="{{ vapid_public_key }}">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-        <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon/apple-touch-icon.png' %}">
-        <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}">
-        <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}">
-        <link rel="manifest" href="{% static 'favicon/site.webmanifest' %}">
-        <script src="{% static 'frontend.js' %}"></script>
-        <link rel="stylesheet" href="{% static 'frontend.css' %}">
-        <title>Kelvin {{ status_code }}</title>
-    </head>
+{% extends 'web/layout.html' %}
 
-    <body>
-        <div class="d-flex justify-content-center align-items-center vh-100 text-center">
-            <div>
-                <h1 class="display-1 mb-4"><strong>{{ status_code }} - {{ title }}</strong></h1>
-                <p class="display-6 mb-5">{{ message }}</p>
-                <a href="{{ return_url }}" class="fs-3 text-decoration-none">
-                    <i class="bi bi-arrow-left"></i>
-                    Go back
-                </a>
-            </div>
+{% block fullcontent %}
+    <div class="d-flex justify-content-center align-items-center text-center" style="height: calc(100vh - 80px);">
+        <div>
+            <h1 class="display-1 mb-4"><strong>{{ status_code }} - {{ title }}</strong></h1>
+            <p class="display-6 mb-5">{{ message }}</p>
+            <a href="{{ return_url }}" class="fs-3 text-decoration-none">
+                <i class="bi bi-arrow-left"></i>
+                Go back
+            </a>
         </div>
-    </body>
-</html>
+    </div>
+{% endblock %}
