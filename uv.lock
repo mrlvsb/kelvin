@@ -324,6 +324,19 @@ wheels = [
 ]
 
 [[package]]
+name = "django-ninja"
+version = "1.4.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fa/9a/558489e0e25173772fbd826306b7d1777e80285b02d69e0e1aaec41e3eec/django_ninja-1.4.5.tar.gz", hash = "sha256:aa1a2ee2b22c5f1c2f4bfbc004386be7074cbfaf133680c2b359a31221965503", size = 3710511, upload-time = "2025-10-19T18:28:02.362Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/49/e3/168274a8def4b9a2fb2540319a68914e8e4e529cd7f7b5f1ba8939d011bc/django_ninja-1.4.5-py3-none-any.whl", hash = "sha256:d779702ddc6e17b10739049ddb075a6a1e6c6270bdc04e0b0429f6adbf670373", size = 2426449, upload-time = "2025-10-19T18:28:00.518Z" },
+]
+
+[[package]]
 name = "django-notifications-hq"
 version = "1.8.0"
 source = { registry = "https://pypi.org/simple" }
@@ -540,6 +553,7 @@ dependencies = [
     { name = "django" },
     { name = "django-cas-ng" },
     { name = "django-ipware" },
+    { name = "django-ninja" },
     { name = "django-notifications-hq" },
     { name = "django-redis" },
     { name = "django-rq" },
@@ -589,6 +603,7 @@ requires-dist = [
     { name = "django", specifier = "==4.2.16" },
     { name = "django-cas-ng", specifier = "==4.3.0" },
     { name = "django-ipware", specifier = "==7.0.1" },
+    { name = "django-ninja", specifier = "==1.4.5" },
     { name = "django-notifications-hq", specifier = "==1.8.0" },
     { name = "django-redis", specifier = ">=5.4.0" },
     { name = "django-rq", specifier = "==2.10.2" },
