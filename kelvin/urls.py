@@ -20,6 +20,8 @@ from django.conf import settings
 
 # import notifications.urls
 
+handler400 = handler403 = handler404 = "web.views.common.custom_40x_handler"
+
 if settings.CAS_ENABLE:
     from django_cas_ng import views as auth_views
 else:

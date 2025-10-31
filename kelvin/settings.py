@@ -81,6 +81,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_cas_ng.middleware.CASMiddleware",
     "quiz.middleware.QuizRedirectMiddleware",
+    "common.exceptions.custom_exception_middleware.CustomExceptionMiddleware",
 ]
 
 ROOT_URLCONF = "kelvin.urls"
