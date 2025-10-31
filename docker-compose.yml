@@ -1,3 +1,5 @@
+name: kelvin
+
 services:
   app:
     container_name: kelvin_app
@@ -9,7 +11,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runtime
-    image: ghcr.io/mrlvsb/kelvin:latest
+    image: "ghcr.io/mrlvsb/kelvin:${APP_IMAGE_TAG:-latest}" # Interpolation for Deployment Service
     pull_policy: always
     restart: unless-stopped
     environment:
@@ -19,8 +21,10 @@ services:
       - DATABASE__PORT=5432
       - REDIS__HOST=redis
       - REDIS__PORT=6379
-    env_file:
-      - .env
+      # Passed through the interpolation from the .env file in the project directory
+      - DATABASE__DB=${DATABASE__DB}
+      - DATABASE__USERNAME=${DATABASE__USERNAME}
+      - DATABASE__PASSWORD=${DATABASE__PASSWORD}
     volumes:
       - app_static:/app/static
       - app_socket:/socket
@@ -37,8 +41,6 @@ services:
       - POSTGRES_DB=${DATABASE__DB}
       - POSTGRES_USER=${DATABASE__USERNAME}
       - POSTGRES_PASSWORD=${DATABASE__PASSWORD}
-    env_file:
-      - .env
     volumes:
       - ${DATABASE__DATA_PATH}:/var/lib/postgresql/data
     ports:
@@ -48,8 +50,6 @@ services:
     container_name: kelvin_redis
     image: redis:7
     restart: unless-stopped
-    env_file:
-      - .env
     volumes:
       - ${REDIS__DATA_PATH}:/data
     ports:
@@ -74,6 +74,28 @@ services:
       - ${NGINX__LOGS_PATH}:/var/log/nginx
       - app_static:/app/static:ro
       - app_socket:/socket
+
+  deployment:
+    container_name: deployment_app
+    profiles: [ prod ]
+    build:
+      context: deployment_service
+      dockerfile: Dockerfile
+      target: runtime
+    image: "ghcr.io/mrlvsb/deployment:latest"
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      # Hardcode the docker-compose.yml path inside the container to match the repository volume mount path (must be in sync with volume that mounts the repo)
+      - DOCKER__COMPOSE_FILE_PATH=/kelvin/docker-compose.yml
+      # For local development set debug to True in .env (e.g. disable TLS verification for HTTP client)
+      - DEBUG=${DEBUG:-false}
+      - SECURITY__WEBHOOK_SECRET=${SECURITY__WEBHOOK_SECRET}
+      - SECURITY__ALLOWED_HOSTS=${SECURITY__ALLOWED_HOSTS}
+    volumes:
+      # Mount the Kelvin repo to /kelvin inside the container,must be in sync with DOCKER__COMPOSE_FILE_PATH
+      - ${REPO__DIRECTORY_PATH}:/kelvin
+      - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
   app_static:
