@@ -4,43 +4,20 @@ from django.utils.crypto import get_random_string
 from django.conf import settings
 from django.urls import reverse
 from api.models import UserToken
+from common.exceptions.exception_parser import parse_exception
 
 from .student import student_index, ui
 from common.utils import is_teacher
 from api.backends import hash_token
 
 
-def custom_403_page(request, exception=None):
-    previous_url = request.META.get("HTTP_REFERER", "/")  # return to last url or home
-    context = {
-        "status_code": 403,
-        "title": "Forbidden",
-        "message": str(exception) if exception else "You are not permitted to view this page.",
-        "return_url": previous_url,
-    }
-    return render(request, "error_page.html", context)
+def custom_40x_handler(request, exception=None):
+    exception = parse_exception(request, exception)
 
+    if exception is not None:
+        return render(request, "error_page.html", exception)
 
-def custom_400_page(request, exception=None):
-    previous_url = request.META.get("HTTP_REFERER", "/")  # return to last url or home
-    context = {
-        "status_code": 400,
-        "title": "Bad Request",
-        "message": str(exception) if exception else "Sorry, something was off in the request.",
-        "return_url": previous_url,
-    }
-    return render(request, "error_page.html", context)
-
-
-def custom_404_page(request, exception=None):
-    previous_url = request.META.get("HTTP_REFERER", "/")  # return to last url or home
-    context = {
-        "status_code": 404,
-        "title": "Page Not Found",
-        "message": str(exception) if exception else "The page you requested does not exist.",
-        "return_url": previous_url,
-    }
-    return render(request, "error_page.html", context)
+    raise exception
 
 
 @login_required()

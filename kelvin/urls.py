@@ -20,9 +20,7 @@ from django.conf import settings
 
 # import notifications.urls
 
-handler400 = "web.views.common.custom_400_page"
-handler403 = "web.views.common.custom_403_page"
-handler404 = "web.views.common.custom_404_page"
+handler400 = handler403 = handler404 = "web.views.common.custom_40x_handler"
 
 if settings.CAS_ENABLE:
     from django_cas_ng import views as auth_views
