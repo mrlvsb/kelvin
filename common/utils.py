@@ -89,6 +89,23 @@ def get_client_ip_address(request: HttpRequest) -> IPAddressString | None:
 
 
 def ip_address_check(function):
+    """
+    Decorator that restricts access to specific IP addresses.
+
+    The decorated function must have the following parameters:
+        - request
+        - assignment_id
+
+    Access is granted if any of the following conditions are met:
+        - requesting user is a teacher
+        - assignment deadline has passed
+        - assignment has no IP address restrictions
+        - user is accessing from an allowed IP address
+
+    IP address check is performed using:
+        models.AssignedTask.is_allowed_from_ip(str)
+    """
+
     def wrapper(*args, **kwargs):
         # this import is here to prevent cyclic dependency (.models uses is_teacher)
         from .models import AssignedTask
