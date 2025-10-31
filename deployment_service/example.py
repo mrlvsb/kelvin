@@ -11,7 +11,7 @@ message_dict = {
     "container_name": "kelvin_app",
     "image": "ghcr.io/mrlvsb/kelvin:da196525cbbe8411ef3814174002b45a8cd77e11",
     "commit_sha": "da196525cbbe8411ef3814174002b45a8cd77e11",
-    "healthcheck_url": "https://nginx/api/health",
+    "healthcheck_url": "https://kelvin.cs.vsb.cz/api/health",
 }
 
 message = json.dumps(message_dict).encode("utf-8")

@@ -124,19 +124,27 @@ class DeploymentManager:
                 self.logger.debug(f"stderr:\n{stderr.decode()}")
         return process.returncode == 0
 
-    def _get_current_image_id(self) -> str | None:
-        """Gets the image ID of the currently running container for rollback."""
+    def _get_current_image_tag(self) -> str | None:
+        """Gets an image tag corresponding to the commit SHA of the currently running container
+        for rollback."""
         try:
             container_image = self.client.containers.get(self.container_name).image
             if not container_image:
-                self.logger.warning(
+                self.logger.error(
                     "The image of the container not found. Rollback will not be possible."
                 )
                 return None
-            self.logger.debug(f"Found previous image ID for rollback: {container_image.id}")
-            return str(container_image.id).split(":")[-1]
+            tags = [t.split(":")[-1] for t in container_image.tags]
+            tags = sorted(t for t in tags if t != "latest")
+            if not tags:
+                self.logger.error(
+                    f"A tag for image {container_image} was not found. Using image ID {container_image.id} as a fallback."
+                )
+                return str(container_image.id).split(":")[-1]
+            self.logger.debug(f"Found previous image tag for rollback: {tags[0]}")
+            return tags[0]
         except NotFound:
-            self.logger.warning("No running container found. Rollback will not be possible.")
+            self.logger.error("No running container found. Rollback will not be possible.")
             return None
 
     def _pull_new_image(self) -> None:
@@ -277,7 +285,7 @@ class DeploymentManager:
                     self.logs,
                 )
 
-            previous_image_id = self._get_current_image_id()
+            previous_image_id = self._get_current_image_tag()
             self._pull_new_image()
 
             self.logger.info(f"Deploying service using config from commit {self.commit_sha}")
