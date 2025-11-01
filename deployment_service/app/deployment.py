@@ -88,7 +88,6 @@ class DeploymentManager:
             )
         )
         self.logger = logging.getLogger(f"deploy-{service_name}")
-        self.logger.setLevel(logging.INFO)
         self.logger.addHandler(handler)
 
     async def _run_command(
