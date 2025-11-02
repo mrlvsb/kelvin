@@ -118,6 +118,13 @@
                                         {{ quiz.deadline|date:"d.m.Y, H:i" }} <span
                                             class="text-muted">({{ quiz.deadline|timeuntil }} left)</span>
                                     </td>
+                                    <td class="text-center">
+                                        {% if quiz.enrolled %}
+                                            <span class="iconify" data-icon="bx:bx-check"></span>
+                                        {% else %}
+                                            <span class="iconify" data-icon="bi:dash"></span>
+                                        {% endif %}
+                                    </td>
                                     <td class="text-end">
                                         {% if quiz.earned_points is not None %}
                                             {{ quiz.earned_points|floatformat:2 }}
