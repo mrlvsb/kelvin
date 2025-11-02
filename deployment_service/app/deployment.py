@@ -14,7 +14,7 @@ from fastapi import status
 
 from app.config import get_settings
 
-HEALTH_CHECK_TIMEOUT = 60  # seconds
+HEALTH_CHECK_TIMEOUT = 90  # seconds
 HEALTH_CHECK_INTERVAL = 5  # seconds
 
 

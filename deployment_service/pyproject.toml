@@ -53,7 +53,7 @@ extend-select = [
 known-third-party = ["fastapi", "pydantic", "starlette"]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 exclude = ["tests/",]
 
 [tool.pytest.ini_options]
