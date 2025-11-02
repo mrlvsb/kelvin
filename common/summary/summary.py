@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import tempfile
@@ -39,10 +38,13 @@ def upload_result(submit_url: str, result: ReviewResult) -> None:
 
     logging.info(f"Uploading result to {submit_url}...")
 
+    json_body = to_json(result, indent=2)
+    logging.debug("Result JSON body: \n%s", json_body)
+
     response = session.post(
         submit_url,
         headers={"Content-Type": "application/json"},
-        data=json.dumps(to_json(result), indent=2),
+        data=json_body,
         timeout=30,
     )
 

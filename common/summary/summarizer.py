@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 from typing import List
 
@@ -6,7 +7,7 @@ from openai import OpenAI
 from openai.types.chat import ChatCompletionUserMessageParam, ChatCompletionSystemMessageParam
 from openai.types.shared_params import ResponseFormatJSONObject
 
-from common.summary.dto import EmbeddedFile, ReviewResult
+from common.summary.dto import EmbeddedFile, ReviewResult, Issue, Severity
 from kelvin import settings
 
 
@@ -132,7 +133,18 @@ class Summarizer:
 
             return ReviewResult(
                 summary=output_json.get("summary", "No summary provided."),
-                issues=output_json.get("issues", []),
+                issues=[
+                    Issue(
+                        file=iss["file"],
+                        severity=Severity(iss["severity"]),
+                        line=int(iss["line"]),
+                        explanation=iss["explanation"],
+                    )
+                    for iss in output_json.get("issues", [])
+                ],
             )
+        except ValueError as e:
+            logging.debug(f"Raw model output: {response.choices[0].message.content}")
+            raise ValueError(f"Invalid JSON in model response: {e}")
         except Exception as e:
             raise ValueError(f"Failed to parse model response: {e}")
