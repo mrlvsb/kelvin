@@ -11,3 +11,12 @@ from evaluator.results import EvaluationResult
 class SubmitData:
     submit: Submit
     results: EvaluationResult
+
+
+@dataclass
+class PlagiarismEntry:
+    link: str
+    lines: int
+    student_percent: int
+    other_percent: int
+    other_login: str
