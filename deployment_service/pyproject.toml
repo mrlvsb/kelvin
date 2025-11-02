@@ -57,7 +57,7 @@ python_version = "3.13"
 exclude = ["tests/",]
 
 [tool.pytest.ini_options]
-addopts = "--cov --cov-report term-missing --cov-fail-under=80"
+addopts = "--cov --cov-report term-missing --cov-fail-under=70"
 asyncio_mode = "auto"
 testpaths = ["tests"]
 

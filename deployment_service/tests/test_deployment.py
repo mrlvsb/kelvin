@@ -31,6 +31,7 @@ async def manager_instance(mock_docker_client):
         compose_env_file=Path("/test/repo/.env"),
         healthcheck_url="http://test.local/health",
     )
+    manager._watch_container_logs = AsyncMock()  # Disable container logs in test
     manager._run_command = AsyncMock(return_value=True)
     return manager
 
@@ -88,19 +89,28 @@ async def test_health_check_healthy(mock_async_client, manager_instance):
 
 @pytest.mark.asyncio
 @patch("httpx.AsyncClient")
-@patch("time.time", side_effect=[0, 1, 62])  # Start, first check, timeout
 @patch("asyncio.sleep", new_callable=AsyncMock)
-async def test_health_check_timeout(mock_sleep, mock_time, mock_async_client, manager_instance):
-    """Tests a health check that fails due to timeout."""
-    mock_response = MagicMock()
-    mock_response.status_code = 503  # Service unavailable
-    mock_async_client.return_value.__aenter__.return_value.get = AsyncMock(
-        return_value=mock_response
-    )
+async def test_health_check_timeout(mock_sleep, mock_async_client, manager_instance):
+    # Fake time that increases every call
+    current_time = 0
 
-    result = await manager_instance._health_check()
-    assert result is False
-    assert "Health check timed out" in manager_instance.logs[-1]
+    def fake_time():
+        nonlocal current_time
+        current_time += 1
+        return current_time
+
+    with patch("time.time", side_effect=fake_time):
+        mock_response = MagicMock()
+        mock_response.status_code = 503
+        mock_async_client.return_value.__aenter__.return_value.get = AsyncMock(
+            return_value=mock_response
+        )
+
+        result = await manager_instance._health_check()
+
+        assert result is False
+        assert "Health check timed out" in manager_instance.logs[-1]
+        assert mock_sleep.called
 
 
 @pytest.mark.asyncio
