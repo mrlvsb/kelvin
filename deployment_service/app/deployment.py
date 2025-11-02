@@ -87,7 +87,7 @@ class DeploymentManager:
                 "[%(asctime)s] [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
             )
         )
-        self.logger = logging.getLogger(f"deploy-{service_name}")
+        self.logger = logging.getLogger(__name__)
         self.logger.addHandler(handler)
 
     async def _run_command(

@@ -14,16 +14,19 @@ def format_for_github_summary(status_code, response_json):
     logs = response_json.get("logs", [])
     error_message = response_json.get("error")
 
-    if error_message:
+    if not (200 <= status_code < 300):
         title = f"## ❌ Deployment Failed (Status: {status_code})"
-        summary_lines = [f"**Error:** `{error_message}`"]
+        if not error_message:
+            summary_lines = [f"**Error:** `{response_json.get("detail", "Unknown error")}`"]
+        else:
+            summary_lines = [f"**Error:** `{error_message}`"]
     else:
         title = f"## ✅ Deployment Succeeded (Status: {status_code})"
         summary_lines = ["The deployment process completed successfully."]
 
-    summary_lines.append("\n<details><summary>View full deployment logs</summary>\n\n```text")
+    summary_lines.append("\n<details>\n\n<summary>View full deployment logs</summary>\n\n```text")
     summary_lines.extend(logs if logs else ["No logs were returned in the response."])
-    summary_lines.append("```\n</details>\n")
+    summary_lines.append("```\n\n</details>\n")
 
     return f"{title}\n\n" + "\n".join(summary_lines)
 
@@ -38,7 +41,6 @@ def main():
         """,
         formatter_class=argparse.RawTextHelpFormatter,
     )
-    # Required Arguments
     parser.add_argument(
         "--service-name",
         default="app",
@@ -57,18 +59,18 @@ def main():
     parser.add_argument(
         "--commit-sha",
         required=True,
-        help="The full 40-character commit SHA for the configuration.",
+        help="The full 40-character commit SHA for the configuration. (e.g., '42fda7e209a3e9df01a5efefb23f5a76724fa653')",
     )
     parser.add_argument(
         "--healthcheck-url",
         default="https://kelvin.cs.vsb.cz/api/health",
-        help="The full URL for the application's health check endpoint.",
+        help="The full URL for the application's health check endpoint. (e.g., 'https://nginx/api/health')",
     )
 
     parser.add_argument(
         "--url",
         default="https://kelvin.cs.vsb.cz/deployment/",
-        help="URL of the deployment service.",
+        help="URL of the deployment service. (e.g., 'https://127.0.0.1/deployment/')",
     )
     parser.add_argument(
         "--secret", help="The webhook secret. Overrides the WEBHOOK_SECRET environment variable."
