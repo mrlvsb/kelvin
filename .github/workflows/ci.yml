@@ -110,6 +110,9 @@ jobs:
         id: load_image
         run: |
           LOADED=$(docker load --input ${{ runner.temp }}/kelvin.tar)
+          # Expected output from `docker load`, based on the previous `build-docker` job:
+          # Loaded image: ghcr.io/mrlvsb/kelvin:latest
+          # Loaded image: ghcr.io/mrlvsb/kelvin:<Commit SHA>
           echo "$LOADED"
           SHA_TAG=$(echo "$LOADED" | grep -v ':latest' | awk '{print $3}')
           echo "app_image_tag=$SHA_TAG" >> $GITHUB_OUTPUT
