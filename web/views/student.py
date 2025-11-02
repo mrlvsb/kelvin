@@ -1,4 +1,3 @@
-import dataclasses
 import hashlib
 import io
 import json
@@ -66,7 +65,7 @@ from quiz.settings import QUIZ_PATH
 from web.markdown_utils import load_readme
 from .test_script import render_test_script
 from .utils import file_response
-from ..models import SubmitData
+from ..dto import SubmitData, PlagiarismEntry
 
 mimedetector = magic.Magic(mime=True)
 
@@ -225,7 +224,7 @@ def student_index(request):
     )
 
 
-def get(submit: Submit) -> SubmitData:
+def get_submit_data(submit: Submit) -> SubmitData:
     results = []
     summary = ReviewResult(summary="", issues=[])
 
@@ -303,23 +302,16 @@ def pipeline_status(request, submit_id):
     )
 
 
-@dataclasses.dataclass
-class PlagiarismEntry:
-    link: str
-    lines: int
-    student_percent: int
-    other_percent: int
-    other_login: str
-
-
 def build_plagiarism_entries(login: str, matches: List[PlagiarismMatch]) -> List[PlagiarismEntry]:
     matches = [m for m in matches if login in (m.first.login, m.second.login)]
     matches = sorted(matches, key=lambda match: match.lines, reverse=True)
 
     def build(match: PlagiarismMatch) -> PlagiarismEntry:
         (student, other) = (match.first, match.second)
+
         if login == match.second.login:
             (student, other) = (other, student)
+
         return PlagiarismEntry(
             link=match.link,
             lines=match.lines,
@@ -425,7 +417,14 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         )
 
     if current_submit:
-        data = {**data, **(get(current_submit).__dict__)}
+        submit_data = get_submit_data(current_submit)
+        data = {
+            **data,
+            "submit": current_submit,
+            "results": submit_data.results,
+            "summary": submit_data.summary,
+        }
+
         has_failure = any(r.failed for r in data["results"])
         data["comment_count"] = current_submit.comment_set.count()
 
@@ -784,7 +783,7 @@ def submit_comments(request, assignment_id, login, submit_num):
                 "comments": {},
             }
 
-    submit_data: SubmitData = get(submit)
+    submit_data: SubmitData = get_submit_data(submit)
 
     # add comments from pipeline
     for pipe in submit_data.results:
@@ -893,7 +892,7 @@ def raw_test_content(request, task_name, test_name, file):
     raise Http404()
 
 
-def create_taskset(task, user, meta: Optional[Dict[str, Any]] = None):
+def create_taskset(task, user, meta: Optional[Dict[str, Any]] = None) -> TestSet:
     meta_dict = get_meta(user)
 
     if meta is not None:
@@ -1047,7 +1046,7 @@ def raw_result_content(request, submit_id, test_name, result_type, file):
     if submit.student_id != request.user.id and not is_teacher(request.user):
         raise PermissionDenied()
 
-    submit_data: SubmitData = get(submit)
+    submit_data: SubmitData = get_submit_data(submit)
 
     for pipe in submit_data.results:
         for test in pipe.tests:
@@ -1120,7 +1119,7 @@ def upload_results(request, assignment_id, submit_num, login):
     with tarfile.open(fileobj=io.BytesIO(request.body)) as tar:
         tar.extractall(result_path)
 
-    submit_data: SubmitData = get(submit)
+    submit_data: SubmitData = get_submit_data(submit)
 
     for pipe in submit_data.results.pipelines:
         if "points" in pipe:
