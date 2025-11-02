@@ -8,7 +8,7 @@ import django_rq
 import requests
 
 from common.serialization import dataclass_to_dict
-from common.summary.models import EmbeddedFile, ReviewResult, LlmConfig
+from common.summary.dto import EmbeddedFile, ReviewResult, LlmConfig
 from common.summary.summarizer import Summarizer
 from common.utils import download_source_to_path
 from kelvin import settings
@@ -42,7 +42,7 @@ def upload_result(submit_url: str, result: ReviewResult) -> None:
     response = session.post(
         submit_url,
         headers={"Content-Type": "application/json"},
-        data=json.dumps(dataclass_to_dict(result), indent=2),
+        data=json.dumps(to_json(result), indent=2),
         timeout=30,
     )
 
