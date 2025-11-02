@@ -40,3 +40,19 @@ $ mypy .
 ## Deployment Service Overview
 
 You can find a detailed description of the deployment workflow and architecture in the [Deployment Documentation](../docs/deployment.md).
+
+## Deployment script
+
+There is script that sends a deployment request to the deployment service endpoint.
+It automatically takes care of signing, validation, and communication, so you don’t need to handle HMAC signatures or headers manually.
+
+It works in both local environments and GitHub Actions.
+When executed within a GitHub Actions workflow, it also generates a detailed Markdown report in the Job Summary, providing clear visibility into the deployment result.
+
+No external dependencies are required — the script runs entirely on the Python standard library.
+
+To view all available arguments, defaults, and examples, run:
+
+```bash
+python deploy.py --help
+```

@@ -77,7 +77,7 @@ services:
       - app_socket:/socket
 
   deployment:
-    container_name: deployment_app
+    container_name: kelvin_deployment_service
     profiles: [ prod ]
     build:
       context: deployment_service
