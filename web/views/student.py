@@ -52,7 +52,7 @@ from common.models import (
 )
 from common.plagcheck.moss import PlagiarismMatch, moss_result
 from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline
-from common.summary.models import ReviewResult
+from common.summary.dto import ReviewResult
 from common.summary.summary import SUMMARY_RESULT_FILE_NAME
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher
