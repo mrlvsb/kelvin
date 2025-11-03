@@ -328,7 +328,7 @@ def reevaluate(request, submit_id):
 
 
 @user_passes_test(is_teacher)
-def quiz_scoring(request, enrolled_id):
+def quiz_scoring(request, enrolled_id: int):
     """
     Function that renders tool allowing to score student's quiz manually.
     """
@@ -337,7 +337,7 @@ def quiz_scoring(request, enrolled_id):
     data = dict(
         is_teacher=is_teacher(request.user),
         quiz_id=enrolled_quiz.assigned_quiz.quiz.pk,
-        enrolled_id=enrolled_quiz.id,
+        enrolled_id=enrolled_quiz.pk,
         remaining=None,
         scoring=json.dumps(enrolled_quiz.scoring),
         student=enrolled_quiz.student.username,
@@ -359,8 +359,8 @@ def quiz_edit(request, quiz_id: int):
     quiz = get_object_or_404(Quiz, pk=quiz_id)
 
     data = dict(
-        id=quiz.id,
-        assignments=json.dumps(quiz_assigned_classes(quiz, request.user.id)),
+        id=quiz.pk,
+        assignments=json.dumps(quiz_assigned_classes(quiz, request.user.pk)),
         teacher=request.user.username,
         deletable=quiz.assignedquiz_set.count() == 0,
         quiz_directory=quiz.src,
@@ -370,7 +370,7 @@ def quiz_edit(request, quiz_id: int):
 
 
 @user_passes_test(is_teacher)
-def quiz_detail(request, quiz_id):
+def quiz_detail(request, quiz_id: int):
     """
     Function that renders detail of a quiz.
     """
