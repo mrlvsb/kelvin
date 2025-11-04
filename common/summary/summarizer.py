@@ -7,8 +7,11 @@ from openai import OpenAI
 from openai.types.chat import ChatCompletionUserMessageParam, ChatCompletionSystemMessageParam
 from openai.types.shared_params import ResponseFormatJSONObject
 
-from common.summary.dto import EmbeddedFile, Issue, Severity
-from common.summary.dto import ReviewResult
+from common.summary.dto import (
+    EmbeddedFile,
+    ReviewResult,
+    Severity,
+)
 from kelvin import settings
 
 
@@ -91,7 +94,7 @@ class Summarizer:
             ```json
             {
                 "summary": "A concise overview (3–5 sentences) describing overall correctness, key positives, and notable negatives.",
-                "issues": [
+                "suggestions": [
                     {
                         "file": "name of the file where issue is found",
                         "severity": "critical | high | medium | low",
@@ -132,16 +135,23 @@ class Summarizer:
             output_text = response.choices[0].message.content
             output_json = json.loads(output_text)
 
+            summary: str = output_json.get("summary", "No summary provided.")
+            suggestions: list = output_json.get("suggestions", [])
+
             return ReviewResult(
-                summary=output_json.get("summary", "No summary provided."),
-                issues=[
-                    Issue(
-                        file=iss["file"],
-                        severity=Severity(iss["severity"]),
-                        line=int(iss["line"]),
-                        explanation=iss["explanation"],
+                summary=SuggestedSummaryDTO(
+                    id=-1, text=str(summary), state=SuggestionState.PENDING
+                ),
+                suggestions=[
+                    SuggestedCommentDTO(
+                        id=-1,
+                        source=sug["file"],
+                        line=int(sug["line"]),
+                        text=sug["explanation"],
+                        severity=Severity(sug["severity"]),
+                        state=SuggestionState.PENDING,
                     )
-                    for iss in output_json.get("issues", [])
+                    for sug in suggestions
                 ],
             )
         except ValueError as e:

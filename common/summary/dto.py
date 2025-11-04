@@ -12,20 +12,36 @@ class Severity(Enum):
     LOW = "low"
 
 
+class SuggestionState(Enum):
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+    PENDING = "pending"
+
+
 @serde
 @dataclass
-class Issue:
-    file: str
+class SuggestedSummaryDTO:
+    id: int
+    text: str
+    state: SuggestionState
+
+
+@serde
+@dataclass
+class SuggestedCommentDTO:
+    id: int
+    source: str
     line: int
+    text: str
     severity: Severity
-    explanation: str
+    state: SuggestionState
 
 
 @serde
 @dataclass
 class ReviewResult:
-    summary: str
-    issues: List[Issue]
+    summary: SuggestedSummaryDTO
+    suggestions: List[SuggestedCommentDTO]
 
 
 @serde

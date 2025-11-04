@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 from serde import serde
 
@@ -12,7 +13,7 @@ from evaluator.results import EvaluationResult
 class SubmitData:
     submit: Submit
     results: EvaluationResult
-    summary: ReviewResult
+    summary: Optional[ReviewResult]
 
 
 @dataclass
