@@ -1155,7 +1155,7 @@ def quiz_fill(request):
         return HttpResponseBadRequest()
 
     try:
-        enrolled_quiz = EnrolledQuiz.objects.get(student=request.user.id, submitted=False)
+        enrolled_quiz = EnrolledQuiz.objects.get(student=request.user.pk, submitted=False)
 
         now = timezone.now()
 
@@ -1169,7 +1169,7 @@ def quiz_fill(request):
         # otherwise redirects to main page.
         if enrolled_quiz.submitted:
             if enrolled_quiz.assigned_quiz.publish_results:
-                return HttpResponseRedirect(reverse("quiz_result", args=[enrolled_quiz.id]))
+                return HttpResponseRedirect(reverse("quiz_result", args=[enrolled_quiz.pk]))
             else:
                 return HttpResponseRedirect("/")
 
@@ -1179,7 +1179,7 @@ def quiz_fill(request):
         data = dict(
             is_teacher=is_teacher(request.user),
             quiz_id=enrolled_quiz.assigned_quiz.quiz.pk,
-            enrolled_id=enrolled_quiz.id,
+            enrolled_id=enrolled_quiz.pk,
             remaining=remaining.total_seconds(),
             scoring=None,
             student=None,
@@ -1241,7 +1241,7 @@ def quiz_result(request, enrolled_id):
     data = dict(
         is_teacher=is_teacher(request.user),
         quiz_id=enrolled_quiz.assigned_quiz.quiz.pk,
-        enrolled_id=enrolled_quiz.id,
+        enrolled_id=enrolled_quiz.pk,
         scoring=json.dumps(enrolled_quiz.scoring),
         answers=json.dumps(enrolled_quiz.submit),
         student=None,
