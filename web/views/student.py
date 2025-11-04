@@ -37,7 +37,6 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from notifications.models import Notification
 from notifications.signals import notify
-from serde import from_dict
 
 from common.evaluate import get_meta
 from common.event_log import record_task_displayed
@@ -52,8 +51,8 @@ from common.models import (
 )
 from common.plagcheck.moss import PlagiarismMatch, moss_result
 from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline
-from common.summary.dto import ReviewResult
-from common.summary.summary import SUMMARY_RESULT_FILE_NAME
+from common.summary.dto import ReviewResult, SuggestedSummaryDTO, SuggestionState
+from common.summary.summary import get_submit_review, SUMMARY_AUTHOR
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher
 from evaluator.results import EvaluationResult
@@ -226,7 +225,6 @@ def student_index(request):
 
 def get_submit_data(submit: Submit) -> SubmitData:
     results = []
-    summary = ReviewResult(summary="", issues=[])
 
     try:
         results = EvaluationResult(submit.pipeline_path())
@@ -234,22 +232,10 @@ def get_submit_data(submit: Submit) -> SubmitData:
         # TODO: show error
         pass
 
-    try:
-        with open(os.path.join(submit.pipeline_path(), SUMMARY_RESULT_FILE_NAME)) as f:
-            json_data = json.load(f)
-            summary = from_dict(ReviewResult, json_data)
-    except FileNotFoundError:
-        # File not found, no summary available, do nothing
-        pass
-    except json.JSONDecodeError:
-        # TODO: show error
-        logging.exception("Failed to parse summary result for submit %d", submit.id)
-        pass
-
     return SubmitData(
         submit=submit,
         results=results,
-        summary=summary,
+        summary=get_submit_review(submit),
     )
 
 
@@ -827,42 +813,65 @@ def submit_comments(request, assignment_id, login, submit_num):
         except KeyError as e:
             logging.exception(e)
 
-    # add comments from llm summary
-    if is_teacher(request.user):  # Currently only teachers can view LLM summary comments
-        llm_summary = submit_data.summary
+    # Append review summary to comments
+    if submit_data.summary:
+        review_result: ReviewResult = submit_data.summary
 
-        if len(llm_summary.summary) > 0:
-            summary_comments.append(
-                {
-                    "id": -1,
-                    "author": "LLM",
-                    "text": llm_summary.summary,
-                    "can_edit": False,
-                    "type": "summary",
-                    "url": None,
-                }
+        def can_view_suggestion(state: SuggestionState, user_is_teacher: bool) -> bool:
+            return state is SuggestionState.ACCEPTED or (
+                user_is_teacher and state is SuggestionState.PENDING
             )
 
-        for issue in llm_summary.issues:
-            if issue.file not in result:
+        if len(review_result.summary.text) > 0:
+            summary: SuggestedSummaryDTO = review_result.summary
+
+            if can_view_suggestion(summary.state, is_teacher(request.user)):
+                summary_comments.append(
+                    {
+                        "id": -1,
+                        "author": SUMMARY_AUTHOR,
+                        "text": summary.text,
+                        "can_edit": False,
+                        "type": "summary",
+                        "url": None,
+                        "meta": {"summary": {"id": summary.id, "state": summary.state.name}},
+                    }
+                )
+
+        for suggestion in review_result.suggestions:
+            if suggestion.source not in result:
+                logging.warning(
+                    f"LLM suggestion ({suggestion.id}) source {suggestion.source} not found in submit sources"
+                )
                 continue
 
-            result[issue.file]["comments"].setdefault(issue.line - 1, []).append(
-                {
-                    "id": -1,
-                    "author": "LLM",
-                    "text": issue.explanation,
-                    "can_edit": False,
-                    "type": "summary",
-                    "url": None,
-                }
-            )
+            if can_view_suggestion(suggestion.state, is_teacher(request.user)):
+                source_comments = result[suggestion.source]["comments"]
+                source_comments.setdefault(suggestion.line - 1, [])
+                source_comments[suggestion.line - 1].append(
+                    {
+                        "id": -1,
+                        "author": SUMMARY_AUTHOR,
+                        "text": suggestion.text,
+                        "can_edit": False,
+                        "type": "summary",
+                        "url": None,
+                        "meta": {
+                            "summary": {
+                                "id": suggestion.id,
+                                "state": suggestion.state.name,
+                                "severity": suggestion.severity.name,
+                            }
+                        },
+                    }
+                )
 
     priorities = {
         "video": 0,
         "img": 1,
         "source": 2,
     }
+
     return JsonResponse(
         {
             "sources": sorted(result.values(), key=lambda f: (priorities[f["type"]], f["path"])),

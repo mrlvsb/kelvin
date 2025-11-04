@@ -43,6 +43,12 @@ urlpatterns = [
     path(
         "task/<int:assignment_id>/<str:login>/<int:submit_num>/llm/result",
         llm.post_submit_summary_result,
+        name="llm_post_submit_summary_result",
+    ),
+    path(
+        "task/<int:assignment_id>/<str:login>/<int:submit_num>/llm/resolve/<int:comment_id>",
+        llm.ResolveSubmitSuggestion.as_view(),
+        name="llm_resolve_submit_suggestion",
     ),
     path("task/<path:task_name>/asset/<path:path>", student_view.task_asset, name="task_asset"),
     path(

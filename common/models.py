@@ -1,23 +1,20 @@
+import datetime
+import logging
 import os
 import re
-import logging
-import datetime
-
 from typing import List, Optional
 
-from django.db.models import QuerySet
-from django.utils import timezone
-
-from django.db import models
 from django.conf import settings
-from django.urls import reverse
 from django.contrib.auth.models import User
-
-from kelvin.settings import BASE_DIR
-from .utils import is_teacher
+from django.db import models
+from django.db.models import QuerySet
+from django.urls import reverse
+from django.utils import timezone
 from jinja2 import Environment, FileSystemLoader
 
+from kelvin.settings import BASE_DIR
 from .event_log import UserEventModel  # noqa
+from .utils import is_teacher
 
 
 def current_semester() -> Optional["Semester"]:
@@ -351,6 +348,30 @@ class Comment(models.Model):
             )
             + "#src"
         )
+
+
+class SuggestedComment(models.Model):
+    class State(models.TextChoices):
+        ACCEPTED = "accepted"
+        REJECTED = "rejected"
+        PENDING = "pending"
+
+    class SeverityLevel(models.TextChoices):
+        CRITICAL = "critical"
+        HIGH = "high"
+        MEDIUM = "medium"
+        LOW = "low"
+
+    submit = models.ForeignKey(Submit, on_delete=models.CASCADE)
+    source = models.CharField(max_length=255, null=True, blank=True)
+    line = models.IntegerField(null=True, blank=True)
+    text = models.TextField()
+    severity = models.CharField(
+        max_length=10, choices=SeverityLevel.choices, default=SeverityLevel.MEDIUM
+    )
+    state = models.CharField(max_length=10, choices=State.choices, default=State.PENDING)
+    comment = models.ForeignKey(Comment, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 User.add_to_class("notification_str", lambda self: self.get_full_name())

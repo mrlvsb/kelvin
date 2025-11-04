@@ -7,7 +7,16 @@ import django_rq
 import requests
 from serde.json import to_json
 
-from common.summary.dto import EmbeddedFile, ReviewResult, LlmConfig
+from common.models import Submit, SuggestedComment
+from common.summary.dto import (
+    EmbeddedFile,
+    ReviewResult,
+    LlmConfig,
+    SuggestedCommentDTO,
+    SuggestedSummaryDTO,
+    Severity,
+    SuggestionState,
+)
 from common.summary.summarizer import Summarizer
 from common.utils import download_source_to_path
 from kelvin import settings
@@ -25,6 +34,7 @@ EXTENSION_LANGUAGE_MAP: Dict[str, str] = {
 }
 
 SUMMARY_RESULT_FILE_NAME: str = "summary.json"
+SUMMARY_AUTHOR: str = "LLM"
 
 
 def detect_language(filename: str) -> Optional[str]:
@@ -118,3 +128,63 @@ def summarize_submit(submit_config, submit_url: str, token: str) -> Optional[str
     return (
         django_rq.get_queue("summary").enqueue(summary_job, submit_url, token, job_timeout=180).id
     )
+
+
+def save_submit_review(submit: Submit, review: ReviewResult) -> None:
+    suggestions = []
+
+    # Save summary comment
+    if review.summary:
+        suggestions.append(
+            SuggestedComment(
+                submit=submit,
+                source=None,
+                line=None,
+                text=review.summary.text,
+                severity=Severity.MEDIUM.value,
+            )
+        )
+
+    # Save suggestion comments
+    for suggestion in review.suggestions:
+        suggestions.append(
+            SuggestedComment(
+                submit=submit,
+                source=suggestion.source,
+                line=suggestion.line,
+                text=suggestion.text,
+                severity=suggestion.severity.value,
+            )
+        )
+
+    SuggestedComment.objects.filter(submit=submit).delete()
+    SuggestedComment.objects.bulk_create(suggestions)
+
+
+def get_submit_review(submit: Submit) -> Optional[ReviewResult]:
+    comments = SuggestedComment.objects.filter(submit=submit)
+
+    if not comments.exists():
+        return None
+
+    summary = None
+    suggestions = []
+
+    for comment in comments:
+        if not comment.line:
+            summary = SuggestedSummaryDTO(
+                id=comment.id, text=comment.text, state=SuggestionState(comment.state)
+            )
+        else:
+            suggestions.append(
+                SuggestedCommentDTO(
+                    id=comment.id,
+                    source=comment.source,
+                    line=comment.line,
+                    severity=Severity(comment.severity),
+                    text=comment.text,
+                    state=SuggestionState(comment.state),
+                )
+            )
+
+    return ReviewResult(summary=summary, suggestions=suggestions)
