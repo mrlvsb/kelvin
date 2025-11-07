@@ -37,24 +37,22 @@ function handleNotification() {
 }
 </script>
 
-{#if !(($hideComments == HideCommentsState.AUTOMATED && (type == 'automated' || type == 'summary')) || $hideComments == HideCommentsState.ALL)}
+{#if !(($hideComments === HideCommentsState.AUTOMATED && type === 'automated') || $hideComments === HideCommentsState.ALL)}
   <div style="display: flex; flex-direction: row;">
     <div
       class="comment comment-{unread ? 'unread' : 'read'} {type}"
       on:dblclick={() => (editing = can_edit)}>
       <strong>{author}</strong>:
       {#if !editing}
-        {#if type == 'automated'}
+        {#if type === 'automated'}
           {text}
           {#if url}
             <a href={url}>
               <span class="iconify" data-icon="entypo:help"></span>
             </a>
           {/if}
-        {:else if type == 'summary'}
-          {text}
         {:else if $user}
-          {#if unread && type != 'automated' && type != 'summary' && author_id != $user.id}
+          {#if unread && author_id !== $user.id}
             <button
               class="btn p-0 float-end"
               on:click|preventDefault={handleNotification}
