@@ -40,16 +40,6 @@ urlpatterns = [
     path(
         "task/<int:assignment_id>/<str:login>/<int:submit_num>/result", student_view.upload_results
     ),
-    path(
-        "task/<int:assignment_id>/<str:login>/<int:submit_num>/llm/result",
-        llm.post_submit_summary_result,
-        name="llm_post_submit_summary_result",
-    ),
-    path(
-        "task/<int:assignment_id>/<str:login>/<int:submit_num>/llm/resolve/<int:comment_id>",
-        llm.ResolveSubmitSuggestion.as_view(),
-        name="llm_resolve_submit_suggestion",
-    ),
     path("task/<path:task_name>/asset/<path:path>", student_view.task_asset, name="task_asset"),
     path(
         "task/<path:task_name>/tests/<str:test_name>/<str:file>",
@@ -68,6 +58,19 @@ urlpatterns = [
         name="submit_source",
     ),
     path("submit/<int:submit_id>/pipeline", student_view.pipeline_status),
+    #
+    # llm
+    path(
+        "llm/result/<int:submit_id>",
+        llm.post_submit_summary_result,
+        name="llm_post_submit_summary_result",
+    ),
+    path(
+        "llm/resolve/<int:suggestion_id>",
+        llm.ResolveSubmitSuggestion.as_view(),
+        name="llm_resolve_submit_suggestion",
+    ),
+    #
     # notifications
     path("notification/all", notification_view.all_notifications),
     path("notification/mark_as_read", notification_view.mark_as_read),

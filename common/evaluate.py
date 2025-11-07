@@ -63,6 +63,14 @@ def evaluate_submit(request, submit, meta=None):
             },
         )
     )
+    llm_summary_url = build_absolute_uri(
+        reverse(
+            "llm_post_submit_summary_result",
+            kwargs={
+                "submit_id": submit.id,
+            },
+        )
+    )
     token = signing.dumps(
         {
             "submit_id": submit.id,
@@ -85,7 +93,7 @@ def evaluate_submit(request, submit, meta=None):
 
     # Async configuration section
     task_config = load_task_config(str(task_dir))
-    summarize_submit(task_config, submit_url, token)
+    summarize_submit(task_config, submit_url, llm_summary_url, token)
 
     # Enqueue the evaluation job
     return django_rq.get_queue(task.queue).enqueue(

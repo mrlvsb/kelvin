@@ -99,7 +99,7 @@ def embed_source_files(source_files_path: str) -> List[EmbeddedFile]:
 
 
 @django_rq.job
-def summary_job(submit_url, token) -> None:
+def summary_job(submit_url, summary_url, token) -> None:
     logging.basicConfig(level=logging.DEBUG)
     logging.info(f"Summarizing {submit_url}")
 
@@ -115,19 +115,21 @@ def summary_job(submit_url, token) -> None:
     logging.info(f"Calling OpenAI model for review with total {len(embedded_files)} files...")
     review: ReviewResult = summary.summarize()
 
-    upload_result(f"{submit_url}llm/result?token={token}", review)
+    upload_result(f"{summary_url}?token={token}", review)
     logging.info(f"Completed summarization for {submit_url}")
 
 
-def summarize_submit(submit_config, submit_url: str, token: str) -> Optional[str]:
+def summarize_submit(submit_config, submit_url: str, summary_url: str, token: str) -> Optional[str]:
     llm_config: LlmConfig = LlmConfig.from_dict(submit_config)
 
     if not llm_config.enabled:
         return None
 
-    return (
-        django_rq.get_queue("summary").enqueue(summary_job, submit_url, token, job_timeout=180).id
+    summary_queue = django_rq.get_queue("summary")
+    enqueued_job = summary_queue.enqueue(
+        summary_job, submit_url, summary_url, token, job_timeout=180
     )
+    return enqueued_job.id
 
 
 def save_submit_review(submit: Submit, review: ReviewResult) -> None:
@@ -156,6 +158,8 @@ def save_submit_review(submit: Submit, review: ReviewResult) -> None:
                 severity=suggestion.severity.value,
             )
         )
+
+    # TODO: Currently if re-evaluating, old teacher accepted suggestions are kept.
 
     SuggestedComment.objects.filter(submit=submit).delete()
     SuggestedComment.objects.bulk_create(suggestions)
