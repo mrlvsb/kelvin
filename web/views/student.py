@@ -833,9 +833,14 @@ def submit_comments(request, assignment_id, login, submit_num):
                         "author": SUMMARY_AUTHOR,
                         "text": summary.text,
                         "can_edit": False,
-                        "type": "summary",
+                        "type": "suggestion",
                         "url": None,
-                        "meta": {"summary": {"id": summary.id, "state": summary.state.name}},
+                        "meta": {
+                            "summary": {
+                                "id": summary.id,
+                                "state": summary.state.name,  #
+                            }
+                        },
                     }
                 )
 
@@ -855,7 +860,7 @@ def submit_comments(request, assignment_id, login, submit_num):
                         "author": SUMMARY_AUTHOR,
                         "text": suggestion.text,
                         "can_edit": False,
-                        "type": "summary",
+                        "type": "suggestion",
                         "url": None,
                         "meta": {
                             "summary": {

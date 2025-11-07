@@ -1,3 +1,4 @@
+from django.core import signing
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -11,64 +12,75 @@ from common.models import Submit, SuggestedComment, Comment
 from common.summary.dto import ReviewResult, SuggestionState
 from common.summary.summary import save_submit_review
 from common.utils import is_teacher
-from web.views.utils import authenticate_submit_token_request
+
+
+def dump_comment_to_dto(comment: Comment) -> dict:
+    return {
+        "id": comment.id,
+        "author": comment.author.get_full_name(),
+        "author_id": comment.author.id,
+        "text": comment.text,
+        "line": comment.line,
+        "source": comment.source,
+        "can_edit": True,
+        "type": "teacher",
+        "unread": True,
+    }
 
 
 @method_decorator(csrf_exempt, name="dispatch")
 class ResolveSubmitSuggestion(View):
-    def post(self, assignment_id, login, submit_num, suggestion_id):
-        if not is_teacher(self.request.user):
+    def post(self, request, suggestion_id):
+        if not is_teacher(request.user):
             raise PermissionDenied()
 
-        submit = get_object_or_404(
-            Submit, assignment_id=assignment_id, student__username=login, submit_num=submit_num
-        )
         suggestion = get_object_or_404(SuggestedComment, id=suggestion_id)
 
-        suggestion.state = SuggestionState.ACCEPTED
-        suggestion.save()
-
-        Comment(
-            submit=submit,
-            author=self.request.user,
+        created_comment = Comment(
+            submit=suggestion.submit,
+            author=request.user,
             text=suggestion.text,
             source=suggestion.source,
             line=suggestion.line,
-        ).save()
-
-        return JsonResponse({"status": "created"})
-
-    def patch(self, assignment_id, login, submit_num, suggestion_id):
-        if not is_teacher(self.request.user):
-            raise PermissionDenied()
-
-        submit = get_object_or_404(
-            Submit, assignment_id=assignment_id, student__username=login, submit_num=submit_num
         )
-        suggestion = get_object_or_404(SuggestedComment, id=suggestion_id)
+        created_comment.save()
 
-        suggestion.state = SuggestionState.ACCEPTED
+        suggestion.state = SuggestionState.ACCEPTED.value
+        suggestion.comment = created_comment
         suggestion.save()
 
-        body = from_json(dict, self.request.body)
+        return JsonResponse(dump_comment_to_dto(created_comment))
+
+    def patch(self, request, suggestion_id):
+        if not is_teacher(request.user):
+            raise PermissionDenied()
+
+        suggestion = get_object_or_404(SuggestedComment, id=suggestion_id)
+
+        body = from_json(dict, request.body)
         modified_text = body.get("modified_text")
 
-        Comment(
-            submit=submit,
-            author=self.request.user,
+        created_comment = Comment(
+            submit=suggestion.submit,
+            author=request.user,
             text=modified_text if modified_text is not None else suggestion.text,
             source=suggestion.source,
             line=suggestion.line,
-        ).save()
+        )
+        created_comment.save()
 
-        return JsonResponse({"status": "updated"})
+        suggestion.state = SuggestionState.ACCEPTED.value
+        suggestion.comment = created_comment
+        suggestion.save()
 
-    def delete(self, _, __, ___, suggestion_id):
-        if not is_teacher(self.request.user):
+        return JsonResponse(dump_comment_to_dto(created_comment))
+
+    def delete(self, request, suggestion_id):
+        if not is_teacher(request.user):
             raise PermissionDenied()
 
         suggestion = get_object_or_404(SuggestedComment, id=suggestion_id)
-        suggestion.state = SuggestionState.REJECTED
+        suggestion.state = SuggestionState.REJECTED.value
         suggestion.save()
 
         return JsonResponse({"status": "deleted"})
@@ -79,12 +91,16 @@ class ResolveSubmitSuggestion(View):
 
 @csrf_exempt
 @require_POST
-def post_submit_summary_result(request, assignment_id, login, submit_num):
-    submit = get_object_or_404(
-        Submit, assignment_id=assignment_id, student__username=login, submit_num=submit_num
-    )
+def post_submit_summary_result(request, submit_id):
+    if "token" in request.GET:
+        token = signing.loads(request.GET["token"], max_age=3600)
 
-    authenticate_submit_token_request(request, submit)
+        if token.get("submit_id") != submit_id:
+            raise PermissionDenied()
+    else:
+        raise PermissionDenied()
+
+    submit = get_object_or_404(Submit, id=submit_id)
 
     summary_result: ReviewResult = from_json(ReviewResult, request.body)
     save_submit_review(submit, summary_result)
