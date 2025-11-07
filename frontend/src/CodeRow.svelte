@@ -3,6 +3,7 @@ import { createEventDispatcher } from 'svelte';
 import CommentForm from './CommentForm.svelte';
 import Comment from './Comment.svelte';
 import { user } from './global.js';
+import SuggestedComment from './SuggestedComment.svelte';
 
 export let line;
 export let lineNumber;
@@ -41,7 +42,11 @@ function addNewComment(evt) {
   <td>
     <pre>{@html line}</pre>
     {#each comments || [] as comment}
-      <Comment {...comment} on:saveComment on:setNotification />
+      {#if comment.type === 'suggestion'}
+        <SuggestedComment {...comment} on:resolveSuggestion />
+      {:else}
+        <Comment {...comment} on:saveComment on:setNotification />
+      {/if}
     {/each}
 
     {#if showAddingForm}
@@ -124,7 +129,7 @@ tr.linecode td:last-of-type {
 :global(html[data-bs-theme='light'] .comment.automated) {
   background: #7db4e4;
 }
-:global(html[data-bs-theme='light'] .comment.summary) {
+:global(html[data-bs-theme='light'] .comment.suggestion) {
   background: #ffb3b3;
 }
 
@@ -148,7 +153,7 @@ tr.linecode td:last-of-type {
 :global(html[data-bs-theme='dark'] .comment.automated) {
   background: #1b96ff;
 }
-:global(html[data-bs-theme='dark'] .comment.summary) {
+:global(html[data-bs-theme='dark'] .comment.suggestion) {
   background: #ff6f6f;
 }
 

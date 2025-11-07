@@ -161,6 +161,26 @@ async function setNotification(evt) {
   }
 }
 
+// Append the resolved comment to the comments list for the appropriate file
+async function resolveSuggestion(evt) {
+  const comment = evt.detail.comment;
+  let added = false;
+
+  files = files.map((file) => {
+    if (file.source.path === comment.source) {
+      let comments = file.source.comments[comment.line - 1] || [];
+      file.source.comments[comment.line - 1] = [...comments, comment];
+      added = true;
+    }
+
+    return file;
+  });
+
+  if (!added) {
+    summaryComments = [...summaryComments, comment];
+  }
+}
+
 function keydown(e) {
   if (
     e.target.getAttribute('contenteditable') ||
@@ -224,7 +244,7 @@ function countComments(comments) {
   };
   for (const line of Object.values(comments)) {
     for (const comment of Object.values(line)) {
-      if (comment.type === 'automated' || comment.type === 'summary') {
+      if (comment.type === 'automated' || comment.type === 'suggestion') {
         counts.automated += 1;
       } else {
         counts.user += 1;
@@ -317,7 +337,8 @@ window.addEventListener('hashchange', goToSelectedLines);
   <SummaryComments
     {summaryComments}
     on:saveComment={(evt) => saveComment(evt.detail)}
-    on:setNotification={setNotification} />
+    on:setNotification={setNotification}
+    on:resolveSuggestion={resolveSuggestion} />
 
   {#each files as file}
     <h2 class="file-header">
@@ -359,7 +380,8 @@ window.addEventListener('hashchange', goToSelectedLines);
               ? selectedRows
               : null}
             on:setNotification={setNotification}
-            on:saveComment={(evt) => saveComment({ ...evt.detail, source: file.source.path })} />
+            on:saveComment={(evt) => saveComment({ ...evt.detail, source: file.source.path })}
+            on:resolveSuggestion={resolveSuggestion} />
         {/if}
       {:else if file.source.type === 'img'}
         <img src={file.source.src} />

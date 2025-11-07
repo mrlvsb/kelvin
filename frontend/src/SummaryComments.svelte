@@ -2,6 +2,7 @@
 import CommentForm from './CommentForm.svelte';
 import Comment from './Comment.svelte';
 import { createEventDispatcher } from 'svelte';
+import SuggestedComment from './SuggestedComment.svelte';
 
 export let summaryComments;
 
@@ -18,7 +19,11 @@ function addComment(evt) {
 </script>
 
 {#each summaryComments as comment}
-  <Comment {...comment} on:saveComment on:setNotification />
+  {#if comment.type === 'suggestion'}
+    <SuggestedComment {...comment} on:resolveSuggestion />
+  {:else}
+    <Comment {...comment} on:saveComment on:setNotification />
+  {/if}
 {/each}
 
 {#if showForm}
