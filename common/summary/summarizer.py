@@ -39,10 +39,17 @@ def remove_comments_from_code(content: str, language: str) -> str:
     return content
 
 
+def remove_html_entities(text: str) -> str:
+    """Remove HTML entities from the given text."""
+    html_entity_pattern = re.compile(r"&[a-zA-Z]+;|&#\d+;|&#x[0-9a-fA-F]+;")
+    return html_entity_pattern.sub("", text)
+
+
 class Summarizer:
-    def __init__(self, model: str, files: List[EmbeddedFile]):
+    def __init__(self, model: str, files: List[EmbeddedFile], language: str = "English"):
         self.model = model
         self.files = files
+        self.language = language
 
     def build_user_content(self) -> str:
         lines: List[str] = []
@@ -63,56 +70,62 @@ class Summarizer:
 
     def build_system_content(self) -> str:
         return """
-            You are a **strict, detail-oriented code reviewer** for student programming assignments.
-            Your primary goal is to **analyze the provided source code for issues that directly affect correctness, memory safety, or runtime performance**.
+            You are a **strict, detail-oriented code reviewer** evaluating student programming assignments.
+            Your task is to identify real, verifiable issues that affect correctness, memory safety, or runtime performance,
+            and provide clear improvement suggestions phrased in the manner of a teacher offering constructive feedback.
 
-            Each file will:
-            - Be enclosed in **code fences**.
-            - Include a **header comment** indicating the file name.
-            - Prefix every line with a **line number** for easy reference.
+            For each issue you find, you will describe:
+            1. **What is wrong** (referencing the exact line number).
+            2. **Why it is a problem** in practical terms.
+            3. **How the student should correct it**, stated as helpful guidance rather than a command.
 
-            You must **only** identify issues in the following categories:
-            1. **Undefined behavior**
-               - Examples: use-after-free, out-of-bounds access, null dereference, uninitialized variable usage.
-            2. **Memory management errors**
-               - Examples: leaks, double-free, dangling pointers, incorrect malloc/free handling.
-            3. **Performance inefficiencies**
-               - Only if they have a **clear, measurable runtime impact** (e.g., an `O(n²)` operation in a loop where `n` can be large, redundant copies, unnecessary allocations).
-            4. **Logical or operational errors**
-               - Anything that causes **incorrect results, faulty control flow, or incorrect algorithmic behavior**.
+            Your tone should be professional and instructional. You are not rewriting the code yourself.
+            The suggestion should be something a teacher could "accept", "decline", or adjust when grading.
+
+            Only report issues in the following categories:
+            1. **Undefined behavior** (e.g., use-after-free, null dereference, uninitialized read, out-of-bounds access).
+            2. **Memory management errors** (e.g., leaks, double free, incorrect ownership).
+            3. **Performance inefficiencies** with clear runtime significance (e.g., unnecessary repeated computation).
+            4. **Logical or operational errors** leading to incorrect behavior or incorrect results.
 
             You must **NOT** report:
-            - Style, naming, or formatting issues.
+            - Pure style or aesthetic issues.
             - Missing error checks, unless they directly cause undefined behavior.
             - Non-critical best-practices (e.g., minor optimizations, comments, or structural preferences).
             - Hypothetical or uncertain issues — **only report what you are confident is wrong**.
 
             When describing code in your explanations:
             - Wrap all **variable names**, **function names**, and **code snippets** in single backticks (e.g., `buffer`, `free(ptr)`).
-            - Use **exact line numbers** and **clear, factual reasoning**.
-            - Avoid speculative language such as "might" or "possibly".
+            - Always use the line numbers provided.
+            - Avoid vague terms like "might", "could", or "possibly" — be definitive about the issues you identify.
 
             Return a **single JSON object** with this structure:
-
             ```json
             {
-                "summary": "A concise overview (3–5 sentences) describing overall correctness, key positives, and notable negatives.",
+                "summary": "3–5 sentences describing general correctness and main concerns.",
                 "suggestions": [
                     {
-                        "file": "name of the file where issue is found",
+                        "file": "file name",
                         "severity": "critical | high | medium | low",
-                        "line": "Integer line number where issue occurs",
-                        "explanation": "Clear, factual description of what is wrong and why it matters (in 1–3 sentences)."
+                        "line": line_number,
+                        "explanation": "Clear explanation of the issue and why it matters."
                     }
                 ]
             }
             ```
 
-            Use severity to indicate impact:
-            - **critical** — Causes undefined behavior or data corruption.
-            - **high** — Causes program to produce incorrect results or crash.
-            - **medium** — Causes significant but not catastrophic performance or logical issues.
-            - **low** — Minor inefficiencies or edge-case correctness problems.
+            Severity meanings:
+            - critical: causes undefined behavior or data corruption.
+            - high: causes incorrect results or runtime failure.
+            - medium: significant inefficiency or limited incorrect behavior.
+            - low: minor correctness or efficiency improvement opportunity.
+        """
+
+    def build_translation_content(self) -> str:
+        return f"""
+            After analyzing, output the final JSON **entirely in {self.language}**.
+            Translate only human-readable text fields (`summary` and `explanation`).
+            Do not modify JSON structure, keys, field names, file names, or line numbers.
         """
 
     def summarize(self) -> ReviewResult:
@@ -125,6 +138,13 @@ class Summarizer:
             ChatCompletionSystemMessageParam(content=self.build_system_content(), role="system"),
             ChatCompletionUserMessageParam(content=self.build_user_content(), role="user"),
         ]
+
+        if self.language.lower() != "english":
+            messages.append(
+                ChatCompletionUserMessageParam(
+                    content=self.build_translation_content(), role="user"
+                ),
+            )
 
         response = client.chat.completions.create(
             model=self.model,
@@ -143,14 +163,14 @@ class Summarizer:
 
             return ReviewResult(
                 summary=SuggestedSummaryDTO(
-                    id=-1, text=str(summary), state=SuggestionState.PENDING
+                    id=-1, text=remove_html_entities(str(summary)), state=SuggestionState.PENDING
                 ),
                 suggestions=[
                     SuggestedCommentDTO(
                         id=-1,
                         source=sug["file"],
                         line=int(sug["line"]),
-                        text=sug["explanation"],
+                        text=remove_html_entities(sug["explanation"]),
                         severity=Severity(sug["severity"]),
                         state=SuggestionState.PENDING,
                     )

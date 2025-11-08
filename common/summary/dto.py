@@ -57,6 +57,7 @@ class EmbeddedFile:
 @dataclass
 class LlmConfig:
     enabled: bool
+    language: str = "english"
 
     @staticmethod
     def from_dict(submit_config: Dict) -> "LlmConfig":

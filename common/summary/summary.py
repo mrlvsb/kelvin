@@ -110,6 +110,7 @@ def summary_job(submit_url, summary_url, token) -> None:
     summary: Summarizer = Summarizer(
         model=settings.OPENAI_MODEL,
         files=embedded_files,
+        language="",
     )
 
     logging.info(f"Calling OpenAI model for review with total {len(embedded_files)} files...")
