@@ -37,6 +37,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from notifications.models import Notification
 from notifications.signals import notify
+from serde.json import from_json
 
 from common.evaluate import get_meta
 from common.event_log import record_task_displayed, record_final_submit_event
@@ -50,7 +51,6 @@ from common.models import (
     current_semester,
 )
 from common.plagcheck.moss import PlagiarismMatch, moss_result
-from common.serialization import dict_to_dataclass
 from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline
 from common.summary.dto import ReviewResult
 from common.summary.summary import SUMMARY_RESULT_FILE_NAME
@@ -226,10 +226,7 @@ def student_index(request):
 
 def get_submit_data(submit: Submit) -> SubmitData:
     results = []
-    summary = {
-        "summary": "",
-        "issues": [],
-    }
+    summary = ReviewResult("", [])
 
     try:
         results = EvaluationResult(submit.pipeline_path())
@@ -239,8 +236,7 @@ def get_submit_data(submit: Submit) -> SubmitData:
 
     try:
         with open(os.path.join(submit.pipeline_path(), SUMMARY_RESULT_FILE_NAME)) as f:
-            result_dict = json.load(f)
-            summary = dict_to_dataclass(result_dict, ReviewResult)
+            summary = from_json(ReviewResult, f.read())
     except FileNotFoundError:
         # File not found, no summary available, do nothing
         pass
@@ -825,7 +821,7 @@ def submit_comments(request, assignment_id, login, submit_num):
 
     # add comments from llm summary
     if is_teacher(request.user):  # Currently only teachers can view LLM summary comments
-        llm_summary = getattr(resultset["summary"], "summary", "")
+        llm_summary = submit_data.summary.summary
 
         if len(llm_summary) > 0:
             summary_comments.append(
@@ -839,7 +835,7 @@ def submit_comments(request, assignment_id, login, submit_num):
                 }
             )
 
-        for issue in getattr(resultset["summary"], "issues", []):
+        for issue in submit_data.summary.issues:
             if issue.file not in result:
                 continue
 
