@@ -341,8 +341,10 @@ let showSummary = false;
                           link={result.link}
                           login={student.username}
                           task={clazz.assignments[i].name}
+                          task_type={clazz.assignments[i].task_type}
                           color={result.color}
-                          assigned_points={result.assigned_points} />
+                          assigned_points={result.assigned_points}
+                          has_final_submit={result.has_final_submit} />
                       </td>
                     {/each}
                     {#each activeQuizList.map((i) => i.students[student.username]) as result, i}

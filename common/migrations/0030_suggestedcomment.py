@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('common', '0028_assignedtask_hard_deadline'),
+        ('common', '0029_submit_is_final_alter_usereventmodel_actio'),
     ]
 
     operations = [

@@ -30,6 +30,11 @@ class SubmitPastHardDeadline(Exception):
         super().__init__(message)
 
 
+class SubmitAfterFinal(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
 def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     """
     Creates a new submit for the given `assignment` and the user logged in the `request`.
@@ -45,26 +50,33 @@ def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     ):
         raise SubmitPastHardDeadline("Submit was submitted after deadline")
 
-    # get existing submits of the student
-    submits = Submit.objects.filter(assignment__pk=assignment.id, student__pk=request.user.id)
+    # Get existing submits of the student
+    submits = list(
+        Submit.objects.filter(assignment__pk=assignment.id, student__pk=request.user.id).order_by(
+            "-created_at"
+        )
+    )
 
     # Check submit date across all tasks, just to be a bit more defensive
-    last_submit_date = Submit.objects.filter(student=request.user).order_by("-created_at").first()
-    if last_submit_date is not None:
+    last_student_submit = (
+        Submit.objects.filter(student=request.user).order_by("-created_at").first()
+    )
+
+    if last_student_submit is not None:
         since_last_submit = (
-            datetime.datetime.now(datetime.timezone.utc) - last_submit_date.created_at
+            datetime.datetime.now(datetime.timezone.utc) - last_student_submit.created_at
         )
         if since_last_submit < SUBMIT_RATELIMIT:
             raise SubmitRateLimited("Submit was rate limited", SUBMIT_RATELIMIT - since_last_submit)
+
+    if any(s.is_final for s in submits):
+        raise SubmitAfterFinal("Attempt to create submit after marking previous as final")
 
     # TODO: transaction/better submit_num checking
     s = Submit()
     s.student = request.user
     s.assignment = assignment
-    s.submit_num = (
-        Submit.objects.filter(assignment__id=s.assignment.id, student__id=request.user.id).count()
-        + 1
-    )
+    s.submit_num = len(submits) + 1
     client_ip = get_client_ip_address(request)
     if client_ip:
         s.ip_address = client_ip

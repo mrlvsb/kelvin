@@ -46,6 +46,7 @@
                                 <th>Type</th>
                                 <th>Assigned</th>
                                 <th>Deadline</th>
+                                <th>Submitted</th>
                                 <th class="text-end">Earned points</th>
                                 <th class="text-end">Max points</th>
                             </tr>
@@ -75,6 +76,16 @@
                                             {{ task.deadline|date:"d.m.Y, H:i" }}
                                             <span class="text-muted">({{ task.deadline|timeuntil }} left)</span>
                                         {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if task.accepted_submit_num %}
+                                            <a href="{% url 'task_detail' login=task.student assignment_id=task.id submit_num=task.accepted_submit_num %}"
+                                               title="Go to latest submit">
+                                               <span class="iconify" data-icon="bx:bx-check"></span>
+                                            </a>
+                                        {% else %}
+                                            <span class="iconify" data-icon="bi:dash"></span>
+                                        {%  endif  %}
                                     </td>
                                     <td class="text-end">
                                         {% if task.assigned_points is not None %}
@@ -107,6 +118,13 @@
                                         {{ quiz.deadline|date:"d.m.Y, H:i" }} <span
                                             class="text-muted">({{ quiz.deadline|timeuntil }} left)</span>
                                     </td>
+                                    <td class="text-center">
+                                        {% if quiz.enrolled %}
+                                            <span class="iconify" data-icon="bx:bx-check"></span>
+                                        {% else %}
+                                            <span class="iconify" data-icon="bi:dash"></span>
+                                        {% endif %}
+                                    </td>
                                     <td class="text-end">
                                         {% if quiz.earned_points is not None %}
                                             {{ quiz.earned_points|floatformat:2 }}
@@ -120,7 +138,7 @@
                                 </tr>
                             {% endfor %}
                             <tr>
-                                <th colspan="4">Total</th>
+                                <th colspan="5">Total</th>
                                 <th class="text-end">{{ node.earned_points|floatformat:2 }}</th>
                                 <th class="text-end">{{ node.max_points|floatformat:2 }}</th>
                             </tr>

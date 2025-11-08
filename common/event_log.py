@@ -43,7 +43,13 @@ class UserEventTaskDisplayed(UserEventBase):
     assigned_task_id: int
 
 
-UserEvent = UserEventLogin | UserEventSubmit | UserEventTaskDisplayed
+@dataclasses.dataclass(frozen=True)
+class UserEventMarkSubmitAsFinal(UserEventBase):
+    assigned_task_id: int
+    submit_num: int
+
+
+UserEvent = UserEventLogin | UserEventSubmit | UserEventTaskDisplayed | UserEventMarkSubmitAsFinal
 
 
 class UserEventModel(models.Model):
@@ -63,9 +69,11 @@ class UserEventModel(models.Model):
         Submit = ("submit", "Submit")
         # A user has displayed an assigned task
         TaskDisplayed = ("task-view", "Task displayed")
+        # A user has marked submit as final
+        SubmitMarkedAsFinal = ("mark-submit", "Submit marked as final")
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    action = models.CharField(max_length=10, choices=Action.choices)
+    action = models.CharField(max_length=15, choices=Action.choices)
     ip_address = models.GenericIPAddressField(null=True, verbose_name="IP address")
     # Arbitrary metadata that can be attached to each event
     metadata = JSONField("Metadata", null=True)
@@ -93,6 +101,12 @@ class UserEventModel(models.Model):
                     **shared,
                     assigned_task_id=self.metadata["task"],
                 )
+            case UserEventModel.Action.SubmitMarkedAsFinal.value:
+                return UserEventMarkSubmitAsFinal(
+                    **shared,
+                    assigned_task_id=self.metadata["task"],
+                    submit_num=self.metadata["submit_num"],
+                )
         logging.error(f"Invalid UserEvent action {self.action} found")
         return None
 
@@ -108,6 +122,18 @@ def record_submit_event(request: HttpRequest, user: User, task: "AssignedTask", 
     event = UserEventModel(
         user=user,
         action=UserEventModel.Action.Submit,
+        metadata=dict(task=task.id, submit_num=submit_num),
+        ip_address=get_client_ip_address(request),
+    )
+    event.save()
+
+
+def record_final_submit_event(
+    request: HttpRequest, user: User, task: "AssignedTask", submit_num: int
+):
+    event = UserEventModel(
+        user=user,
+        action=UserEventModel.Action.SubmitMarkedAsFinal,
         metadata=dict(task=task.id, submit_num=submit_num),
         ip_address=get_client_ip_address(request),
     )

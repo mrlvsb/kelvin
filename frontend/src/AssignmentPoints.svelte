@@ -7,7 +7,9 @@ export let color;
 export let assigned_points;
 export let login;
 export let task;
+export let task_type;
 export let submit_id;
+export let has_final_submit;
 
 let show = false;
 let saving = false;
@@ -51,9 +53,15 @@ async function save() {
 
 <div on:contextmenu={ctxMenu} on:keydown={keydown} on:click={click} bind:this={container}>
   {#if submits != 0}
-    <a href={link} style="color: {color}">
-      {isNaN(parseFloat(assigned_points)) ? '?' : assigned_points}
-    </a>
+    {#if isNaN(parseFloat(assigned_points))}
+      {#if has_final_submit}
+        <a href={link} style="color: {color}" title="Final">F</a>
+      {:else}
+        <a href={link} style="color: {color}">?</a>
+      {/if}
+    {:else}
+      <a href={link} style="color: {color}">{assigned_points}</a>
+    {/if}
   {/if}
   {#if show}
     <div class="overlay">

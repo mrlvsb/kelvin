@@ -122,6 +122,7 @@
             </li>
             {% endif %}
             {% if submit %}
+
             <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#src">
                   Source code
@@ -130,6 +131,7 @@
                   {% endif %}
                 </a>
             </li>
+
             {% if has_pipeline %}
             <li class="nav-item">
                 <a class="nav-link" data-toggle="tab" href="#result">
@@ -147,12 +149,25 @@
                         <a class="btn btn-sm btn-info" href="{{ next_url_to_evaluate }}#src">Next student to evaluate</a>
                     </div>
                     {% endif %}
+
+                    {% if task.type == 'exam' and submit != null and submit.submit_num == submits.first.submit_num %}
+                      {% if submits.first.is_final %}
+                          <div class="me-1" title="Allow student to create new submits. ">
+                            <a class="btn btn-sm btn-info" href="{% url 'unmark_solution_final_mark' submit.assignment.pk submit.student submit.submit_num%}">Unmark final flag</a>
+                          </div>
+                      {% else %}
+                          <div class="me-1" title="Prevents the student from sending further submits.">
+                            <a class="btn btn-sm btn-info" href="{% url 'mark_solution_as_final' submit.assignment.pk submit.student submit.submit_num%}">Mark as final</a>
+                          </div>
+                      {% endif %}
+                    {% endif %}
+
                     {% if submit and submit.assignment.max_points is not None %}
                     <div>
-                    {% include 'web/teacher/form_assign_points.html' %}
-                    </div>
-                    {% endif %}
-                </li>
+                        {% include 'web/teacher/form_assign_points.html' %}
+                     </div>
+                <li>
+              {% endif %}
             {% else %}
             <li class="nav-item ms-auto">
                 <ul class="navbar-nav">
@@ -163,12 +178,30 @@
                     {% endif %}
                     {% if upload != False %}
                     <li class="nav-item">
-                        <form method="post" enctype="multipart/form-data">
+                      {% if task.type == 'exam' and submit != null and submit.submit_num == submits.first.submit_num and submit.created_at < submit.assignment.deadline%}
+                            {% if not submits.first.is_final %}
+                                <form id="mark-form" class="d-inline" action="{% url 'mark_solution_as_final' submit.assignment.pk submit.student submit.submit_num%}" method="post">
+                                {% csrf_token %}
+                                <span id="mark-button"></span>
+                                </form>
+                            {% else %}
+                                <input type="button" disabled value="Marked as final" class="btn btn-sm btn-primary"  />
+                            {% endif %}
+                        {% endif %}
+                        {% if not submits.first.is_final %}
+                        <form method="post" enctype="multipart/form-data" class="d-inline">
                             {% csrf_token %}
                             <input type="file" name="solution" multiple hidden id="upload-choose"
                                    onclick="this.value=null;"
                                    onchange="this.form.submit()">
-                            <span id="upload_button" class="btn btn-sm btn-primary" onclick="document.getElementById('upload-choose').click()" data-deadline="{{ deadline|date:'c' }}" data-hard-deadline="{{hard_deadline}}">Upload</span>
+
+                            <span id="upload_button"
+                                  class="btn btn-sm btn-primary"
+                                  onclick="document.getElementById('upload-choose').click()" data-deadline="{{ deadline|date:'c' }}"
+                                  data-hard-deadline="{{hard_deadline}}">
+                                Upload
+                            </span>
+
                             <span class="morehover" style="position: relative">
                               <span class="iconify" data-icon="bx:bx-help-circle"></span>
                               <div class="morehover-content" style="position: absolute; right: 0px; top: 15px; background: white; padding: 4px; display: none">
@@ -177,7 +210,9 @@
                               </div>
                             </span>
                         </form>
+
                         <kelvin-upload-solution cooldown="0"></kelvin-upload-solution>
+                        {% endif %}
                     </li>
                     {% endif %}
                 </ul>
@@ -253,6 +288,8 @@
 </div>
 
 <script>
+    mountMarkButton("#mark-button", {"formId": "mark-form"});
+
   (function() {
     const tabControl = document.querySelector('.nav-tabs');
     if (!tabControl) return;

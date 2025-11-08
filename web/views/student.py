@@ -17,11 +17,11 @@ import django_rq
 import magic
 import rq
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.core import signing
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, BadRequest
 from django.http import (
     FileResponse,
     Http404,
@@ -39,7 +39,7 @@ from notifications.models import Notification
 from notifications.signals import notify
 
 from common.evaluate import get_meta
-from common.event_log import record_task_displayed
+from common.event_log import record_task_displayed, record_final_submit_event
 from common.models import (
     AssignedTask,
     Class,
@@ -1145,6 +1145,54 @@ def upload_results(request, assignment_id, submit_num, login):
     return JsonResponse({"success": True})
 
 
+@login_required()
+def mark_solution_as_final(request, assignment_id, login, submit_num):
+    submit = get_object_or_404(
+        Submit, assignment_id=assignment_id, submit_num=submit_num, student__username=login
+    )
+
+    user_is_teacher = is_teacher(request.user)
+
+    if not user_is_teacher and submit.created_at > submit.assignment.deadline:
+        raise BadRequest("Attempting to mark a submit after deadline.")
+
+    if not user_is_teacher and login != request.user.username:
+        raise PermissionDenied()
+
+    last_submit = (
+        Submit.objects.filter(assignment__pk=assignment_id, student__username=login)
+        .order_by("-created_at")
+        .first()
+    )
+
+    if last_submit is None or submit.pk == last_submit.pk:
+        submit.is_final = True
+
+        submit.save()
+
+        assignment = get_object_or_404(AssignedTask, id=assignment_id)
+        record_final_submit_event(request, request.user, task=assignment, submit_num=submit_num)
+
+        return redirect("task_detail", assignment_id, login, submit_num)
+    else:
+        raise BadRequest(
+            "Attempting to mark a submit which is not the most recently submitted one as final."
+        )
+
+
+@user_passes_test(is_teacher)
+def unmark_solution_final_mark(request, assignment_id, login, submit_num):
+    submit = get_object_or_404(
+        Submit, assignment_id=assignment_id, submit_num=submit_num, student__username=login
+    )
+
+    submit.is_final = False
+
+    submit.save()
+
+    return redirect("task_detail", assignment_id, login, submit_num)
+
+
 def teacher_task_tar(request, task_id):
     task = get_object_or_404(Task, id=task_id)
 
@@ -1174,7 +1222,7 @@ def quiz_fill(request):
         return HttpResponseBadRequest()
 
     try:
-        enrolled_quiz = EnrolledQuiz.objects.get(student=request.user.id, submitted=False)
+        enrolled_quiz = EnrolledQuiz.objects.get(student=request.user.pk, submitted=False)
 
         now = timezone.now()
 
@@ -1188,7 +1236,7 @@ def quiz_fill(request):
         # otherwise redirects to main page.
         if enrolled_quiz.submitted:
             if enrolled_quiz.assigned_quiz.publish_results:
-                return HttpResponseRedirect(reverse("quiz_result", args=[enrolled_quiz.id]))
+                return HttpResponseRedirect(reverse("quiz_result", args=[enrolled_quiz.pk]))
             else:
                 return HttpResponseRedirect("/")
 
@@ -1198,7 +1246,7 @@ def quiz_fill(request):
         data = dict(
             is_teacher=is_teacher(request.user),
             quiz_id=enrolled_quiz.assigned_quiz.quiz.pk,
-            enrolled_id=enrolled_quiz.id,
+            enrolled_id=enrolled_quiz.pk,
             remaining=remaining.total_seconds(),
             scoring=None,
             student=None,
@@ -1260,7 +1308,7 @@ def quiz_result(request, enrolled_id):
     data = dict(
         is_teacher=is_teacher(request.user),
         quiz_id=enrolled_quiz.assigned_quiz.quiz.pk,
-        enrolled_id=enrolled_quiz.id,
+        enrolled_id=enrolled_quiz.pk,
         scoring=json.dumps(enrolled_quiz.scoring),
         answers=json.dumps(enrolled_quiz.submit),
         student=None,
