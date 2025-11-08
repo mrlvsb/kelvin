@@ -1,6 +1,8 @@
 from datetime import datetime
 from serde import serde, field
 
+Number = int | float
+
 
 # Class that represents a DTO for single answer in a question.
 @serde
@@ -14,9 +16,9 @@ class AnswerDto:
 
     # Positive and negative fields are required when question type is abcd.multiple
     # Value that is added to accumulator if the answer is not marked wrong
-    positive: int | None = field(default=None, skip_if=lambda x: x is None)
+    positive: Number | None = field(default=None, skip_if=lambda x: x is None)
     # Value that is subtracted from accumulator if the answer is marked wrong
-    negative: int | None = field(default=None, skip_if=lambda x: x is None)
+    negative: Number | None = field(default=None, skip_if=lambda x: x is None)
 
     @property
     def id(self):
@@ -29,7 +31,7 @@ class QuestionDto:
     # Content of quiz question
     content: str
     # Points of question
-    points: int
+    points: Number
     # Name of question
     name: str
     # Type of question (open, abcd, abcd.multiple)
@@ -104,7 +106,7 @@ class QuizClassAssignmentsUpdateDto:
 @serde
 class ScoreDto:
     # Assigned points
-    points: int | float
+    points: Number
     # Assigned comment
     comment: str = ""
 

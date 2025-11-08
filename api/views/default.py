@@ -34,6 +34,7 @@ from common.event_log import (
     UserEventSubmit,
     UserEvent,
     UserEventTaskDisplayed,
+    UserEventMarkSubmitAsFinal,
 )
 from common.inbus import inbus
 from common.models import (
@@ -47,7 +48,7 @@ from common.models import (
     current_semester,
     submit_assignment_path,
 )
-from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline
+from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline, SubmitAfterFinal
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher, points_to_color, inbus_search_user, user_from_inbus_person
 from quiz.models import EnrolledQuiz
@@ -406,9 +407,7 @@ def find_task_ids_from_events(events: List[UserEvent]) -> Set[int]:
     task_ids = set()
     for event in events:
         match event:
-            case UserEventSubmit():
-                task_ids.add(event.assigned_task_id)
-            case UserEventTaskDisplayed():
+            case UserEventSubmit() | UserEventTaskDisplayed() | UserEventMarkSubmitAsFinal():
                 task_ids.add(event.assigned_task_id)
     return task_ids
 
@@ -464,6 +463,18 @@ def event_list(request: HttpRequest, login: str):
                         login=user.username,
                     ),
                 )
+                metadata["task_name"] = tasks[event.assigned_task_id].task.name
+            case UserEventMarkSubmitAsFinal():
+                action = "mark-submit"
+                metadata["link"] = reverse(
+                    "task_detail",
+                    kwargs=dict(
+                        assignment_id=event.assigned_task_id,
+                        login=user.username,
+                        submit_num=event.submit_num,
+                    ),
+                )
+                metadata["submit_num"] = event.submit_num
                 metadata["task_name"] = tasks[event.assigned_task_id].task.name
         data = dict(
             action=action,
@@ -1007,6 +1018,12 @@ def create_submit(request: django.http.HttpRequest, task_assignment: int) -> Jso
             },
             status=400,
         )
+    except SubmitAfterFinal:
+        return JsonResponse(
+            {
+                "error": "The submission was sent after the final one, so it is not a valid submission."
+            }
+        )
 
     url = (
         reverse(
@@ -1030,3 +1047,7 @@ def create_submit(request: django.http.HttpRequest, task_assignment: int) -> Jso
             "task": {"name": assignment.task.name},
         }
     )
+
+
+def health_check(request):
+    return JsonResponse({"status": "OK"})
