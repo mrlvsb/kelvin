@@ -50,10 +50,6 @@ urlpatterns = [
         student_view.unmark_solution_final_mark,
         name="unmark_solution_final_mark",
     ),
-    path(
-        "task/<int:assignment_id>/<str:login>/<int:submit_num>/llm/result",
-        llm.post_submit_summary_result,
-    ),
     path("task/<path:task_name>/asset/<path:path>", student_view.task_asset, name="task_asset"),
     path(
         "task/<path:task_name>/tests/<str:test_name>/<str:file>",
