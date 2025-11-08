@@ -67,5 +67,5 @@ class LlmConfig:
 
         return LlmConfig(
             enabled=llm_section.get("enabled", False),
-            language=pycountry.countries.get(alpha_2=llm_section.get("language", "en")).name,
+            language=pycountry.languages.get(alpha_2="en").name,
         )
