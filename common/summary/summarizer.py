@@ -139,12 +139,11 @@ class Summarizer:
             ChatCompletionUserMessageParam(content=self.build_user_content(), role="user"),
         ]
 
-        if self.language.lower() != "english":
-            messages.append(
-                ChatCompletionUserMessageParam(
-                    content=self.build_translation_content(), role="user"
-                ),
+        if self.language.lower() != "en":
+            translate_prompt = ChatCompletionUserMessageParam(
+                content=self.build_translation_content(), role="user"
             )
+            messages.append(translate_prompt)
 
         response = client.chat.completions.create(
             model=self.model,

@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Dict
 
+import pycountry
 from serde import serde
 
 
@@ -57,11 +58,14 @@ class EmbeddedFile:
 @dataclass
 class LlmConfig:
     enabled: bool
-    language: str = "english"
+    language: str
 
     @staticmethod
     def from_dict(submit_config: Dict) -> "LlmConfig":
         async_section = submit_config.get("async", {})
         llm_section = async_section.get("llm", {})
 
-        return LlmConfig(enabled=llm_section.get("enabled", False))
+        return LlmConfig(
+            enabled=llm_section.get("enabled", False),
+            language=pycountry.countries.get(alpha_2=llm_section.get("language", "en")).name,
+        )

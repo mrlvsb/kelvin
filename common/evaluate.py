@@ -12,7 +12,7 @@ from django.core import signing
 from django.urls import reverse
 from django.utils import timezone
 
-from common.summary.summary import summarize_submit
+from common.summary.summary import enqueue_summary_job
 from common.utils import is_teacher
 from evaluator.evaluator import Evaluation
 from evaluator.testsets import TestSet
@@ -93,7 +93,7 @@ def evaluate_submit(request, submit, meta=None):
 
     # Async configuration section
     task_config = load_task_config(str(task_dir))
-    summarize_submit(task_config, submit_url, llm_summary_url, token)
+    enqueue_summary_job(task_config, submit_url, llm_summary_url, token)
 
     # Enqueue the evaluation job
     return django_rq.get_queue(task.queue).enqueue(
