@@ -5,8 +5,8 @@ from typing import Dict, List, Optional
 
 import django_rq
 import requests
+from serde.json import to_json
 
-from common.serialization import dataclass_to_dict
 from common.summary.dto import EmbeddedFile, ReviewResult, LlmConfig
 from common.summary.summarizer import Summarizer
 from common.utils import download_source_to_path
