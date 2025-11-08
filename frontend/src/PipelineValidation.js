@@ -1,4 +1,5 @@
 import yaml from 'js-yaml';
+import ISO6391 from 'iso-639-1';
 import CodeMirror from 'codemirror';
 
 CodeMirror.registerHelper('hint', 'yaml', function (cm) {
@@ -587,5 +588,17 @@ const rules = new DictRule({
             }),
             'Automatically assign or propose points based on executed tests.'
         ]
+    }),
+    async: new DictRule({
+        llm: new DictRule({
+            enabled: [
+                new EnumRule(['true', 'false']),
+                'Enable or disable LLM summary and suggestions generation.'
+            ],
+            language: [
+                new EnumRule(ISO6391.getAllCodes()),
+                'Language code for the generated summary and suggestions.'
+            ]
+        })
     })
 });
