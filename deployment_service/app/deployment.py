@@ -5,7 +5,6 @@ import shutil
 import tempfile
 import time
 from collections import deque
-from contextlib import suppress
 from pathlib import Path
 
 import docker
@@ -90,7 +89,6 @@ class DeploymentManager:
         )
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(handler)
-        self._stop_logs: asyncio.Event = asyncio.Event()
 
     async def _run_command(
         self,
@@ -165,13 +163,13 @@ class DeploymentManager:
                     status.HTTP_400_BAD_REQUEST,
                 ) from e
 
-    async def _watch_container_logs(self) -> None:
+    async def _watch_container_logs(self, stop_logs: asyncio.Event) -> None:
         """
         Background task: reconnects to container logs and streams new lines
-        into self.logs. It runs until self._stop_logs is set.
+        into self.logs. It runs until stop_logs is set.
         """
         self.logger.info("Connecting to container to stream logs...")
-        self._stop_logs.clear()
+        stop_logs.clear()
 
         loop = asyncio.get_event_loop()
 
@@ -180,12 +178,12 @@ class DeploymentManager:
                 for chunk in container.logs(stream=True, follow=True, tail=0):
                     line = chunk.decode(errors="replace")
                     self.logger.info(f"[Container] {line}")
-                    if self._stop_logs.is_set():
+                    if stop_logs.is_set():
                         break
             except Exception as e:
                 self.logger.debug(f"Container log reader exception: {e}")
 
-        while not self._stop_logs.is_set():
+        while not stop_logs.is_set():
             try:
                 container = self.client.containers.get(self.container_name)
             except NotFound:
@@ -296,7 +294,8 @@ class DeploymentManager:
             candidate_dir, os.path.basename(self.stable_compose_path)
         )
 
-        log_task = asyncio.create_task(self._watch_container_logs())
+        stop_container_logs = asyncio.Event()
+        container_logs_task = asyncio.create_task(self._watch_container_logs(stop_container_logs))
 
         try:
             self.logger.info("Fetching latest data from git origin...")
@@ -371,13 +370,11 @@ class DeploymentManager:
         except Exception as e:
             raise CriticalError(f"Unexpected deployment failure: {e}", self.logs) from e
         finally:
-            self._stop_logs.set()
+            stop_container_logs.set()
             try:
-                await asyncio.wait_for(log_task, timeout=5.0)
+                await asyncio.wait_for(container_logs_task, timeout=5.0)
             except TimeoutError:
-                log_task.cancel()
-                with suppress(asyncio.CancelledError):
-                    await log_task
+                self.logger.debug("Log streaming task did not finish in time and was cancelled.")
             # ALWAYS clean up the temporary directory, no matter what happened.
             self.logger.info("Cleaning up temporary directory...")
             shutil.rmtree(candidate_dir, ignore_errors=True)
