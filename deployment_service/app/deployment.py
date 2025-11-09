@@ -169,7 +169,6 @@ class DeploymentManager:
         into self.logs. It runs until stop_logs is set.
         """
         self.logger.info("Connecting to container to stream logs...")
-        stop_logs.clear()
 
         loop = asyncio.get_event_loop()
 
