@@ -90,7 +90,6 @@ class DeploymentManager:
         )
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(handler)
-        self._log_queue: asyncio.Queue = asyncio.Queue()
         self._stop_logs: asyncio.Event = asyncio.Event()
 
     async def _run_command(
@@ -169,7 +168,7 @@ class DeploymentManager:
     async def _watch_container_logs(self) -> None:
         """
         Background task: reconnects to container logs and streams new lines
-        into self.logs and self._log_queue. It runs until self._stop_logs is set.
+        into self.logs. It runs until self._stop_logs is set.
         """
         self.logger.info("Connecting to container to stream logs...")
         self._stop_logs.clear()
@@ -181,8 +180,6 @@ class DeploymentManager:
                 for chunk in container.logs(stream=True, follow=True, tail=0):
                     line = chunk.decode(errors="replace")
                     self.logger.info(f"[Container] {line}")
-                    # Put to async queue from thread
-                    loop.call_soon_threadsafe(self._log_queue.put_nowait, line)
                     if self._stop_logs.is_set():
                         break
             except Exception as e:
