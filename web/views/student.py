@@ -56,7 +56,7 @@ from common.models import (
 from common.plagcheck.moss import PlagiarismMatch, moss_result
 from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
-from common.utils import is_teacher
+from common.utils import is_teacher, ip_address_check
 from evaluator.results import EvaluationResult
 from evaluator.testsets import TestSet
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES, MAX_INLINE_LINES
@@ -307,6 +307,7 @@ def build_plagiarism_entries(login: str, matches: List[PlagiarismMatch]) -> List
 
 
 @login_required()
+@ip_address_check
 def task_detail(request, assignment_id, submit_num=None, login=None):
     submits = Submit.objects.filter(
         assignment__pk=assignment_id,
@@ -540,6 +541,7 @@ def submit_source(request, submit_id, path):
 
 
 @login_required
+@ip_address_check
 def submit_diff(request, login, assignment_id, submit_a, submit_b):
     submit = get_object_or_404(
         Submit, assignment_id=assignment_id, student__username=login, submit_num=submit_a
@@ -603,6 +605,7 @@ def submit_diff(request, login, assignment_id, submit_a, submit_b):
 
 
 @login_required
+@ip_address_check
 def submit_comments(request, assignment_id, login, submit_num):
     submit = get_object_or_404(
         Submit, assignment_id=assignment_id, student__username=login, submit_num=submit_num
@@ -1044,11 +1047,13 @@ def submit_download(request, assignment_id: int, login: str, submit_num: int):
 
 
 @login_required
+@ip_address_check
 def ui(request):
     return render(request, "web/ui.html")
 
 
 @csrf_exempt
+@ip_address_check
 def upload_results(request, assignment_id, submit_num, login):
     submit = get_object_or_404(
         Submit, assignment_id=assignment_id, submit_num=submit_num, student__username=login
@@ -1079,6 +1084,7 @@ def upload_results(request, assignment_id, submit_num, login):
 
 
 @login_required()
+@ip_address_check
 def mark_solution_as_final(request, assignment_id, login, submit_num):
     submit = get_object_or_404(
         Submit, assignment_id=assignment_id, submit_num=submit_num, student__username=login

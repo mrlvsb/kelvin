@@ -47,8 +47,15 @@ from common.models import (
     assignedtask_results,
     current_semester,
     submit_assignment_path,
+    ClassroomIpRange,
 )
-from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline, SubmitAfterFinal
+from common.submit import (
+    SubmitRateLimited,
+    store_submit,
+    SubmitPastHardDeadline,
+    SubmitAfterFinal,
+    SubmitFromUnauthorizedIPError,
+)
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher, points_to_color, inbus_search_user, user_from_inbus_person
 from quiz.models import EnrolledQuiz
@@ -597,6 +604,12 @@ def add_student_to_class(request, class_id):
     )
 
 
+def classrooms_list(request):
+    classrooms = ClassroomIpRange.objects.values("id", "name")
+
+    return JsonResponse(list(classrooms), safe=False)
+
+
 @user_passes_test(is_teacher)
 def task_detail(request, task_id=None):
     errors = []
@@ -719,7 +732,7 @@ def task_detail(request, task_id=None):
 
         for cl in data["classes"]:
             if cl.get("assigned", None):
-                AssignedTask.objects.update_or_create(
+                assigned_task, _ = AssignedTask.objects.update_or_create(
                     task_id=task.pk,
                     clazz_id=cl["id"],
                     defaults={
@@ -731,6 +744,15 @@ def task_detail(request, task_id=None):
                         "hard_deadline": cl.get("hard_deadline", False),
                     },
                 )
+
+                if "allowed_classrooms" in cl:
+                    classes = []
+                    for class_id in cl["allowed_classrooms"]:
+                        class_object = ClassroomIpRange.objects.get(pk=class_id)
+                        classes.append(class_object)
+
+                    assigned_task.allowed_classrooms.set(classes)
+
             else:
                 submits = Submit.objects.filter(
                     assignment__task_id=task.pk, assignment__clazz_id=cl["id"]
@@ -856,6 +878,9 @@ def task_detail(request, task_id=None):
             item["deadline"] = assigned.deadline
             item["max_points"] = assigned.max_points
             item["hard_deadline"] = assigned.hard_deadline
+            item["allowed_classrooms"] = list(
+                assigned.allowed_classrooms.values_list("id", flat=True)
+            )
 
         result["classes"].append(item)
 
@@ -1022,6 +1047,12 @@ def create_submit(request: django.http.HttpRequest, task_assignment: int) -> Jso
         return JsonResponse(
             {
                 "error": "The submission was sent after the final one, so it is not a valid submission."
+            }
+        )
+    except SubmitFromUnauthorizedIPError:
+        return JsonResponse(
+            {
+                "error": "The submission was sent from IP address that is not on the list of allowed IP addresses."
             }
         )
 
