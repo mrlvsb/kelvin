@@ -1,6 +1,5 @@
 import json
 import logging
-import re
 from typing import List
 
 from openai import OpenAI
@@ -15,23 +14,6 @@ def enumerate_file_lines(content: str) -> str:
     return "\n".join(f"{i + 1}: {line}" for i, line in enumerate(content.splitlines()))
 
 
-def remove_comments_from_code(content: str, language: str) -> str:
-    """
-    Remove comments from source code based on the programming language.
-    Leaves the code structure intact. Each comment is replaced with empty lines to preserve line numbers.
-    """
-
-    if language in ["c", "cpp", "java", "javascript", "typescript"]:
-        content = re.sub(r"//.*", "", content)
-        content = re.sub(r"/\*.*?\*/", "", content, flags=re.DOTALL)
-    elif language == "python":
-        content = re.sub(r"#.*", "", content)
-        content = re.sub(r'"""(.*?)"""', "", content, flags=re.DOTALL)
-        content = re.sub(r"'''(.*?)'''", "", content, flags=re.DOTALL)
-
-    return content
-
-
 class Summarizer:
     def __init__(self, model: str, files: List[EmbeddedFile]):
         self.model = model
@@ -41,11 +23,8 @@ class Summarizer:
         lines: List[str] = []
 
         for file in self.files:
-            # Removing comments improves focus on code logic. Comments could be misleading.
-            processed_line = remove_comments_from_code(file.content, file.language)
-
             # Enumerate lines for reference
-            processed_line = enumerate_file_lines(processed_line)
+            processed_line = enumerate_file_lines(file.content)
 
             lines.append(f"\n### FILE: {file.path}")
             lines.append(f"```{file.language}")
