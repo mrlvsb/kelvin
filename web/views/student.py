@@ -21,12 +21,9 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.core import signing
-from django.core.exceptions import PermissionDenied, BadRequest
 from django.http import (
     FileResponse,
-    Http404,
     HttpResponse,
-    HttpResponseBadRequest,
     JsonResponse,
     HttpResponseNotFound,
     HttpResponseRedirect,
@@ -40,6 +37,13 @@ from notifications.signals import notify
 
 from common.evaluate import get_meta
 from common.event_log import record_task_displayed, record_final_submit_event
+from common.exceptions.http_exceptions import (
+    HttpException400,
+    HttpException403,
+    HttpException404,
+    HttpException409,
+    HttpException429,
+)
 from common.models import (
     AssignedTask,
     Class,
@@ -93,14 +97,14 @@ def student_index(request):
         try:
             semester = request.GET["semester"]
             if len(semester) != 5:
-                return HttpResponseBadRequest()
+                raise HttpException400()
 
             year, winter = int(semester[:4]), semester[4] == "W"
             classess = Class.objects.filter(
                 semester__year=year, semester__winter=winter, students__pk=request.user.id
             )
         except (ValueError, IndexError):
-            return HttpResponseBadRequest()
+            raise HttpException400()
     else:
         semester = str(current_semester())
         classess = Class.objects.current_semester().filter(students__pk=request.user.id)
@@ -269,7 +273,7 @@ def pipeline_status(request, submit_id):
     submit = get_object_or_404(Submit, id=submit_id)
 
     if not is_teacher(request.user) and request.user != submit.student:
-        raise PermissionDenied()
+        raise HttpException403()
 
     s = get_submit_job_status(submit.jobid)
     return JsonResponse(
@@ -314,7 +318,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
     else:
         submits = submits.filter(student__pk=request.user.id)
         if login != request.user.username:
-            raise PermissionDenied()
+            raise HttpException403()
 
     assignment = get_object_or_404(AssignedTask, id=assignment_id)
     testset = create_taskset(
@@ -330,7 +334,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
     ) and not user_is_teacher:
         is_announce = True
         if not assignment.task.announce:
-            raise Http404()
+            raise HttpException404()
 
     if not user_is_teacher and request.method == "GET":
         record_task_displayed(request, request.user, task=assignment)
@@ -381,7 +385,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         try:
             current_submit = submits.get(submit_num=submit_num)
         except Submit.DoesNotExist:
-            raise Http404()
+            raise HttpException404()
     elif submits:
         current_submit = submits[0]
         return redirect(
@@ -441,22 +445,19 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         try:
             submit = store_submit(request, assignment)
         except TooManyFilesError:
-            return HttpResponse(
+            raise HttpException400(
                 f"You have uploaded too many files. The maximum allowed file count is {MAX_UPLOAD_FILECOUNT}.",
-                status=400,
             )
         except SubmitRateLimited as e:
             # We show an error so that users can re-send the same submit with F5.
             # It can be spammy, but probably better than forcing them to select the files
             # repeatedly.
-            return HttpResponse(
+            raise HttpException429(
                 f"Too many submits. You need to wait {e.time_until_limit_expires.total_seconds():.0f}s before sending another submit",
-                status=429,
             )
         except SubmitPastHardDeadline:
-            return HttpResponse(
+            raise HttpException409(
                 "Your submit was sent after the deadline, which is not allowed for this task.",
-                status=409,
             )
 
         return redirect(
@@ -487,7 +488,7 @@ def find_task_detail(request, task_id, login=None):
         .first()
     )
     if assignment is None:
-        raise Http404()
+        raise HttpException404()
     url = "{}#src".format(resolve_url("task_detail", assignment_id=assignment.id, login=login))
     return redirect(url)
 
@@ -508,7 +509,7 @@ def comment_recipients(submit, current_author):
 def submit_source(request, submit_id, path):
     submit = get_object_or_404(Submit, id=submit_id)
     if not is_teacher(request.user) and request.user.username != submit.student.username:
-        raise PermissionDenied()
+        raise HttpException403()
 
     for s in submit.all_sources():
         if s.virt == path:
@@ -535,7 +536,7 @@ def submit_source(request, submit_id, path):
                     res["Content-type"] = mime
                 res["Accept-Ranges"] = "bytes"
                 return res
-    raise Http404()
+    raise HttpException404()
 
 
 @login_required
@@ -545,7 +546,7 @@ def submit_diff(request, login, assignment_id, submit_a, submit_b):
     )
 
     if not is_teacher(request.user) and request.user.username != submit.student.username:
-        raise PermissionDenied()
+        raise HttpException403()
 
     base_dir = os.path.dirname(submit.dir())
     dir_a = os.path.join(base_dir, str(submit_a))
@@ -608,7 +609,7 @@ def submit_comments(request, assignment_id, login, submit_num):
     )
 
     if not is_teacher(request.user) and request.user.username != submit.student.username:
-        raise PermissionDenied()
+        raise HttpException403()
 
     submits = []
     for s in Submit.objects.filter(assignment_id=assignment_id, student__username=login).order_by(
@@ -680,7 +681,7 @@ def submit_comments(request, assignment_id, login, submit_num):
         comment = get_object_or_404(Comment, id=data["id"])
 
         if comment.author != request.user:
-            raise PermissionDenied()
+            raise HttpException403()
 
         Notification.objects.filter(
             action_object_object_id=comment.id,
@@ -835,7 +836,7 @@ def raw_test_content(request, task_name, test_name, file):
                 return file_response(
                     test.files[file].open("rb"), f"{test_name}.{file}", "text/plain"
                 )
-    raise Http404()
+    raise HttpException404()
 
 
 def create_taskset(task, user, meta: Optional[Dict[str, Any]] = None) -> TestSet:
@@ -853,7 +854,7 @@ def check_is_task_accessible(request, task):
             task_id=task.id, clazz__students__id=request.user.id, assigned__lte=timezone.now()
         )
         if not assigned_tasks:
-            raise PermissionDenied()
+            raise HttpException403()
 
 
 @login_required
@@ -905,22 +906,22 @@ def task_asset(request, task_name, path):
     task = get_object_or_404(Task, code=task_name)
     try:
         check_is_task_accessible(request, task)
-    except PermissionDenied:
+    except HttpException403:
         if not path.split("/")[-1].startswith("announce."):
-            raise PermissionDenied()
+            raise HttpException403()
 
     # Files and directories starting with . are private
     if any(p.startswith(".") for p in path.split("/")):
-        raise PermissionDenied()
+        raise HttpException403()
 
     deny_files = ["config.yml", "tests.yml", "script.py", "solution.c", "solution.cpp"]
     if ".." in path or (path in deny_files and not is_teacher(request.user)):
-        raise PermissionDenied()
+        raise HttpException403()
 
     system_path = os.path.join("tasks", task_name, path)
     if request.method not in ["HEAD", "GET"]:
         if not is_teacher(request.user):
-            raise PermissionDenied()
+            raise HttpException403()
 
         if request.method == "PUT":
             os.makedirs(os.path.dirname(system_path), exist_ok=True)
@@ -944,7 +945,7 @@ def task_asset(request, task_name, path):
         elif request.method == "MOVE":
             dst = request.headers["Destination"]
             if ".." in dst:
-                raise PermissionDenied()
+                raise HttpException403()
             system_dst = os.path.join("tasks", task_name, dst.lstrip("/"))
             if os.path.exists(system_path):
                 os.makedirs(os.path.dirname(system_dst), exist_ok=True)
@@ -953,7 +954,7 @@ def task_asset(request, task_name, path):
             else:
                 return HttpResponseNotFound()
         else:
-            return HttpResponseBadRequest()
+            raise HttpException400()
 
     try:
         with open(system_path, "rb") as f:
@@ -978,7 +979,7 @@ def task_asset(request, task_name, path):
                     f = zip_directory(directory)
                     f.seek(0)
                     return file_response(f, name, "application/x-zip")
-        raise Http404()
+        raise HttpException404()
 
 
 # Files with these extensions will be opened in the browser directly
@@ -990,7 +991,7 @@ def raw_result_content(request, submit_id, test_name, result_type, file):
     submit = get_object_or_404(Submit, pk=submit_id)
 
     if submit.student_id != request.user.id and not is_teacher(request.user):
-        raise PermissionDenied()
+        raise HttpException403()
 
     submit_data: SubmitData = get_submit_data(submit)
 
@@ -1012,7 +1013,7 @@ def raw_result_content(request, submit_id, test_name, result_type, file):
                             if extension in DIRECT_SHOW_EXTENSIONS and file_mime:
                                 return HttpResponse(file_content, content_type=file_mime)
                             return file_response(file_content, file_name, "text/plain")
-    raise Http404()
+    raise HttpException404()
 
 
 def submit_download(request, assignment_id: int, login: str, submit_num: int):
@@ -1023,11 +1024,11 @@ def submit_download(request, assignment_id: int, login: str, submit_num: int):
     if "token" in request.GET:
         token = signing.loads(request.GET["token"], max_age=3600)
         if token.get("submit_id") != submit.id:
-            raise PermissionDenied()
+            raise HttpException403()
     elif not request.user.is_authenticated:
         return redirect(f"{settings.LOGIN_URL}?next={request.path}")
     elif not is_teacher(request.user) and request.user.username != submit.student.username:
-        raise PermissionDenied()
+        raise HttpException403()
 
     with io.BytesIO() as f:
         with tarfile.open(fileobj=f, mode="w:gz") as tar:
@@ -1055,7 +1056,7 @@ def upload_results(request, assignment_id, submit_num, login):
 
     token = signing.loads(request.GET.get("token"), max_age=3600)
     if token.get("submit_id") != submit.id:
-        raise PermissionDenied()
+        raise HttpException403()
 
     result_path = os.path.join(
         "submit_results",
@@ -1086,10 +1087,10 @@ def mark_solution_as_final(request, assignment_id, login, submit_num):
     user_is_teacher = is_teacher(request.user)
 
     if not user_is_teacher and submit.created_at > submit.assignment.deadline:
-        raise BadRequest("Attempting to mark a submit after deadline.")
+        raise HttpException400("Attempting to mark a submit after deadline.")
 
     if not user_is_teacher and login != request.user.username:
-        raise PermissionDenied()
+        raise HttpException403()
 
     last_submit = (
         Submit.objects.filter(assignment__pk=assignment_id, student__username=login)
@@ -1107,7 +1108,7 @@ def mark_solution_as_final(request, assignment_id, login, submit_num):
 
         return redirect("task_detail", assignment_id, login, submit_num)
     else:
-        raise BadRequest(
+        raise HttpException400(
             "Attempting to mark a submit which is not the most recently submitted one as final."
         )
 
@@ -1131,9 +1132,9 @@ def teacher_task_tar(request, task_id):
     if "token" in request.GET:
         token = signing.loads(request.GET["token"], max_age=3600)
         if token.get("task_id") != task_id:
-            raise PermissionDenied()
+            raise HttpException403()
     elif not is_teacher(request.user):
-        raise PermissionDenied()
+        raise HttpException403()
 
     f = tempfile.TemporaryFile()
     with tarfile.open(fileobj=f, mode="w") as tar:
@@ -1151,7 +1152,7 @@ def quiz_fill(request):
     Function that allows filling a quiz.
     """
     if request.method != "GET":
-        return HttpResponseBadRequest()
+        raise HttpException400()
 
     try:
         enrolled_quiz = EnrolledQuiz.objects.get(student=request.user.pk, submitted=False)
@@ -1264,24 +1265,24 @@ def quiz_asset(request, quiz_src, asset_path):
     teacher_user = is_teacher(request.user)
 
     if ".." in path or ("quiz.yml" in path and not teacher_user):
-        raise PermissionDenied()
+        raise HttpException403()
 
     system_path = os.path.join(QUIZ_PATH, quiz_src, asset_path)
 
     if not Path(system_path).is_relative_to(QUIZ_PATH):
-        raise PermissionDenied()
+        raise HttpException403()
 
     if not teacher_user:
         try:
             with open(os.path.join(QUIZ_PATH, quiz_src, ".quiz_id")) as f:
                 quiz_id = int(f.read())
         except FileNotFoundError:
-            raise Http404()
+            raise HttpException404()
 
         has_access = request.user.enrolledquiz_set.filter(assigned_quiz__quiz__id=quiz_id).exists()
 
         if not has_access:
-            raise PermissionDenied()
+            raise HttpException403()
 
     try:
         with open(system_path, "rb") as f:
@@ -1291,4 +1292,4 @@ def quiz_asset(request, quiz_src, asset_path):
                 resp["Content-Type"] = f"{mime};charset=utf-8"
             return resp
     except FileNotFoundError:
-        raise Http404()
+        raise HttpException404()

@@ -1,0 +1,11 @@
+{% extends 'web/layout.html' %}
+
+{% block fullcontent %}
+    <div class="d-flex justify-content-center align-items-center text-center"
+         style="height: calc(100vh - 80px);">
+        <div>
+            <h1 class="display-1 mb-4"><strong>{{ status_code }}</strong></h1>
+            <p class="display-6 mb-5">{{ message }}</p>
+        </div>
+    </div>
+{% endblock %}

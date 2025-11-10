@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.contrib.auth.decorators import user_passes_test
 from django.urls import path, include
 from django.conf import settings
+from web.views.common import render_custom_error_page
 
 from common.utils import is_teacher
 from ninja import NinjaAPI
@@ -68,3 +69,8 @@ if settings.DEBUG:
         urlpatterns += debug_toolbar_urls()
     except ImportError:
         pass
+
+# Custom handlers for common HTTP errors
+handler400 = render_custom_error_page
+handler403 = render_custom_error_page
+handler404 = render_custom_error_page
