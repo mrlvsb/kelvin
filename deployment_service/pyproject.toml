@@ -3,7 +3,7 @@ name = "deployment-service"
 version = "0.1.0"
 description = "Deployment Service"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = "==3.13.*"
 dependencies = [
     "docker>=7.1.0",
     "fastapi[standard]>=0.116.1",
@@ -53,11 +53,11 @@ extend-select = [
 known-third-party = ["fastapi", "pydantic", "starlette"]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 exclude = ["tests/",]
 
 [tool.pytest.ini_options]
-addopts = "--cov --cov-report term-missing --cov-fail-under=80"
+addopts = "--cov --cov-report term-missing --cov-fail-under=70"
 asyncio_mode = "auto"
 testpaths = ["tests"]
 

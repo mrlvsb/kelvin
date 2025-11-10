@@ -14,7 +14,7 @@ from fastapi import status
 
 from app.config import get_settings
 
-HEALTH_CHECK_TIMEOUT = 60  # seconds
+HEALTH_CHECK_TIMEOUT = 90  # seconds
 HEALTH_CHECK_INTERVAL = 5  # seconds
 
 
@@ -87,8 +87,7 @@ class DeploymentManager:
                 "[%(asctime)s] [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
             )
         )
-        self.logger = logging.getLogger(f"deploy-{service_name}")
-        self.logger.setLevel(logging.INFO)
+        self.logger = logging.getLogger(__name__)
         self.logger.addHandler(handler)
 
     async def _run_command(
@@ -124,19 +123,27 @@ class DeploymentManager:
                 self.logger.debug(f"stderr:\n{stderr.decode()}")
         return process.returncode == 0
 
-    def _get_current_image_id(self) -> str | None:
-        """Gets the image ID of the currently running container for rollback."""
+    def _get_current_image_tag(self) -> str | None:
+        """Gets an image tag corresponding to the commit SHA of the currently running container
+        for rollback."""
         try:
             container_image = self.client.containers.get(self.container_name).image
             if not container_image:
-                self.logger.warning(
+                self.logger.error(
                     "The image of the container not found. Rollback will not be possible."
                 )
                 return None
-            self.logger.debug(f"Found previous image ID for rollback: {container_image.id}")
-            return str(container_image.id).split(":")[-1]
+            tags = [t.split(":")[-1] for t in container_image.tags]
+            tags = sorted(t for t in tags if t != "latest")
+            if not tags:
+                self.logger.error(
+                    f"A tag for image {container_image} was not found. Using image ID {container_image.id} as a fallback."
+                )
+                return str(container_image.id).split(":")[-1]
+            self.logger.debug(f"Found previous image tag for rollback: {tags[0]}")
+            return tags[0]
         except NotFound:
-            self.logger.warning("No running container found. Rollback will not be possible.")
+            self.logger.error("No running container found. Rollback will not be possible.")
             return None
 
     def _pull_new_image(self) -> None:
@@ -155,6 +162,41 @@ class DeploymentManager:
                     self.logs,
                     status.HTTP_400_BAD_REQUEST,
                 ) from e
+
+    async def _watch_container_logs(self, stop_logs: asyncio.Event) -> None:
+        """
+        Background task: reconnects to container logs and streams new lines
+        into self.logs. It runs until stop_logs is set.
+        """
+        self.logger.info("Connecting to container to stream logs...")
+
+        loop = asyncio.get_event_loop()
+
+        def blocking_reader(container):
+            try:
+                for chunk in container.logs(stream=True, follow=True, tail=0):
+                    line = chunk.decode(errors="replace")
+                    self.logger.info(f"[Container] {line}")
+                    if stop_logs.is_set():
+                        break
+            except Exception as e:
+                self.logger.debug(f"Container log reader exception: {e}")
+
+        while not stop_logs.is_set():
+            try:
+                container = self.client.containers.get(self.container_name)
+            except NotFound:
+                # Container not running yet, wait and retry
+                await asyncio.sleep(0.5)
+                continue
+
+            # Run the blocking reader in executor, returns when container log stream ends
+            await loop.run_in_executor(None, blocking_reader, container)
+
+            # Small pause before reconnecting (container might be restarting)
+            await asyncio.sleep(0.2)
+
+        self.logger.info("Disconnected from container log stream.")
 
     async def _swap_service(
         self,
@@ -251,6 +293,9 @@ class DeploymentManager:
             candidate_dir, os.path.basename(self.stable_compose_path)
         )
 
+        stop_container_logs = asyncio.Event()
+        container_logs_task = asyncio.create_task(self._watch_container_logs(stop_container_logs))
+
         try:
             self.logger.info("Fetching latest data from git origin...")
 
@@ -277,7 +322,7 @@ class DeploymentManager:
                     self.logs,
                 )
 
-            previous_image_id = self._get_current_image_id()
+            previous_image_id = self._get_current_image_tag()
             self._pull_new_image()
 
             self.logger.info(f"Deploying service using config from commit {self.commit_sha}")
@@ -324,6 +369,11 @@ class DeploymentManager:
         except Exception as e:
             raise CriticalError(f"Unexpected deployment failure: {e}", self.logs) from e
         finally:
+            stop_container_logs.set()
+            try:
+                await asyncio.wait_for(container_logs_task, timeout=5.0)
+            except TimeoutError:
+                self.logger.debug("Log streaming task did not finish in time and was cancelled.")
             # ALWAYS clean up the temporary directory, no matter what happened.
             self.logger.info("Cleaning up temporary directory...")
             shutil.rmtree(candidate_dir, ignore_errors=True)

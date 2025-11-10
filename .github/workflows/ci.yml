@@ -97,25 +97,59 @@ jobs:
     concurrency: production
     if: ${{ github.event_name == 'merge_group' }}
     steps:
+      - name: Checkout deploy script
+        uses: actions/checkout@v5
+        with:
+          sparse-checkout: |
+            deployment_service/deploy.py
+          sparse-checkout-cone-mode: false
+
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
+
       - name: Download built image
         uses: actions/download-artifact@v4
         with:
           name: kelvin
           path: ${{ runner.temp }}
+
       - name: Load image
+        id: load_image
         run: |
-          docker load --input ${{ runner.temp }}/kelvin.tar
+          LOADED=$(docker load --input ${{ runner.temp }}/kelvin.tar)
+          # Expected output from `docker load`, based on the previous `build-docker` job:
+          # Loaded image: ghcr.io/mrlvsb/kelvin:latest
+          # Loaded image: ghcr.io/mrlvsb/kelvin:<Commit SHA>
+          echo "$LOADED"
+          SHA_TAG=$(echo "$LOADED" | grep -v ':latest' | awk '{print $3}')
+          echo "app_image_tag=$SHA_TAG" >> $GITHUB_OUTPUT
           docker image ls -a
+
       - name: Login to Docker registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Push Docker image
-        run: docker push --all-tags ghcr.io/mrlvsb/kelvin
+
+      - name: Push Docker image with SHA tag
+        run: docker push ${{ steps.load_image.outputs.app_image_tag }}
+
+      - name: Trigger on-prem deployment
+        run: |
+          python3 deployment_service/deploy.py \
+            --service-name app \
+            --container-name kelvin_app \
+            --image ${{ steps.load_image.outputs.app_image_tag }} \
+            --commit-sha ${{ github.sha }} \
+            --healthcheck-url https://kelvin.cs.vsb.cz/api/health \
+            --url https://kelvin.cs.vsb.cz/deployment/
+        env:
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+
+      - name: Push Docker image with latest tag
+        run: docker push ghcr.io/mrlvsb/kelvin:latest
+
   # Summary job to enable easier handling of required status checks.
   # On PRs, we need everything to be green, while deploy is skipped.
   # On merge queue, we need everything to be green.

@@ -12,7 +12,7 @@
 # See https://pydantic-docs.helpmanual.io/usage/settings/
 # Note, complex types like lists are read as json-encoded strings.
 
-
+import logging.config
 from functools import lru_cache
 from pathlib import Path
 
@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     security: Security
     docker: Docker
     debug: bool = False
+    log_level: str = "INFO"
 
     model_config = SettingsConfigDict(
         extra="ignore",
@@ -52,3 +53,34 @@ class Settings(BaseSettings):
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     return Settings()  # type: ignore
+
+
+def logging_config(log_level: str) -> None:
+    conf = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "verbose": {
+                "format": "{asctime} [{levelname}] {name}: {message}",
+                "style": "{",
+            },
+        },
+        "handlers": {
+            "stream": {
+                "class": "logging.StreamHandler",
+                "formatter": "verbose",
+                "level": "DEBUG",
+            },
+        },
+        "loggers": {
+            "": {
+                "level": log_level,
+                "handlers": ["stream"],
+                "propagate": True,
+            },
+        },
+    }
+    logging.config.dictConfig(conf)
+
+
+logging_config(log_level=get_settings().log_level)

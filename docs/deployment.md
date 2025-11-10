@@ -29,11 +29,11 @@ graph TD
         direction TB
         B5 --> C1["Create Temporary candidate compose file for new commit_sha"];
         C1 -- Fails --> C3["Exit & Return 500 Internal Server Error"];
-        C1 -- Succeeds --> C2["Get Current Image ID for Rollback<br/>(docker.from_env)"];
+        C1 -- Succeeds --> C2["Get Current Image Tag for Rollback<br/>(docker.from_env)"];
         C2 --> C4["Pull New Docker Image<br/>(docker.from_env)"];
         C4 -- Fails --> C5["Exit & Return 400 Bad Request"];
         C4 -- Succeeds --> C6["Swap Service: Stop old container (using stable compose file) & Start new container (using candidate's compose file)"];
-        C6 -- Fails --> C9["Rollback: Restart service with previous image ID and stable compose file"];
+        C6 -- Fails --> C9["Rollback: Restart service with previous image tag and stable compose file"];
         C6 -- Succeeds --> C7{"Health Check"};
         C7 -- Unhealthy --> C9;
         C9 --> C10["Exit & Return 502 Bad Gateway"];
@@ -69,12 +69,8 @@ graph TD
 #### 2. **Call Deployment Endpoint**
 
 - Computes an HMAC signature over the GitHub event payload using `WEBHOOK_SECRET`.
-- Sends a `POST` request to the Kelvin VM’s `/deployment/` with the `X-Hub-Signature-256` header. The JSON body includes:
+- Sends a `POST` request to the Kelvin VM’s `/deployment/` with the `X-Hub-Signature-256` header. Information about the JSON body can be found at `deployment_service/app/models.py` in class `DeploymentRequest`:
 
-   - service_name: The service to target in docker-compose.yml.
-   - container_name: The specific container name for health checks and state capture.
-   - image: The full image URI.
-   - commit_sha: The Git commit hash representing the desired configuration state.
 - The workflow fails immediately on any non-200 response.
 
 
@@ -84,7 +80,7 @@ The deployment endpoint is a small, secure, and separate FastAPI service. It is 
 
 #### 1. **Reverse Proxy (Nginx) & IP Whitelisting**
 
-The deployment service depends on a Reverse Proxy (Nginx), which acts as the single public-facing entry point on the server. This proxy is configured with a firewall or IP allowlist to ensure that only requests originating from official GitHub runner IP addresses are accepted. If a request comes from an unauthorized IP, it is immediately blocked with a `401 Unauthorized` status. For valid requests, Nginx routes them internally to the Deployment Service.
+The deployment service depends on a Reverse Proxy (Nginx), which acts as the single public-facing entry point on the server. For valid requests, Nginx routes them internally to the Deployment Service.
 
 #### 2. **Deployment Service Container & HMAC Validation**
 
@@ -110,7 +106,7 @@ To avoid disrupting the stable configuration, the manager first creates a tempor
 #### **2. Capture Rollback State & Pull New Image**
 
 
-- The logic inspects the currently running application container to get its exact image ID. This ID is stored as a reliable rollback target.
+- The logic inspects the currently running application container to get its exact image tag. This tag is stored as a reliable rollback target.
 
 - It then pulls the new image from the container registry. If the pull fails (e.g., image not found), it exits with a 400 Bad Request status without affecting the running service.
 
@@ -127,9 +123,7 @@ The manager performs an active health check by repeatedly sending HTTP GET reque
 
 #### **5. Rollback (on Failure)**
 
-- If the service fails to start or the health check times out, a FallbackError is raised.
-
-- The logic initiates a rollback by calling the swap logic again, but in reverse: it uses the stable `docker-compose.yml` and overrides the image tag with the previous image ID captured in step 2.
+- If the service fails to start or the health check times out,the logic initiates a rollback by calling the swap logic again, but in reverse: it uses the stable `docker-compose.yml` and overrides the image tag with the previous image tag captured in step 2.
 
 - The workflow fails with a 502 Bad Gateway response, indicating a successful rollback.
 

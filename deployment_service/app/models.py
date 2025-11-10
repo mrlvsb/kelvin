@@ -42,9 +42,9 @@ class DeploymentRequest(BaseModel):
     healthcheck_url: Annotated[
         AnyHttpUrl | None,
         Field(
-            default="https://nginx/api/health",
+            default="https://kelvin.cs.vsb.cz/api/health",
             description="The URL to check the health of the service.",
-            examples=["https://nginx/api/health", "https://kelvin.cs.vsb.cz/api/health"],
+            examples=["https://kelvin.cs.vsb.cz/api/health"],
         ),
     ]
 
