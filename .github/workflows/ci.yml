@@ -97,6 +97,13 @@ jobs:
     concurrency: production
     if: ${{ github.event_name == 'merge_group' }}
     steps:
+      - name: Checkout deploy script
+        uses: actions/checkout@v5
+        with:
+          sparse-checkout: |
+            deployment_service/deploy.py
+          sparse-checkout-cone-mode: false
+
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
 
