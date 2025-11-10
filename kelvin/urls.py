@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.contrib.auth.decorators import user_passes_test
 from django.urls import path, include
 from django.conf import settings
+from web.views.common import render_custom_error_page
 
 from common.utils import is_teacher
 from ninja import NinjaAPI
@@ -27,8 +28,6 @@ api_v2 = NinjaAPI(title="Kelvin API", version="2.0.0", docs_decorator=user_passe
 api_v2.add_router("", api_router)
 
 # import notifications.urls
-
-handler400 = handler403 = handler404 = "web.views.common.custom_40x_handler"
 
 if settings.CAS_ENABLE:
     from django_cas_ng import views as auth_views
@@ -70,3 +69,8 @@ if settings.DEBUG:
         urlpatterns += debug_toolbar_urls()
     except ImportError:
         pass
+
+# Custom handlers for common HTTP errors
+handler400 = render_custom_error_page
+handler403 = render_custom_error_page
+handler404 = render_custom_error_page

@@ -1,23 +1,24 @@
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.http import HttpRequest
 from django.shortcuts import render
 from django.utils.crypto import get_random_string
 from django.conf import settings
 from django.urls import reverse
 from api.models import UserToken
-from common.exceptions.exception_parser import parse_exception
+from common.exceptions import HttpExceptionData
 
 from .student import student_index, ui
 from common.utils import is_teacher
 from api.backends import hash_token
 
 
-def custom_40x_handler(request, exception=None):
-    exception = parse_exception(request, exception)
-
-    if exception is not None:
-        return render(request, "error_page.html", exception)
-
-    raise exception
+def render_custom_error_page(request: HttpRequest, exception):
+    exception = HttpExceptionData.from_exception(exception)
+    ctx = dict(
+        status_code=exception.status,
+        message=exception.message,
+    )
+    return render(request, "error_page.html", ctx, status=exception.status)
 
 
 @login_required()
