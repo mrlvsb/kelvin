@@ -12,7 +12,7 @@ from django.core import signing
 from django.urls import reverse
 from django.utils import timezone
 
-from common.summary.summary import summarize_submit
+from common.ai_summary.summary import summarize_submit
 from common.utils import is_teacher
 from evaluator.evaluator import Evaluation
 from evaluator.testsets import TestSet

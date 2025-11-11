@@ -37,7 +37,7 @@ function handleNotification() {
 }
 </script>
 
-{#if !(($hideComments == HideCommentsState.AUTOMATED && (type == 'automated' || type == 'summary')) || $hideComments == HideCommentsState.ALL)}
+{#if !(($hideComments == HideCommentsState.AUTOMATED && (type == 'automated' || type == 'ai-review')) || $hideComments == HideCommentsState.ALL)}
   <div style="display: flex; flex-direction: row;">
     <div
       class="comment comment-{unread ? 'unread' : 'read'} {type}"
@@ -51,10 +51,10 @@ function handleNotification() {
               <span class="iconify" data-icon="entypo:help"></span>
             </a>
           {/if}
-        {:else if type == 'summary'}
+        {:else if type == 'ai-review'}
           {text}
         {:else if $user}
-          {#if unread && type != 'automated' && type != 'summary' && author_id != $user.id}
+          {#if unread && type != 'automated' && type != 'ai-review' && author_id != $user.id}
             <button
               class="btn p-0 float-end"
               on:click|preventDefault={handleNotification}

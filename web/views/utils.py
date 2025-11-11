@@ -12,10 +12,10 @@ def file_response(file, filename: str, mimetype: str) -> HttpResponse:
     return response
 
 
-def authenticate_submit_token_request(request, submit: Submit) -> None:
+def authenticate_submit_token_request(request, submit: Submit):
     if "token" in request.GET:
         token = signing.loads(request.GET["token"], max_age=3600)
         if token.get("submit_id") == submit.id:
-            return None
+            return
 
     raise PermissionDenied()

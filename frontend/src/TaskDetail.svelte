@@ -224,7 +224,7 @@ function countComments(comments) {
   };
   for (const line of Object.values(comments)) {
     for (const comment of Object.values(line)) {
-      if (comment.type === 'automated' || comment.type === 'summary') {
+      if (comment.type === 'automated' || comment.type === 'ai-review') {
         counts.automated += 1;
       } else {
         counts.user += 1;

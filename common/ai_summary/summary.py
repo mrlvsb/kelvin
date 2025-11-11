@@ -7,8 +7,8 @@ import django_rq
 import requests
 from serde.json import to_json
 
-from common.summary.dto import EmbeddedFile, ReviewResult, LlmConfig
-from common.summary.summarizer import Summarizer
+from common.ai_summary.dto import EmbeddedFile, AIReviewResult, LlmConfig
+from common.ai_summary.summarizer import Summarizer
 from common.utils import download_source_to_path
 from kelvin import settings
 
@@ -24,7 +24,9 @@ EXTENSION_LANGUAGE_MAP: Dict[str, str] = {
     ".java": "java",
 }
 
-SUMMARY_RESULT_FILE_NAME: str = "summary.json"
+AI_REVIEW_RESULT_FILE_NAME: str = "summary.json"
+AI_REVIEW_COMMENT_TYPE: str = "ai-review"
+AI_REVIEW_COMMENT_AUTHOR: str = "LLM"
 
 
 def detect_language(filename: str) -> Optional[str]:
@@ -32,7 +34,7 @@ def detect_language(filename: str) -> Optional[str]:
     return EXTENSION_LANGUAGE_MAP.get(ext.lower())
 
 
-def upload_result(submit_url: str, result: ReviewResult) -> None:
+def upload_result(submit_url: str, result: AIReviewResult) -> None:
     logging.basicConfig(level=logging.DEBUG)
     session = requests.Session()
 
@@ -103,7 +105,7 @@ def summary_job(submit_url, token) -> None:
     )
 
     logging.info(f"Calling OpenAI model for review with total {len(embedded_files)} files...")
-    review: ReviewResult = summary.summarize()
+    review: AIReviewResult = summary.summarize()
 
     upload_result(f"{submit_url}llm/result?token={token}", review)
     logging.info(f"Completed summarization for {submit_url}")

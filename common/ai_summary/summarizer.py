@@ -6,7 +6,7 @@ from openai import OpenAI
 from openai.types.chat import ChatCompletionUserMessageParam, ChatCompletionSystemMessageParam
 from openai.types.shared_params import ResponseFormatJSONObject
 
-from common.summary.dto import EmbeddedFile, ReviewResult, Issue, Severity
+from common.ai_summary.dto import EmbeddedFile, AIReviewResult, Issue, Severity
 from kelvin import settings
 
 
@@ -87,7 +87,7 @@ class Summarizer:
             - **low** — Minor inefficiencies or edge-case correctness problems.
         """
 
-    def summarize(self) -> ReviewResult:
+    def summarize(self) -> AIReviewResult:
         client = OpenAI(
             api_key=settings.OPENAI_API_KEY,
             base_url=settings.OPENAI_API_URL,
@@ -110,7 +110,7 @@ class Summarizer:
             output_text = response.choices[0].message.content
             output_json = json.loads(output_text)
 
-            return ReviewResult(
+            return AIReviewResult(
                 summary=output_json.get("summary", "No summary provided."),
                 issues=[
                     Issue(
@@ -119,7 +119,7 @@ class Summarizer:
                         line=int(iss["line"]),
                         explanation=iss["explanation"],
                     )
-                    for iss in output_json.get("issues", [])
+                    for iss in output_json.get("issues", [])[:200]
                 ],
             )
         except ValueError as e:

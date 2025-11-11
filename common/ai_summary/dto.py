@@ -23,7 +23,7 @@ class Issue:
 
 @serde
 @dataclass
-class ReviewResult:
+class AIReviewResult:
     summary: str
     issues: List[Issue]
 
