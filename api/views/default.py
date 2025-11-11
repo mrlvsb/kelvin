@@ -1047,7 +1047,3 @@ def create_submit(request: django.http.HttpRequest, task_assignment: int) -> Jso
             "task": {"name": assignment.task.name},
         }
     )
-
-
-def health_check(request):
-    return JsonResponse({"status": "OK"})

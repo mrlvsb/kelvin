@@ -7,3 +7,7 @@ class SemesterResponse(Schema):
     year: int = Field(..., description="Year of the semester")
     winter: bool = Field(..., description="Is it a winter semester?")
     inbus_semester_id: int = Field(..., description="ID of the INBUS semester")
+
+
+class HealthCheckResponse(Schema):
+    status: str = Field(..., description="Health status of Kelvin")
