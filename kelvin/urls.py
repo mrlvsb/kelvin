@@ -24,7 +24,7 @@ from common.utils import is_teacher
 from ninja import NinjaAPI
 from api.v2.default import router as api_router
 
-api_v2 = NinjaAPI(title="Kelvin API", version="2.0.0", docs_decorator=user_passes_test(is_teacher))
+api_v2 = NinjaAPI(title="Kelvin API", version="2.0.1", docs_decorator=user_passes_test(is_teacher))
 api_v2.add_router("", api_router)
 
 # import notifications.urls

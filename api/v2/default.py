@@ -3,7 +3,7 @@ from common.utils import is_teacher
 from ninja import Router
 from web.views.teacher import user_passes_test
 
-from .dto import SemesterResponse
+from .dto import SemesterResponse, HealthCheckResponse
 
 router = Router()
 
@@ -27,3 +27,14 @@ def semesters(request):
         for semester in semesters
     ]
     return semesters_response
+
+
+@router.get(
+    "/health",
+    response={200: HealthCheckResponse},
+    summary="Health check endpoint",
+    description="Check if the API is running and healthy.",
+    tags=["CI/CD"],
+)
+def health_check(request):
+    return {"status": "OK"}
