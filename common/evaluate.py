@@ -1,19 +1,41 @@
+import io
+import logging
+import os
+import tarfile
+import tempfile
+from typing import Optional
+
 import django_rq
-from django.urls import reverse
+import requests
+import yaml
 from django.core import signing
+from django.urls import reverse
+from django.utils import timezone
+
+from common.ai_summary.summary import summarize_submit
+from common.utils import is_teacher
+from evaluator.evaluator import Evaluation
+from evaluator.testsets import TestSet
 from kelvin.settings import BASE_DIR
 
-from evaluator.evaluator import Evaluation
-import os
-import io
-import requests
-import tempfile
-import tarfile
-import logging
-from django.utils import timezone
-from common.utils import is_teacher
 
-from evaluator.testsets import TestSet
+def load_task_config(task_path: str) -> Optional[dict]:
+    """
+    Loads the task configuration from a YAML file located in the specified task directory.
+    If the configuration file does not exist or cannot be parsed, an empty dictionary is returned.
+    """
+
+    config_path = os.path.join(task_path, "config.yml")
+
+    if not os.path.exists(config_path):
+        return {}
+
+    try:
+        with open(config_path, "r", encoding="utf-8") as file:
+            config_data: Optional[dict] = yaml.load(file.read(), Loader=yaml.SafeLoader)
+            return config_data or {}
+    except (yaml.YAMLError, OSError):
+        return {}
 
 
 def evaluate_submit(request, submit, meta=None):
@@ -61,6 +83,11 @@ def evaluate_submit(request, submit, meta=None):
     task_dir = os.path.join(BASE_DIR, "tasks", submit.assignment.task.code)
     task = TestSet(task_dir, meta)
 
+    # Async configuration section
+    task_config = load_task_config(str(task_dir))
+    summarize_submit(task_config, submit_url, token)
+
+    # Enqueue the evaluation job
     return django_rq.get_queue(task.queue).enqueue(
         evaluate_job, submit_url, task_url, token, meta, job_timeout=task.timeout
     )

@@ -258,6 +258,12 @@ class TestSet:
     def parse_conf_timeout(self, conf):
         self.timeout = conf
 
+    def parse_conf_async(self, conf):
+        """
+        This configuration section is not used for tests, this method exists only to avoid warnings.
+        """
+        pass
+
     def load_tests(self):
         self.discover_tests()
 

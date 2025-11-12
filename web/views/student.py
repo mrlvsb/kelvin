@@ -34,7 +34,14 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from notifications.models import Notification
 from notifications.signals import notify
+from serde.json import from_json
 
+from common.ai_summary.dto import AIReviewResult
+from common.ai_summary.summary import (
+    AI_REVIEW_RESULT_FILE_NAME,
+    AI_REVIEW_COMMENT_TYPE,
+    AI_REVIEW_COMMENT_AUTHOR,
+)
 from common.evaluate import get_meta
 from common.event_log import record_task_displayed, record_final_submit_event
 from common.exceptions.http_exceptions import (
@@ -227,13 +234,25 @@ def student_index(request):
 
 def get_submit_data(submit: Submit) -> SubmitData:
     results = []
+    ai_review = AIReviewResult("", [])
+
     try:
         results = EvaluationResult(submit.pipeline_path())
     except json.JSONDecodeError:
         # TODO: show error
         pass
 
-    return SubmitData(submit=submit, results=results)
+    try:
+        with open(os.path.join(submit.pipeline_path(), AI_REVIEW_RESULT_FILE_NAME)) as f:
+            ai_review = from_json(AIReviewResult, f.read())
+    except FileNotFoundError:
+        # File not found, no summary available, do nothing
+        pass
+    except json.JSONDecodeError:
+        # TODO: show error
+        pass
+
+    return SubmitData(submit=submit, results=results, ai_review=ai_review)
 
 
 JobStatus = namedtuple("JobStatus", ["finished", "status", "message"], defaults=[False, "", ""])
@@ -804,6 +823,37 @@ def submit_comments(request, assignment_id, login, submit_num):
                 )
         except KeyError as e:
             logging.exception(e)
+
+    # add comments from llm summary
+    if is_teacher(request.user):  # Currently only teachers can view LLM summary comments
+        llm_summary = submit_data.ai_review.summary
+
+        if len(llm_summary) > 0:
+            summary_comments.append(
+                {
+                    "id": -1,
+                    "author": AI_REVIEW_COMMENT_AUTHOR,
+                    "text": llm_summary,
+                    "can_edit": False,
+                    "type": AI_REVIEW_COMMENT_TYPE,
+                    "url": None,
+                }
+            )
+
+        for issue in submit_data.ai_review.issues:
+            if issue.file not in result:
+                continue
+
+            result[issue.file]["comments"].setdefault(int(issue.line) - 1, []).append(
+                {
+                    "id": -1,
+                    "author": AI_REVIEW_COMMENT_AUTHOR,
+                    "text": issue.explanation,
+                    "can_edit": False,
+                    "type": AI_REVIEW_COMMENT_TYPE,
+                    "url": None,
+                }
+            )
 
     priorities = {
         "video": 0,

@@ -124,6 +124,9 @@ tr.linecode td:last-of-type {
 :global(html[data-bs-theme='light'] .comment.automated) {
   background: #7db4e4;
 }
+:global(html[data-bs-theme='light'] .comment.ai-review) {
+  background: #ffb3b3;
+}
 
 /* Dark style comments */
 :global(html[data-bs-theme='dark'] .comment) {
@@ -144,6 +147,9 @@ tr.linecode td:last-of-type {
 }
 :global(html[data-bs-theme='dark'] .comment.automated) {
   background: #1b96ff;
+}
+:global(html[data-bs-theme='dark'] .comment.ai-review) {
+  background: #ff6f6f;
 }
 
 .selected {

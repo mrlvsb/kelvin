@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from serde import serde
 
 from common.models import Submit
+from common.ai_summary.dto import AIReviewResult
 from evaluator.results import EvaluationResult
 
 
@@ -11,6 +12,7 @@ from evaluator.results import EvaluationResult
 class SubmitData:
     submit: Submit
     results: EvaluationResult
+    ai_review: AIReviewResult
 
 
 @dataclass
