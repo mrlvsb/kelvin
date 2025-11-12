@@ -4,7 +4,7 @@
     "scripts": {
         "copy-dolos": "node copy-dolos.js",
         "build": "npm run copy-dolos && vue-tsc && vite build",
-        "dev": "npm run copy-dolos && vite build --watch --mode dev",
+        "dev": "npm run copy-dolos && vite dev --port 5173 --strictPort",
         "check": "vue-tsc && prettier --check src && eslint src",
         "fix": "prettier --write src && eslint --fix src",
         "test": "vitest"
