@@ -354,6 +354,44 @@ class Comment(models.Model):
         )
 
 
+class LlmReviewPrompt(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    version = models.IntegerField(default=1)
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    default = models.BooleanField(default=False)
+
+
+class SuggestedComment(models.Model):
+    class State(models.TextChoices):
+        ACCEPTED = "accepted"
+        REJECTED = "rejected"
+        PENDING = "pending"
+        DISMISSED = "dismissed"
+
+    class SeverityLevel(models.TextChoices):
+        CRITICAL = "critical"
+        HIGH = "high"
+        MEDIUM = "medium"
+        LOW = "low"
+
+    submit = models.ForeignKey(Submit, on_delete=models.CASCADE)
+    source = models.CharField(max_length=255, null=True, blank=True)
+    line = models.IntegerField(null=True, blank=True)
+    text = models.TextField()
+    severity = models.CharField(
+        max_length=10, choices=SeverityLevel.choices, default=SeverityLevel.MEDIUM
+    )
+    model = models.CharField(max_length=50)
+    prompt = models.ForeignKey(LlmReviewPrompt, on_delete=models.SET_NULL, null=True, blank=True)
+    rating = models.IntegerField(null=True, blank=True)
+    state = models.CharField(max_length=10, choices=State.choices, default=State.PENDING)
+    comment = models.ForeignKey(Comment, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
 User.add_to_class("notification_str", lambda self: self.get_full_name())
 
 
