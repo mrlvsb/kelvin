@@ -1,6 +1,7 @@
+from ninja import Router
+
 from common.models import Semester
 from common.utils import is_teacher
-from ninja import Router
 from web.views.teacher import user_passes_test
 
 from .dto import SemesterResponse, HealthCheckResponse
