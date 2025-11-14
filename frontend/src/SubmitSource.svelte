@@ -83,6 +83,7 @@ function mouseover(e) {
       scroll={selectedRows && userSelected == 0 && lineNumber + 1 == selectedRows.from}
       on:showCommentForm={(evt) => (addingCommentToLine = evt.detail)}
       on:setNotification
+      on:resolveSuggestion
       on:saveComment />
   {/each}
 </table>
