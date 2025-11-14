@@ -43,6 +43,7 @@ dependencies = [
     "uWSGI==2.0.24",
     "django-ipware==7.0.1",
     "openai>=2.6.1",
+    "pycountry>=24.6.1",
     "django-ninja==1.4.5",
 ]
 

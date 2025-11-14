@@ -1,16 +1,16 @@
 import logging
 import os
 import tempfile
-from typing import Dict, List, Optional
+from typing import Dict, Optional, List
 
 import django_rq
 import requests
+from serde import from_dict
 from serde.json import to_json
 
-from common.ai_summary.dto import EmbeddedFile, AIReviewResult, LlmConfig
-from common.ai_summary.summarizer import Summarizer
+from common.ai_review.dto import EmbeddedFile, AIReviewResult, LlmReviewPromptDTO, LlmConfig
+from common.ai_review.llm_reviewer import AISubmitReview
 from common.utils import download_source_to_path
-from kelvin import settings
 
 # Available file extensions and their corresponding programming languages
 # If a file extension is not listed here, it will be skipped during embedding.
@@ -24,10 +24,6 @@ EXTENSION_LANGUAGE_MAP: Dict[str, str] = {
     ".java": "java",
 }
 
-AI_REVIEW_RESULT_FILE_NAME: str = "summary.json"
-AI_REVIEW_COMMENT_TYPE: str = "ai-review"
-AI_REVIEW_COMMENT_AUTHOR: str = "LLM"
-
 
 def detect_language(filename: str) -> Optional[str]:
     _, ext = os.path.splitext(filename)
@@ -38,11 +34,10 @@ def upload_result(submit_url: str, result: AIReviewResult) -> None:
     logging.basicConfig(level=logging.DEBUG)
     session = requests.Session()
 
-    logging.info(f"Uploading result to {submit_url}...")
-
     json_body = to_json(result, indent=2)
     logging.debug("Result JSON body: \n%s", json_body)
 
+    logging.info(f"Uploading result to {submit_url}...")
     response = session.post(
         submit_url,
         headers={"Content-Type": "application/json"},
@@ -91,7 +86,9 @@ def embed_source_files(source_files_path: str) -> List[EmbeddedFile]:
 
 
 @django_rq.job
-def summary_job(submit_url, token) -> None:
+def review_job(
+    submit_url: str, upload_url: str, prompt_url: str, token: str, llm_config: LlmConfig
+) -> None:
     logging.basicConfig(level=logging.DEBUG)
     logging.info(f"Summarizing {submit_url}")
 
@@ -99,24 +96,20 @@ def summary_job(submit_url, token) -> None:
         download_source_to_path(f"{submit_url}download?token={token}", workdir)
         embedded_files = embed_source_files(workdir)
 
-    summary: Summarizer = Summarizer(
-        model=settings.OPENAI_MODEL,
+    # Fetch prompt configuration
+    prompt_json = requests.get(f"{prompt_url}?token={token}", timeout=30)
+    prompt_json.raise_for_status()
+    prompt: LlmReviewPromptDTO = from_dict(LlmReviewPromptDTO, prompt_json.json())
+
+    summarier: AISubmitReview = AISubmitReview(
         files=embedded_files,
+        model=llm_config.model,
+        prompt=prompt,
+        language=llm_config.language,
     )
 
     logging.info(f"Calling OpenAI model for review with total {len(embedded_files)} files...")
-    review: AIReviewResult = summary.summarize()
+    result: AIReviewResult = summarier.process()
 
-    upload_result(f"{submit_url}llm/result?token={token}", review)
+    upload_result(f"{upload_url}?token={token}", result)
     logging.info(f"Completed summarization for {submit_url}")
-
-
-def summarize_submit(submit_config, submit_url: str, token: str) -> Optional[str]:
-    llm_config: LlmConfig = LlmConfig.from_dict(submit_config)
-
-    if not llm_config.enabled:
-        return None
-
-    return (
-        django_rq.get_queue("summary").enqueue(summary_job, submit_url, token, job_timeout=180).id
-    )

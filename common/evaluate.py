@@ -12,8 +12,8 @@ from django.core import signing
 from django.urls import reverse
 from django.utils import timezone
 
-from common.ai_summary.summary import summarize_submit
-from common.utils import is_teacher
+from common.ai_review.processor import enqueue_llm_review_job
+from common.utils import is_teacher, build_absolute_uri
 from evaluator.evaluator import Evaluation
 from evaluator.testsets import TestSet
 from kelvin.settings import BASE_DIR
@@ -39,13 +39,8 @@ def load_task_config(task_path: str) -> Optional[dict]:
 
 
 def evaluate_submit(request, submit, meta=None):
-    def build_absolute_uri(location):
-        base_uri = os.getenv("API_INTERNAL_BASEURL", None)
-        if base_uri:
-            return "".join([base_uri, location])
-        return request.build_absolute_uri(location)
-
     submit_url = build_absolute_uri(
+        request,
         reverse(
             "task_detail",
             kwargs={
@@ -53,16 +48,19 @@ def evaluate_submit(request, submit, meta=None):
                 "assignment_id": submit.assignment_id,
                 "submit_num": submit.submit_num,
             },
-        )
+        ),
     )
+
     task_url = build_absolute_uri(
+        request,
         reverse(
             "teacher_task_tar",
             kwargs={
                 "task_id": submit.assignment.task_id,
             },
-        )
+        ),
     )
+
     token = signing.dumps(
         {
             "submit_id": submit.id,
@@ -85,7 +83,7 @@ def evaluate_submit(request, submit, meta=None):
 
     # Async configuration section
     task_config = load_task_config(str(task_dir))
-    summarize_submit(task_config, submit_url, token)
+    enqueue_llm_review_job(request, submit, task_config, submit_url, token)
 
     # Enqueue the evaluation job
     return django_rq.get_queue(task.queue).enqueue(
