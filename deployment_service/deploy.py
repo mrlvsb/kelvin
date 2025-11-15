@@ -17,7 +17,7 @@ def format_for_github_summary(status_code, response_json):
     if not (200 <= status_code < 300):
         title = f"## ❌ Deployment Failed (Status: {status_code})"
         if not error_message:
-            summary_lines = [f"**Error:** `{response_json.get("detail", "Unknown error")}`"]
+            summary_lines = [f"**Error:** `{response_json.get('detail', 'Unknown error')}`"]
         else:
             summary_lines = [f"**Error:** `{error_message}`"]
     else:

@@ -67,7 +67,7 @@ python -Im site
 python -Ic 'import app'
 EOT
 
-ENTRYPOINT [ "uvicorn" , "app.main:app", "--workers", "2", "--loop", "uvloop", "--host", "0.0.0.0" ]
+ENTRYPOINT [ "uvicorn" , "app.main:app", "--workers", "1", "--loop", "uvloop", "--host", "0.0.0.0" ]
 
 CMD ["--port", "9000", "--root-path", "/deployment"]
 
