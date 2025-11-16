@@ -246,6 +246,12 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
+      - uses: actions/delete-package-versions@v5
+        with:
+          package-name: 'kelvin'
+          package-type: 'container'
+          min-versions-to-keep: 15
+
   # Summary job to enable easier handling of required status checks.
   # On PRs and merge queues, we need everything to be green, while deploy jobs are skipped.
   # On master, we need everything to be green.
