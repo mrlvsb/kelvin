@@ -1,0 +1,59 @@
+---
+sidebar-position: 2
+---
+
+# Task configuration
+
+By default, task configuration is **not required** in assignment. But by its implementation,
+you are able to execute post-processing tasks after the assignment is submitted by student.
+
+## Example configuration file
+
+This example configuration is only for demonstration purposes. You can find more details about each pipeline type
+in separate documentation tabs.
+
+```yml title="config.yml"
+# https://github.com/mrlvsb/kelvin/blob/master/README.pipeline.md
+# You can also use CTRL+Space for autocompleting
+
+# Specify the queue where the evaluation will be processed
+queue: "evaluator"
+
+# Max time for whole evaluation process
+timeout: "15m"
+
+# TODO: Add example tests
+tests:
+
+# Define the evaluation pipeline
+pipeline:
+  # Compile submitted source codes with gcc
+  - type: gcc
+    flags: -Wall -Wextra -g -fsanitize=address -lm -Wno-unused-variable
+
+  # Runs clang-tidy static analysis and add warnings as comments
+  - type: clang-tidy
+    checks: '*'
+
+  # Run configured tests
+  - type: tests
+
+  # Automatically propose points from the test results
+  - type: auto_grader
+    propose: true
+
+# Manage resource limits
+limits:
+  fsize: 5M     # max filesize
+  wall-time: 5  # max 5 seconds per test
+  cg-mem: 5M    # max 5MB of memory usage
+
+# Enable asynchronous tasks after evaluation
+async:
+  # LLM is module for automatic feedback generation using Large Language Models
+  llm:
+    enabled: false
+    language: en
+    model: gpt-4                      # Overwrite default model
+    prompt_name: strict_code_review   # Use custom prompt
+```

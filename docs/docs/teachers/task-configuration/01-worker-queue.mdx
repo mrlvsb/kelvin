@@ -1,0 +1,12 @@
+---
+title: 1. Worker queue
+sidebar_position: 1
+---
+The `queue` action allows you to configure a queue system for handling submissions. This is particularly useful
+for assignments requires hardware resource access or long processing times.
+
+For example, by compiling **cuda**, you most likely want to run this on a machine with a compatible GPU.
+
+```yaml title="config.yml"
+queue: <queue_name>   # eq. "cuda", "evaluator" (default)
+```

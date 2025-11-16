@@ -1,0 +1,82 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background rounded square -->
+  <defs>
+    <linearGradient id="kelvinBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#266CF5"/>
+      <stop offset="100%" stop-color="#2BD6C4"/>
+    </linearGradient>
+  </defs>
+
+  <rect
+    x="32"
+    y="32"
+    width="448"
+    height="448"
+    rx="96"
+    ry="96"
+    fill="url(#kelvinBg)"
+  />
+
+  <!-- Subtle inner shadow / card background -->
+  <rect
+    x="112"
+    y="112"
+    width="288"
+    height="288"
+    rx="40"
+    ry="40"
+    fill="#FFFFFF"
+    opacity="0.96"
+  />
+
+  <!-- Paper shape -->
+  <path
+    d="M164 160
+       H316
+       C330 160 340 170 340 184
+       V332
+       C340 346 330 356 316 356
+       H196
+       C182 356 172 346 172 332
+       V168
+       C172 163 176 160 181 160
+       Z"
+    fill="#F9FAFB"
+  />
+
+  <!-- Paper top fold (small accent) -->
+  <path
+    d="M316 160 H280 C280 176 292 188 308 188 V184 C308 170 304 160 316 160 Z"
+    fill="#E5E7EB"
+  />
+
+  <!-- Checkmark line items -->
+  <line x1="196" y1="210" x2="260" y2="210" stroke="#9CA3AF" stroke-width="8" stroke-linecap="round"/>
+  <line x1="196" y1="242" x2="280" y2="242" stroke="#9CA3AF" stroke-width="8" stroke-linecap="round"/>
+  <line x1="196" y1="274" x2="260" y2="274" stroke="#9CA3AF" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Checkmark circle -->
+  <circle cx="300" cy="282" r="38" fill="#266CF5"/>
+
+  <!-- Checkmark -->
+  <path
+    d="M288 282 L296 292 L314 268"
+    fill="none"
+    stroke="#FFFFFF"
+    stroke-width="8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- Kelvin "K" badge at top-left -->
+  <circle cx="176" cy="188" r="22" fill="#2BD6C4"/>
+  <path
+    d="M170 176 V200
+       M182 176 L172 188 L182 200"
+    fill="none"
+    stroke="#0F172A"
+    stroke-width="4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>
