@@ -1,0 +1,126 @@
+---
+title: 3. Tests
+sidebar_position: 3
+---
+
+Verifies the student's program against predefined input/output/files tests.
+All tests are automatically collected and provided to students.
+
+:::danger
+For this section to work, tests must be enabled in the pipeline:
+
+```yaml
+pipeline:
+  - type: gcc
+  - type: tests
+```
+
+:::
+
+Static tests can be defined by files in the task directory.
+In these examples, the first line with the hash denotes filename.
+These files are grouped together by the matching filename prefix, which denotes a single test or a scenario.
+It is recommended to prepend the test number to each test because tests are ordered by name.
+
+### 1. Check the standard output
+
+This test will execute the student program and checks if it prints `2020` in the standard output.
+
+```
+# 01_year.out
+2020
+```
+
+### 2. Pass the standard input and check the standard output
+
+The standard input is passed to the program and then the student's result on the output is compared to the expected stdout result.
+
+```
+# 02_sum.in
+1 2 3 4
+```
+
+```
+# 02_sum.out
+10
+```
+
+### 3. Check the file content
+
+Checks if the student's program created file `result.txt` with the expected content.
+
+```
+# 03_nums.file_out.result.txt
+1 2 3 4 5 6 7 8 9 10
+```
+
+### 4. Provide an input file
+
+Provides the input file `data.txt` to student's program.
+It can be combined with stdout or file comparing.
+
+```
+# 04_nums.file_in.data.txt
+1 2 3 4 5 6 7 8 9 10
+```
+
+### 5. Arguments
+
+Arguments passed to the program can be defined in yaml configuration:
+
+```yaml
+tests:
+  - name: 05_program_arguments
+    title: 5. Program arguments
+    args:
+      - 127.0.0.1
+      - 80
+```
+
+### 6. Exit code checking
+
+Program's exit code must be zero in order to pass the test.
+Different program's exit code or disabling of this check can be configured in yaml.
+
+```yaml
+tests:
+  - name: 06_exit_code
+    exit_code: 42
+
+  - name: 07_any_exit_code
+    exit_code: null
+```
+
+### Dynamic tests
+
+Some bigger or dynamic tests can be configured by `script.py` in the task directory.
+Tests are created in the function `gen_tests` - you can also use numpy for generating the output for your random input.
+This function can be also used for generating [variants](https://kelvin.cs.vsb.cz/#/task/edit/125) of student tasks, that
+can be defined simply in [markdown files](https://kelvin.cs.vsb.cz/#/task/edit/124).
+
+```python
+# script.py
+import random
+
+def gen_tests(evaluation):
+    r = random.randint(0, 100)
+
+    test = evaluation.create_test('01_dynamic_test')
+    test.args = [f'input{r}.txt', f'output{r}.txt', str(r), evaluation.meta['login']]
+    test.exit_code = r
+
+    f = test.add_memory_file('stdin', input=True)
+    f.write(f'stdin {evaluation.meta["login"]}'.encode('utf-8'))
+
+    f = test.add_memory_file('stdout')
+    f.write(f'stdout {evaluation.meta["login"]}'.encode('utf-8'))
+
+    f = test.add_memory_file('stderr')
+    f.write(f'stderr {evaluation.meta["login"}'.encode('utf-8'))
+
+    f = test.add_memory_file('input.txt', input=True)
+    f.write(f'input.txt {evaluation.meta["login"]}'.encode('utf-8'))
+
+    f = test.add_memory_file('output.txt')
+    f.write(f'output.txt {evaluation.meta["login"]}'.encode('utf-8'))
+```

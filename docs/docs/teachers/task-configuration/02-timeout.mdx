@@ -1,0 +1,19 @@
+---
+title: 2. Timeout
+sidebar_position: 2
+---
+
+The `timeout` action allows you to set a maximum time limit for the execution of student submissions.
+This is useful to prevent infinite loops or excessively long-running processes that could consume server resources.
+
+Timeout consumes a time string format, which can include:
+
+- `s` for seconds
+- `m` for minutes
+- `h` for hours
+
+Examples: `30s` for 30 seconds, `5m` for 5 minutes
+
+```yaml title="config.yml"
+timeout: <time_string>   # eq. "5m"
+```

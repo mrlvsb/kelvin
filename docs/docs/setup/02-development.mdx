@@ -1,0 +1,48 @@
+---
+sidebar_position: 2
+title: Development
+---
+
+This guide provides an overview of how to work with the development environment for this project,
+including helpful tooling, commands, and recommended workflows.
+
+## Testing code
+
+We currently do not have any tests :( But you can at least lint and reformat Python code using the
+following commands:
+
+```bash
+ruff check
+ruff format
+```
+
+You can also apply fixes automatically:
+
+```bash
+ruff check --fix
+```
+
+## Updating dependencies
+
+1) Add a new Python dependency:
+
+    ```bash
+    uv add package==<version>
+    ```
+
+2) Commit the changes:
+
+    ```bash
+    git add pyproject.toml uv.lock
+    ```
+
+To update the version of an existing transitive dependency, you can use `uv lock --upgrade-package <package>=<version>`.
+
+## Contributing
+
+If you're collaborating with others:
+
+- Keep your local branch updated with the main branch.
+- Prefer small, focused pull requests.
+- Use descriptive titles and summaries.
+- Include configuration updates if they affect the development environment.

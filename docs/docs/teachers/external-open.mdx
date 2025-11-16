@@ -1,7 +1,11 @@
-# Open submit on desktop app
+---
+title: External open submit
+sidebar_position: 3
+---
 
-1. create schema handler for `kelvin:`:
-   ```
+1. Create schema handler for `kelvin:`:
+
+   ```yaml
    # ~/.local/share/applications/kelvin-open.desktop
    [Desktop Entry]
    Type=Application
@@ -11,15 +15,17 @@
    MimeType=x-scheme-handler/kelvin;
    ```
 
-2. register schema with default app
+2. Register schema with default app
 
    ```sh
-   $ xdg-mime default kelvin-open.desktop x-schema-handler/kelvin
+   xdg-mime default kelvin-open.desktop x-schema-handler/kelvin
    ```
-3. <a href="https://kelvin.cs.vsb.cz/api_token">generate your API token</a> and store it in `~/.config/kelvin/token`
 
-4. create your `kelvin-open` script and add it to the `$PATH`
-   ```
+3. [https://kelvin.cs.vsb.cz/api_token](Generate your API token) and store it in `~/.config/kelvin/token`
+
+4. Create your `kelvin-open` script and add it to the `$PATH`
+
+   ```bash
    #!/bin/bash
    cd $(mktemp -d)
 
@@ -37,13 +43,15 @@
    # start in ubuntu container with X11 forwarding (xhost + or something like that required on your side)
    #exec gnome-terminal -- docker run --rm -v $PWD:/submit -w /submit -v /tmp:/tmp -e DISPLAY=:0 -it ubuntu bash
    ```
-5. make `kelvin-open` executable
+
+5. Make `kelvin-open` executable
 
    ```sh
-   $ chmod u+x kelvin-open
+   chmod u+x kelvin-open
    ```
-6. update desktop database
+
+6. Update desktop database
 
    ```sh
-   $ update-desktop-database ~/.local/share/applications/`
+   update-desktop-database ~/.local/share/applications/`
    ```

@@ -1,0 +1,139 @@
+---
+sidebar_position: 1
+title: Installation
+---
+
+Kelvin relies on several runtime services, so some setup is required before use.
+
+## Install System dependencies
+
+```bash
+apt-get install libsasl2-dev libgraphviz-dev graphviz gcc libxml2-dev libxslt1-dev libffi-dev libz-dev python3-pip curl pre-commit
+```
+
+## Installing Python dependencies
+
+Create a Python virtual environment and install Kelvin’s dependencies.
+Kelvin, which is a Django app. The easiest way of doing that is to use [uv](https://github.com/astral-sh/uv),
+which manages the dependencies of this project. As a first step for working
+with the Python code, install `uv` using some [supported approach](https://docs.astral.sh/uv/getting-started/installation/), for example:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Then, use `uv` to create a virtual environment and install the necessary dependencies into it:
+
+```bash
+uv sync
+```
+
+:::info
+If you have unsupported python version, use `uv python install 3.12` with following `uv sync --python 3.12`
+:::
+
+## Building the frontend
+
+For building the frontend, you'll need `npm`:
+
+```bash
+$ cd frontend
+$ npm ci
+# Perform a production build:
+$ npm run build
+# Perform a development build with live-reload:
+$ npm run dev
+```
+
+The frontend build will store JS and CSS files into `web/static`.
+
+## Prepare environment
+
+Application needs to work with services like *postgres*, *redis*, *nginx*, etc. Therefore, it's required to prepare `.env` file, that contains
+variables used by runtime services. Then modify by your liking.
+
+```bash
+cp .env.example .env
+```
+
+## Preparing the database
+
+PostgreSQL is required to storage application data. You can either provide it yourself, or use the provided `docker-compose.yaml`
+file (recommended).
+
+### Running PostgreSQL with Docker
+
+To start postgres dockerized, docker server is required. If not already installed, use [instalation guide](https://docs.docker.com/engine/install/),
+and then start a PostgreSQL database using `docker-compose`:
+
+```bash
+docker compose up db
+```
+
+:::info
+Note that `docker compose` will load the DB (and other) configuration options from the `.env` file, same as Kelvin, so they should match.
+:::
+
+### Running migrations
+
+Once you have a working connection to the DB, you should run migrations on it:
+
+```bash
+uv run manage.py migrate
+```
+
+## Creating superuser
+
+To be able to log in into Kelvin, you firstly need to create superadmin user. Create it by using:
+
+```bash
+uv run manage.py createsuperuser
+```
+
+## Running the server
+
+Once you built the frontend, installed Python dependencies and configured the database, you can start a local development server using this command:
+
+```bash
+uv run manage.py runserver 8000
+```
+
+And then you should be able to find the application on [`http://localhost:8000`](http://localhost:8000).
+
+## Optional enhancements
+
+---
+
+### Git pre-commit hooks
+
+To ensure that the code is formatted correctly and linted, you can install pre-commit hooks:
+
+```bash
+pre-commit install
+```
+
+### Deploying workers
+
+To perform code plagiarism checks or evaluate code submits, you'll also need to deploy Redis and start RQ workers.
+You can start Redis using the provided `docker-compose.yml` file:
+
+```bash
+docker compose up redis
+```
+
+:::info
+Note that the Redis instance does not store data persistently.
+:::
+
+You also need to compile the Docker images used for evaluation:
+
+```bash
+cd evaluator/images
+uv run build.py
+```
+
+Then you can start a worker with the following command (in kelvin root folder):
+
+```bash
+uv run manage.py rqworker default evaluator summary --with-scheduler
+```

@@ -1,0 +1,204 @@
+---
+title: 5. Pipeline
+sidebar_position: 5
+---
+
+Pipeline actions are executed when a student submits a new solution.
+It can be used to build a submitted program to check if all parts of source code were uploaded or
+evaluate the solution against prepared tests.
+
+[Builtin actions](https://github.com/mrlvsb/kelvin/blob/master/evaluator/pipelines.py) are
+implemented directly in Kelvin source code, but it is also possible to run the action in
+[docker container](https://github.com/mrlvsb/kelvin/tree/master/evaluator/images") with concrete compilers,
+so they don't need to be installed on the server.
+
+If you add a new Docker pipeline, don't forget to also modify the config validation rules in
+[`frontend/src/PipelineValidation.js`](https://github.com/mrlvsb/kelvin/blob/master/frontend/src/PipelineValidation.js)
+(variable `rules`).
+
+## The sandbox environment limits
+
+Submits are evaluated in a sandboxed environment using Docker.
+Executing the student's submit is constrained to the [default](https://github.com/mrlvsb/kelvin/blob/63b6ffc294e3b91d1db13453d487c773764ba4a1/evaluator/testsets.py#L122)
+wall clock time, memory, number of created processes etc.
+
+This can be overridden by the yaml configuration:
+
+```yaml
+pipeline:
+  - type: <action_type>
+    ...
+    limits:
+      fsize: 5M     # max filesize
+      wall-time: 5  # max 5 seconds per test
+      cg-mem: 5M    # max 5MB of memory usage
+```
+
+## Builtin pipeline actions
+
+Pipeline actions already implemented in Kelvin, you can use them directly in your pipeline configuration.
+
+### a) C# (.NET)
+
+Action for compiling a .NET (core) application and producing a standalone binary executable file as an output.
+Optionally you can build and run unit tests.
+
+```yaml
+pipeline:
+  - type: dotnet
+    unittests: <boolean>    # Run unit tests, default: false
+```
+
+### b) Java
+
+Action for compiling a Java application and producing a JAR file as an output.
+Optionally you can build and run unit tests.
+
+```yaml
+pipeline:
+  - type: java
+    unittests: <boolean>    # Run unit tests, default: false
+```
+
+### c) C/C++ (gcc)
+
+Action for compiling all source codes in a submitted solution with or without a makefile.
+The errors and warnings are shown in the Result tab.
+
+```yaml
+pipeline:
+  - type: gcc
+    flags: -Wall -Wextra -g -fsanitize=address    # Flags for the gcc/g++ compiler.
+    output: main                                  # Built executable name <strong>-o main</strong>
+    ldflags: <string>                             # Linker flags for the gcc/g++ compiler.
+    cmakeflags: <string>                          # CMake flags, if CMakeLists.txt is used.
+    makeflags: <string>                           # Makefile flags, if Makefile is used.
+```
+
+### d) Rust (cargo)
+
+Action for compiling a Rust application using Cargo and producing a standalone binary executable file as an output.
+
+```yaml
+pipeline:
+  - type: cargo
+    cmd: build       # Cargo command that should be executed, default: build
+    args: --release  # Arguments for Cargo, default: empty
+    lib: <boolean>   # Whether the submitted file should be compiled as a library, default: false
+```
+
+### e) Python
+
+Action for running python unit tests using pytest framework.
+
+```yaml
+pipeline:
+  - type: pythonrun
+    commands: [<string>]   # Command can be string or a dict.
+```
+
+```yaml title="Example"
+pipeline:
+  - type: pythonrun
+    commands:
+    - pytest -v test_solution.py
+    - python3 -m unittest discover -s tests
+```
+
+### f) Flake8 (Python)
+
+Action for static python source code analysis using Flake8 tool.
+
+```yaml
+pipeline:
+  - type: flake8
+    select: <string>        # List of enabled PEP8 codes. Can be array or string delimited by comma
+    ignore: <string>        # List of ignored PEP8 codes. Can be array or string delimited by comma
+```
+
+### g) Clang-Tidy
+
+Adds comments to the source code from the clang-tidy linter.
+Checks can give student's helpful feedback about leaker memory, misused pointer or misstyped assignment
+in a condition instead of comparison.
+
+Individual [checks](https://clang.llvm.org/extra/clang-tidy/checks/list.html) can be enabled or disabled.
+Following example enables all checks `*` and disables `-` the remaining ones.
+
+```yaml
+pipeline:
+  - type: clang-tidy
+    checks: <string>              # List of used checks.
+    warnings-as-errors: <string>  # List of checks that should be treated as errors.
+```
+
+```yaml title="Example"
+pipeline:
+ - type: clang-tidy
+    checks:
+        - '*'
+        - '-cppcoreguidelines-avoid-magic-numbers'
+        - '-readability-magic-numbers'
+        - '-cert-*'
+        - '-llvm-include-order'
+        - '-cppcoreguidelines-init-variables'
+        - '-clang-analyzer-security*'
+    files:
+      - main.cpp
+      - lib.cpp
+```
+
+### h) Custom command
+
+Custom programs can be executed in a docker container.
+This can be used for simply executing the students program and showing the result to the Results tab.
+
+```yaml
+pipeline:
+  - type: run
+    commands: [<string>]   # Command can be string or a dict.
+```
+
+```yaml
+pipeline:
+  - type: run
+    commands:
+      - cmd: <string>         # Command to be executed
+        display: <string>     # List of image/video patterns that will be converted and shown on the result page.
+        hide: <boolean>       # Hide command and its output from the result page.
+        asciinema: <boolean>  # Run the command in asciinema and generate video animation from the run.
+        timeout: <string>     # Timeout in seconds. You can also suffixes like 5m
+      - ...
+```
+
+```yaml title="Example"
+pipeline:
+  - type: run
+    commands:
+      - ./main
+      - ./main > out
+      - cat /etc/passwd | ./main
+
+      - cmd: timeout 2 ./main
+        display: ./main
+
+      - '# apt install faketime'   # executed but hidden from the output
+
+      - cmd: ./main || true
+        timeout: 10
+        display: ./main
+        asciinema: true
+
+      - display: ['*.ppm', '*.pgm', '*.jpg']
+```
+
+:::info
+Commands prefixed with **#** are not shown on the result page.
+:::
+
+## Docker
+
+Own private actions can be implemented in any language in a [docker container](https://github.com/mrlvsb/kelvin/tree/master/evaluator/images) and published to the official docker hub.
+Currently, the action has access to all source codes and artifacts from the previously executed actions like an executable file.
+When the action starts, the docker entry point program is executed.
+The action can generate `result.html` which will be shown in the Result tab to students.
