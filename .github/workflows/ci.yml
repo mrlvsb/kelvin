@@ -1,4 +1,4 @@
-name: CI
+name: Kelvin CI
 on:
   pull_request:
       paths-ignore:
