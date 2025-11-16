@@ -97,8 +97,6 @@ async def deploy(request: DeploymentRequest, response: Response):
     a final HTTP status code reflecting the outcome.
     """
     async with deployment_lock:
-        await asyncio.sleep(10)
-        raise HTTPException(status_code=503, detail="Simulated deployment in progress.")
         manager = DeploymentManager(
             service_name=request.service_name,
             image=request.image,
