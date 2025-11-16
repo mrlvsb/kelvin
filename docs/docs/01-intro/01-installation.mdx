@@ -8,15 +8,16 @@ Kelvin relies on several runtime services, so some setup is required before use.
 ## Install System dependencies
 
 ```bash
-apt-get install libsasl2-dev libgraphviz-dev graphviz gcc libxml2-dev libxslt1-dev libffi-dev libz-dev python3-pip curl pre-commit
+apt-get install libsasl2-dev libgraphviz-dev graphviz gcc libxml2-dev libxslt1-dev libffi-dev \
+  libz-dev python3-pip curl pre-commit
 ```
 
-## Installing Python dependencies
+## Install Python dependencies
 
 Create a Python virtual environment and install Kelvin’s dependencies.
-Kelvin, which is a Django app. The easiest way of doing that is to use [uv](https://github.com/astral-sh/uv),
-which manages the dependencies of this project. As a first step for working
-with the Python code, install `uv` using some [supported approach](https://docs.astral.sh/uv/getting-started/installation/), for example:
+The easiest way of doing that is to use [uv](https://github.com/astral-sh/uv),
+which manages the dependencies of this project. If you don't have `uv`,
+you can install it using some [supported approach](https://docs.astral.sh/uv/getting-started/installation/), for example:
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -34,15 +35,16 @@ If you have unsupported python version, use `uv python install 3.12` with follow
 
 ## Building the frontend
 
-For building the frontend, you'll need `npm`:
+For building the frontend, you'll need `npm`. Again if you don't have it installed,
+follow these official [instructions](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
 
 ```bash
-$ cd frontend
-$ npm ci
+cd frontend
+npm ci
 # Perform a production build:
-$ npm run build
+npm run build
 # Perform a development build with live-reload:
-$ npm run dev
+npm run dev
 ```
 
 The frontend build will store JS and CSS files into `web/static`.
