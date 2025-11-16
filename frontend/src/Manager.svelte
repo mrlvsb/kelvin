@@ -59,7 +59,7 @@ pipeline:
   # flags: -Wall -Wextra -g -fsanitize=address -lm -Wno-unused-variable
 
   # add hints from clang-tidy as comments
-  #- type: clang-tidy 
+  #- type: clang-tidy
 
   # run tests
   #- type: tests
@@ -71,7 +71,16 @@ pipeline:
 
   # automatically assign points from the test results
   #- type: auto_grader
-      
+
+async:
+  # LLM is module for automatic feedback generation using Large Language Models
+  llm:
+    enabled: false
+    language: en
+
+    # Override default model and prompt settings
+    #model: gpt-3.5-turbo
+    #prompt_name: custom_defined_prompt
 `.trim()
     );
 
