@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Dict
 
-from ninja import Schema
 from serde import serde
 
 import kelvin.settings
@@ -48,7 +47,9 @@ class SuggestedCommentDTO:
     state: SuggestionState
 
 
-class LlmReviewPromptDTO(Schema):
+@serde
+@dataclass
+class LlmReviewPromptDTO:
     id: int
     name: str
     description: str

@@ -820,15 +820,17 @@ def submit_comments(request, assignment_id, login, submit_num):
     if submit_data.ai_review:
         review_result: AIReviewResult = submit_data.ai_review
 
-        def can_view_suggestion(state: SuggestionState, user_is_teacher: bool) -> bool:
-            return state is SuggestionState.ACCEPTED or (
-                user_is_teacher and state is SuggestionState.PENDING
+        def can_view_suggestion(state: SuggestionState, user) -> bool:
+            return (
+                is_teacher(user)
+                and user.has_perm("common.view_suggestedcomment")
+                and state is SuggestionState.PENDING
             )
 
         if len(review_result.summary.text) > 0:
             summary: SubmitSummary = review_result.summary
 
-            if can_view_suggestion(summary.state, is_teacher(request.user)):
+            if can_view_suggestion(summary.state, request.user):
                 summary_comments.append(
                     {
                         "id": -1,
@@ -840,7 +842,7 @@ def submit_comments(request, assignment_id, login, submit_num):
                         "meta": {
                             "review": {
                                 "id": summary.id,
-                                "state": summary.state.name,  #
+                                "state": summary.state.name,
                             }
                         },
                     }
@@ -853,7 +855,7 @@ def submit_comments(request, assignment_id, login, submit_num):
                 )
                 continue
 
-            if can_view_suggestion(suggestion.state, is_teacher(request.user)):
+            if can_view_suggestion(suggestion.state, request.user):
                 source_comments = result[suggestion.source]["comments"]
                 source_comments.setdefault(suggestion.line - 1, [])
                 source_comments[suggestion.line - 1].append(

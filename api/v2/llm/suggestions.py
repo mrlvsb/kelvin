@@ -2,8 +2,9 @@ from django.shortcuts import get_object_or_404
 from django_cas_ng.decorators import user_passes_test
 from ninja import Router
 from ninja.errors import HttpError
+from serde import to_dict
 
-from api.v2.llm.schema import ModifySuggestionSchema
+from api.v2.llm.schema import ModifySuggestionSchema, RateSuggestionSchema
 from common.ai_review.dto import SuggestionState
 from common.models import Comment, SuggestedComment
 from common.utils import is_teacher
@@ -11,28 +12,30 @@ from common.utils import is_teacher
 router = Router()
 
 
+# TODO: Add check, to ensure that only teacher, that teach the course can accept/reject suggestions
+
+
 @router.post(
-    "/rate/{suggestion_id}",
+    "/{suggestion_id}/rate",
     url_name="rate_submit_suggestion",
     summary="Rate suggested comment",
     description="Rate an AI-suggested comment as helpful or not.",
 )
 @user_passes_test(is_teacher)
-def rate_submit_suggestion(request, suggestion_id: int, query: dict):
+def rate_submit_suggestion(request, suggestion_id: int, body: RateSuggestionSchema):
     suggestion = get_object_or_404(SuggestedComment, id=suggestion_id)
 
-    rating = query.get("rating")
-    if rating is None or not (0 <= rating <= 10):
+    if not (0 <= body.rating <= 10):
         raise HttpError(400, "Rating must be between 0 and 10")
 
-    suggestion.rating = rating
+    suggestion.rating = body.rating
     suggestion.save()
 
     return {"status": "success"}
 
 
 @router.post(
-    "/resolve/{suggestion_id}",
+    "/{suggestion_id}",
     url_name="accept_submit_suggestion",
     summary="Accept suggested comment",
     description="Accept an AI-suggested comment as a teacher.",
@@ -40,6 +43,9 @@ def rate_submit_suggestion(request, suggestion_id: int, query: dict):
 @user_passes_test(is_teacher)
 def accept_submit_suggestion(request, suggestion_id: int):
     suggestion = get_object_or_404(SuggestedComment, id=suggestion_id)
+
+    if suggestion.state != SuggestionState.PENDING.value:
+        raise HttpError(400, "Only pending suggestions can be accepted")
 
     created_comment = Comment.objects.create(
         submit=suggestion.submit,
@@ -53,11 +59,13 @@ def accept_submit_suggestion(request, suggestion_id: int):
     suggestion.comment = created_comment
     suggestion.save()
 
-    return created_comment.to_dto(can_edit=True, type="teacher", unread=False)
+    # TODO: Handle notifications
+
+    return to_dict(created_comment.to_dto(can_edit=True, type="teacher", unread=False))
 
 
 @router.patch(
-    "/resolve/{suggestion_id}",
+    "/{suggestion_id}",
     url_name="modify_submit_suggestion",
     summary="Modify and accept suggested comment",
     description="Modify a suggested comment text before accepting it.",
@@ -65,6 +73,9 @@ def accept_submit_suggestion(request, suggestion_id: int):
 @user_passes_test(is_teacher)
 def modify_submit_suggestion(request, suggestion_id: int, body: ModifySuggestionSchema):
     suggestion = get_object_or_404(SuggestedComment, id=suggestion_id)
+
+    if suggestion.state != SuggestionState.PENDING.value:
+        raise HttpError(400, "Only pending suggestions can be modified and accepted")
 
     created_comment = Comment.objects.create(
         submit=suggestion.submit,
@@ -78,11 +89,13 @@ def modify_submit_suggestion(request, suggestion_id: int, body: ModifySuggestion
     suggestion.comment = created_comment
     suggestion.save()
 
-    return created_comment.to_dto(can_edit=True, type="teacher", unread=False)
+    # TODO: Handle notifications
+
+    return to_dict(created_comment.to_dto(can_edit=True, type="teacher", unread=False))
 
 
 @router.delete(
-    "/resolve/{suggestion_id}",
+    "/{suggestion_id}",
     url_name="decline_submit_suggestion",
     summary="Reject suggested comment",
     description="Reject an AI-suggested comment as a teacher.",
@@ -90,22 +103,11 @@ def modify_submit_suggestion(request, suggestion_id: int, body: ModifySuggestion
 @user_passes_test(is_teacher)
 def decline_submit_suggestion(request, suggestion_id: int):
     suggestion = get_object_or_404(SuggestedComment, id=suggestion_id)
+
+    if suggestion.state != SuggestionState.PENDING.value:
+        raise HttpError(400, "Only pending suggestions can be rejected")
+
     suggestion.state = SuggestionState.REJECTED.value
-    suggestion.save()
-
-    return {"status": "deleted"}
-
-
-@router.delete(
-    "/dismiss/{suggestion_id}",
-    url_name="dismiss_submit_suggestion",
-    summary="Dismiss suggested comment",
-    description="Mark an AI-suggested comment as dismissed. Works for summary.",
-)
-@user_passes_test(is_teacher)
-def dismiss_submit_suggestion(request, suggestion_id: int):
-    suggestion = get_object_or_404(SuggestedComment, id=suggestion_id)
-    suggestion.state = SuggestionState.DISMISSED.value
     suggestion.save()
 
     return {"status": "deleted"}

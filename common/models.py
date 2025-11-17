@@ -392,7 +392,6 @@ class SuggestedComment(models.Model):
         ACCEPTED = "accepted"
         REJECTED = "rejected"
         PENDING = "pending"
-        DISMISSED = "dismissed"
 
     class SeverityLevel(models.TextChoices):
         CRITICAL = "critical"

@@ -164,21 +164,20 @@ async function setNotification(evt) {
 // Append the resolved comment to the comments list for the appropriate file
 async function resolveSuggestion(evt) {
   const comment = evt.detail.comment;
-  let added = false;
+
+  if (comment.line === null || comment.line === undefined) {
+    summaryComments = [...summaryComments, comment];
+    return;
+  }
 
   files = files.map((file) => {
     if (file.source.path === comment.source) {
       let comments = file.source.comments[comment.line - 1] || [];
       file.source.comments[comment.line - 1] = [...comments, comment];
-      added = true;
     }
 
     return file;
   });
-
-  if (!added) {
-    summaryComments = [...summaryComments, comment];
-  }
 }
 
 function keydown(e) {

@@ -30,13 +30,16 @@ def remove_html_entities(text: str) -> str:
     return html_entity_pattern.sub("", text)
 
 
+AI_REVIEW_DEFAULT_LANGUAGE: str = "cs"
+
+
 class AISubmitReview:
     def __init__(
         self,
         files: List[EmbeddedFile],
         model: str,
         prompt: LlmReviewPromptDTO,
-        language: str = "en",
+        language: str = AI_REVIEW_DEFAULT_LANGUAGE,
     ):
         self.files = files
         self.model = model
@@ -77,7 +80,7 @@ class AISubmitReview:
             ChatCompletionUserMessageParam(content=self.build_user_content(), role="user"),
         ]
 
-        if self.language.lower() != "en":
+        if self.language.lower() != AI_REVIEW_DEFAULT_LANGUAGE:
             translate_prompt = ChatCompletionSystemMessageParam(
                 content=self.build_translation_content(), role="system"
             )
@@ -102,7 +105,7 @@ class AISubmitReview:
                 summary=SubmitSummary(
                     id=-1,
                     text=remove_html_entities(summary),
-                    rating=0,
+                    rating=None,
                     model=self.model,
                     prompt_id=self.prompt.id,
                     state=SuggestionState.PENDING,
@@ -113,7 +116,7 @@ class AISubmitReview:
                         source=sug["file"],
                         line=int(sug["line"]),
                         text=remove_html_entities(sug["explanation"]),
-                        rating=0,
+                        rating=None,
                         model=self.model,
                         prompt_id=self.prompt.id,
                         severity=Severity(sug["severity"]),

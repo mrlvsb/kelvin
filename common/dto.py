@@ -1,7 +1,11 @@
-from ninja import Schema
+from dataclasses import dataclass
+
+from serde import serde
 
 
-class CommentDTO(Schema):
+@serde
+@dataclass
+class CommentDTO:
     id: int
     author: str
     author_id: int

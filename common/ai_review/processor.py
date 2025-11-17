@@ -40,17 +40,13 @@ def enqueue_llm_review_job(
         ),
     )
 
-    if llm_config.prompt_name:
-        review_prompt_url = build_absolute_uri(
-            request,
-            reverse(
-                "v2:retrieve_llm_review_prompt", kwargs={"prompt_name": llm_config.prompt_name}
-            ),
-        )
-    else:
-        review_prompt_url = build_absolute_uri(
-            request, reverse("v2:retrieve_default_llm_review_prompt", kwargs={})
-        )
+    review_prompt_url = build_absolute_uri(
+        request,
+        reverse(
+            "v2:retrieve_llm_review_prompt",
+            kwargs={"prompt_name": llm_config.prompt_name or "default"},
+        ),
+    )
 
     summary_queue = django_rq.get_queue(AI_REVIEW_DJANGO_RQ_QUEUE)
     enqueued_job = summary_queue.enqueue(

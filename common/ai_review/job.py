@@ -101,7 +101,7 @@ def review_job(
     prompt_json.raise_for_status()
     prompt: LlmReviewPromptDTO = from_dict(LlmReviewPromptDTO, prompt_json.json())
 
-    summarier: AISubmitReview = AISubmitReview(
+    summarizer: AISubmitReview = AISubmitReview(
         files=embedded_files,
         model=llm_config.model,
         prompt=prompt,
@@ -109,7 +109,7 @@ def review_job(
     )
 
     logging.info(f"Calling OpenAI model for review with total {len(embedded_files)} files...")
-    result: AIReviewResult = summarier.process()
+    result: AIReviewResult = summarizer.process()
 
     upload_result(f"{upload_url}?token={token}", result)
     logging.info(f"Completed summarization for {submit_url}")

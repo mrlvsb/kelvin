@@ -623,7 +623,7 @@ requires-dist = [
     { name = "openai", specifier = ">=2.6.1" },
     { name = "pandas", specifier = "==2.2.1" },
     { name = "psycopg", extras = ["binary"], specifier = "==3.2.1" },
-    { name = "pycountry", specifier = ">=24.6.1" },
+    { name = "pycountry", specifier = "~=24.6.1" },
     { name = "pygraphviz", specifier = "==1.7" },
     { name = "pymdown-extensions", specifier = "==10.10.1" },
     { name = "pyserde", specifier = "==0.25.1" },

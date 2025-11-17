@@ -88,7 +88,7 @@ class Migration(migrations.Migration):
                 ('severity', models.CharField(choices=[('critical', 'Critical'), ('high', 'High'), ('medium', 'Medium'), ('low', 'Low')], default='medium', max_length=10)),
                 ('model', models.CharField(max_length=50)),
                 ('rating', models.IntegerField(blank=True, null=True)),
-                ('state', models.CharField(choices=[('accepted', 'Accepted'), ('rejected', 'Rejected'), ('pending', 'Pending'), ('dismissed', 'Dismissed')], default='pending', max_length=10)),
+                ('state', models.CharField(choices=[('accepted', 'Accepted'), ('rejected', 'Rejected'), ('pending', 'Pending')], default='pending', max_length=10)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('comment', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='common.comment')),
                 ('prompt', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='common.llmreviewprompt')),

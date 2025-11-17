@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from ninja import Router
 from serde.json import from_json
@@ -16,6 +17,7 @@ router = Router()
     summary="Upload AI review summary result",
     description="Receive and store the AI summary result for a given submit.",
 )
+@transaction.atomic
 @require_submit_token
 def upload_submit_llm_review_result(request, submit_id: int):
     submit = get_object_or_404(Submit, id=submit_id)
