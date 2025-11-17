@@ -1,8 +1,9 @@
 import datetime
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Dict, Optional
+from typing import List, Dict
 
+from ninja import Schema
 from serde import serde
 
 import kelvin.settings
@@ -27,7 +28,7 @@ class SuggestionState(Enum):
 class SubmitSummary:
     id: int
     text: str
-    rating: Optional[int]
+    rating: int | None
     model: str
     prompt_id: int
     state: SuggestionState
@@ -40,22 +41,20 @@ class SuggestedCommentDTO:
     source: str
     line: int
     text: str
-    rating: Optional[int]
+    rating: int | None
     model: str
     prompt_id: int
     severity: Severity
     state: SuggestionState
 
 
-@serde
-@dataclass
-class LlmReviewPromptDTO:
+class LlmReviewPromptDTO(Schema):
     id: int
     name: str
     description: str
     version: int
     text: str
-    created_at: Optional[datetime.datetime]
+    created_at: datetime.datetime | None
     default: bool
 
 
@@ -83,7 +82,7 @@ class LlmConfig:
     enabled: bool
     language: str
     model: str
-    prompt_name: Optional[str]
+    prompt_name: str | None
 
     @staticmethod
     def from_dict(submit_config: Dict) -> "LlmConfig":

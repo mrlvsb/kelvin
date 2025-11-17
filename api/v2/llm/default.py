@@ -1,9 +1,8 @@
-from django.core import signing
 from django.shortcuts import get_object_or_404
 from ninja import Router
-from ninja.errors import HttpError
 from serde.json import from_json
 
+from api.auth import require_submit_token
 from common.ai_review.dto import AIReviewResult, SubmitSummary
 from common.models import Submit
 from common.models import SuggestedComment
@@ -17,15 +16,8 @@ router = Router()
     summary="Upload AI review summary result",
     description="Receive and store the AI summary result for a given submit.",
 )
-def upload_submit_llm_review_result(request, submit_id: int, token: str):
-    try:
-        decoded_token = signing.loads(token, max_age=3600)
-    except Exception:
-        raise HttpError(403, "Invalid or expired token")
-
-    if decoded_token.get("submit_id") != submit_id:
-        raise HttpError(403, "Permission denied")
-
+@require_submit_token
+def upload_submit_llm_review_result(request, submit_id: int):
     submit = get_object_or_404(Submit, id=submit_id)
     review: AIReviewResult = from_json(AIReviewResult, request.body)
     suggestions: list[SuggestedComment] = []

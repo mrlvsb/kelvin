@@ -11,21 +11,6 @@ from common.utils import is_teacher
 router = Router()
 
 
-# TODO: Move this to shared location and result in CommentDTO
-def dump_comment_to_dto(comment: Comment) -> dict:
-    return {
-        "id": comment.id,
-        "author": comment.author.get_full_name(),
-        "author_id": comment.author.id,
-        "text": comment.text,
-        "line": comment.line,
-        "source": comment.source,
-        "can_edit": True,
-        "type": "teacher",
-        "unread": True,
-    }
-
-
 @router.post(
     "/rate/{suggestion_id}",
     url_name="rate_submit_suggestion",
@@ -68,7 +53,7 @@ def accept_submit_suggestion(request, suggestion_id: int):
     suggestion.comment = created_comment
     suggestion.save()
 
-    return dump_comment_to_dto(created_comment)
+    return created_comment.to_dto(can_edit=True, type="teacher", unread=False)
 
 
 @router.patch(
@@ -93,7 +78,7 @@ def modify_submit_suggestion(request, suggestion_id: int, body: ModifySuggestion
     suggestion.comment = created_comment
     suggestion.save()
 
-    return dump_comment_to_dto(created_comment)
+    return created_comment.to_dto(can_edit=True, type="teacher", unread=False)
 
 
 @router.delete(

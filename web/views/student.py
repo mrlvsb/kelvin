@@ -414,7 +414,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
             **data,
             "submit": current_submit,
             "results": submit_data.results,
-            "summary": submit_data.ai_review,
+            "review": submit_data.ai_review,
         }
 
         has_failure = any(r.failed for r in data["results"])
@@ -838,7 +838,7 @@ def submit_comments(request, assignment_id, login, submit_num):
                         "type": AI_REVIEW_COMMENT_TYPE,
                         "url": None,
                         "meta": {
-                            "summary": {
+                            "review": {
                                 "id": summary.id,
                                 "state": summary.state.name,  #
                             }
@@ -865,7 +865,7 @@ def submit_comments(request, assignment_id, login, submit_num):
                         "type": AI_REVIEW_COMMENT_TYPE,
                         "url": None,
                         "meta": {
-                            "summary": {
+                            "review": {
                                 "id": suggestion.id,
                                 "state": suggestion.state.name,
                                 "severity": suggestion.severity.name,

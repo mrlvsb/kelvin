@@ -26,7 +26,7 @@ let hoverRating = 0;
 
 async function handleAccept() {
   sending = true;
-  const suggestionId = meta.summary.id;
+  const suggestionId = meta.review.id;
 
   const res = await fetch(`/api/v2/llm/suggestions/resolve/${suggestionId}`, {
     method: 'POST',
@@ -48,7 +48,7 @@ async function handleAccept() {
 
 async function handleDeny() {
   sending = true;
-  const suggestionId = meta.summary.id;
+  const suggestionId = meta.review.id;
 
   await fetch(`/api/v2/llm/suggestions/resolve/${suggestionId}`, {
     method: 'DELETE',
@@ -67,7 +67,7 @@ function handleEdit() {
 
 async function handleSave(event) {
   sending = true;
-  const suggestionId = meta.summary.id;
+  const suggestionId = meta.review.id;
 
   const res = await fetch(`/api/v2/llm/suggestions/resolve/${suggestionId}`, {
     method: 'PATCH',
@@ -93,7 +93,7 @@ async function handleSave(event) {
 
 async function handleDismiss() {
   sending = true;
-  const suggestionId = meta.summary.id;
+  const suggestionId = meta.review.id;
 
   await fetch(`/api/v2/llm/suggestions/dismiss/${suggestionId}`, {
     method: 'DELETE',
@@ -108,14 +108,14 @@ async function handleDismiss() {
 </script>
 
 {#if !(($hideComments === HideCommentsState.AUTOMATED && meta?.type === 'ai-review') || $hideComments === HideCommentsState.ALL)}
-  {#if $user?.teacher && meta?.summary?.state === 'PENDING' && !processed}
+  {#if $user?.teacher && meta?.review?.state === 'PENDING' && !processed}
     <div class="comment ai-review">
       <div class="comment-header">
         <strong>{author}</strong>
 
         {#if $user?.teacher && !editing}
           <div class="comment-actions">
-            {#if meta?.summary?.state === 'PENDING'}
+            {#if meta?.review?.state === 'PENDING'}
               {#if summary === true}
                 <button title="Accept" class="icon-button" on:click|preventDefault={handleDismiss}>
                   <span class="iconify" data-icon="cil-check"></span>
