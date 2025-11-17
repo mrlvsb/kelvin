@@ -215,9 +215,6 @@ RQ_QUEUES = {
     "evaluator": {
         "USE_REDIS_CACHE": "default",
     },
-    "summary": {
-        "USE_REDIS_CACHE": "default",
-    },
 }
 
 # For django-tasks-scheduler

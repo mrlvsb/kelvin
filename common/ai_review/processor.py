@@ -18,7 +18,7 @@ from common.utils import build_absolute_uri
 
 AI_REVIEW_COMMENT_TYPE: str = "ai-review"
 AI_REVIEW_COMMENT_AUTHOR: str = "LLM"
-AI_REVIEW_DJANGO_RQ_QUEUE: str = "summary"
+AI_REVIEW_DJANGO_RQ_QUEUE: str = "default"
 
 
 def enqueue_llm_review_job(
