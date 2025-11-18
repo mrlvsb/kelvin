@@ -160,7 +160,10 @@ class DockerPipe:
 
         result = {}
         try:
-            with open(os.path.join(evaluation.submit_path, "piperesult.json")) as f:
+            json_result_path = os.path.join(evaluation.submit_path, "piperesult.json")
+            if os.path.islink(json_result_path):
+                raise FileNotFoundError
+            with open(json_result_path) as f:
                 result = json.load(f)
         except FileNotFoundError:
             pass
@@ -174,6 +177,8 @@ class DockerPipe:
 
         try:
             path = os.path.join(evaluation.submit_path, "result.html")
+            if os.path.islink(path):
+                raise FileNotFoundError
             with open(path) as f:
                 result["html"] = f.read()
             os.unlink(path)
