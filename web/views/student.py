@@ -360,6 +360,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
     data = {
         # TODO: task and deadline can be combined into assignment ad deal with it in template
         "task": assignment.task,
+        "teacher": assignment.clazz.teacher.username,
         "assigned": assignment.assigned if is_announce else None,
         "deadline": assignment.deadline,
         "now": timezone.now(),

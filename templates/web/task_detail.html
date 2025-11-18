@@ -16,6 +16,9 @@
     <a href="/#/task/edit/{{task.id}}" class="text-muted" title="Edit task"><span class="iconify" data-icon="fa-solid:pen"></span></a>
     {% endif %}
 </h2>
+{% if teacher %}
+<h6>Class lecturer: {{ teacher }}</h6>
+{% endif %}
 {% if assigned %}
 <h6>Assigned: {{ assigned|date:"d.m.Y, G:i" }}, Time remaining: {{ assigned|timeuntil }}</h6>
 {% endif %}
