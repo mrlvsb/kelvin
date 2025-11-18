@@ -91,18 +91,19 @@ function compareSemester(a: string, b: string) {
 watch([semester, subject, teacher, clazz], () => {
   if (isLoading.value) return;
 
-  const params = new URLSearchParams(
-    Object.fromEntries(
-      Object.entries({
-        semester: semester.value,
-        subject: subject.value,
-        teacher: teacher.value,
-        class: clazz.value
-      }).filter(([, v]) => v)
-    )
+  const queryParams = {
+    semester: semester.value,
+    subject: subject.value,
+    teacher: teacher.value,
+    class: clazz.value
+  };
+
+  // Filter out empty values
+  const filteredParams = Object.fromEntries(
+    Object.entries(queryParams).filter(([, v]) => v)
   );
 
-  router.replace({ path: '/', query: Object.fromEntries(params.entries()) }).catch(() => {});
+  router.replace({ path: '/', query: filteredParams }).catch(() => {});
 
   // Emit filter change to parent
   emit('filterChange', {
