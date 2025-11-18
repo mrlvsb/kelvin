@@ -100,6 +100,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "web.views.common.template_context",
+                "django.template.context_processors.debug",
             ],
         },
     },
