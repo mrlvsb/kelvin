@@ -98,7 +98,10 @@ class TestResult:
                     # on the **host**, and its contents then presented to the user. That is a
                     # security issue.
                     # So we do not follow symlinks here.
-                    shutil.copyfile(actual, dest, follow_symlinks=False)
+                    # We must also not copy the file if it is itself a symlink, as it would be later
+                    # read on the host again.
+                    if not os.path.islink(actual):
+                        shutil.copyfile(actual, dest, follow_symlinks=False)
             except FileNotFoundError:
                 pass
 
