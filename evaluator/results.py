@@ -93,7 +93,12 @@ class TestResult:
                     with open(dest, "w" if isinstance(actual, io.StringIO) else "wb") as f:
                         f.write(actual.getvalue())
                 elif os.stat(actual).st_size > 0 or expected:
-                    shutil.copyfile(actual, dest)
+                    # Note: here we might be copying a file out of a direcetory that is shared with
+                    # the Docker sandbox. If the file is a symlink, that symlink would be evaluated
+                    # on the **host**, and its contents then presented to the user. That is a
+                    # security issue.
+                    # So we do not follow symlinks here.
+                    shutil.copyfile(actual, dest, follow_symlinks=False)
             except FileNotFoundError:
                 pass
 
