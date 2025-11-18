@@ -347,10 +347,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
     )
 
     is_announce = False
-    if (
-        assignment.assigned > timezone.now()
-        or not assignment.clazz.students.filter(username=request.user.username)
-    ) and not user_is_teacher:
+    if assignment.assigned > timezone.now() and not user_is_teacher:
         is_announce = True
         if not assignment.task.announce:
             raise HttpException404()
@@ -363,6 +360,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
     data = {
         # TODO: task and deadline can be combined into assignment ad deal with it in template
         "task": assignment.task,
+        "teacher": assignment.clazz.teacher.username,
         "assigned": assignment.assigned if is_announce else None,
         "deadline": assignment.deadline,
         "now": timezone.now(),
