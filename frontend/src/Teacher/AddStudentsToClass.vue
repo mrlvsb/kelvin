@@ -15,8 +15,10 @@ const textarea = ref('');
 const processing = ref(false);
 const addStudentError = ref('');
 
-function pasteLogins(event) {
-  const paste = (event.clipboardData || window.clipboardData).getData('text').toUpperCase();
+function pasteLogins(event: ClipboardEvent) {
+  const paste = event.clipboardData?.getData('text').toUpperCase();
+  if (!paste) return;
+
   const logins = Array.from(paste.matchAll(/\b([A-Z]{3}[0-9]{2,4})\b/g)).map((m) => m[1]);
   if (logins.length) {
     event.preventDefault();
