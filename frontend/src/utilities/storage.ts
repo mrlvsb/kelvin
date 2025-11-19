@@ -18,7 +18,6 @@ export const localStorageStore = <$Type>(key: string, initialValue: $Type): Ref<
                 initialValue = JSON.parse(saved);
             } catch (exception) {
                 console.log(`Failed to load ${key}: ${exception}`);
-                initialValue = initialValue;
             }
         }
 

@@ -2,7 +2,6 @@
 import { ref, computed } from 'vue';
 import AddStudentsToClass from './AddStudentsToClass.vue';
 import Markdown from '../components/Markdown.vue';
-import { getFromAPI } from '../utilities/api';
 import AssignmentPoints from './AssignmentPoints.vue';
 import { type Class, type StudentIdentity } from './frontendtypes';
 

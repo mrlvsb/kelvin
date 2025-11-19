@@ -29,7 +29,7 @@ export const loadInfo = async (forceDataRefresh = false) => {
     const semester = localStorageStore<Semester | undefined>('semester', undefined);
 
     if (!user.value || !semester.value || forceDataRefresh) {
-        let data = await getFromAPI<APIInfoResponse>('/api/info');
+        const data = await getFromAPI<APIInfoResponse>('/api/info');
         console.log('data:', data);
         data['semester']['begin'] = new Date(data['semester']['begin']);
         data['semester']['begin'].setHours(0);
