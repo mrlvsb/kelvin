@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { getFromAPI } from '../utilities/api';
 import { loadInfo } from '../utilities/global';
@@ -99,9 +99,7 @@ watch([semester, subject, teacher, clazz], () => {
   };
 
   // Filter out empty values
-  const filteredParams = Object.fromEntries(
-    Object.entries(queryParams).filter(([, v]) => v)
-  );
+  const filteredParams = Object.fromEntries(Object.entries(queryParams).filter(([, v]) => v));
 
   router.replace({ path: '/', query: filteredParams }).catch(() => {});
 

@@ -31,7 +31,7 @@ const filter = ref<FilterParams>({
 async function loadClasses() {
   isLoading.value = true;
   const params = new URLSearchParams(
-    Object.fromEntries(Object.entries(filter.value).filter(([_, v]) => v))
+    Object.fromEntries(Object.entries(filter.value).filter(([, v]) => v))
   ).toString();
 
   const req = await getFromAPI<{ classes: Class[] }>('/api/classes?' + params);
