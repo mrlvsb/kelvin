@@ -1,1 +1,1 @@
-If you find a security vulnerability in Kelvin, please disclose it to jakub.beranek@vsb.cz. Thank you!
+If you find a security vulnerability in Kelvin, please disclose it to kelvin@vsb.cz. Thank you!
