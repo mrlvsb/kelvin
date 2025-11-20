@@ -205,7 +205,9 @@ const options: Config = {
     callback({
       data: filtered,
       recordsTotal: count,
-      recordsFiltered: filtered.length
+      // We do client-side filtering with server-side data, we thus do not know the server-side
+      // filtered item count, and must use the total size.
+      recordsFiltered: count
     });
   },
   pageLength: 50,
