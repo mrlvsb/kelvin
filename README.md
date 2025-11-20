@@ -18,5 +18,5 @@ For local documentation, simply: `cd docs && npm ci && npm run start`
 
 ## Security
 
-If you find a security vulnerability in Kelvin, please disclose it to jakub.beranek@vsb.cz. Thank
+If you find a security vulnerability in Kelvin, please disclose it to kelvin@vsb.cz. Thank
 you!
