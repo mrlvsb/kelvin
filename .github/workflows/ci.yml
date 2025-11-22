@@ -1,11 +1,7 @@
 name: CI
 on:
   pull_request:
-    paths-ignore:
-      - 'docs/**'
   merge_group:
-    paths-ignore:
-      - 'docs/**'
 jobs:
   test-backend:
     runs-on: ubuntu-latest
