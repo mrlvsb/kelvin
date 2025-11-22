@@ -92,7 +92,11 @@ class Builder:
     def detect_language(self) -> str:
         return max(self.counters, key=self.counters.get)
 
-    def build_csv(self) -> Path:
+    def build_csv(self) -> Optional[Path]:
+        if len(self.entries) < 2:
+            self.logger.info(f"Not enough files to run Dolos ({len(self.entries)})")
+            return None
+
         data = defaultdict(list)
         for entry in self.entries:
             # Files should be relative to the temp dir
@@ -210,47 +214,47 @@ def dolos_check_plagiarism(task_id: int):
                 )
 
         csv_path = builder.build_csv()
+        if csv_path is not None:
+            name = f"{task.name} ({task.subject.abbr})"
+            args = [
+                "npx",
+                "--yes",
+                "-p",
+                "tree-sitter-rust",
+                "-p",
+                "@dodona/dolos",
+                "dolos",
+                "run",
+                str(csv_path),
+                "--language",
+                builder.detect_language(),
+                "--name",
+                name,
+                "--output-format",
+                "csv",
+            ]
 
-        name = f"{task.name} ({task.subject.abbr})"
-        args = [
-            "npx",
-            "--yes",
-            "-p",
-            "tree-sitter-rust",
-            "-p",
-            "@dodona/dolos",
-            "dolos",
-            "run",
-            str(csv_path),
-            "--language",
-            builder.detect_language(),
-            "--name",
-            name,
-            "--output-format",
-            "csv",
-        ]
+            templates = [Path(f) for f in iter_template_files(logger, task=task)]
+            if len(templates) > 0:
+                template_path = builder.path("task.template")
+                combine_files(templates, template_path)
+                args += ["-i", str(template_path.relative_to(builder.dir.name))]
 
-        templates = [Path(f) for f in iter_template_files(logger, task=task)]
-        if len(templates) > 0:
-            template_path = builder.path("task.template")
-            combine_files(templates, template_path)
-            args += ["-i", str(template_path.relative_to(builder.dir.name))]
+            logger.info(f"Running Dolos\n{' '.join(args)}")
+            output = subprocess.run(
+                args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=builder.dir.name
+            )
+            logger.info(f"Dolos exit code: {output.returncode}")
+            logger.info(f"Dolos stdout:\n{output.stdout.decode()}\n")
+            logger.info(f"Dolos stderr:\n{output.stderr.decode()}\n")
 
-        logger.info(f"Running Dolos\n{' '.join(args)}")
-        output = subprocess.run(
-            args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=builder.dir.name
-        )
-        logger.info(f"Dolos exit code: {output.returncode}")
-        logger.info(f"Dolos stdout:\n{output.stdout.decode()}\n")
-        logger.info(f"Dolos stderr:\n{output.stderr.decode()}\n")
+            tmp_result_dir = builder.get_result_dir()
+            if tmp_result_dir is None or output.returncode != 0:
+                raise Exception("Dolos execution failed")
 
-        tmp_result_dir = builder.get_result_dir()
-        if tmp_result_dir is None or output.returncode != 0:
-            raise Exception("Dolos execution failed")
-
-        # Copy the result CSV files from the temporary dir to the task dir
-        shutil.copytree(tmp_result_dir, result_dir)
-        mark_success(task)
+            # Copy the result CSV files from the temporary dir to the task dir
+            shutil.copytree(tmp_result_dir, result_dir)
+            mark_success(task)
     except BaseException as e:
         logger.exception(e)
         mark_failure(task)
