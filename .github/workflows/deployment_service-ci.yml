@@ -1,7 +1,8 @@
-name: Kelvin CI
+name: Deployment Service CI
+
 on:
   pull_request:
-      paths-ignore:
+      paths:
         - 'deployment_service/**'
         - '.github/workflows/deployment_service-ci.yml'
   merge_group:
@@ -15,7 +16,8 @@ env:
   UV_CACHE_DIR: /tmp/.uv-cache
 
 jobs:
-  test-backend:
+  static-code-analysis:
+    name: Static Code Analysis
     runs-on: ubuntu-latest
 
     steps:
@@ -26,88 +28,103 @@ jobs:
         id: setup_python
         uses: actions/setup-python@v5
         with:
-          python-version-file: "pyproject.toml"
+          python-version-file: "deployment_service/pyproject.toml"
 
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: "auto"
-          version: "0.9.9"
-
-      - name: Install OS dependencies
-        run: |
-          sudo apt-get install -y libgraphviz-dev build-essential
+          working-directory: "deployment_service"
 
       - name: Cache venv
         uses: actions/cache@v4
         id: cache-venv
         with:
-            path: .venv/
-            key: ${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-kelvin-${{ hashFiles('uv.lock') }}
+            path: deployment_service/.venv/
+            key: ${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-deployment_service-${{ hashFiles('deployment_service/uv.lock') }}
 
       - name: Restore uv cache
         uses: actions/cache@v4
         with:
           path: /tmp/.uv-cache
-          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          key: uv-${{ runner.os }}-${{ hashFiles('deployment_service/uv.lock') }}
 
       - name: Install dependencies
+        working-directory: deployment_service/
         run: |
           uv sync --frozen
 
-      - name: Check migrations
-        run: uv run manage.py makemigrations api common web survey quiz --check
-
-      # Update output format to enable automatic inline annotations.
-      - name: Lint Python code
+      - name: Ruff Linter
+        working-directory: deployment_service/
         run: uv run ruff check --output-format=github
 
-      - name: Check Python formatting
+      - name: Ruff Formatter
+        if: success() || failure()
+        working-directory: deployment_service/
         run: uv run ruff format --check
 
       - name: Check lockfile
+        if: success() || failure()
+        working-directory: deployment_service/
         run: uv lock --locked
 
-      - name: Pyrefly Python code
-        run: uv run pyrefly check
-        continue-on-error: true
+      - name: MyPy
+        if: success() || failure()
+        working-directory: deployment_service/
+        run: |
+          uv run mypy --check .
 
-  test-frontend:
+  tests:
+    name: Python Tests
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout sources
         uses: actions/checkout@v5
 
-      - name: Install NodeJS
-        uses: actions/setup-node@v4
+      - name: Setup Python
+        id: setup_python
+        uses: actions/setup-python@v5
         with:
-          node-version: 20
+          python-version-file: "deployment_service/pyproject.toml"
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: "auto"
+          working-directory: "deployment_service"
+
+      - name: Cache venv
+        uses: actions/cache@v4
+        id: cache-venv
+        with:
+            path: deployment_service/.venv/
+            key: ${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-deployment_service-${{ hashFiles('deployment_service/uv.lock') }}
+
+      - name: Restore uv cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.uv-cache
+          key: uv-${{ runner.os }}-${{ hashFiles('deployment_service/uv.lock') }}
+          restore-keys: |
+            uv-${{ runner.os }}-${{ hashFiles('deployment_service/uv.lock') }}
+            uv-${{ runner.os }}
 
       - name: Install dependencies
-        working-directory: frontend/
+        working-directory: deployment_service/
         run: |
-          npm ci
-
-      - name: Build packages
-        working-directory: frontend/
-        run: |
-          npm run build
+          uv sync --frozen
 
       - name: Run tests
-        working-directory: frontend/
+        working-directory: deployment_service/
+        run: uv run pytest
         env:
-          TZ: "CET"
-        run: |
-          npm run test
-
-      - name: Check lints and formatting
-        working-directory: frontend/
-        run: |
-          npm run check
+          SECURITY__WEBHOOK_SECRET: "yoursecretvalue"
+          DOCKER__COMPOSE_FILE_PATH: "../docker-compose.yml"
 
   build-docker:
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       packages: write
@@ -127,56 +144,41 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
-          cache-from: type=registry,ref=ghcr.io/mrlvsb/kelvin-ci-cache
+          cache-from: type=registry,ref=ghcr.io/mrlvsb/deployment-ci-cache
           # Only write the cache in a merge build
           # https://github.com/docker/build-push-action/issues/845#issuecomment-1512619265
-          cache-to: ${{ github.event_name == 'merge_group' && 'type=registry,ref=ghcr.io/mrlvsb/kelvin-ci-cache,compression=zstd' || '' }}
-          tags: ghcr.io/mrlvsb/kelvin:latest,ghcr.io/mrlvsb/kelvin:${{ github.sha }}
-          outputs: type=docker,dest=${{ runner.temp }}/kelvin.tar
+          cache-to: ${{ github.event_name == 'merge_group' && 'type=registry,ref=ghcr.io/mrlvsb/deployment-ci-cache,compression=zstd' || '' }}
+          tags: ghcr.io/mrlvsb/deployment:latest,ghcr.io/mrlvsb/deployment:${{ github.sha }}
+          outputs: type=docker,dest=${{ runner.temp }}/deployment.tar
 
       - name: Share built image
         uses: actions/upload-artifact@v4
         with:
-          name: kelvin
-          path: ${{ runner.temp }}/kelvin.tar
+          name: deployment
+          path: ${{ runner.temp }}/deployment.tar
           retention-days: 1
 
   deploy:
     runs-on: ubuntu-latest
     permissions:
       packages: write
-    needs: [test-backend, test-frontend, build-docker]
+    needs: [static-code-analysis, tests, build-docker]
     environment: production
     concurrency: production
     if: ${{ github.event_name == 'merge_group' }}
-
     steps:
-      - name: Checkout deploy script
-        uses: actions/checkout@v5
-        with:
-          sparse-checkout: |
-            deployment_service/deploy.py
-          sparse-checkout-cone-mode: false
-
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
 
       - name: Download built image
         uses: actions/download-artifact@v4
         with:
-          name: kelvin
+          name: deployment
           path: ${{ runner.temp }}
 
       - name: Load image
-        id: load_image
         run: |
-          LOADED=$(docker load --input ${{ runner.temp }}/kelvin.tar)
-          # Expected output from `docker load`, based on the previous `build-docker` job:
-          # Loaded image: ghcr.io/mrlvsb/kelvin:latest
-          # Loaded image: ghcr.io/mrlvsb/kelvin:<Commit SHA>
-          echo "$LOADED"
-          SHA_TAG=$(echo "$LOADED" | grep -v ':latest' | awk '{print $3}')
-          echo "app_image_tag=$SHA_TAG" >> $GITHUB_OUTPUT
+          docker load --input ${{ runner.temp }}/deployment.tar
           docker image ls -a
 
       - name: Login to Docker registry
@@ -186,27 +188,12 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push Docker image with SHA tag
-        run: docker push ${{ steps.load_image.outputs.app_image_tag }}
-
-      - name: Trigger on-prem deployment
-        run: |
-          python3 deployment_service/deploy.py \
-            --service-name app \
-            --container-name kelvin_app \
-            --image ${{ steps.load_image.outputs.app_image_tag }} \
-            --commit-sha ${{ github.sha }} \
-            --healthcheck-url https://kelvin.cs.vsb.cz/api/v2/health \
-            --url https://kelvin.cs.vsb.cz/deployment/
-        env:
-          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
-
-      - name: Push Docker image with latest tag
-        run: docker push ghcr.io/mrlvsb/kelvin:latest
+      - name: Push Docker image
+        run: docker push --all-tags ghcr.io/mrlvsb/deployment
 
       - uses: actions/delete-package-versions@v5
         with:
-          package-name: 'kelvin'
+          package-name: 'deployment'
           package-type: 'container'
           min-versions-to-keep: 15
 
@@ -215,7 +202,7 @@ jobs:
   # On merge queue, we need everything to be green.
   # ALL THE PREVIOUS JOBS NEED TO BE ADDED TO THE `needs` SECTION OF THIS JOB!
   conclusion:
-    needs: [test-frontend, test-backend, build-docker, deploy]
+    needs: [static-code-analysis, tests, build-docker, deploy]
     # We need to ensure this job does *not* get skipped if its dependencies fail,
     # because a skipped job is considered a success by GitHub. So we have to
     # overwrite `if:`. We use `!cancelled()` to ensure the job does still not get run

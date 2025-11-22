@@ -37,11 +37,11 @@ async def manager_instance(mock_docker_client):
 
 
 @pytest.mark.asyncio
-async def test_get_current_image_id_success(manager_instance):
+async def test_get_current_image_tag_success(manager_instance):
     mock_container = MagicMock()
     mock_container.image.id = "sha256:imgid"
     manager_instance.client.containers.get.return_value = mock_container
-    assert manager_instance._get_current_image_tag() == "imgid"
+    assert manager_instance._get_current_image() == ("imgid", "imgid")
 
 
 @pytest.mark.asyncio
@@ -127,7 +127,9 @@ async def test_swap_service_critical_error(manager_instance):
 @patch("shutil.rmtree")
 async def test_run_success(mock_rmtree, mock_mkdtemp, manager_instance):
     """Tests the entire successful deployment workflow."""
-    manager_instance._get_current_image_tag = MagicMock(return_value="previous_image_id")
+    manager_instance._get_current_image = MagicMock(
+        return_value=("previous_image_tag", "previous_image_id")
+    )
     manager_instance._pull_new_image = MagicMock()
     manager_instance._swap_service = AsyncMock(return_value=True)
     manager_instance._health_check = AsyncMock(return_value=True)
@@ -146,7 +148,7 @@ async def test_run_success(mock_rmtree, mock_mkdtemp, manager_instance):
         output_file=ANY,
     )
 
-    manager_instance._get_current_image_tag.assert_called_once()
+    manager_instance._get_current_image.assert_called_once()
     manager_instance._pull_new_image.assert_called_once()
     manager_instance._swap_service.assert_awaited_once()
     manager_instance._health_check.assert_awaited_once()
@@ -163,7 +165,7 @@ async def test_run_success(mock_rmtree, mock_mkdtemp, manager_instance):
 @pytest.mark.asyncio
 async def test_run_rollback_on_health_check_failure(manager_instance):
     """Tests that a rollback is triggered if the health check fails."""
-    manager_instance._get_current_image_tag = MagicMock(return_value="previous123")
+    manager_instance._get_current_image = MagicMock(return_value=("previous123", "previous123_id"))
     manager_instance._pull_new_image = MagicMock()
     manager_instance._health_check = AsyncMock(return_value=False)
 
