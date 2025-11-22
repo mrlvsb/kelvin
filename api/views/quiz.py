@@ -110,11 +110,11 @@ def quiz_results(request: HttpRequest, enrolled_id: int, is_submit: int):
 
     enrolled_quiz = get_object_or_404(EnrolledQuiz, pk=enrolled_id)
 
-    if request.user.id != enrolled_quiz.student.id:
-        return HttpResponseForbidden()
+    if request.user.pk != enrolled_quiz.student.pk:
+        return JsonResponse({"error": "Forbidden"}, status=403)
 
     if enrolled_quiz.submitted:
-        return HttpResponseForbidden()
+        return JsonResponse({"error": "Quiz already submitted"}, status=403)
 
     submit_answers_dto = from_json(SubmitAnswersDto, request.body.decode("utf-8"))
 
@@ -147,8 +147,8 @@ def quiz_scoring(request: HttpRequest, enrolled_id: int):
 
     if enrolled_quiz.scored_by is None:
         enrolled_quiz.scored_by = teacher
-    elif enrolled_quiz.scored_by.id != teacher.id:
-        return HttpResponseForbidden()
+    elif enrolled_quiz.scored_by.pk != teacher.pk:
+        return JsonResponse({"error": "Forbidden"}, status=403)
 
     enrolled_quiz.scoring = json.loads(to_json(scoring_dto.scoring))
 
