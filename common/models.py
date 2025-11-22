@@ -1,23 +1,22 @@
+import datetime
+import logging
 import os
 import re
-import logging
-import datetime
-
 from typing import List, Optional
 
-from django.db.models import QuerySet
-from django.utils import timezone
-
-from django.db import models
 from django.conf import settings
-from django.urls import reverse
 from django.contrib.auth.models import User
-
-from kelvin.settings import BASE_DIR
-from .utils import is_teacher
+from django.db import models
+from django.db.models import QuerySet
+from django.urls import reverse
+from django.utils import timezone
 from jinja2 import Environment, FileSystemLoader
 
+from kelvin.settings import BASE_DIR
+from .ai_review.dto import LlmReviewPromptDTO
+from .dto import CommentDTO
 from .event_log import UserEventModel  # noqa
+from .utils import is_teacher
 
 
 def current_semester() -> Optional["Semester"]:
@@ -352,6 +351,67 @@ class Comment(models.Model):
             )
             + "#src"
         )
+
+    def to_dto(self, can_edit: bool, type: str, unread: bool) -> CommentDTO:
+        return CommentDTO(
+            id=self.id,
+            author=self.author.get_full_name(),
+            author_id=self.author.id,
+            text=self.text,
+            line=self.line,
+            source=self.source,
+            can_edit=can_edit,
+            type=type,
+            unread=unread,
+        )
+
+
+class LlmReviewPrompt(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    version = models.IntegerField(default=1)
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    default = models.BooleanField(default=False)
+
+    def to_dto(self) -> LlmReviewPromptDTO:
+        return LlmReviewPromptDTO(
+            id=self.id,
+            name=self.name,
+            description=self.description if self.description is not None else "",
+            version=self.version,
+            text=self.text,
+            created_at=self.created_at,
+            default=self.default,
+        )
+
+
+class SuggestedComment(models.Model):
+    class State(models.TextChoices):
+        ACCEPTED = "accepted"
+        REJECTED = "rejected"
+        PENDING = "pending"
+
+    class SeverityLevel(models.TextChoices):
+        CRITICAL = "critical"
+        HIGH = "high"
+        MEDIUM = "medium"
+        LOW = "low"
+
+    submit = models.ForeignKey(Submit, on_delete=models.CASCADE)
+    source = models.CharField(max_length=255, null=True, blank=True)
+    line = models.IntegerField(null=True, blank=True)
+    text = models.TextField()
+    severity = models.CharField(
+        max_length=10, choices=SeverityLevel.choices, default=SeverityLevel.MEDIUM
+    )
+    model = models.CharField(max_length=50)
+    prompt = models.ForeignKey(LlmReviewPrompt, on_delete=models.SET_NULL, null=True, blank=True)
+    rating = models.IntegerField(null=True, blank=True)
+    state = models.CharField(max_length=10, choices=State.choices, default=State.PENDING)
+    comment = models.ForeignKey(Comment, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 User.add_to_class("notification_str", lambda self: self.get_full_name())

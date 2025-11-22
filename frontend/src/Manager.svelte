@@ -76,7 +76,7 @@ async:
   # LLM is module for automatic feedback generation using Large Language Models
   llm:
     enabled: false
-    language: en
+    language: cs
 
     # Override default model and prompt settings
     #model: gpt-3.5-turbo

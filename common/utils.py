@@ -1,4 +1,5 @@
 import io
+import os
 import re
 import tarfile
 from datetime import timedelta
@@ -101,3 +102,10 @@ def download_source_to_path(source_url: str, destination_path: str) -> None:
 
     with tarfile.open(fileobj=io.BytesIO(response.content)) as tar:
         tar.extractall(destination_path)
+
+
+def build_absolute_uri(request, location):
+    base_uri = os.getenv("API_INTERNAL_BASEURL", None)
+    if base_uri:
+        return "".join([base_uri, location])
+    return request.build_absolute_uri(location)

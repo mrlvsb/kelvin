@@ -3,6 +3,7 @@ import { createEventDispatcher } from 'svelte';
 import CommentForm from './CommentForm.svelte';
 import Comment from './Comment.svelte';
 import { user } from './global.js';
+import SuggestedComment from './SuggestedComment.svelte';
 
 export let line;
 export let lineNumber;
@@ -41,7 +42,11 @@ function addNewComment(evt) {
   <td>
     <pre>{@html line}</pre>
     {#each comments || [] as comment}
-      <Comment {...comment} on:saveComment on:setNotification />
+      {#if comment.type === 'ai-review'}
+        <SuggestedComment {...comment} on:resolveSuggestion />
+      {:else}
+        <Comment {...comment} on:saveComment on:setNotification />
+      {/if}
     {/each}
 
     {#if showAddingForm}
