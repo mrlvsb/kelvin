@@ -22,7 +22,7 @@ In these examples, the first line with the hash denotes filename.
 These files are grouped together by the matching filename prefix, which denotes a single test or a scenario.
 It is recommended to prepend the test number to each test because tests are ordered by name.
 
-### 1. Check the standard output
+## 1. Check the standard output
 
 This test will execute the student program and checks if it prints `2020` in the standard output.
 
@@ -31,7 +31,7 @@ This test will execute the student program and checks if it prints `2020` in the
 2020
 ```
 
-### 2. Pass the standard input and check the standard output
+## 2. Pass the standard input and check the standard output
 
 The standard input is passed to the program and then the student's result on the output is compared to the expected stdout result.
 
@@ -45,7 +45,7 @@ The standard input is passed to the program and then the student's result on the
 10
 ```
 
-### 3. Check the file content
+## 3. Check the file content
 
 Checks if the student's program created file `result.txt` with the expected content.
 
@@ -54,7 +54,7 @@ Checks if the student's program created file `result.txt` with the expected cont
 1 2 3 4 5 6 7 8 9 10
 ```
 
-### 4. Provide an input file
+## 4. Provide an input file
 
 Provides the input file `data.txt` to student's program.
 It can be combined with stdout or file comparing.
@@ -64,7 +64,7 @@ It can be combined with stdout or file comparing.
 1 2 3 4 5 6 7 8 9 10
 ```
 
-### 5. Arguments
+## 5. Arguments
 
 Arguments passed to the program can be defined in yaml configuration:
 
@@ -77,7 +77,7 @@ tests:
       - 80
 ```
 
-### 6. Exit code checking
+## 6. Exit code checking
 
 Program's exit code must be zero in order to pass the test.
 Different program's exit code or disabling of this check can be configured in yaml.
@@ -91,7 +91,7 @@ tests:
     exit_code: null
 ```
 
-### Dynamic tests
+## Dynamic tests
 
 Some bigger or dynamic tests can be configured by `script.py` in the task directory.
 Tests are created in the function `gen_tests` - you can also use numpy for generating the output for your random input.
