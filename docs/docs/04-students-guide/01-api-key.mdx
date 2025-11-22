@@ -1,0 +1,30 @@
+---
+title: API key
+sidebar_position: 1
+---
+
+An API key is a unique identifier used to authenticate requests associated with your account as student.
+For security reasons, you should keep your API key private and not share it publicly.
+
+Click [Create API Token](https://kelvin.cs.vsb.cz/api_token) to generate your API key.
+
+## Using the API key
+
+To use the API key, include it in the `Authorization` header of your HTTP requests. The format should be as follows:
+
+```
+Authorization: Bearer YOUR_API_KEY
+```
+
+```bash
+curl -H "Authorization: Bearer YOUR_TOKEN" https://kelvin.cs.vsb.cz
+```
+
+```py
+import requests
+headers = {
+    "Authorization": "Bearer YOUR_TOKEN"
+}
+response = requests.get("https://kelvin.cs.vsb.cz", headers=headers)
+print(response.text)
+```

@@ -1,8 +1,7 @@
 ---
 sidebar_position: 2
+title: Architecture
 ---
-
-# Architecture of Kelvin
 
 Kelvin consists of several interconnected services:
 
@@ -10,7 +9,7 @@ Kelvin consists of several interconnected services:
   - Django 4 application that provides a REST API and also a set of user-facing web pages and templates
   - It renders some part of the web using a JavaScript frontend
 - **JavaScript frontend**
-  - Reactive frontend implemented using Svelte 3, which is rendered into a single JS and CSS file
+  - Reactive frontend implemented using Svelte 3 and Vue.js, which is rendered into a single JS and CSS file
   and served by the Django app.
 - **PostgreSQL database**
   - Provides persistent storage of users, classes, subjects etc. for the web
@@ -18,14 +17,15 @@ Kelvin consists of several interconnected services:
   - Provides a temporary (non-persistent) cache used for e.g. storing code plagiarism detection
     check results
 
-The web also uses RQ (Redis) queues for executing various jobs. There are three queues:
+The web also uses RQ (Redis) queues for executing various jobs. There are multiple queues:
 
-- `default` queue performs jobs related to code plagiarism detection
+- `default` queue performs jobs related to common asynchronous stuff, like:
+  - Code plagiarism detection
+  - LLM code submission review
 - `evaluator` queue performs evaluations of code submitted by students
   - The evaluation logic is implemented in the `evaluator` directory
   - It uses Docker internally to perform various evaluation pipelines
 - `cuda` queue also performs evaluation, but it should be used for code that needs an NVIDIA GPU
-- `summary` queue used to process LLM review of student submitted code
 
 Here is a simple diagram that describes the architecture:
 
