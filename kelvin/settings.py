@@ -220,6 +220,8 @@ RQ_QUEUES = {
 # For django-tasks-scheduler
 SCHEDULER_QUEUES = {"default": {"HOST": REDIS_HOST, "PORT": REDIS_PORT}}
 
+# Logging
+LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG")
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -246,17 +248,18 @@ LOGGING = {
         # Default logger for everything
         "": {
             "handlers": ["console", "mail_admins"],
-            "level": "DEBUG",
+            "level": LOG_LEVEL,
         },
         # Override format of default Django logs
         "django.server": {
             "handlers": ["console_http"],
-            "level": "DEBUG",
+            "level": LOG_LEVEL,
             "propagate": False,
         },
-        # Disable logs from the serde and markdown crates, to avoid spam
+        # Disable logs from the serde, markdown crates and openai, to avoid spam
         "serde": {"handlers": [], "level": "DEBUG", "propagate": False},
         "markdown": {"handlers": [], "level": "DEBUG", "propagate": False},
+        "openai": {"handlers": [], "level": "DEBUG", "propagate": False},
     },
 }
 

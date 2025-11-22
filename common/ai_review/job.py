@@ -31,7 +31,6 @@ def detect_language(filename: str) -> Optional[str]:
 
 
 def upload_result(submit_url: str, result: AIReviewResult) -> None:
-    logging.basicConfig(level=logging.DEBUG)
     session = requests.Session()
 
     json_body = to_json(result, indent=2)
@@ -89,7 +88,6 @@ def embed_source_files(source_files_path: str) -> List[EmbeddedFile]:
 def review_job(
     submit_url: str, upload_url: str, prompt_url: str, token: str, llm_config: LlmConfig
 ) -> None:
-    logging.basicConfig(level=logging.DEBUG)
     logging.info(f"Summarizing {submit_url}")
 
     with tempfile.TemporaryDirectory() as workdir:
