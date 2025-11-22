@@ -90,7 +90,6 @@ class AISubmitReview:
             model=self.model,
             messages=messages,
             temperature=0.2,
-            reasoning_effort="high",
             response_format=ResponseFormatJSONObject(type="json_object"),
         )
 
