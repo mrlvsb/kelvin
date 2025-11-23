@@ -172,17 +172,17 @@ jobs:
       - name: Push Docker image with SHA tag
         run: docker push ${{ steps.load_image.outputs.app_image_tag }}
 
-      - name: Trigger on-prem deployment
-        run: |
-          python3 deployment_service/deploy.py \
-            --service-name app \
-            --container-name kelvin_app \
-            --image ${{ steps.load_image.outputs.app_image_tag }} \
-            --commit-sha ${{ github.sha }} \
-            --healthcheck-url https://kelvin.cs.vsb.cz/api/v2/health \
-            --url https://kelvin.cs.vsb.cz/deployment/
-        env:
-          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+      #      - name: Trigger on-prem deployment
+      #        run: |
+      #          python3 deployment_service/deploy.py \
+      #            --service-name app \
+      #            --container-name kelvin_app \
+      #            --image ${{ steps.load_image.outputs.app_image_tag }} \
+      #            --commit-sha ${{ github.sha }} \
+      #            --healthcheck-url https://kelvin.cs.vsb.cz/api/v2/health \
+      #            --url https://kelvin.cs.vsb.cz/deployment/
+      #        env:
+      #          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
 
       - name: Push Docker image with latest tag
         run: docker push ghcr.io/mrlvsb/kelvin:latest
