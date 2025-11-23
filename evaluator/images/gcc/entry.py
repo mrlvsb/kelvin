@@ -1,9 +1,19 @@
 #!/usr/bin/python3
 import html
+import io
+import json
 import subprocess
 import os
 import shlex
-import json
+
+
+SANITIZED_FILES = ["result.html", "piperesult.json"]
+
+output = os.getenv("PIPE_OUTPUT", "main")
+flags = os.getenv("PIPE_FLAGS", "")
+ldflags = os.getenv("PIPE_LDFLAGS", "")
+cmakeflags = os.getenv("PIPE_CMAKEFLAGS", "[]")
+makeflags = os.getenv("PIPE_MAKEFLAGS", "[]")
 
 
 # TODO: replace with shlex.join on python3.8
@@ -29,14 +39,11 @@ def cmd_run(cmd, out, show_cmd=None, env=None):
         return p.returncode
 
 
-output = os.getenv("PIPE_OUTPUT", "main")
-flags = os.getenv("PIPE_FLAGS", "")
-ldflags = os.getenv("PIPE_LDFLAGS", "")
-cmakeflags = os.getenv("PIPE_CMAKEFLAGS", "[]")
-makeflags = os.getenv("PIPE_MAKEFLAGS", "[]")
+class CompilationException(BaseException):
+    pass
 
 
-with open("result.html", "w") as out:
+def compile(makeflags: str, cmakeflags: str, html_output: io.StringIO):
     env = {
         "CC": "gcc",
         "CXX": "g++",
@@ -50,12 +57,16 @@ with open("result.html", "w") as out:
 
     if "cmakelists.txt" in [f.lower() for f in os.listdir(".")]:
         cmakeflags = json.loads(cmakeflags)
-        cmd_run(["cmake", *cmakeflags, "."], out, env=env)
+        cmake_exitcode = cmd_run(["cmake", *cmakeflags, "."], html_output, env=env)
+        if cmake_exitcode != 0:
+            raise CompilationException(f"Could not run CMake, exit code {cmake_exitcode}")
 
     # The file list needs to be queried again
     if "makefile" in [f.lower() for f in os.listdir(".")]:
         makeflags = json.loads(makeflags)
-        returncode = cmd_run(["make", *makeflags], out, env=env)
+        make_exitcode = cmd_run(["make", *makeflags], html_output, env=env)
+        if make_exitcode != 0:
+            raise CompilationException(f"Could not run Make, exit code {make_exitcode}")
     else:
         sources = []
         for root, dirs, files in os.walk("."):
@@ -64,10 +75,9 @@ with open("result.html", "w") as out:
                     sources.append(os.path.join(root, f))
 
         if not sources:
-            out.write(
-                "<div style='color: red'>Missing source files! please upload .c or .cpp files!</div>"
+            raise CompilationException(
+                "Missing source files! please upload .c or .cpp files!</div>"
             )
-            exit(1)
 
         use_cpp = any(f.endswith(".cpp") for f in sources)
         compile_cmd = [
@@ -78,43 +88,48 @@ with open("result.html", "w") as out:
             *shlex.split(flags),
             *shlex.split(ldflags),
         ]
-        returncode = cmd_run(compile_cmd, out, show_cmd=compile_cmd, env=env)
+        gcc_exitcode = cmd_run(compile_cmd, html_output, show_cmd=compile_cmd, env=env)
 
-        if returncode == 0:
-            out.write("<div style='color: green'>Compilation Succeeded</div>")
+        if gcc_exitcode == 0:
+            out.write("<div style='color: green'>Compilation succeeded</div>")
         else:
-            out.write("<div style='color: red'>Compilation Failed</div>")
+            raise CompilationException(f"Failed to run GCC, exit code {gcc_exitcode}")
 
     if output and not os.path.exists(output):
         executables = [f for f in os.listdir() if os.access(f, os.X_OK) and not os.path.isdir(f)]
         if len(executables) == 0:
-            out.write("<div style='color: red'>No executable has been built.</div>")
-            exit(1)
+            raise CompilationException("No executable has been built.")
         elif len(executables) > 1:
-            out.write(
-                f"<div style='color: red'>Multiple executables have been built: {','.join(executables)}</div>"
+            raise CompilationException(
+                f"Multiple executables have been built: {','.join(executables)}"
             )
-            exit(1)
 
-        out.write(f"<code style='filter: opacity(.7);'>$ mv {executables[0]} {output}</code>")
+        html_output.write(
+            f"<code style='filter: opacity(.7);'>$ mv {executables[0]} {output}</code>"
+        )
         os.rename(executables[0], output)
 
 
-"""
-p = subprocess.Popen([*compile_cmd, '-fdiagnostics-format=json'], stderr=subprocess.PIPE)
-stdout, stderr = p.communicate()
-comments = defaultdict(list)
-for err in json.loads(stderr.decode('utf-8')):
-    for pos in err['locations']:
-        filename = re.sub(r'^./', '', pos['caret']['file'])
-        comments[filename].append({
-            'line': pos['caret']['line'],
-            'text': err['message'],
-            'url': err.get('option_url', None),
- 
-        })
+result_file = "result.html"
 
-with open('piperesult.json', 'w') as out:
-    json.dump({"comments": comments}, out, indent=4, sort_keys=True)
-"""
+html_output = io.StringIO()
+returncode = 1
+
+try:
+    compile(makeflags, cmakeflags, html_output)
+    returncode = 0
+except BaseException as e:
+    if isinstance(e, CompilationException):
+        html_output.write(f"<div style='color: red'>{str(e)}</div>")
+finally:
+    for file in SANITIZED_FILES:
+        try:
+            # Make sure that no sanitized file was written
+            os.unlink(file)
+        except:  # noqa
+            pass
+
+with open("result.html", "w") as out:
+    out.write(html_output.getvalue())
+
 exit(returncode)
