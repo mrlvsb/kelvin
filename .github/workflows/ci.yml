@@ -2,6 +2,14 @@ name: CI
 on:
   pull_request:
   merge_group:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+# Do not allow parallel execution when deploying from the master branch
+concurrency: ${{ github.workflow }}-${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 'deploy' || github.sha }}
+
 jobs:
   test-backend:
     runs-on: ubuntu-latest
@@ -77,9 +85,9 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           cache-from: type=registry,ref=ghcr.io/mrlvsb/kelvin-ci-cache
-          # Only write the cache in a merge build
+          # Only write the cache in the main branch
           # https://github.com/docker/build-push-action/issues/845#issuecomment-1512619265
-          cache-to: ${{ github.event_name == 'merge_group' && 'type=registry,ref=ghcr.io/mrlvsb/kelvin-ci-cache,compression=zstd' || '' }}
+          cache-to: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 'type=registry,ref=ghcr.io/mrlvsb/kelvin-ci-cache,compression=zstd' || '' }}
           tags: ghcr.io/mrlvsb/kelvin:latest,ghcr.io/mrlvsb/kelvin:${{ github.sha }}
           outputs: type=docker,dest=${{ runner.temp }}/kelvin.tar
       - name: Share built image
@@ -88,14 +96,43 @@ jobs:
           name: kelvin
           path: ${{ runner.temp }}/kelvin.tar
           retention-days: 1
-  deploy:
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: docs
+        run: npm ci
+
+      - name: Build docs
+        working-directory: docs
+        run: npm run build
+
+      - name: Install markdownlint
+        run: npm install -g markdownlint-cli
+
+      - name: Run Markdownlint on MDX files
+        working-directory: docs
+        run: npx markdownlint "**/*.mdx" "**/*.md"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/build
+  deploy-kelvin:
     runs-on: ubuntu-latest
     permissions:
       packages: write
-    needs: [test-backend, test-frontend, build-docker]
+    needs: [ test-backend, test-frontend, build-docker ]
     environment: production
-    concurrency: production
-    if: ${{ github.event_name == 'merge_group' }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout deploy script
         uses: actions/checkout@v5
@@ -149,13 +186,29 @@ jobs:
 
       - name: Push Docker image with latest tag
         run: docker push ghcr.io/mrlvsb/kelvin:latest
+  deploy-docs:
+    runs-on: ubuntu-latest
+    needs: [ build-docs ]
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
   # Summary job to enable easier handling of required status checks.
-  # On PRs, we need everything to be green, while deploy is skipped.
-  # On merge queue, we need everything to be green.
+  # On PRs and merge queues, we need everything to be green, while deploy jobs are skipped.
+  # On master, we need everything to be green.
   # ALL THE PREVIOUS JOBS NEED TO BE ADDED TO THE `needs` SECTION OF THIS JOB!
   conclusion:
-    needs: [test-frontend, test-backend, build-docker, deploy]
+    needs: [ test-frontend, test-backend, build-docker, deploy-kelvin, deploy-docs ]
     # We need to ensure this job does *not* get skipped if its dependencies fail,
     # because a skipped job is considered a success by GitHub. So we have to
     # overwrite `if:`. We use `!cancelled()` to ensure the job does still not get run
