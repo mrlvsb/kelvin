@@ -30,16 +30,13 @@ def remove_html_entities(text: str) -> str:
     return html_entity_pattern.sub("", text)
 
 
-AI_REVIEW_DEFAULT_LANGUAGE: str = "cs"
-
-
 class AISubmitReview:
     def __init__(
         self,
         files: List[EmbeddedFile],
         model: str,
         prompt: LlmReviewPromptDTO,
-        language: str = AI_REVIEW_DEFAULT_LANGUAGE,
+        language: str = "cs",
     ):
         self.files = files
         self.model = model
@@ -80,7 +77,8 @@ class AISubmitReview:
             ChatCompletionUserMessageParam(content=self.build_user_content(), role="user"),
         ]
 
-        if self.language.lower() != AI_REVIEW_DEFAULT_LANGUAGE:
+        # Since prompt is written in English, we need to translate when the output language is not English
+        if self.language.lower() != "en":
             translate_prompt = ChatCompletionSystemMessageParam(
                 content=self.build_translation_content(), role="system"
             )
