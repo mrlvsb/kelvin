@@ -5,7 +5,7 @@ import json
 import subprocess
 import os
 import shlex
-
+import bleach
 
 SANITIZED_FILES = ["result.html", "piperesult.json"]
 
@@ -21,21 +21,23 @@ def shlex_join(split_command):
     return " ".join(shlex.quote(arg) for arg in split_command)
 
 
-def cmd_run(cmd, out, show_cmd=None, env=None):
+def cmd_run(cmd, out, show_cmd=None, env=None) -> int:
     if not show_cmd:
         show_cmd = cmd
 
     if env:
         env = {**os.environ, **env}
 
-    out.write(f"<code style='filter: opacity(.7);'>$ {shlex_join(show_cmd)}</code>")
+    out.write(f"<code style='filter: opacity(.7);'>$ {bleach.clean(shlex_join(show_cmd))}</code>")
 
     with open("/tmp/out", "w+", errors="ignore") as gcc_out:
         p = subprocess.Popen(cmd, stdout=gcc_out, stderr=gcc_out, env=env)
         p.wait()
 
         gcc_out.seek(0)
-        out.write(f"<kelvin-terminal-output>{html.escape(gcc_out.read())}</kelvin-terminal-output>")
+        out.write(
+            f"<kelvin-terminal-output>{bleach.clean(html.escape(gcc_out.read()))}</kelvin-terminal-output>"
+        )
         return p.returncode
 
 
@@ -105,7 +107,7 @@ def compile(makeflags: str, cmakeflags: str, html_output: io.StringIO):
             )
 
         html_output.write(
-            f"<code style='filter: opacity(.7);'>$ mv {executables[0]} {output}</code>"
+            f"<code style='filter: opacity(.7);'>$ mv {bleach.clean(executables[0])} {output}</code>"
         )
         os.rename(executables[0], output)
 
