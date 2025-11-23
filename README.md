@@ -49,6 +49,8 @@ Kelvin contributors can be found below.
 
 ### Other contributors
 
+- [Jan Stránský](https://github.com/jan1s2) found and reported several security vulnerabilities in
+  Kelvin.
 - [Roman Táborský](https://github.com/Astra3) implemented support for dark mode and theme switching.
 - [Jan Dymáček](https://github.com/Dym03) implemented support for task types, relative deadlines and
   hard dedlines.
