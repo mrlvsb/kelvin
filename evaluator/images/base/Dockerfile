@@ -11,6 +11,14 @@ RUN apt-get update && \
     cmake=3.28.3-1build7 && \
     rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    python3-pip && \
+    rm -rf /var/lib/apt/lists/*
+
+# For HTML sanitization
+RUN python3 -m pip install --break-system-packages bleach==5.0.1
+
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
