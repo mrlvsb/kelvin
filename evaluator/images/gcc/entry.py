@@ -95,7 +95,7 @@ def compile(makeflags: str, cmakeflags: str, html_output: io.StringIO):
         gcc_exitcode = cmd_run(compile_cmd, html_output, show_cmd=compile_cmd, env=env)
 
         if gcc_exitcode == 0:
-            out.write("<div style='color: green'>Compilation succeeded</div>")
+            html_output.write("<div style='color: green'>Compilation succeeded</div>")
         else:
             raise CompilationException(f"Failed to run GCC, exit code {gcc_exitcode}")
 
