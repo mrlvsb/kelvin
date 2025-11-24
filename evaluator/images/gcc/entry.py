@@ -5,6 +5,8 @@ import json
 import subprocess
 import os
 import shlex
+import traceback
+
 import bleach
 
 SANITIZED_FILES = ["result.html", "piperesult.json"]
@@ -123,6 +125,8 @@ try:
 except BaseException as e:
     if isinstance(e, CompilationException):
         html_output.write(f"<div style='color: red'>{bleach.clean(str(e))}</div>")
+    else:
+        traceback.print_exception(e)
 finally:
     for file in SANITIZED_FILES:
         try:
