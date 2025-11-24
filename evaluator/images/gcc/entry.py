@@ -37,9 +37,7 @@ def cmd_run(cmd, out, show_cmd=None, env=None) -> int:
         p.wait()
 
         gcc_out.seek(0)
-        out.write(
-            f"<kelvin-terminal-output>{bleach.clean(html.escape(gcc_out.read()))}</kelvin-terminal-output>"
-        )
+        out.write(f"<kelvin-terminal-output>{html.escape(gcc_out.read())}</kelvin-terminal-output>")
         return p.returncode
 
 
