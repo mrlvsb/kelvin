@@ -122,7 +122,7 @@ try:
     returncode = 0
 except BaseException as e:
     if isinstance(e, CompilationException):
-        html_output.write(f"<div style='color: red'>{str(e)}</div>")
+        html_output.write(f"<div style='color: red'>{bleach.clean(str(e))}</div>")
 finally:
     for file in SANITIZED_FILES:
         try:
