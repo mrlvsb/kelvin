@@ -12,6 +12,8 @@ import xml.etree.ElementTree as ET
 
 import bleach
 
+SANITIZED_FILES = ["result.html", "piperesult.json"]
+
 
 @dataclasses.dataclass
 class BuildResult:
@@ -170,6 +172,14 @@ def build_dotnet_project(run_tests: bool) -> BuildResult:
 
 run_tests = os.getenv("PIPE_UNITTESTS", False)
 result = build_dotnet_project(run_tests)
+
+for file in SANITIZED_FILES:
+    try:
+        # unlink any result files created by the student's build script
+        os.unlink(file)
+    except:  # noqa
+        pass
+
 
 with open("result.html", "w") as out:
     stdout = bleach.clean(result.output.strip()).replace("\n", "<br />")
