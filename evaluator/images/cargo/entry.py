@@ -195,11 +195,18 @@ Using the first one for further commands.
 
 COMMAND = get_param("cmd", "build")
 ARGS = get_param("args", [], parse_json=True)
+SANITIZED_FILES = ["result.html", "piperesult.json"]
 
 try:
     result = run_cargo(COMMAND, ARGS)
 except BaseException as e:
     result = BuildResult.fail(f"Cargo execution failed\n{e}")
+finally:
+    for file in SANITIZED_FILES:
+        try:
+            os.unlink(file)
+        except:  # noqa
+            pass
 
 with open("result.html", "w") as out:
     stdout = bleach.clean(result.stdout.strip())
