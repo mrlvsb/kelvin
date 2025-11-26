@@ -177,7 +177,7 @@ for file in SANITIZED_FILES:
     try:
         # unlink any result files created by the student's build script
         os.unlink(file)
-    except:
+    except: # noqa
         pass
 
 
