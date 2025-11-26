@@ -196,7 +196,7 @@ for file in SANITIZED_FILES:
     try:
         # unlink any result files created by the student's build script
         os.unlink(file)
-    except:
+    except FileNotFoundError:
         pass
 
 with open("result.html", "w") as out:
