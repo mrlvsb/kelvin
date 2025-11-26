@@ -12,6 +12,8 @@ import xml.etree.ElementTree as ET
 
 import bleach
 
+SANITIZED_FILES = ["result.html", "piperesult.json"]
+
 
 @dataclasses.dataclass
 class BuildResult:
@@ -189,6 +191,13 @@ os.environ["PATH"] = f"{os.environ['M2_HOME']}/bin:{os.environ['PATH']}"
 
 run_tests = os.getenv("PIPE_UNITTESTS", False)
 result = build_java_project(run_tests)
+
+for file in SANITIZED_FILES:
+    try:
+        # unlink any result files created by the student's build script
+        os.unlink(file)
+    except FileNotFoundError:
+        pass
 
 with open("result.html", "w") as out:
     stdout = bleach.clean(result.output.strip())
