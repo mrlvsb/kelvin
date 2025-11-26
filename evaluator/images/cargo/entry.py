@@ -205,7 +205,7 @@ finally:
     for file in SANITIZED_FILES:
         try:
             os.unlink(file)
-        except FileNotFoundError:
+        except: # noqa
             pass
 
 with open("result.html", "w") as out:
