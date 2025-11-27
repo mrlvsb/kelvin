@@ -9,6 +9,7 @@ import subprocess
 import tarfile
 import tempfile
 from collections import namedtuple
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from zipfile import ZIP_DEFLATED, ZipFile
@@ -61,6 +62,7 @@ from common.models import (
 )
 from common.plagcheck.moss import PlagiarismMatch, moss_result
 from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline
+from common.task import get_active_exams_at
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher, prohibit_during_test
 from evaluator.results import EvaluationResult
@@ -670,7 +672,19 @@ def submit_comments(request, assignment_id, login, submit_num):
             "notification_id": notification_id,
         }
 
+    currently_active_exams: List[AssignedTask] = get_active_exams_at(
+        request.user, datetime.now(), timedelta(0)
+    )
+
     if request.method == "POST":
+        if not is_teacher(request.user) and len(currently_active_exams) > 0:
+            return JsonResponse(
+                {
+                    "error": "It is not allowed to create new comment's during test. Please wait until test is done.."
+                },
+                status=400,
+            )
+
         data = json.loads(request.body)
         comment = Comment()
         comment.submit = submit
@@ -777,6 +791,25 @@ def submit_comments(request, assignment_id, login, submit_num):
 
     submit_data: SubmitData = get_submit_data(submit)
 
+    priorities = {
+        "video": 0,
+        "img": 1,
+        "source": 2,
+    }
+
+    if not is_teacher(request.user) and len(currently_active_exams) > 0:
+        return JsonResponse(
+            {
+                "sources": sorted(
+                    result.values(), key=lambda f: (priorities[f["type"]], f["path"])
+                ),
+                "summary_comments": [],
+                "submits": submits,
+                "current_submit": submit.submit_num,
+                "deadline": submit.assignment.deadline,
+            }
+        )
+
     # add comments from pipeline
     for pipe in submit_data.results:
         for source, comments in pipe.comments.items():
@@ -878,12 +911,6 @@ def submit_comments(request, assignment_id, login, submit_num):
                         },
                     }
                 )
-
-    priorities = {
-        "video": 0,
-        "img": 1,
-        "source": 2,
-    }
 
     return JsonResponse(
         {

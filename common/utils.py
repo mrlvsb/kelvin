@@ -8,12 +8,12 @@ from typing import NewType
 
 import django.contrib.auth.models
 import requests
-from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
-from django.http.response import Http404
 from ipware import get_client_ip
 
+from .exceptions.http_exceptions import HttpException404, HttpException403
 from .inbus import inbus
+
 
 IPAddressString = NewType("IPAddressString", str)
 
@@ -143,7 +143,7 @@ def prohibit_during_test(function):
         try:
             assignment = AssignedTask.objects.get(pk=assignment_id)
         except AssignedTask.DoesNotExist:
-            raise Http404(f"AssignedTask with id {assignment_id} not found")
+            raise HttpException404(f"AssignedTask with id {assignment_id} not found")
 
         # if task is any of ongoing exams allow it
         for exam in active_exams:
@@ -155,6 +155,6 @@ def prohibit_during_test(function):
             if all(map(lambda e: assignment.deadline < e.assigned, active_exams)):
                 return function(*args, **kwargs)
 
-        raise PermissionDenied("Access to this task is prohibited during exam")
+        raise HttpException403("Access to this task is prohibited during exam")
 
     return wrapper
