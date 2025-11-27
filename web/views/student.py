@@ -7,6 +7,7 @@ import subprocess
 import tarfile
 import tempfile
 from collections import namedtuple
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from zipfile import ZIP_DEFLATED, ZipFile
@@ -52,6 +53,7 @@ from common.models import (
 )
 from common.plagcheck.moss import PlagiarismMatch, moss_result
 from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline, is_file_small
+from common.task import get_active_exams_at
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher, prohibit_during_test
 from evaluator.results import EvaluationResult
