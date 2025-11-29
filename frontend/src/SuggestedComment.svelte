@@ -3,8 +3,8 @@ import CommentForm from './CommentForm.svelte';
 import { safeMarkdown } from './markdown.js';
 import { user } from './global.js';
 import { hideComments, HideCommentsState } from './stores';
-import {createEventDispatcher, onMount} from 'svelte';
-import Toast from "bootstrap/js/dist/toast";
+import { createEventDispatcher, onMount } from 'svelte';
+import Toast from 'bootstrap/js/dist/toast';
 
 export let id;
 export let author;
@@ -41,7 +41,7 @@ async function handleAccept() {
 
   if (!res.ok) {
     showToast(json.detail, 'warning');
-    return
+    return;
   }
 
   dispatch('resolveSuggestion', {
@@ -68,7 +68,7 @@ async function handleReject() {
 
   if (!res.ok) {
     showToast(json.detail, 'warning');
-    return
+    return;
   }
 
   processed = true;
@@ -100,7 +100,7 @@ async function handleSave(event) {
   if (!res.ok) {
     showToast(json.detail, 'warning');
     editing = false;
-    return
+    return;
   }
 
   dispatch('resolveSuggestion', {
@@ -121,10 +121,10 @@ function showToast(message, status = 'success') {
     let text_color = 'text-white';
 
     if (status === 'error') {
-        bg_color = 'bg-danger';
+      bg_color = 'bg-danger';
     } else if (status === 'warning') {
-        bg_color = 'bg-warning';
-        text_color = 'text-dark';
+      bg_color = 'bg-warning';
+      text_color = 'text-dark';
     }
 
     // Update toast color based on status
@@ -133,7 +133,6 @@ function showToast(message, status = 'success') {
     new Toast(toast).show();
   }
 }
-
 </script>
 
 <div class="position-fixed top-0 end-0 mt-5 me-3">
@@ -142,12 +141,9 @@ function showToast(message, status = 'success') {
     role="alert"
     aria-live="assertive"
     aria-atomic="true"
-    bind:this={toast}
-  >
+    bind:this={toast}>
     <div class="d-flex">
-      <div class="toast-body">
-          Unexpected error occurred. Please try again later.
-      </div>
+      <div class="toast-body">Unexpected error occurred. Please try again later.</div>
 
       <button
         type="button"
