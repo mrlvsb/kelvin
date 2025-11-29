@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
@@ -136,6 +137,20 @@ class TaskAdmin(admin.ModelAdmin):
 class SubmitAdmin(admin.ModelAdmin):
     list_filter = ("assignment__task__subject", "assignment__task__name")
     autocomplete_fields = ["assignment"]
+
+
+class RoomForm(forms.ModelForm):
+    class Meta:
+        model = models.Room
+        fields = "__all__"
+        labels = {
+            "inbus_room_id": "INBUS room_id",
+        }
+
+
+@admin.register(models.Room)
+class RoomAdmin(admin.ModelAdmin):
+    form = RoomForm
 
 
 admin.site.register(models.Task, TaskAdmin)
