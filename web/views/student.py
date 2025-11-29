@@ -19,7 +19,6 @@ import rq
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
-from django.contrib.contenttypes.models import ContentType
 from django.core import signing
 from django.http import (
     FileResponse,
@@ -32,13 +31,8 @@ from django.shortcuts import get_object_or_404, redirect, render, resolve_url
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
-from notifications.models import Notification
-from notifications.signals import notify
 
-from common.ai_review.dto import SubmitSummary, AIReviewResult, SuggestionState
 from common.ai_review.processor import (
-    AI_REVIEW_COMMENT_AUTHOR,
-    AI_REVIEW_COMMENT_TYPE,
     get_submit_review_result,
 )
 from common.evaluate import get_meta
@@ -53,7 +47,6 @@ from common.exceptions.http_exceptions import (
 from common.models import (
     AssignedTask,
     Class,
-    Comment,
     Submit,
     Task,
     assignedtask_results,
@@ -504,18 +497,6 @@ def find_task_detail(request, task_id, login=None):
     return redirect(url)
 
 
-def comment_recipients(submit, current_author):
-    recipients = [submit.assignment.clazz.teacher, submit.student]
-
-    # add all participants
-    for comment in Comment.objects.filter(submit_id=submit.id):
-        if comment.author not in recipients:
-            recipients.append(comment.author)
-
-    recipients.remove(current_author)
-    return recipients
-
-
 @login_required
 def submit_source(request, submit_id, path):
     submit = get_object_or_404(Submit, id=submit_id)
@@ -611,286 +592,6 @@ def submit_diff(request, login, assignment_id, submit_a, submit_b):
     resp = HttpResponse(out)
     resp["Content-Type"] = "text/x-diff"
     return resp
-
-
-@login_required
-def submit_comments(request, assignment_id, login, submit_num):
-    submit = get_object_or_404(
-        Submit, assignment_id=assignment_id, student__username=login, submit_num=submit_num
-    )
-
-    if not is_teacher(request.user) and request.user.username != submit.student.username:
-        raise HttpException403()
-
-    submits = []
-    for s in Submit.objects.filter(assignment_id=assignment_id, student__username=login).order_by(
-        "submit_num"
-    ):
-        submits.append(
-            {
-                "num": s.submit_num,
-                "submitted": s.created_at,
-                "points": s.assigned_points,
-                "comments": s.comment_set.count(),
-            }
-        )
-
-    def get_comment_type(comment):
-        if comment.author == comment.submit.student:
-            return "student"
-        return "teacher"
-
-    notifications = {
-        c.action_object.id: c
-        for c in Notification.objects.filter(
-            target_object_id=submit.id,
-            target_content_type=ContentType.objects.get_for_model(Submit),
-        )
-    }
-
-    def dump_comment(comment):
-        notification = notifications.get(comment.id, None)
-        unread = False
-        notification_id = None
-        if notification:
-            unread = notification.unread
-            notification_id = notification.id
-
-        return {
-            "id": comment.id,
-            "author": comment.author.get_full_name(),
-            "author_id": comment.author.id,
-            "text": comment.text,
-            "can_edit": comment.author == request.user,
-            "type": get_comment_type(comment),
-            "unread": unread,
-            "notification_id": notification_id,
-        }
-
-    if request.method == "POST":
-        data = json.loads(request.body)
-        comment = Comment()
-        comment.submit = submit
-        comment.author = request.user
-        comment.text = data["text"]
-        comment.source = data.get("source", None)
-        comment.line = data.get("line", None)
-        comment.save()
-
-        notify.send(
-            sender=request.user,
-            recipient=comment_recipients(submit, request.user),
-            verb="added new",
-            action_object=comment,
-            target=submit,
-            public=False,
-            important=True,
-        )
-        return JsonResponse({**dump_comment(comment), "unread": True})
-    elif request.method == "PATCH":
-        data = json.loads(request.body)
-        comment = get_object_or_404(Comment, id=data["id"])
-
-        if comment.author != request.user:
-            raise HttpException403()
-
-        Notification.objects.filter(
-            action_object_object_id=comment.id,
-            action_object_content_type=ContentType.objects.get_for_model(Comment),
-        ).delete()
-
-        if not data["text"]:
-            comment.delete()
-            return HttpResponse("{}")
-        else:
-            if comment.text != data["text"]:
-                comment.text = data["text"]
-                comment.save()
-
-                notify.send(
-                    sender=request.user,
-                    recipient=comment_recipients(submit, request.user),
-                    verb="updated",
-                    action_object=comment,
-                    target=submit,
-                    public=False,
-                    important=True,
-                )
-            return JsonResponse(dump_comment(comment))
-
-    result = {}
-    for source in submit.all_sources():
-        mime = mimedetector.from_file(source.phys)
-        if mime and mime.startswith("image/"):
-            SUPPORTED_IMAGES = [
-                "image/png",
-                "image/jpeg",
-                "image/gif",
-                "image/webp",
-                "image/svg+xml",
-            ]
-
-            result[source.virt] = {
-                "type": "img",
-                "path": source.virt,
-                "src": reverse("submit_source", args=[submit.id, source.virt])
-                + ("?convert=1" if mime not in SUPPORTED_IMAGES else ""),
-            }
-        elif mime and mime.startswith("video/"):
-            name = ".".join(source.virt.split(".")[:-1])
-            if name not in result:
-                result[name] = {
-                    "type": "video",
-                    "path": name,
-                    "sources": [],
-                }
-            result[name]["sources"].append(reverse("submit_source", args=[submit.id, source.virt]))
-        else:
-            content = ""
-            content_url = None
-            error = None
-
-            try:
-                if is_file_small(source.phys):
-                    with open(source.phys) as f:
-                        content = f.read()
-                else:
-                    content_url = reverse(
-                        "submit_source", kwargs=dict(submit_id=submit.id, path=source.virt)
-                    )
-            except UnicodeDecodeError:
-                error = "The file contains binary data or is not encoded in UTF-8"
-            except FileNotFoundError:
-                error = "source code not found"
-
-            result[source.virt] = {
-                "type": "source",
-                "path": source.virt,
-                "content": content,
-                "content_url": content_url,
-                "error": error,
-                "comments": {},
-            }
-
-    submit_data: SubmitData = get_submit_data(submit)
-
-    # add comments from pipeline
-    for pipe in submit_data.results:
-        for source, comments in pipe.comments.items():
-            for comment in comments:
-                if source not in result:
-                    continue
-
-                try:
-                    line = min(result[source]["content"].count("\n"), int(comment["line"])) - 1
-                    if not any(
-                        filter(
-                            lambda c: c["text"] == comment["text"],
-                            result[source]["comments"].setdefault(line, []),
-                        )
-                    ):
-                        result[source]["comments"].setdefault(line, []).append(
-                            {
-                                "id": -1,
-                                "author": "Kelvin",
-                                "text": comment["text"],
-                                "can_edit": False,
-                                "type": "automated",
-                                "url": comment.get("url", None),
-                            }
-                        )
-                except KeyError as e:
-                    logging.exception(e)
-
-    summary_comments = []
-    for comment in Comment.objects.filter(submit_id=submit.id).order_by("id"):
-        try:
-            if not comment.source or comment.source not in result:
-                summary_comments.append(dump_comment(comment))
-            else:
-                max_lines = result[comment.source]["content"].count("\n")
-                line = 0 if comment.line > max_lines else comment.line
-                result[comment.source]["comments"].setdefault(line - 1, []).append(
-                    dump_comment(comment)
-                )
-        except KeyError as e:
-            logging.exception(e)
-
-    # Append review summary to comments
-    if submit_data.ai_review:
-        review_result: AIReviewResult = submit_data.ai_review
-
-        def can_view_suggestion(state: SuggestionState, user) -> bool:
-            return (
-                is_teacher(user)
-                and user.has_perm("common.view_suggestedcomment")
-                and state is SuggestionState.PENDING
-            )
-
-        if len(review_result.summary.text) > 0:
-            summary: SubmitSummary = review_result.summary
-
-            if can_view_suggestion(summary.state, request.user):
-                summary_comments.append(
-                    {
-                        "id": -1,
-                        "author": AI_REVIEW_COMMENT_AUTHOR,
-                        "text": summary.text,
-                        "can_edit": False,
-                        "type": AI_REVIEW_COMMENT_TYPE,
-                        "url": None,
-                        "meta": {
-                            "review": {
-                                "id": summary.id,
-                                "state": summary.state.name,
-                            }
-                        },
-                    }
-                )
-
-        for suggestion in review_result.suggestions:
-            if suggestion.source not in result:
-                logging.warning(
-                    f"LLM suggestion ({suggestion.id}) source {suggestion.source} not found in submit sources"
-                )
-                continue
-
-            if can_view_suggestion(suggestion.state, request.user):
-                source_comments = result[suggestion.source]["comments"]
-                source_comments.setdefault(suggestion.line - 1, [])
-                source_comments[suggestion.line - 1].append(
-                    {
-                        "id": -1,
-                        "author": AI_REVIEW_COMMENT_AUTHOR,
-                        "text": suggestion.text,
-                        "can_edit": False,
-                        "type": AI_REVIEW_COMMENT_TYPE,
-                        "url": None,
-                        "meta": {
-                            "review": {
-                                "id": suggestion.id,
-                                "state": suggestion.state.name,
-                                "severity": suggestion.severity.name,
-                            }
-                        },
-                    }
-                )
-
-    priorities = {
-        "video": 0,
-        "img": 1,
-        "source": 2,
-    }
-
-    return JsonResponse(
-        {
-            "sources": sorted(result.values(), key=lambda f: (priorities[f["type"]], f["path"])),
-            "summary_comments": summary_comments,
-            "submits": submits,
-            "current_submit": submit.submit_num,
-            "deadline": submit.assignment.deadline,
-        }
-    )
 
 
 def raw_test_content(request, task_name, test_name, file):
