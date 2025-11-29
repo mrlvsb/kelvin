@@ -24,9 +24,12 @@
         </p>
     {% endif %}
 
+    <!--OSY C/02/460-2016/05 PO 10:45 Olivka-->
+
     {% for node in classes %}
         <div class="card mb-2">
-            <div class="card-header"><h5 class="mb-0">{{ node.class }}</h5></div>
+            <div class="card-header"><h5 class="mb-0">{{ node.class.subject.abbr }} {{node.class.day }} {{node.class.time|date:"H:i" }},
+                {% if node.class.teacher %}{{ node.class.teacher.get_full_name }}{% else %}No teacher{% endif %}, Room: {{node.class.room.code }} ({{node.class.code }})</h5></div>
             <div class="card-body">
                 {% if node.summary %}
                     <button class="btn btn-outline-info mb-1" data-bs-toggle="collapse"
