@@ -26,7 +26,7 @@
 
     {% for node in classes %}
         <div class="card mb-2">
-            <div class="card-header"><h5 class="mb-0">{{ node.class }}</h5></div>
+            <div class="card-header"><h5 class="mb-0">{{ node.class.class_name_for_students }}</h5></div>
             <div class="card-body">
                 {% if node.summary %}
                     <button class="btn btn-outline-info mb-1" data-bs-toggle="collapse"

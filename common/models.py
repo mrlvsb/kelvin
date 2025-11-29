@@ -179,6 +179,13 @@ class Class(models.Model):
         return f"{self.subject.abbr} {self.code} {self.day} {self.time:%H:%M} {self.teacher.last_name if self.teacher else ''}"
 
     @property
+    def student_class_name(self):
+        """
+        A class name displayed to students in the frontend.
+        """
+        return f"{self.subject.abbr} {self.day} {self.time:%H:%M} {self.teacher.get_full_name() if self.teacher else ''} - Room: {self.room.number if self.room else 'N/A'}"
+
+    @property
     def timeslot(self):
         return f"{self.day}{self.time.hour:02}{self.time.minute:02}"
 

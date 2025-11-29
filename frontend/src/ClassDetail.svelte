@@ -167,6 +167,7 @@ let showSummary = false;
     </div>
     <button class="float-start btn" on:click={() => (showStudentsList = !showStudentsList)}>
       {clazz.subject_abbr}
+      {#if clazz.room}{clazz.room}{/if}
       {clazz.timeslot}
       {clazz.code}
       {clazz.teacher_username}
