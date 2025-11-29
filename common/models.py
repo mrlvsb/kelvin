@@ -126,6 +126,22 @@ class Task(models.Model):
             return ""
 
 
+class Room(models.Model):
+    number = models.CharField(
+        max_length=30
+    )  # This is actually a string rather than a strict number itself
+    inbus_room_id = models.IntegerField()
+    rows = models.IntegerField()  # table rows
+    cols = models.IntegerField()  # seats per row
+
+    @property
+    def capacity(self):
+        return self.rows * self.cols
+
+    def __str__(self):
+        return f"{self.number} ({self.rows}x{self.cols}) - {self.capacity} seats"
+
+
 class Class(models.Model):
     class Day(models.TextChoices):
         MONDAY = "PO", "Monday"
@@ -152,6 +168,10 @@ class Class(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     day = models.CharField(max_length=5, choices=Day.choices)
     time = models.TimeField()
+
+    # Use SET_NULL so that if a room is deleted, the class remains but its room assignment is cleared.
+    # This is preferred over CASCADE or PROTECT since room assignments may change or be removed.
+    room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, blank=True)
 
     objects = ClassManager()
 
