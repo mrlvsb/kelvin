@@ -174,6 +174,11 @@ async function resolveSuggestion(evt) {
   files = files.map((file) => {
     if (file.source.path === comment.source) {
       let comments = file.source.comments[comment.line - 1] || [];
+
+      // Remove suggestion comment
+      comments = comments.filter((c) => c.meta.review.id !== evt.detail.id);
+
+      // Append new comment
       file.source.comments[comment.line - 1] = [...comments, comment];
     }
 
