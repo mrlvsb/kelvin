@@ -352,7 +352,14 @@ class Comment(models.Model):
             + "#src"
         )
 
-    def to_dto(self, can_edit: bool, type: str, unread: bool) -> CommentDTO:
+    def type(self):
+        if self.author == self.submit.student:
+            return "student"
+        return "teacher"
+
+    def to_dto(
+        self, can_edit: bool, type: str, unread: bool, notification_id: int | None = None
+    ) -> CommentDTO:
         return CommentDTO(
             id=self.id,
             author=self.author.get_full_name(),
@@ -363,6 +370,7 @@ class Comment(models.Model):
             can_edit=can_edit,
             type=type,
             unread=unread,
+            notification_id=notification_id,
         )
 
 
