@@ -13,9 +13,6 @@ from common.utils import is_teacher
 router = Router()
 
 
-# TODO: Add check, to ensure that only teacher, that teach the course can accept/reject suggestions
-
-
 @router.post(
     "/{suggestion_id}/rate",
     url_name="rate_submit_suggestion",
@@ -28,6 +25,9 @@ def rate_submit_suggestion(request, suggestion_id: int, body: RateSuggestionSche
 
     if not (0 <= body.rating <= 10):
         raise HttpError(400, "Rating must be between 0 and 10")
+
+    if suggestion.submit.assignment.clazz.teacher != request.user:
+        raise HttpError(403, "Only the teacher of the class can rate suggestions")
 
     suggestion.rating = body.rating
     suggestion.save()
@@ -47,6 +47,9 @@ def accept_submit_suggestion(request, suggestion_id: int):
 
     if suggestion.state != SuggestionState.PENDING.value:
         raise HttpError(400, "Only pending suggestions can be accepted")
+
+    if suggestion.submit.assignment.clazz.teacher != request.user:
+        raise HttpError(403, "Only the teacher of the class can accept suggestions")
 
     created_comment = create_submit_comment(
         submit=suggestion.submit,
@@ -76,6 +79,9 @@ def modify_submit_suggestion(request, suggestion_id: int, body: ModifySuggestion
     if suggestion.state != SuggestionState.PENDING.value:
         raise HttpError(400, "Only pending suggestions can be modified and accepted")
 
+    if suggestion.submit.assignment.clazz.teacher != request.user:
+        raise HttpError(403, "Only the teacher of the class can modify and accept suggestions")
+
     final_text = body.modified_text if body.modified_text is not None else suggestion.text
     created_comment = create_submit_comment(
         submit=suggestion.submit,
@@ -104,6 +110,9 @@ def decline_submit_suggestion(request, suggestion_id: int):
 
     if suggestion.state != SuggestionState.PENDING.value:
         raise HttpError(400, "Only pending suggestions can be rejected")
+
+    if suggestion.submit.assignment.clazz.teacher != request.user:
+        raise HttpError(403, "Only the teacher of the class can reject suggestions")
 
     suggestion.state = SuggestionState.REJECTED.value
     suggestion.save()
