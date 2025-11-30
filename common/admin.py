@@ -146,6 +146,7 @@ admin.site.register(models.Semester)
 admin.site.register(models.Subject)
 admin.site.register(models.UserEventModel)
 admin.site.register(models.LlmReviewPrompt)
+admin.site.register(models.Room)
 
 admin.site.unregister(User)
 admin.site.register(User, MyUserAdmin)
