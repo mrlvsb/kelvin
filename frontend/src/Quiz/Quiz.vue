@@ -122,34 +122,44 @@ const selectQuestion = (index: number) => {
  * @param answers_type If submit, the interval for sending answers will be cleared.
  */
 const sendAnswers = async (answers_type: SubmitType) => {
-  if (answers_type == SubmitType.Manual) {
+  try {
+    if (answers_type == SubmitType.Manual) {
+      clearInterval(sendingIntervalHandle);
+    }
+    const answers = collectAnswers();
+    const data = await getDataWithCSRF<{ redirect?: string }>(
+      `/api/quiz/${props.quizData.enrolled_id}/result/${answers_type}`,
+      'POST',
+      answers
+    );
+    if (!data) {
+      console.error('Error during saving results.');
+      return;
+    }
+    if ('redirect' in data) {
+      window.location.href = data.redirect;
+      return;
+    }
+  } catch (error) {
+    console.error('Error sending answers:', error);
     clearInterval(sendingIntervalHandle);
-  }
-  const answers = collectAnswers();
-  const data = await getDataWithCSRF<{ redirect?: string }>(
-    `/api/quiz/${props.quizData.enrolled_id}/result/${answers_type}`,
-    'POST',
-    answers
-  );
-  if (!data) {
-    console.error('Error during saving results.');
-    return;
-  }
-  if ('redirect' in data) {
-    window.location.href = data.redirect;
-    return;
   }
 };
 /**
  * Sends teacher scoring to the server.
  */
 const sendScoring = async () => {
-  if (!scoringUnsaved.value) {
-    return;
+  try {
+    if (!scoringUnsaved.value) {
+      return;
+    }
+    const scoring = collectScoring();
+    await getDataWithCSRF(`/api/quiz/${props.quizData.enrolled_id}/scoring`, 'POST', scoring);
+    scoringUnsaved.value = false;
+  } catch (error) {
+    console.error('Error sending scoring:', error);
+    clearInterval(sendingIntervalHandle);
   }
-  const scoring = collectScoring();
-  await getDataWithCSRF(`/api/quiz/${props.quizData.enrolled_id}/scoring`, 'POST', scoring);
-  scoringUnsaved.value = false;
 };
 /**
  * Collects teacher scoring of the quiz.
