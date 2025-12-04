@@ -315,8 +315,6 @@ async function deleteTask(proceed: boolean): Promise<void> {
 
     const json = await res.json();
 
-    console.log(json);
-
     if (json['errors']) {
       errors.value = json['errors'];
     } else {
@@ -410,7 +408,11 @@ async function deleteTask(proceed: boolean): Promise<void> {
         <div class="mb-2">
           <table class="table table-hover table-striped mb-0">
             <tbody>
-              <tr v-for="(clazz, idx) in shownClasses" :class="{ 'table-success': clazz.assigned }">
+              <tr
+                v-for="(clazz, idx) in shownClasses"
+                :key="idx"
+                :class="{ 'table-success': clazz.assigned }"
+              >
                 <td>
                   {{ clazz.timeslot }}
                   <span class="opacity-50">({{ clazz.code }})</span>

@@ -104,7 +104,7 @@ watch([fromDate, toDate], setDatePickers);
       ></button>
       <ul class="dropdown-menu">
         <button class="dropdown-item" @click="fromDate = new Date()">Now</button>
-        <button v-for="i in 14" class="dropdown-item" @click="fromDate = weekDate(i)">
+        <button v-for="i in 14" :key="i" class="dropdown-item" @click="fromDate = weekDate(i)">
           Week {{ i + 1 }}
           <span v-if="weekStart(i) <= new Date() && new Date() <= weekStart(i + 1)">
             <span class="iconify" data-icon="akar-icons:arrow-back"></span>
