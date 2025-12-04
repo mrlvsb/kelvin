@@ -1,0 +1,25 @@
+{% extends 'web/layout.html' %}
+{% load static %}
+
+{% block fullcontent %}
+    <div id="edit-task"></div>
+{% endblock %}
+
+{% block script %}
+<script id="initial-props-data" type="application/json">
+    {% if task_id %}
+        { "id": "{{ task_id }}" }
+    {% elif subject_name %}
+        { "subject": "{{ subject_name }}" }
+    {% else %}
+        {}
+    {% endif %}
+</script>
+
+    <script>
+        const dataElement = document.getElementById('initial-props-data');
+        const routeData = JSON.parse(dataElement.textContent);
+
+        mountEditTask("#edit-task", {params: routeData});
+    </script>
+{% endblock %}
