@@ -1,5 +1,9 @@
 import { Directive } from 'vue';
 
+interface HTMLElementWithHandler extends HTMLElement {
+    _clickOutsideHandler?: (event: MouseEvent) => void;
+}
+
 /**
  * Custom directive used in vue components to detect clicks outside HTML tag.
  * Is it necessary to use lambda as function as evaluation is not lazy.
@@ -16,7 +20,7 @@ import { Directive } from 'vue';
  *
  */
 export const clickOutside: Directive = {
-    mounted(node: HTMLElement, binding) {
+    mounted(node: HTMLElementWithHandler, binding) {
         const handler = (event: MouseEvent) => {
             if (node && !node.contains(event.target as Node)) {
                 binding.value(event);
@@ -24,12 +28,12 @@ export const clickOutside: Directive = {
         };
 
         //save handler to remove it on unmounted
-        (node as any)._clickOutsideHandler = handler;
+        node._clickOutsideHandler = handler;
 
         document.addEventListener('click', handler, true);
     },
 
-    unmounted(node: HTMLElement) {
-        document.removeEventListener('click', (node as any)._clickOutsideHandler, true);
+    unmounted(node: HTMLElementWithHandler) {
+        document.removeEventListener('click', node._clickOutsideHandler, true);
     }
 };
