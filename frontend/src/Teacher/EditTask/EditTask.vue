@@ -6,7 +6,7 @@
 import { ref, watch, onMounted, toRaw } from 'vue';
 
 import { semester as semesterSvelte, user as userSvelte } from '../../global.js';
-import { fs, openedFiles } from '../../fs.js';
+import { fs, openedFiles as openedFilesSvelte } from '../../fs.js';
 import VueModal from '../../components/VueModal.vue';
 import { task_types } from '../../taskTypes';
 import Manager from './FileManager.vue';
@@ -17,8 +17,9 @@ import { User, Semester, FileEntry } from '../../utilities/SvelteStoreTypes';
 import AutoCompleteTaskPath from './AutoCompleteTaskPath.vue';
 import { fetch } from '../../api';
 
-let semester = useReadableSvelteStore<Semester>(semesterSvelte);
-let user = useReadableSvelteStore<User>(userSvelte);
+const semester = useReadableSvelteStore<Semester>(semesterSvelte);
+const user = useReadableSvelteStore<User>(userSvelte);
+const openedFiles = useReadableSvelteStore<Record<string, FileEntry>>(openedFilesSvelte);
 
 interface EditParams {
   id: number;
@@ -69,7 +70,7 @@ let taskLink = ref('');
 let deleteModal = ref(false);
 
 const syncing = ref<boolean>(false);
-let errors = [];
+let errors = ref<Array<string>>([]);
 let savedPath = ref('');
 
 let showAllClasses = ref<boolean>(false);
@@ -119,10 +120,11 @@ async function prepareCreatingTask(): Promise<void> {
 
   task.value = {
     classes: json['classes'],
-    path: [props.params.subject, semester['abbr'], user.value.username].join('/'),
+    path: [props.params.subject, semester.value['abbr'], user.value.username].join('/'),
     subject_abbr: props.params.subject,
     type: 'homework'
   };
+
   fs.createFile('readme.md', '# Task Title');
   await fs.open('readme.md');
 }
@@ -147,52 +149,64 @@ onMounted(async () => {
     await loadTask(props.params.id, false);
   } else {
     await prepareCreatingTask();
+    syncPathWithTitle.value = true;
   }
 });
 
+function synchronizePathWithReadMeTitle(): void {
+  const readme = openedFiles.value['/readme.md'];
+
+  if (readme && task.value) {
+    let parts = [props.params.subject, semester['abbr'], user.value.username];
+
+    let classes = task.value['classes'].filter((c) => c.assigned);
+    if (classes.length == 1) {
+      parts.push(classes[0].timeslot);
+    }
+
+    const title = readme.content
+      .split('\n')[0]
+      .toLowerCase()
+      .replace(/^\s*#\s*|\s*$/g, '')
+      .replace(/( |\/|\\)/g, '_')
+      .split('')
+      .map((c) => {
+        const map = {
+          ě: 'e',
+          š: 's',
+          č: 'c',
+          ř: 'r',
+          ž: 'z',
+          ý: 'y',
+          á: 'a',
+          í: 'i',
+          é: 'e',
+          ú: 'u',
+          ů: 'u',
+          ǒ: 'o',
+          ó: 'p'
+        };
+        return map[c] ? map[c] : c;
+      })
+      .join('');
+
+    if (title) {
+      parts.push(title);
+    }
+
+    task.value.path = parts.join('/');
+  }
+}
+
 watch(syncPathWithTitle, (newSyncPathWithTitle) => {
   if (newSyncPathWithTitle) {
-    const readme = openedFiles['/readme.md'];
-    if (readme && task) {
-      let parts = [props.params.subject, semester['abbr'], user.value.username];
+    synchronizePathWithReadMeTitle();
+  }
+});
 
-      let classes = task.value['classes'].filter((c) => c.assigned);
-      if (classes.length == 1) {
-        parts.push(classes[0].timeslot);
-      }
-
-      const title = readme.content
-        .split('\n')[0]
-        .toLowerCase()
-        .replace(/^\s*#\s*|\s*$/g, '')
-        .replace(/( |\/|\\)/g, '_')
-        .split('')
-        .map((c) => {
-          const map = {
-            ě: 'e',
-            š: 's',
-            č: 'c',
-            ř: 'r',
-            ž: 'z',
-            ý: 'y',
-            á: 'a',
-            í: 'i',
-            é: 'e',
-            ú: 'u',
-            ů: 'u',
-            ǒ: 'o',
-            ó: 'p'
-          };
-          return map[c] ? map[c] : c;
-        })
-        .join('');
-
-      if (title) {
-        parts.push(title);
-      }
-
-      task.value['path'] = parts.join('/');
-    }
+watch(openedFiles, () => {
+  if (syncPathWithTitle.value) {
+    synchronizePathWithReadMeTitle();
   }
 });
 
@@ -205,14 +219,14 @@ async function save(): Promise<void> {
   });
 
   const json = await res.json();
-  errors = json['errors'];
-  if (errors.length == 0) {
+  errors.value = json['errors'];
+  if (errors.value.length == 0) {
     task.value['classes'] = json['classes'];
     savedPath.value = json['path'];
     task.value['can_delete'] = json['can_delete'];
     fs.setEndpointUrl(json.files_uri);
 
-    await openedFiles.save();
+    await openedFilesSvelte.save();
 
     if (!task.value.id) {
       redirectToUrl('/task/edit/' + json.id);
@@ -300,10 +314,13 @@ async function deleteTask(proceed: boolean): Promise<void> {
     });
 
     const json = await res.json();
+
+    console.log(json);
+
     if (json['errors']) {
-      errors = json['errors'];
+      errors.value = json['errors'];
     } else {
-      errors = [];
+      errors.value = [];
       redirectToUrl('/task/add/' + task.value.subject_abbr);
       fs.setRoot([], undefined);
       await prepareCreatingTask();
@@ -332,32 +349,45 @@ async function deleteTask(proceed: boolean): Promise<void> {
             :on-change="loadTask"
             @click="syncPathWithTitle = false"
           />
-          <div v-if="taskLink">
-            <button class="btn btn-outline-info" title="Plagiarism check">
-              <a :href="task.plagcheck_link" target="_blank" class="text-decoration: none;">
-                <span class="iconify" data-icon="bx:bx-check-double"></span>
-              </a>
-            </button>
-            <button class="btn btn-outline-info" title="Show all source codes">
-              <a :href="'/task/show/' + task.id" target="_blank">
-                <span class="iconify" data-icon="bx-bx-code-alt"></span>
-              </a>
-            </button>
-            <button class="btn btn-outline-info" title="Show task stats">
-              <a :href="'/statistics/task/' + task.id" target="_blank">
-                <span class="iconify" data-icon="bx-bx-bar-chart-alt-2"></span>
-              </a>
-            </button>
-            <button class="btn btn-outline-info" title="Duplicate this task" @click="duplicateTask">
+          <template v-if="taskLink">
+            <a
+              class="btn btn-outline-info d-flex align-items-center"
+              title="Plagiarism check"
+              :href="task.plagcheck_link"
+              target="_blank"
+            >
+              <span class="iconify" data-icon="bx:bx-check-double"></span>
+            </a>
+            <a
+              class="btn btn-outline-info d-flex align-items-center"
+              title="Show all source codes"
+              :href="'/task/show/' + task.id"
+              target="_blank"
+            >
+              <span class="iconify" data-icon="bx-bx-code-alt"></span>
+            </a>
+            <a
+              class="btn btn-outline-info d-flex align-items-center"
+              title="Show task stats"
+              :href="'/statistics/task/' + task.id"
+              target="_blank"
+            >
+              <span class="iconify" data-icon="bx-bx-bar-chart-alt-2"></span>
+            </a>
+            <button
+              class="btn btn-outline-info d-flex align-items-center"
+              title="Duplicate this task"
+              @click="duplicateTask"
+            >
               <span class="iconify" data-icon="ant-design:copy-outlined"></span>
             </button>
-            <button class="btn btn-outline-info" title="Open task">
+            <button class="btn btn-outline-info d-flex align-items-center" title="Open task">
               <a :href="taskLink" target="_blank"
                 ><span class="iconify" data-icon="bx:bx-link-external"></span
               ></a>
             </button>
             <button
-              class="btn btn-outline-danger"
+              class="btn btn-outline-danger d-flex align-items-center"
               :disabled="!task['can_delete']"
               @click="() => (deleteModal = true)"
             >
@@ -374,7 +404,7 @@ async function deleteTask(proceed: boolean): Promise<void> {
               <strong>Readme.md</strong>
               and all files will be <strong>DELETED!</strong>
             </VueModal>
-          </div>
+          </template>
         </div>
 
         <div class="mb-2">
