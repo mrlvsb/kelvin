@@ -1,4 +1,4 @@
-import { ref, onUnmounted, Ref, watch } from 'vue';
+import { ref, onUnmounted, Ref, watch, toRaw } from 'vue';
 import { Readable, Unsubscriber, Writable } from 'svelte/store';
 
 /**
@@ -12,7 +12,7 @@ export function useReadableSvelteStore<T>(store: Readable<T>): Ref<T> {
     const value = ref<T>();
 
     const unsubscribe: Unsubscriber = store.subscribe((v: T) => {
-        value.value = v;
+        value.value = structuredClone(toRaw(v));
     });
 
     onUnmounted(unsubscribe);
@@ -34,7 +34,7 @@ export function useWritableSvelteStore<T>(store: Writable<T>): Ref<T> {
         value.value = v;
     });
 
-    watch(value, (v) => store.set(v));
+    watch(value, (v) => store.set(v), { deep: true });
 
     onUnmounted(unsubscribe);
 
