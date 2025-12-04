@@ -33,11 +33,6 @@ urlpatterns = [
         name="submit_download",
     ),
     path(
-        "task/<int:assignment_id>/<str:login>/<int:submit_num>/comments",
-        student_view.submit_comments,
-        name="submit_comments",
-    ),
-    path(
         "task/<int:assignment_id>/<str:login>/<int:submit_num>/result", student_view.upload_results
     ),
     path(
