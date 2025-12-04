@@ -1,27 +1,19 @@
 <script setup lang="ts">
 /**
- * Generate array with range of numbers from start
- *
- * @param size size of the array
- * @param start starting number
- *
- * @returns array of numbers from start to start + size
+ * Component that displays three orange dots loading indicator
  */
-const generateRange = (size: number, start = 0) => {
-  return Array.from({ length: size }).map((_, i) => i + start);
-};
-
-const size = 60;
-const color = '#FF3E00';
-const unit = 'px';
+const size: number = 60;
+const color: string = '#FF3E00';
 </script>
 
 <template>
-  <div v-for="i in generateRange(3, 1)" :key="i" class="wrapper" :style="`--size:${size}${unit}`">
+  <div class="wrapper" :style="`--size: ${size}px`">
     <div
+      v-for="i in 3"
+      :key="i"
       class="dot"
-      :style="`--dotSize:${size * 0.25}${unit}; --color:${color}; animation-delay:  ${i * 0.07}s;`"
-    />
+      :style="`--dotSize:${size * 0.25}px; --color:${color}; animation-delay:  ${i * 0.07}s;`"
+    ></div>
   </div>
 </template>
 
@@ -49,12 +41,10 @@ const unit = 'px';
     -webkit-transform: translateY(10px);
     transform: translateY(10px);
   }
-
   66% {
     -webkit-transform: translateY(-10px);
     transform: translateY(-10px);
   }
-
   100% {
     -webkit-transform: translateY(0);
     transform: translateY(0);
@@ -66,12 +56,10 @@ const unit = 'px';
     -webkit-transform: translateY(10px);
     transform: translateY(10px);
   }
-
   66% {
     -webkit-transform: translateY(-10px);
     transform: translateY(-10px);
   }
-
   100% {
     -webkit-transform: translateY(0);
     transform: translateY(0);
