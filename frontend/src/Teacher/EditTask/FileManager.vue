@@ -119,7 +119,7 @@ async function openConfigYaml(): Promise<void> {
     fs.createFile(
       fileName,
       `
-# https://github.com/mrlvsb/kelvin/blob/master/README.pipeline.md
+# https://mrlvsb.github.io/kelvin/teachers-guide/task-configuration/pipeline
 # You can also use CTRL+Space for autocompleting
 pipeline:
   # compile submitted source codes
@@ -261,7 +261,7 @@ function closeTab(path: string) {
           <button class="btn btn-link p-0" title="Reevaluate all submits" @click="reevaluate">
             <span class="iconify" data-icon="bx:bx-refresh"></span>
           </button>
-          <a href="https://github.com/mrlvsb/kelvin/blob/master/README.pipeline.md" target="_blank">
+          <a href="https://mrlvsb.github.io/kelvin/teachers-guide/task-configuration/pipeline" target="_blank">
             <span class="iconify" data-icon="entypo:help"></span>
           </a>
         </div>
