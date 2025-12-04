@@ -35,7 +35,7 @@ import {
  * @prop {Number} taskid - current task id, for reevaluate button in config.yml file
  */
 const props = defineProps({
-  taskid: { type: Number, required: true }
+  taskid: { type: Number, required: false }
 });
 
 /**
@@ -52,7 +52,7 @@ const vClickOutside = clickOutside;
 const currentPath = useReadableSvelteStore<string>(currentPathSvelte);
 const cwd = useReadableSvelteStore<FileEntry[]>(cwdSvelte);
 const currentOpenedFile = useWritableSvelteStore<string | null>(currentOpenedFileSvelte);
-const openedFiles = useReadableSvelteStore<Record<string, FileEntry>>(openedFilesSvelte);
+const openedFiles = useWritableSvelteStore<Record<string, FileEntry>>(openedFilesSvelte);
 
 let renamingPath = ref<string | null>(null);
 let ctxMenu = ref<ContextMenu | null>(null);
@@ -261,7 +261,10 @@ function closeTab(path: string) {
           <button class="btn btn-link p-0" title="Reevaluate all submits" @click="reevaluate">
             <span class="iconify" data-icon="bx:bx-refresh"></span>
           </button>
-          <a href="https://mrlvsb.github.io/kelvin/teachers-guide/task-configuration/pipeline" target="_blank">
+          <a
+            href="https://mrlvsb.github.io/kelvin/teachers-guide/task-configuration/pipeline"
+            target="_blank"
+          >
             <span class="iconify" data-icon="entypo:help"></span>
           </a>
         </div>
