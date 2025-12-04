@@ -161,6 +161,7 @@ import QuizEdit from './Quiz/QuizEdit.vue';
 import QuizList from './Quiz/Lists/QuizList.vue';
 import QuizSubmitList from './Quiz/Lists/QuizSubmitList.vue';
 import MarkButton from './components/MarkButton.vue';
+import EditTask from './Teacher/EditTask/EditTask.vue';
 
 /**
  * Register new Vue component as a custom element.
@@ -229,7 +230,13 @@ function mountMarkButton(id, props) {
     app.mount(id);
 }
 
+function mountEditTask(id, props) {
+    const app = createApp(EditTask, props);
+    app.mount(id);
+}
+
 window.mountStudentPage = mountStudentPage;
 window.mountQuiz = mountQuiz;
 window.mountQuizEdit = mountQuizEdit;
 window.mountMarkButton = mountMarkButton;
+window.mountEditTask = mountEditTask;
