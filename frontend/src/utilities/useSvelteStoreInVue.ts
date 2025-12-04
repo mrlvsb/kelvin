@@ -12,7 +12,11 @@ export function useReadableSvelteStore<T>(store: Readable<T>): Ref<T> {
     const value = ref<T>();
 
     const unsubscribe: Unsubscriber = store.subscribe((v: T) => {
-        value.value = v;
+        if (v !== null && typeof v === 'object') {
+            value.value = Array.isArray(v) ? ([...v] as T) : ({ ...v } as T);
+        } else {
+            value.value = v;
+        }
     });
 
     onUnmounted(unsubscribe);
@@ -34,7 +38,7 @@ export function useWritableSvelteStore<T>(store: Writable<T>): Ref<T> {
         value.value = v;
     });
 
-    watch(value, (v) => store.set(v));
+    watch(value, (v) => store.set(v), { deep: true });
 
     onUnmounted(unsubscribe);
 
