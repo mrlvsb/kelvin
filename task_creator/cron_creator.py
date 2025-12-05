@@ -13,7 +13,7 @@ def create_crontask(name, callable, cron_string, args=[], enabled=True, queue="e
         enabled=enabled,
         queue=queue,
         cron_string=cron_string,
-            )
+    )
     content_type = ContentType.objects.get_for_model(CronTask)
     for arg in args:
         TaskArg.objects.create(
@@ -21,4 +21,4 @@ def create_crontask(name, callable, cron_string, args=[], enabled=True, queue="e
             content_type=content_type,
             arg_type=arg[0],
             val=arg[1],
-            )
+        )
