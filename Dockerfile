@@ -58,6 +58,7 @@ COPY --chown=webserver survey ./survey
 COPY --chown=webserver common ./common
 COPY --chown=webserver api ./api
 COPY --chown=webserver quiz ./quiz
+COPY --chown=webserver task_creator ./task_creator
 COPY --chown=webserver manage.py .
 COPY --from=build-frontend --chown=webserver /web/static/ ./web/static/
 
