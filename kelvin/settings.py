@@ -218,7 +218,11 @@ RQ_QUEUES = {
 }
 
 # For django-tasks-scheduler
-SCHEDULER_QUEUES = {"default": {"HOST": REDIS_HOST, "PORT": REDIS_PORT}}
+SCHEDULER_QUEUES = {
+    "default": {"HOST": REDIS_HOST, "PORT": REDIS_PORT},
+    # For Docker container cleanup
+    "evaluator": {"HOST": REDIS_HOST, "PORT": REDIS_PORT},
+}
 
 # Logging
 LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG")
