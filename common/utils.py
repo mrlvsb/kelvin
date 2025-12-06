@@ -81,7 +81,10 @@ def get_client_ip_address(request: HttpRequest) -> IPAddressString | None:
     Returns client IP address from HttpRequest instance.
     Returns None if no client IP address is available.
     """
-    client_ip, is_routable = get_client_ip(request)
+    # Do not allow proxies or custom HTTP headers that can override the IP address
+    client_ip, is_routable = get_client_ip(
+        request, proxy_count=0, request_header_order=["REMOTE_ADDR"]
+    )
 
     if client_ip is None:
         return None
