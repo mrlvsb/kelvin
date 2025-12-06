@@ -12,10 +12,11 @@ class TaskCreatorConfig(AppConfig):
         from task_creator.cron_creator import create_crontask
 
         try:
+            # We want to delete containers older than 30 minutes every hour
             create_crontask(
                 "deleter",
                 "evaluator.old_deleter.delete_old_containers",
-                "0 * * * *",
+                cron_string="0 * * * *",
                 args=[("int", "1800")],
             )
         # Database is not running, skip creating the cron task
