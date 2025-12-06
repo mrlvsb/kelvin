@@ -1,4 +1,7 @@
 from django.apps import AppConfig, apps
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class TaskCreatorConfig(AppConfig):
@@ -16,5 +19,5 @@ class TaskCreatorConfig(AppConfig):
                 args=[("int", "1800")],
             )
         # Database is not running, skip creating the cron task
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Could not create cron task: {e}")
