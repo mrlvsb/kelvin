@@ -45,7 +45,7 @@ dependencies = [
     "openai>=2.6.1",
     "pycountry~=24.6.1",
     "django-ninja==1.4.5",
-    "docker>=7.1.0",
+    "docker~=7.1.0",
 ]
 
 [tool.uv]
