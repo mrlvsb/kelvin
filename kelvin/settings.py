@@ -220,7 +220,7 @@ RQ_QUEUES = {
 # For django-tasks-scheduler
 SCHEDULER_QUEUES = {
     "default": {"HOST": REDIS_HOST, "PORT": REDIS_PORT},
-    # for the deleter
+    # For Docker container cleanup
     "evaluator": {"HOST": REDIS_HOST, "PORT": REDIS_PORT},
 }
 
