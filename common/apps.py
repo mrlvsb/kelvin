@@ -13,7 +13,7 @@ class CommonConfig(AppConfig):
             # We want to delete containers older than 30 minutes every hour
             create_crontask(
                 "deleter",
-                "evaluator.old_deleter.delete_old_containers",
+                "evaluator.docker_container_cleanup.delete_old_containers",
                 cron_string="0 * * * *",
                 args=[("int", "1800")],
             )
