@@ -68,7 +68,6 @@ INSTALLED_APPS = [
     "django_cas_ng",
     "notifications",
     "webpush",
-    "task_creator.apps.TaskCreatorConfig",
 ]
 
 MIDDLEWARE = [
