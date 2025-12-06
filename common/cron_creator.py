@@ -1,4 +1,4 @@
-from scheduler.models.scheduled_task import CronTask, BaseTask
+from scheduler.models.scheduled_task import CronTask
 from scheduler.models.args import TaskArg
 from django.contrib.contenttypes.models import ContentType
 from typing import List, Tuple
