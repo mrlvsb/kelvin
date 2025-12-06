@@ -358,6 +358,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
         "now": timezone.now(),
         "hard_deadline": hard_deadline,
         "submits": submits,
+        "multiple_ip_addresses": len(set(s.ip_address for s in submits)) > 1,
         "text": testset.load_readme().announce if is_announce else testset.load_readme(),
         "inputs": None if is_announce else testset,
         "max_inline_content_bytes": MAX_INLINE_CONTENT_BYTES,
@@ -632,6 +633,7 @@ def submit_comments(request, assignment_id, login, submit_num):
                 "submitted": s.created_at,
                 "points": s.assigned_points,
                 "comments": s.comment_set.count(),
+                "ip_address": s.ip_address,
             }
         )
 

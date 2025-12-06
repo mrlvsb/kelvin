@@ -47,14 +47,13 @@ $: if (a != b) {
         <strong>#{submit.num}</strong>
       </a>
       {#if submit.submitted > deadline}
-        <strong class="text-danger"
-          ><TimeAgo
-            datetime={submit.submitted}
-            rel={deadline}
-            suffix="after the deadline" /></strong>
+        <strong class="text-danger">
+          <TimeAgo datetime={submit.submitted} rel={deadline} suffix="after the deadline" />
+        </strong>
       {:else}
         {new Date(submit.submitted).toLocaleString('cs')}
       {/if}
+      (from {submit.ip_address})
 
       {#if submit.points != null || submit.comments > 0}
         <span class="text-muted">{formatInfo(submit)}</span>
