@@ -69,7 +69,7 @@ function createFs() {
     return {
         subscribe,
         setRoot: (files, endpoint_url) => {
-            openedFiles.set([]);
+            openedFiles.set({});
             currentOpenedFile.set(null);
             currentPath.set('/');
             set({
@@ -264,7 +264,7 @@ function createPath() {
 }
 
 function createOpenedFiles() {
-    const { subscribe, set, update } = writable([]);
+    const { subscribe, set, update } = writable({});
 
     return {
         subscribe,
@@ -305,6 +305,7 @@ export const cwd = derived(
                     return a.type < b.type ? -1 : 1;
                 });
         }
+
         set(map(getInode($path, $fs['root'])['files']));
     },
     []
