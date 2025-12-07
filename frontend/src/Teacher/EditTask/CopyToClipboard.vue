@@ -9,10 +9,10 @@ import { ref } from 'vue';
  * @prop {string} content - content to copy to clipboard
  * @prop {string} title   - appears when the user moves the mouse over the button
  */
-const props = defineProps({
-  content: { type: String, required: true },
-  title: { type: String, required: true, default: 'Copy to clipboard' }
-});
+let { content, title = 'Copy to clipboard' } = defineProps<{
+  content?: string;
+  title: string;
+}>();
 
 /**
  * Pop up message coordinates
@@ -25,7 +25,7 @@ interface PopUp {
 const tooltip = ref<PopUp | null>(null);
 
 function copy(e: MouseEvent): void {
-  navigator.clipboard.writeText(props.content);
+  navigator.clipboard.writeText(content);
 
   let spanElement: HTMLElement = e.target as HTMLElement;
   let container: HTMLElement = spanElement.closest('.tooltip-container') as HTMLElement;

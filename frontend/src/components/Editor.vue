@@ -3,7 +3,7 @@
  * Component used to display code mirror editor
  */
 
-import { ref, watch, onUnmounted, defineModel, markRaw, PropType } from 'vue';
+import { ref, watch, onUnmounted, defineModel, markRaw } from 'vue';
 
 import CodeMirror from 'codemirror';
 import { lintPipeline } from '../PipelineValidation.js';
@@ -35,17 +35,19 @@ import { useReadableSvelteStore } from '../utilities/useSvelteStoreInVue';
  *    - Tab          soft tab
  *    You can add custom ones in form { 'key': function }
  */
-const props = defineProps({
-  filename: { type: String, default: '', required: false },
-  autofocus: { type: Boolean, default: false, required: false },
-  disabled: { type: Boolean, default: false, required: false },
-  extraKeys: {
-    type: Object as PropType<Record<string, () => void>>,
-    default: () => ({}),
-    required: false
-  },
-  wrap: { type: Boolean, default: false, required: false }
-});
+let {
+  filename = '',
+  autofocus = false,
+  disabled = false,
+  extraKeys = {},
+  wrap = false
+} = defineProps<{
+  filename?: string;
+  autofocus?: boolean;
+  disabled?: boolean;
+  extraKeys?: Record<string, () => void>;
+  wrap?: boolean;
+}>();
 
 /**
  * @model
@@ -94,13 +96,13 @@ watch(editorTag, (newEditorTag) => {
     //https://stackoverflow.com/questions/67686617/codemirror-on-vue3-has-a-problem-when-setvalue-is-kicked
     codeMirrorEditor.value = markRaw(
       CodeMirror.fromTextArea(newEditorTag, {
-        mode: toMode(props.filename),
-        autofocus: props.autofocus,
-        lineWrapping: props.wrap,
+        mode: toMode(filename),
+        autofocus: autofocus,
+        lineWrapping: wrap,
         gutters: ['CodeMirror-lint-markers'],
         spellcheck: true,
         theme: getTheme(curTheme.value),
-        readOnly: props.disabled,
+        readOnly: disabled,
         tabSize: 2,
         extraKeys: {
           'Ctrl-Space': 'autocomplete',
@@ -115,7 +117,7 @@ watch(editorTag, (newEditorTag) => {
           Tab: function (cm) {
             cm.execCommand('insertSoftTab');
           },
-          ...props.extraKeys
+          ...extraKeys
         }
       })
     );
@@ -130,15 +132,15 @@ watch(editorTag, (newEditorTag) => {
 
 function setUpOptions() {
   if (codeMirrorEditor.value) {
-    codeMirrorEditor.value.setOption('mode', toMode(props.filename));
-    codeMirrorEditor.value.setOption('readOnly', props.disabled);
+    codeMirrorEditor.value.setOption('mode', toMode(filename));
+    codeMirrorEditor.value.setOption('readOnly', disabled);
     codeMirrorEditor.value.setOption(
       'gutters',
-      props.filename == '/config.yml' ? ['CodeMirror-lint-markers'] : []
+      filename == '/config.yml' ? ['CodeMirror-lint-markers'] : []
     );
 
-    codeMirrorEditor.value.setOption('lint', props.filename == '/config.yml' ? lintPipeline : null);
-    codeMirrorEditor.value.setOption('spellcheck', props.filename != '/config.yml');
+    codeMirrorEditor.value.setOption('lint', filename == '/config.yml' ? lintPipeline : null);
+    codeMirrorEditor.value.setOption('spellcheck', filename != '/config.yml');
     codeMirrorEditor.value.setOption('theme', getTheme(curTheme.value));
   }
 }
@@ -159,7 +161,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div :class="{ disabled: props.disabled }">
+  <div :class="{ disabled: disabled }">
     <textarea ref="editorTag" class="form-control"></textarea>
   </div>
 </template>

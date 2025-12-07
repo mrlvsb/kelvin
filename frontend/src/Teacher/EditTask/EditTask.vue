@@ -10,7 +10,7 @@ import { fs, openedFiles as openedFilesSvelte } from '../../fs.js';
 import VueModal from '../../components/VueModal.vue';
 import { task_types } from '../../taskTypes';
 import Manager from './FileManager.vue';
-import SyncLoader from './SyncLoader.vue';
+import SyncLoader from '../../components/SyncLoader.vue';
 import TimeRange from './TimeRange.vue';
 import { useReadableSvelteStore } from '../../utilities/useSvelteStoreInVue';
 import { User, Semester, FileEntry } from '../../utilities/SvelteStoreTypes';

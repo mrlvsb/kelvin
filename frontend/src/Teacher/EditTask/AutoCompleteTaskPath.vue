@@ -8,17 +8,17 @@ import { user as userSvelte } from '../../global.js';
 import { clickOutside } from '../../utilities/clickOutside';
 import { User } from '../../utilities/SvelteStoreTypes';
 import { useReadableSvelteStore } from '../../utilities/useSvelteStoreInVue';
-import { defineModel, PropType, onMounted, computed, ref, watch, defineEmits } from 'vue';
+import { defineModel, onMounted, computed, ref, watch, defineEmits } from 'vue';
 import CopyToClipboard from './CopyToClipboard.vue';
 
 /**
  * @prop {string}                     subject  - subject code used to get autocomplete hints
  * @prop {(task_id: number) => void}  onChange - function called once user select item from list
  */
-const props = defineProps({
-  subject: { type: String, required: true },
-  onChange: { type: Function as PropType<(task_id: number) => void>, required: true }
-});
+let { subject, onChange } = defineProps<{
+  subject: string;
+  onChange: (task_id: number) => void;
+}>();
 
 const vClickOutside = clickOutside;
 
@@ -60,7 +60,7 @@ const filtered = computed(() =>
 onMounted(async () => {
   // Load last 100 tasks of the given subject.
   // Hopefully they will contain some useful paths to autocomplete :)
-  let res = await fetch(`/api/task-list/${props.subject}?sort=desc`);
+  let res = await fetch(`/api/task-list/${subject}?sort=desc`);
   res = await res.json();
   items.value = res['tasks'];
 });
@@ -86,7 +86,7 @@ function keyup(e: KeyboardEvent) {
 }
 
 watch(selectedId, () => {
-  if (selectedId.value) props.onChange(selectedId.value);
+  if (selectedId.value) onChange(selectedId.value);
 });
 </script>
 
