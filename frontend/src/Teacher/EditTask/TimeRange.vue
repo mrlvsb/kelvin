@@ -6,19 +6,22 @@
  *  - or by adding time from drop-down list to current value
  */
 
-import { PropType, onMounted, watch, defineModel, ref } from 'vue';
+import { onMounted, watch, defineModel, ref } from 'vue';
 import flatpickr from 'flatpickr';
 
-const props = defineProps({
-  timeOffsetInWeek: { type: Number, required: true },
-  semesterBeginDate: { type: Date, required: true },
-  onFromDuplicateClick: { type: Function as PropType<(date: Date) => void>, required: true },
-  onToDuplicateClick: { type: Function as PropType<(date: Date) => void>, required: true },
-  onToRelativeClick: {
-    type: Function as PropType<(assigned: Date, deadline: Date) => void>,
-    required: true
-  }
-});
+let {
+  timeOffsetInWeek,
+  semesterBeginDate,
+  onFromDuplicateClick,
+  onToDuplicateClick,
+  onToRelativeClick
+} = defineProps<{
+  timeOffsetInWeek: number;
+  semesterBeginDate: Date;
+  onFromDuplicateClick: (date: Date) => void;
+  onToDuplicateClick: (date: Date) => void;
+  onToRelativeClick: (assigned: Date, deadline: Date) => void;
+}>();
 
 /**
  * @model
@@ -53,14 +56,14 @@ onMounted(() => {
 });
 
 function weekDate(n: number): Date {
-  let date = new Date(props.semesterBeginDate.getTime());
+  let date = new Date(semesterBeginDate.getTime());
   date.setDate(date.getDate() + 7 * n);
-  date.setSeconds(props.timeOffsetInWeek);
+  date.setSeconds(timeOffsetInWeek);
   return date;
 }
 
 function weekStart(n: number): Date {
-  let date = new Date(props.semesterBeginDate.getTime());
+  let date = new Date(semesterBeginDate.getTime());
   date.setDate(date.getDate() + 7 * n);
   return date;
 }

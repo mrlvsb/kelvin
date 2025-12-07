@@ -34,9 +34,9 @@ import {
 /**
  * @prop {Number} taskid - current task id, for reevaluate button in config.yml file
  */
-const props = defineProps({
-  taskid: { type: Number, required: false }
-});
+let { taskid } = defineProps<{
+  taskid: number;
+}>();
 
 /**
  * file list panel context menu position
@@ -148,7 +148,7 @@ pipeline:
 }
 
 async function reevaluate() {
-  await fetch(`/api/reevaluate_task/${props.taskid}`, { method: 'POST' });
+  await fetch(`/api/reevaluate_task/${taskid}`, { method: 'POST' });
 }
 
 /**
