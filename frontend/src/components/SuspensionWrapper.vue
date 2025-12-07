@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import SyncLoader from '../Teacher/EditTask/SyncLoader.vue';
+import SyncLoader from '../components/SyncLoader.vue';
 
 defineProps<{
   childComponent: object;

@@ -12,7 +12,7 @@ import {
   useWritableSvelteStore
 } from '../../utilities/useSvelteStoreInVue';
 import Editor from '../../components/Editor.vue';
-import SyncLoader from './SyncLoader.vue';
+import SyncLoader from '../../components/SyncLoader.vue';
 import yaml from 'js-yaml';
 import {
   currentOpenedFile as currentOpenedFileSvelte,
