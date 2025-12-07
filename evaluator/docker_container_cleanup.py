@@ -10,5 +10,5 @@ def delete_old_containers(max_lifetime: int, socket_path="unix://var/run/docker.
         created_at = container["Created"]
         now = datetime.now(timezone.utc).timestamp()
         elapsed = now - created_at
-        if elapsed > max_lifetime:
+        if container["Image"].startswith("kelvin/") and elapsed > max_lifetime:
             client.kill(container["Id"])
