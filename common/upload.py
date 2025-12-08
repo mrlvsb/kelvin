@@ -2,7 +2,6 @@ import os
 import re
 import zipfile
 import tarfile
-import rarfile
 import py7zr
 from os.path import basename, dirname
 from typing import List, Tuple
@@ -82,6 +81,7 @@ class TarUploader(Uploader):
     def close(self) -> None:
         self.archive.close()
         # fileobj is not closed, we have to do it manually
+        # Reference: https://docs.python.org/3/library/tarfile.html#tarfile.TarFile
         self.archive.fileobj.close()
 
 
@@ -100,27 +100,6 @@ class SevenZipUploader(Uploader):
         os.makedirs(dirname(target_path), exist_ok=True)
         self.archive.reset()
         self.archive.extract(targets=[path], path=submit.dir())
-        self.count += 1
-        return target_path
-
-    def close(self) -> None:
-        self.archive.close()
-
-
-class RarUploader(Uploader):
-    def __init__(self, file: UploadedFile):
-        super().__init__()
-        self.archive = rarfile.RarFile(file, mode="r")
-
-    def get_files(self) -> List[Tuple[str, rarfile.RarInfo]]:
-        return [(f.filename, f) for f in self.archive.infolist() if not f.is_dir()]
-
-    def upload_file(self, path: str, file, submit: Submit) -> str:
-        self.check_file_type(file, rarfile.RarInfo)
-
-        target_path = submit.source_path(path)
-        os.makedirs(dirname(target_path), exist_ok=True)
-        self.archive.extract(path, path=submit.dir())
         self.count += 1
         return target_path
 
@@ -207,8 +186,6 @@ def upload_submit_files(submit: Submit, paths: List[str], files: List[UploadedFi
             uploader = TarUploader(reset_file())
         elif py7zr.is_7zfile(reset_file().file):
             uploader = SevenZipUploader(reset_file())
-        elif rarfile.is_rarfile(reset_file()):
-            uploader = RarUploader(reset_file())
 
     if uploader is None:
         uploader = FileUploader(paths, files)
