@@ -109,6 +109,8 @@ class SevenZipUploader(Uploader):
 
         target_path = submit.source_path(path)
         os.makedirs(dirname(target_path), exist_ok=True)
+        # Once extract() called, the SevenZipFile object become exhausted, and an EOF state.
+        # If you want to call extract(), extractall() again, you should call reset() before it.
         # https://py7zr.readthedocs.io/en/latest/api.html#py7zr.SevenZipFile.extract
         self.archive.reset()
         self.archive.extract(targets=[path], path=submit.dir())
