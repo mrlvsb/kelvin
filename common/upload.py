@@ -1,5 +1,6 @@
 import os
 import re
+import stat
 import zipfile
 import tarfile
 import py7zr
@@ -88,10 +89,24 @@ class TarUploader(Uploader):
 class SevenZipUploader(Uploader):
     def __init__(self, file: UploadedFile):
         super().__init__()
-        self.archive = py7zr.SevenZipFile(file.file, "r")
+        self.archive = py7zr.SevenZipFile(
+            file.file,
+            "r",
+        )
+
+    def __is_file(self, file: py7zr.py7zr.ArchiveFile):
+        """
+        Checks if an ArchiveFile is a regular file and not a link, directory or socket.
+        py7zr library doesn't have this method available in stable versions at the moment.
+        Source: https://github.com/miurahr/py7zr/blob/master/py7zr/py7zr.py
+        """
+        e = file._get_unix_extension()
+        if e is not None:
+            return stat.S_ISREG(e)
+        return not (file.is_directory or file.is_symlink or file.is_junction or file.is_socket)
 
     def get_files(self) -> List[Tuple[str, py7zr.py7zr.ArchiveFile]]:
-        return [(f.filename, f) for f in self.archive.files if f.is_file]
+        return [(f.filename, f) for f in self.archive.files if self.__is_file(f)]
 
     def upload_file(self, path: str, file, submit: Submit) -> str:
         self.check_file_type(file, py7zr.py7zr.ArchiveFile)
