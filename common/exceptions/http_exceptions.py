@@ -1,4 +1,4 @@
-class HttpException(BaseException):
+class HttpException(Exception):
     """
     Custom HTTP exception that can be used to report user-facing errors that will be rendered
     in a custom error page.
