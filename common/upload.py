@@ -64,7 +64,6 @@ class ZipUploader(Uploader):
 class TarUploader(Uploader):
     def __init__(self, file: UploadedFile):
         super().__init__()
-        file.seek(0)
         self.archive = tarfile.open(fileobj=file, mode="r")
 
     def get_files(self) -> List[Tuple[str, tarfile.TarInfo]]:
@@ -81,9 +80,6 @@ class TarUploader(Uploader):
 
     def close(self) -> None:
         self.archive.close()
-        # fileobj is not closed, we have to do it manually
-        # Reference: https://docs.python.org/3/library/tarfile.html#tarfile.TarFile
-        self.archive.fileobj.close()
 
 
 class SevenZipUploader(Uploader):
