@@ -74,7 +74,7 @@ class TarUploader(Uploader):
 
         target_path = submit.source_path(path)
         os.makedirs(dirname(target_path), exist_ok=True)
-        self.archive.extract(path, path=submit.dir())
+        self.archive.extract(path, path=submit.dir(), filter="data")
         self.count += 1
         return target_path
 
@@ -91,7 +91,7 @@ class SevenZipUploader(Uploader):
         self.archive = py7zr.SevenZipFile(file.file, "r")
 
     def get_files(self) -> List[Tuple[str, py7zr.py7zr.ArchiveFile]]:
-        return [(f.filename, f) for f in self.archive.files if not f.is_directory]
+        return [(f.filename, f) for f in self.archive.files if f.is_file]
 
     def upload_file(self, path: str, file, submit: Submit) -> str:
         self.check_file_type(file, py7zr.py7zr.ArchiveFile)
