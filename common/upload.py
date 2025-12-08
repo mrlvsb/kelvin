@@ -1,8 +1,11 @@
 import os
 import re
 import zipfile
+import tarfile
+import rarfile
+import py7zr
 from os.path import basename, dirname
-from typing import List
+from typing import List, Tuple
 
 import magic
 from django.core.exceptions import SuspiciousOperation
@@ -38,14 +41,14 @@ class Uploader:
 
 
 class ZipUploader(Uploader):
-    def __init__(self, file):
+    def __init__(self, file: UploadedFile):
         super().__init__()
         self.archive = zipfile.ZipFile(file, "r")
 
-    def get_files(self):
+    def get_files(self) -> List[Tuple[str, zipfile.ZipInfo]]:
         return [(f.filename, f) for f in self.archive.filelist if not f.is_dir()]
 
-    def upload_file(self, path: str, file, submit: Submit):
+    def upload_file(self, path: str, file, submit: Submit) -> str:
         self.check_file_type(file, zipfile.ZipInfo)
 
         target_path = submit.source_path(path)
@@ -54,7 +57,74 @@ class ZipUploader(Uploader):
         self.count += 1
         return target_path
 
-    def close(self):
+    def close(self) -> None:
+        self.archive.close()
+
+
+class TarUploader(Uploader):
+    def __init__(self, file: UploadedFile):
+        super().__init__()
+        file.seek(0)
+        self.archive = tarfile.open(fileobj=file, mode="r")
+
+    def get_files(self) -> List[Tuple[str, tarfile.TarInfo]]:
+        return [(f.name, f) for f in self.archive.getmembers() if not f.isdir()]
+
+    def upload_file(self, path: str, file, submit: Submit) -> str:
+        self.check_file_type(file, tarfile.TarInfo)
+
+        target_path = submit.source_path(path)
+        os.makedirs(dirname(target_path), exist_ok=True)
+        self.archive.extract(path, path=submit.dir())
+        self.count += 1
+        return target_path
+
+    def close(self) -> None:
+        self.archive.close()
+        # fileobj is not closed, we have to do it manually
+        self.archive.fileobj.close()
+
+
+class SevenZipUploader(Uploader):
+    def __init__(self, file: UploadedFile):
+        super().__init__()
+        self.archive = py7zr.SevenZipFile(file.file, "r")
+
+    def get_files(self) -> List[Tuple[str, py7zr.py7zr.ArchiveFile]]:
+        return [(f.filename, f) for f in self.archive.files if not f.is_directory]
+
+    def upload_file(self, path: str, file, submit: Submit) -> str:
+        self.check_file_type(file, py7zr.py7zr.ArchiveFile)
+
+        target_path = submit.source_path(path)
+        os.makedirs(dirname(target_path), exist_ok=True)
+        self.archive.reset()
+        self.archive.extract(targets=[path], path=submit.dir())
+        self.count += 1
+        return target_path
+
+    def close(self) -> None:
+        self.archive.close()
+
+
+class RarUploader(Uploader):
+    def __init__(self, file: UploadedFile):
+        super().__init__()
+        self.archive = rarfile.RarFile(file, mode="r")
+
+    def get_files(self) -> List[Tuple[str, rarfile.RarInfo]]:
+        return [(f.filename, f) for f in self.archive.infolist() if not f.is_dir()]
+
+    def upload_file(self, path: str, file, submit: Submit) -> str:
+        self.check_file_type(file, rarfile.RarInfo)
+
+        target_path = submit.source_path(path)
+        os.makedirs(dirname(target_path), exist_ok=True)
+        self.archive.extract(path, path=submit.dir())
+        self.count += 1
+        return target_path
+
+    def close(self) -> None:
         self.archive.close()
 
 
@@ -120,9 +190,27 @@ class TooManyFilesError(BaseException):
 
 
 def upload_submit_files(submit: Submit, paths: List[str], files: List[UploadedFile]):
-    if len(paths) == 1 and get_extension(paths[0]) == ".zip":
-        uploader = ZipUploader(files[0])
-    else:
+    uploader = None
+    if len(paths) == 1:
+
+        def reset_file() -> UploadedFile:
+            """
+            Returns first file, seeked to zero.
+            This is required since checkers of file headers do not seek back.
+            """
+            files[0].seek(0)
+            return files[0]
+
+        if zipfile.is_zipfile(reset_file()):
+            uploader = ZipUploader(reset_file())
+        elif tarfile.is_tarfile(reset_file()):
+            uploader = TarUploader(reset_file())
+        elif py7zr.is_7zfile(reset_file().file):
+            uploader = SevenZipUploader(reset_file())
+        elif rarfile.is_rarfile(reset_file()):
+            uploader = RarUploader(reset_file())
+
+    if uploader is None:
         uploader = FileUploader(paths, files)
 
     try:
@@ -136,7 +224,3 @@ def upload_submit_files(submit: Submit, paths: List[str], files: List[UploadedFi
             store_uploaded_file(submit, uploader, path, file)
     finally:
         uploader.close()
-
-
-def get_extension(path: str) -> str:
-    return os.path.splitext(path)[1].lower()
