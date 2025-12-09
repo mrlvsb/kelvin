@@ -381,7 +381,7 @@ def class_detail_list(request):
                 "timeslot": clazz.timeslot,
                 "code": clazz.code,
                 "subject_abbr": clazz.subject.abbr,
-                "room": clazz.room.number if clazz.room else None,
+                "room": clazz.room.code if clazz.room else None,
                 "csv_link": reverse("download_csv_per_class", kwargs={"class_id": clazz.pk}),
                 "assignments": assignments,
                 "quizzes": quizzes,
