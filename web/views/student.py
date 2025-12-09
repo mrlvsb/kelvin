@@ -9,6 +9,7 @@ import subprocess
 import tarfile
 import tempfile
 from collections import namedtuple
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from zipfile import ZIP_DEFLATED, ZipFile
@@ -61,8 +62,9 @@ from common.models import (
 )
 from common.plagcheck.moss import PlagiarismMatch, moss_result
 from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline
+from common.task import get_active_exams_at
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
-from common.utils import is_teacher
+from common.utils import is_teacher, prohibit_during_test
 from evaluator.results import EvaluationResult
 from evaluator.testsets import TestSet
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES, MAX_INLINE_LINES
@@ -318,6 +320,7 @@ def build_plagiarism_entries(login: str, matches: List[PlagiarismMatch]) -> List
 
 
 @login_required()
+@prohibit_during_test
 def task_detail(request, assignment_id, submit_num=None, login=None):
     submits = Submit.objects.filter(
         assignment__pk=assignment_id,
@@ -552,6 +555,7 @@ def submit_source(request, submit_id, path):
 
 
 @login_required
+@prohibit_during_test
 def submit_diff(request, login, assignment_id, submit_a, submit_b):
     submit = get_object_or_404(
         Submit, assignment_id=assignment_id, student__username=login, submit_num=submit_a
@@ -615,6 +619,7 @@ def submit_diff(request, login, assignment_id, submit_a, submit_b):
 
 
 @login_required
+@prohibit_during_test
 def submit_comments(request, assignment_id, login, submit_num):
     submit = get_object_or_404(
         Submit, assignment_id=assignment_id, student__username=login, submit_num=submit_num
@@ -669,7 +674,19 @@ def submit_comments(request, assignment_id, login, submit_num):
             "notification_id": notification_id,
         }
 
+    currently_active_exams: List[AssignedTask] = get_active_exams_at(
+        request.user, datetime.now(), timedelta(0)
+    )
+
     if request.method == "POST":
+        if not is_teacher(request.user) and len(currently_active_exams) > 0:
+            return JsonResponse(
+                {
+                    "error": "It is not allowed to create new comment's during test. Please wait until test is done.."
+                },
+                status=400,
+            )
+
         data = json.loads(request.body)
         comment = Comment()
         comment.submit = submit
@@ -776,6 +793,25 @@ def submit_comments(request, assignment_id, login, submit_num):
 
     submit_data: SubmitData = get_submit_data(submit)
 
+    priorities = {
+        "video": 0,
+        "img": 1,
+        "source": 2,
+    }
+
+    if not is_teacher(request.user) and len(currently_active_exams) > 0:
+        return JsonResponse(
+            {
+                "sources": sorted(
+                    result.values(), key=lambda f: (priorities[f["type"]], f["path"])
+                ),
+                "summary_comments": [],
+                "submits": submits,
+                "current_submit": submit.submit_num,
+                "deadline": submit.assignment.deadline,
+            }
+        )
+
     # add comments from pipeline
     for pipe in submit_data.results:
         for source, comments in pipe.comments.items():
@@ -877,12 +913,6 @@ def submit_comments(request, assignment_id, login, submit_num):
                         },
                     }
                 )
-
-    priorities = {
-        "video": 0,
-        "img": 1,
-        "source": 2,
-    }
 
     return JsonResponse(
         {
@@ -1090,6 +1120,7 @@ def raw_result_content(request, submit_id, test_name, result_type, file):
     raise HttpException404()
 
 
+@prohibit_during_test
 def submit_download(request, assignment_id: int, login: str, submit_num: int):
     submit = get_object_or_404(
         Submit, assignment_id=assignment_id, student__username=login, submit_num=submit_num
@@ -1123,6 +1154,7 @@ def ui(request):
 
 
 @csrf_exempt
+@prohibit_during_test
 def upload_results(request, assignment_id, submit_num, login):
     submit = get_object_or_404(
         Submit, assignment_id=assignment_id, submit_num=submit_num, student__username=login
