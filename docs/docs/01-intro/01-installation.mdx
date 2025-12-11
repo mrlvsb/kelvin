@@ -92,6 +92,15 @@ To be able to log in into Kelvin, you firstly need to create superadmin user. Cr
 uv run manage.py createsuperuser
 ```
 
+## Seeding database
+
+For the ease of use, you can seed some example data into your database by using init_db command. If you want you can specify username to match your created superuser.
+Otherwise it will create a user with username: `teacher` and password `admin`.
+
+```bash
+python manage.py init_db [--username <username>]
+```
+
 ## Running the server
 
 Once you built the frontend, installed Python dependencies and configured the database, you can start a local development server using this command:
