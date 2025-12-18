@@ -620,22 +620,24 @@ def submit_comments(request, assignment_id, login, submit_num):
         Submit, assignment_id=assignment_id, student__username=login, submit_num=submit_num
     )
 
-    if not is_teacher(request.user) and request.user.username != submit.student.username:
+    user_is_teacher = is_teacher(request.user)
+    if not user_is_teacher and request.user.username != submit.student.username:
         raise HttpException403()
 
     submits = []
     for s in Submit.objects.filter(assignment_id=assignment_id, student__username=login).order_by(
         "submit_num"
     ):
-        submits.append(
-            {
-                "num": s.submit_num,
-                "submitted": s.created_at,
-                "points": s.assigned_points,
-                "comments": s.comment_set.count(),
-                "ip_address": s.ip_address,
-            }
-        )
+        submit_data = {
+            "num": s.submit_num,
+            "submitted": s.created_at,
+            "points": s.assigned_points,
+            "comments": s.comment_set.count(),
+        }
+
+        if user_is_teacher:
+            submit_data["ip_address"] = s.ip_address
+        submits.append(submit_data)
 
     def get_comment_type(comment):
         if comment.author == comment.submit.student:
