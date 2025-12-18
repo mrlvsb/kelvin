@@ -53,7 +53,9 @@ $: if (a != b) {
       {:else}
         {new Date(submit.submitted).toLocaleString('cs')}
       {/if}
-      (from {submit.ip_address})
+      {#if submit.ip_address}
+        (from {submit.ip_address})
+      {/if}
 
       {#if submit.points != null || submit.comments > 0}
         <span class="text-muted">{formatInfo(submit)}</span>
