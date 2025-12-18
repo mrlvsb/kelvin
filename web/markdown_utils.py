@@ -25,7 +25,7 @@ class ProcessedMarkdown:
         return self.content
 
 
-def load_readme(task_code, vars=None):
+def load_readme(task_code: str, vars=None) -> ProcessedMarkdown | None:
     try:
         task_dir = os.path.join(BASE_DIR, "tasks", task_code)
         readmes = [f for f in os.listdir(task_dir) if f.lower() == "readme.md"]
@@ -63,7 +63,7 @@ def markdown_to_html(input: str) -> str:
     )
 
 
-def process_markdown(asset_dir: str, markdown: str, asset_group: str = "task"):
+def process_markdown(asset_dir: str, markdown: str, asset_group: str = "task") -> ProcessedMarkdown:
     h = hashlib.md5()
     h.update(markdown.encode("utf-8"))
     key = "markdown_" + h.hexdigest()

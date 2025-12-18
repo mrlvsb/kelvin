@@ -23,6 +23,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core import signing
 from django.http import (
     FileResponse,
+    HttpRequest,
     HttpResponse,
     JsonResponse,
     HttpResponseNotFound,
@@ -77,8 +78,8 @@ from ..dto import SubmitData, PlagiarismEntry
 mimedetector = magic.Magic(mime=True)
 
 
-def is_file_small(path):
-    def count_lines(path):
+def is_file_small(path: str) -> bool:
+    def count_lines(path: str) -> int:
         lines = 0
         with open(path) as f:
             for line in f:
@@ -96,7 +97,7 @@ def is_file_small(path):
 
 
 @login_required()
-def student_index(request):
+def student_index(request: HttpRequest) -> HttpResponse:
     result = []
 
     if "semester" in request.GET:
@@ -250,7 +251,7 @@ def get_submit_data(submit: Submit) -> SubmitData:
 JobStatus = namedtuple("JobStatus", ["finished", "status", "message"], defaults=[False, "", ""])
 
 
-def get_submit_job_status(jobid):
+def get_submit_job_status(jobid: str | None) -> JobStatus:
     try:
         job = django_rq.jobs.get_job_class().fetch(
             jobid, connection=django_rq.queues.get_connection()
@@ -280,7 +281,7 @@ def get_submit_job_status(jobid):
 
 
 @login_required()
-def pipeline_status(request, submit_id):
+def pipeline_status(request: HttpRequest, submit_id: int) -> JsonResponse:
     submit = get_object_or_404(Submit, id=submit_id)
 
     if not is_teacher(request.user) and request.user != submit.student:
@@ -318,7 +319,12 @@ def build_plagiarism_entries(login: str, matches: List[PlagiarismMatch]) -> List
 
 
 @login_required()
-def task_detail(request, assignment_id, submit_num=None, login=None):
+def task_detail(
+    request: HttpRequest,
+    assignment_id: int,
+    submit_num: int | None = None,
+    login: str | None = None,
+) -> HttpResponse:
     submits = Submit.objects.filter(
         assignment__pk=assignment_id,
     ).order_by("-id")
@@ -487,7 +493,7 @@ def task_detail(request, assignment_id, submit_num=None, login=None):
 
 
 @login_required()
-def find_task_detail(request, task_id, login=None):
+def find_task_detail(request: HttpRequest, task_id: int, login: str | None = None):
     """
     Tries to find an assignment for a given task and a given student.
     If an assignment is found, redirects to its source code.
@@ -505,11 +511,11 @@ def find_task_detail(request, task_id, login=None):
     return redirect(url)
 
 
-def comment_recipients(submit, current_author):
+def comment_recipients(submit: Submit, current_author: User) -> List[User]:
     recipients = [submit.assignment.clazz.teacher, submit.student]
 
     # add all participants
-    for comment in Comment.objects.filter(submit_id=submit.id):
+    for comment in Comment.objects.filter(submit_id=submit.pk):
         if comment.author not in recipients:
             recipients.append(comment.author)
 
@@ -518,7 +524,7 @@ def comment_recipients(submit, current_author):
 
 
 @login_required
-def submit_source(request, submit_id, path):
+def submit_source(request: HttpRequest, submit_id: int, path: str) -> HttpResponse:
     submit = get_object_or_404(Submit, id=submit_id)
     if not is_teacher(request.user) and request.user.username != submit.student.username:
         raise HttpException403()
@@ -552,7 +558,9 @@ def submit_source(request, submit_id, path):
 
 
 @login_required
-def submit_diff(request, login, assignment_id, submit_a, submit_b):
+def submit_diff(
+    request: HttpRequest, login: str, assignment_id: int, submit_a: int, submit_b: int
+) -> HttpResponse:
     submit = get_object_or_404(
         Submit, assignment_id=assignment_id, student__username=login, submit_num=submit_a
     )
@@ -615,7 +623,9 @@ def submit_diff(request, login, assignment_id, submit_a, submit_b):
 
 
 @login_required
-def submit_comments(request, assignment_id, login, submit_num):
+def submit_comments(
+    request: HttpRequest, assignment_id: int, login: str, submit_num: int
+) -> HttpResponse:
     submit = get_object_or_404(
         Submit, assignment_id=assignment_id, student__username=login, submit_num=submit_num
     )
@@ -897,7 +907,9 @@ def submit_comments(request, assignment_id, login, submit_num):
     )
 
 
-def raw_test_content(request, task_name, test_name, file):
+def raw_test_content(
+    request: HttpRequest, task_name: str, test_name: str, file: str
+) -> HttpResponse:
     task = get_object_or_404(Task, code=task_name)
 
     username = request.user.username
@@ -915,7 +927,7 @@ def raw_test_content(request, task_name, test_name, file):
     raise HttpException404()
 
 
-def create_taskset(task, user, meta: Optional[Dict[str, Any]] = None) -> TestSet:
+def create_taskset(task: Task, user: str, meta: Optional[Dict[str, Any]] = None) -> TestSet:
     meta_dict = get_meta(user)
 
     if meta is not None:
@@ -924,17 +936,17 @@ def create_taskset(task, user, meta: Optional[Dict[str, Any]] = None) -> TestSet
     return TestSet(task_dir, meta_dict)
 
 
-def check_is_task_accessible(request, task):
+def check_is_task_accessible(request: HttpRequest, task: Task):
     if not is_teacher(request.user):
         assigned_tasks = AssignedTask.objects.filter(
-            task_id=task.id, clazz__students__id=request.user.id, assigned__lte=timezone.now()
+            task_id=task.pk, clazz__students__id=request.user.pk, assigned__lte=timezone.now()
         )
         if not assigned_tasks:
             raise HttpException403()
 
 
 @login_required
-def tar_test_data(request, task_name):
+def tar_test_data(request: HttpRequest, task_name: str) -> HttpResponse:
     def include_tests_script(tar, tests: TestSet):
         test_script = render_test_script(tests)
         info = tarfile.TarInfo("run-tests.py")
@@ -978,7 +990,7 @@ def zip_directory(directory: str) -> io.BytesIO:
 
 
 @login_required
-def task_asset(request, task_name, path):
+def task_asset(request: HttpRequest, task_name: str, path: str) -> HttpResponse:
     task = get_object_or_404(Task, code=task_name)
     try:
         check_is_task_accessible(request, task)
@@ -1006,6 +1018,7 @@ def task_asset(request, task_name, path):
 
             if path == "readme.md":
                 readme = load_readme(task.code)
+                # TODO What if readme is None?
                 task.name = readme.name
                 if not task.name:
                     task.name = task.code
@@ -1063,10 +1076,12 @@ DIRECT_SHOW_EXTENSIONS = [".html", ".svg", ".png", ".jpg"]
 
 
 @login_required
-def raw_result_content(request, submit_id, test_name, result_type, file):
+def raw_result_content(
+    request: HttpRequest, submit_id: int, test_name: str, result_type: str, file: str
+) -> HttpResponse:
     submit = get_object_or_404(Submit, pk=submit_id)
 
-    if submit.student_id != request.user.id and not is_teacher(request.user):
+    if submit.student_id != request.user.pk and not is_teacher(request.user):
         raise HttpException403()
 
     submit_data: SubmitData = get_submit_data(submit)
@@ -1092,7 +1107,9 @@ def raw_result_content(request, submit_id, test_name, result_type, file):
     raise HttpException404()
 
 
-def submit_download(request, assignment_id: int, login: str, submit_num: int):
+def submit_download(
+    request: HttpRequest, assignment_id: int, login: str, submit_num: int
+) -> HttpResponse:
     submit = get_object_or_404(
         Submit, assignment_id=assignment_id, student__username=login, submit_num=submit_num
     )
@@ -1120,12 +1137,14 @@ def submit_download(request, assignment_id: int, login: str, submit_num: int):
 
 
 @login_required
-def ui(request):
+def ui(request: HttpRequest) -> HttpResponse:
     return render(request, "web/ui.html")
 
 
 @csrf_exempt
-def upload_results(request, assignment_id, submit_num, login):
+def upload_results(
+    request: HttpRequest, assignment_id: int, submit_num: int, login: str
+) -> HttpResponse:
     submit = get_object_or_404(
         Submit, assignment_id=assignment_id, submit_num=submit_num, student__username=login
     )
@@ -1155,7 +1174,9 @@ def upload_results(request, assignment_id, submit_num, login):
 
 
 @login_required()
-def mark_solution_as_final(request, assignment_id, login, submit_num):
+def mark_solution_as_final(
+    request: HttpRequest, assignment_id: int, login: str, submit_num: int
+) -> HttpResponse:
     submit = get_object_or_404(
         Submit, assignment_id=assignment_id, submit_num=submit_num, student__username=login
     )
@@ -1190,7 +1211,9 @@ def mark_solution_as_final(request, assignment_id, login, submit_num):
 
 
 @user_passes_test(is_teacher)
-def unmark_solution_final_mark(request, assignment_id, login, submit_num):
+def unmark_solution_final_mark(
+    request: HttpRequest, assignment_id: int, login: str, submit_num: int
+) -> HttpResponse:
     submit = get_object_or_404(
         Submit, assignment_id=assignment_id, submit_num=submit_num, student__username=login
     )
@@ -1202,7 +1225,7 @@ def unmark_solution_final_mark(request, assignment_id, login, submit_num):
     return redirect("task_detail", assignment_id, login, submit_num)
 
 
-def teacher_task_tar(request, task_id):
+def teacher_task_tar(request: HttpRequest, task_id: int) -> FileResponse:
     task = get_object_or_404(Task, id=task_id)
 
     if "token" in request.GET:
@@ -1223,7 +1246,7 @@ def teacher_task_tar(request, task_id):
 
 
 @login_required
-def quiz_fill(request):
+def quiz_fill(request: HttpRequest) -> HttpResponse | HttpResponseRedirect:
     """
     Function that allows filling a quiz.
     """
@@ -1272,7 +1295,7 @@ def quiz_fill(request):
 
 
 @login_required
-def quiz_enrolling(request, assignment_id):
+def quiz_enrolling(request: HttpRequest, assignment_id: int) -> HttpResponse:
     """
     Function that renders informative enrolling page.
     """
@@ -1295,7 +1318,7 @@ def quiz_enrolling(request, assignment_id):
 
 
 @login_required
-def quiz_result(request, enrolled_id):
+def quiz_result(request: HttpRequest, enrolled_id: int) -> HttpResponse | HttpResponseRedirect:
     """
     Function that renders the results of a quiz for student if possible, otherwise redirects to main page, or returns 404
     if enroll for quiz not exists.
@@ -1331,7 +1354,7 @@ def quiz_result(request, enrolled_id):
 
 
 @login_required
-def quiz_asset(request, quiz_src, asset_path):
+def quiz_asset(request: HttpRequest, quiz_src: str, asset_path: str) -> HttpResponse:
     """
     Function that returns an asset of a quiz folder if asset is found, 404 otherwise.
     Raises permission denied if user is trying to access something he can't.
