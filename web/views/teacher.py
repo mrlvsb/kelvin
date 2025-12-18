@@ -8,8 +8,7 @@ import tarfile
 import tempfile
 from collections import OrderedDict
 
-import django.http
-
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
@@ -39,7 +38,7 @@ from serde.json import to_json
 
 
 @user_passes_test(is_teacher)
-def teacher_task(request, task_id):
+def teacher_task(request: HttpRequest, task_id: int) -> HttpResponse:
     task = get_object_or_404(Task, pk=task_id)
     task_dir = os.path.join(BASE_DIR, "tasks", task.code)
 
@@ -58,7 +57,7 @@ def teacher_task(request, task_id):
 
 
 @user_passes_test(is_teacher)
-def submits(request, student_username=None):
+def submits(request: HttpRequest, student_username: str | None = None) -> HttpResponse:
     filters = {}
     student_full_name = None
     if student_username:
@@ -81,12 +80,12 @@ def submits(request, student_username=None):
     )
 
 
-def get_last_submits(assignment_id):
+def get_last_submits(assignment_id: int) -> list[Submit]:
     submits = Submit.objects.filter(assignment_id=assignment_id).order_by(
         "-submit_num", "student_id"
     )
 
-    result = []
+    result: list[Submit] = []
     processed = set()
     for submit in submits:
         if submit.student_id not in processed:
@@ -97,7 +96,7 @@ def get_last_submits(assignment_id):
 
 
 @user_passes_test(is_teacher)
-def download_assignment_submits(request, assignment_id):
+def download_assignment_submits(request: HttpRequest, assignment_id: int) -> HttpResponse:
     assignment = get_object_or_404(AssignedTask, pk=assignment_id)
 
     with tempfile.TemporaryFile(suffix=".tar.gz") as f:
@@ -111,7 +110,7 @@ def download_assignment_submits(request, assignment_id):
         return file_response(f, filename, "application/tar")
 
 
-def get_assignment_submits(assignment: AssignedTask):
+def get_assignment_submits(assignment: AssignedTask) -> list[tuple[Submit | None, dict]]:
     results = []
     for result in assignedtask_results(assignment):
         submit = None
@@ -131,7 +130,7 @@ def get_assignment_submits(assignment: AssignedTask):
 
 
 @user_passes_test(is_teacher)
-def show_assignment_submits(request, assignment_id):
+def show_assignment_submits(request: HttpRequest, assignment_id: int) -> HttpResponse:
     assignment = get_object_or_404(AssignedTask, pk=assignment_id)
     results = get_assignment_submits(assignment)
 
@@ -145,7 +144,7 @@ def show_assignment_submits(request, assignment_id):
 
 
 @user_passes_test(is_teacher)
-def show_task_submits(request, task_id: int):
+def show_task_submits(request: HttpRequest, task_id: int) -> HttpResponse:
     assignments = AssignedTask.objects.filter(task_id=task_id)
     results = list(
         itertools.chain.from_iterable(
@@ -163,7 +162,7 @@ def show_task_submits(request, task_id: int):
 
 
 @user_passes_test(is_teacher)
-def submit_assign_points(request, submit_id):
+def submit_assign_points(request: HttpRequest, submit_id: int) -> HttpResponseRedirect:
     submit = get_object_or_404(Submit, pk=submit_id)
 
     points = None
@@ -191,7 +190,7 @@ def submit_assign_points(request, submit_id):
     return redirect(request.META.get("HTTP_REFERER", "/"))
 
 
-def build_score_csv(assignments, filename: str) -> django.http.HttpResponse:
+def build_score_csv(assignments: list[AssignedTask], filename: str) -> HttpResponse:
     result = OrderedDict()
 
     header = ["LOGIN"]
@@ -219,7 +218,7 @@ def build_score_csv(assignments, filename: str) -> django.http.HttpResponse:
 
 def build_score_for_assignment_without_header_and_zero_scores_csv(
     assignment: AssignedTask, filename: str
-) -> django.http.HttpResponse:
+) -> HttpResponse:
     result = (record for record in assignedtask_results(assignment) if "assigned_points" in record)
 
     with io.StringIO() as out:
@@ -231,7 +230,7 @@ def build_score_for_assignment_without_header_and_zero_scores_csv(
         return file_response(out.getvalue(), filename, "text/csv")
 
 
-def build_edison_task_score_csv(student_points, filename: str) -> django.http.HttpResponse:
+def build_edison_task_score_csv(student_points: dict[User, float], filename: str) -> HttpResponse:
     """
     Build CSV file importable by Edison system.
     Edison requires delimiter set to `;`.
@@ -245,7 +244,7 @@ def build_edison_task_score_csv(student_points, filename: str) -> django.http.Ht
 
 
 @user_passes_test(is_teacher)
-def download_csv_per_assignment(request, assignment_id: int):
+def download_csv_per_assignment(request: HttpRequest, assignment_id: int) -> HttpResponse:
     assigned_task = AssignedTask.objects.get(pk=assignment_id)
     csv_filename = f"{assigned_task.task.sanitized_name()}_{assigned_task.clazz.day}{assigned_task.clazz.time:%H%M}.csv"
     return build_score_for_assignment_without_header_and_zero_scores_csv(
@@ -254,7 +253,7 @@ def download_csv_per_assignment(request, assignment_id: int):
 
 
 @user_passes_test(is_teacher)
-def download_csv_per_task(request, task_id: int):
+def download_csv_per_task(request: HttpRequest, task_id: int) -> HttpResponse:
     """
     Students without a submit are excluded.
     """
@@ -266,7 +265,7 @@ def download_csv_per_task(request, task_id: int):
 
 
 @user_passes_test(is_teacher)
-def download_csv_per_class(request, class_id: int):
+def download_csv_per_class(request: HttpRequest, class_id: int) -> HttpResponse:
     clazz = Class.objects.get(pk=class_id)
     return build_score_csv(
         clazz.assignedtask_set.all(), f"{clazz.subject.abbr}_{clazz.day}{clazz.time:%H%M}.csv"
@@ -274,7 +273,7 @@ def download_csv_per_class(request, class_id: int):
 
 
 @user_passes_test(is_teacher)
-def task_list(request):
+def task_list(request: HttpRequest) -> HttpResponse:
     """
     Page that renders a Vue component with a list of tasks.
     """
@@ -282,7 +281,7 @@ def task_list(request):
 
 
 @user_passes_test(is_teacher)
-def student_list(request):
+def student_list(request: HttpRequest) -> HttpResponse:
     """
     Page that renders a Vue component with a list of students.
     """
@@ -290,7 +289,7 @@ def student_list(request):
 
 
 @user_passes_test(is_teacher)
-def student_page(request, login: str):
+def student_page(request: HttpRequest, login: str) -> HttpResponse:
     """
     Page that renders a Vue component with a detail of a single student.
     """
@@ -307,7 +306,7 @@ def student_page(request, login: str):
 
 
 @user_passes_test(is_teacher)
-def student_transfer(request):
+def student_transfer(request: HttpRequest) -> HttpResponse:
     """
     Page that renders a Vue component to transfer students between classes.
     """
@@ -315,7 +314,7 @@ def student_transfer(request):
 
 
 @user_passes_test(is_teacher)
-def reevaluate(request, submit_id):
+def reevaluate(request: HttpRequest, submit_id: int) -> HttpResponseRedirect:
     submit = Submit.objects.get(pk=submit_id)
     try:
         shutil.rmtree(submit.pipeline_path())
@@ -328,7 +327,7 @@ def reevaluate(request, submit_id):
 
 
 @user_passes_test(is_teacher)
-def quiz_scoring(request, enrolled_id: int):
+def quiz_scoring(request: HttpRequest, enrolled_id: int) -> HttpResponse:
     """
     Function that renders tool allowing to score student's quiz manually.
     """
@@ -351,7 +350,7 @@ def quiz_scoring(request, enrolled_id: int):
 
 
 @user_passes_test(is_teacher)
-def quiz_edit(request, quiz_id: int):
+def quiz_edit(request: HttpRequest, quiz_id: int) -> HttpResponse:
     """
     Function that renders quiz edit page, or returns 404 if quiz not exists.
     Raises an Exception if there are multiple assignments of one quiz for one class, which is not allowed.
@@ -370,7 +369,7 @@ def quiz_edit(request, quiz_id: int):
 
 
 @user_passes_test(is_teacher)
-def quiz_detail(request, quiz_id: int):
+def quiz_detail(request: HttpRequest, quiz_id: int) -> HttpResponse:
     """
     Function that renders detail of a quiz.
     """
@@ -393,7 +392,7 @@ def quiz_detail(request, quiz_id: int):
 
 
 @user_passes_test(is_teacher)
-def quiz_list(request):
+def quiz_list(request: HttpRequest) -> HttpResponse:
     """
     Function that renders page with all quizzes.
     """
@@ -401,7 +400,7 @@ def quiz_list(request):
 
 
 @user_passes_test(is_teacher)
-def quiz_submits(request, quiz_id: int):
+def quiz_submits(request: HttpRequest, quiz_id: int) -> HttpResponse:
     """
     Function that renders page with submits for quiz and its assigned classes.
     """
@@ -411,6 +410,6 @@ def quiz_submits(request, quiz_id: int):
         request,
         "web/quiz/quiz_submit_list.html",
         {
-            "quiz_id": quiz.id,
+            "quiz_id": quiz.pk,
         },
     )
