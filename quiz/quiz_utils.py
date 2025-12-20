@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 
+from typing import Optional
 from common.models import Class
 from quiz.models import Quiz, AssignedQuiz, EnrolledQuiz
 from web.markdown_utils import process_markdown
@@ -11,6 +12,20 @@ class QuizException(Exception):
     """
 
     pass
+
+
+def quiz_running_for_user(user: User) -> Optional[EnrolledQuiz]:
+    """
+    Returns currently running quiz for given user.
+    If user is not running a quiz at the moment, None is returned.
+    """
+    try:
+        return EnrolledQuiz.objects.get(student=user.id, submitted=False)
+    except EnrolledQuiz.DoesNotExist:
+        return None
+
+
+User.add_to_class("is_running_quiz", lambda self: quiz_running_for_user(self) is not None)
 
 
 def quiz_assigned_classes(quiz: Quiz, requested_by: int):

@@ -1,7 +1,9 @@
 from django.http import HttpResponseRedirect
 from django.urls import reverse, resolve, Resolver404
 from enum import Enum
-from quiz.models import EnrolledQuiz
+from kelvin.settings import DEBUG
+from debug_toolbar.toolbar import DebugToolbar
+from quiz.quiz_utils import quiz_running_for_user
 
 
 class SubmitType(Enum):
@@ -19,15 +21,16 @@ class QuizRedirectMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        try:
-            enrolled_quiz = EnrolledQuiz.objects.get(student=request.user.id, submitted=False)
+        enrolled_quiz = quiz_running_for_user(request.user)
 
+        if enrolled_quiz is not None:
             fill_url = reverse("quiz_fill")
 
             allowed_urls = [
                 fill_url,
                 reverse("api_quiz_results", args=[enrolled_quiz.id, SubmitType.PERIODIC.value]),
                 reverse("api_quiz_results", args=[enrolled_quiz.id, SubmitType.MANUAL.value]),
+                reverse("api_info"),
                 reverse("cas_ng_logout"),
             ]
 
@@ -37,10 +40,9 @@ class QuizRedirectMiddleware:
             except Resolver404:
                 pass
 
-            if request.path_info not in allowed_urls:
+            debug_toolbar = DEBUG and DebugToolbar.is_toolbar_request(request)
+            if not debug_toolbar and request.path_info not in allowed_urls:
                 return HttpResponseRedirect(fill_url)
-        except EnrolledQuiz.DoesNotExist:
-            pass
 
         response = self.get_response(request)
 

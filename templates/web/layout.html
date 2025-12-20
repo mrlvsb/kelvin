@@ -68,7 +68,9 @@
                 <span class="ml-auto navbar-text">
                   <span class="d-md-none">Logged as: </span><span class="text-body-emphasis">{{ user.get_full_name }} ({{ user.username }})</span>
                 </span>
+                {% if not user.is_running_quiz %}
                 <kelvin-notifications></kelvin-notifications>
+                {% endif %}
                 
                 <kelvin-color-theme></kelvin-color-theme>
                 <li class="nav-item"><a class="nav-link text-primary-emphasis" href="/accounts/logout/?next=/">Logout</a></li>
