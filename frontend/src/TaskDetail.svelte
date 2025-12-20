@@ -356,19 +356,23 @@ window.addEventListener('hashchange', goToSelectedLines);
               >{comments.automated}</span>
           {/if}
         {/if}
-      </span>{#if file.source.type == 'source' && file.source.content}<CopyToClipboard
+      </span>
+      {#if file.source.type == 'source' && file.source.content}
+        <CopyToClipboard
           content={() => file.source.content}
-          title="Copy the source code to the clipboard"
-          ><span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px"
-          ></span
-          ></CopyToClipboard
-        >{/if}
+          title="Copy the source code to the clipboard">
+          <span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px" />
+        </CopyToClipboard>
+      {/if}
+      <a class="text-body" href={file.source.content_url} download title="Download the file">
+        <span class="iconify" data-icon="clarity:download-line" style="height: 20px" />
+      </a>
     </h2>
     {#if file.opened}
       {#if file.source.error}
         <span class="text-muted">{file.source.error}</span>
       {:else if file.source.type == 'source'}
-        {#if file.source.content_url}
+        {#if file.source.content === null}
           Content too large, show <a href={file.source.content_url}>raw content</a>.
         {:else}
           <SubmitSource
