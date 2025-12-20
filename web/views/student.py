@@ -760,18 +760,16 @@ def submit_comments(
                 }
             result[name]["sources"].append(reverse("submit_source", args=[submit.id, source.virt]))
         else:
-            content = ""
-            content_url = None
+            content = None
+            content_url = reverse(
+                "submit_source", kwargs=dict(submit_id=submit.id, path=source.virt)
+            )
             error = None
 
             try:
                 if is_file_small(source.phys):
                     with open(source.phys) as f:
                         content = f.read()
-                else:
-                    content_url = reverse(
-                        "submit_source", kwargs=dict(submit_id=submit.id, path=source.virt)
-                    )
             except UnicodeDecodeError:
                 error = "The file contains binary data or is not encoded in UTF-8"
             except FileNotFoundError:
