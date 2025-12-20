@@ -12,7 +12,7 @@ urlpatterns = [
     path("task-list/<subject_abbr>", default_view.tasks_list_all),
     path("student-list", default_view.student_list),
     path("submits/<int:task_assignment>", default_view.create_submit),
-    path("info", default_view.info),
+    path("info", default_view.info, name="api_info"),
     path("classes", default_view.class_detail_list),
     path("classes/all", default_view.all_classes),
     path("classes/<int:class_id>/add_students", default_view.add_student_to_class),
