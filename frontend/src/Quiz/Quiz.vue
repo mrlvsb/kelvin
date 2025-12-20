@@ -430,6 +430,7 @@ onUnmounted(() => {
 <style scoped>
 #quiz:deep(#sidebar-wrapper) {
   height: 100%;
+  border-radius: 5px;
 }
 
 #quiz:deep(#sidebar-wrapper ul) {
@@ -446,6 +447,7 @@ onUnmounted(() => {
 
 #quiz:deep(#sidebar-wrapper li:hover) {
   background-color: #e9ecef;
+  border-radius: 5px;
 }
 
 #quiz:deep(.active) {
@@ -463,5 +465,20 @@ onUnmounted(() => {
 
 #quiz:deep(.teacher-scoring) {
   background-color: lightyellow;
+}
+
+[data-bs-theme='dark'] {
+  #quiz:deep(#sidebar-wrapper li:hover),
+  #quiz:deep(.active) {
+    background-color: #3c4044;
+  }
+
+  #quiz #sidebar-wrapper {
+    --bs-light-rgb: 43, 47, 51;
+  }
+
+  #quiz:deep(.teacher-scoring) {
+    background-color: #3a3828;
+  }
 }
 </style>
