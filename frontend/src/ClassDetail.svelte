@@ -40,7 +40,7 @@ $: {
 }
 
 $: {
-  activeQuizList = task_type === null ? clazz.quizzes : [];
+  activeQuizList = task_type === null || task_type === 'quiz' ? clazz.quizzes : [];
 }
 
 function studentPoints(activeTaskList, activeQuizList, student) {

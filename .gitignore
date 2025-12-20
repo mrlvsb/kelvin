@@ -116,6 +116,7 @@ web/static/dolos
 
 survey/surveys/*.yaml
 exams/
+quizzes/
 
 static/
 
