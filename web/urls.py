@@ -69,9 +69,9 @@ urlpatterns = [
     ),
     path("submit/<int:submit_id>/pipeline", student_view.pipeline_status),
     # notifications
-    path("notification/all", notification_view.all_notifications),
-    path("notification/mark_as_read", notification_view.mark_as_read),
-    path("notification/mark_as_read/<int:notification_id>", notification_view.mark_as_read),
+    path("notification/all", notification_view.all_notifications, name="notification_all"),
+    path("notification/mark_as_read", notification_view.mark_as_read, name="notification_mark_as_read_all"),
+    path("notification/mark_as_read/<int:notification_id>", notification_view.mark_as_read, name="notification_mark_as_read_single"),
     # teacher
     path("teacher/task/<int:task_id>", teacher_view.teacher_task, name="teacher_task"),
     path("teacher/task/<int:task_id>.tar", student_view.teacher_task_tar, name="teacher_task_tar"),

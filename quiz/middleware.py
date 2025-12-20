@@ -31,11 +31,15 @@ class QuizRedirectMiddleware:
                 reverse("api_quiz_results", args=[enrolled_quiz.id, SubmitType.PERIODIC.value]),
                 reverse("api_quiz_results", args=[enrolled_quiz.id, SubmitType.MANUAL.value]),
                 reverse("api_info"),
+                reverse("notification_all"),
+                reverse("notification_mark_as_read_all"),
                 reverse("cas_ng_logout"),
             ]
 
             try:
                 if resolve(request.path_info).url_name == "quiz_asset":
+                    allowed_urls.append(request.path_info)
+                elif resolve(request.path_info).url_name == "notification_mark_as_read_single":
                     allowed_urls.append(request.path_info)
             except Resolver404:
                 pass

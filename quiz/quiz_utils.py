@@ -25,9 +25,6 @@ def quiz_running_for_user(user: User) -> Optional[EnrolledQuiz]:
         return None
 
 
-User.add_to_class("is_running_quiz", lambda self: quiz_running_for_user(self) is not None)
-
-
 def quiz_assigned_classes(quiz: Quiz, requested_by: int):
     """
     Function that returns a list of classes that are/can be assigned to the quiz.
