@@ -37,9 +37,10 @@ class QuizRedirectMiddleware:
             ]
 
             try:
-                if resolve(request.path_info).url_name == "quiz_asset":
+                resolved_path = resolve(request.path_info).url_name
+                if resolved_path == "quiz_asset":
                     allowed_urls.append(request.path_info)
-                elif resolve(request.path_info).url_name == "notification_mark_as_read_single":
+                elif resolved_path == "notification_mark_as_read_single":
                     allowed_urls.append(request.path_info)
             except Resolver404:
                 pass
