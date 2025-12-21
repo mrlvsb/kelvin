@@ -33,6 +33,16 @@ urlpatterns = [
         name="submit_download",
     ),
     path(
+        "task/edit/<int:task_id>/",
+        student_view.edit_task,
+        name="edit_task",
+    ),
+    path(
+        "task/add/<str:subject_name>/",
+        student_view.edit_new_task,
+        name="edit_task",
+    ),
+    path(
         "task/<int:assignment_id>/<str:login>/<int:submit_num>/comments",
         student_view.submit_comments,
         name="submit_comments",
