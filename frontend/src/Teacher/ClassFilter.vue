@@ -55,7 +55,7 @@ async function load() {
   semester.value =
     (route.query.semester as string) || sem_sorted.value[sem_sorted.value.length - 1] || '';
   subject.value = (route.query.subject as string) || '';
-  teacher.value = (route.query.teacher as string) || '';
+  teacher.value = (route.query.teacher as string) || user.value.username;
   clazz.value = (route.query.class as string) || '';
 
   isLoading.value = false;
