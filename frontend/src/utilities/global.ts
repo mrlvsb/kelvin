@@ -30,7 +30,6 @@ export const loadInfo = async (forceDataRefresh = false) => {
 
     if (!user.value || !semester.value || forceDataRefresh) {
         const data = await getFromAPI<APIInfoResponse>('/api/info');
-        console.log('data:', data);
         data['semester']['begin'] = new Date(data['semester']['begin']);
         data['semester']['begin'].setHours(0);
 
