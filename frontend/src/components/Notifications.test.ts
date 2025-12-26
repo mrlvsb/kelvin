@@ -46,6 +46,10 @@ const exampleNotifications = [
 ] satisfies Notification[];
 
 beforeEach(() => {
+    // Mock the current date to make tests deterministic
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2025-01-01T00:00:00.000Z'));
+
     //fake csrf token
     const csrf = document.createElement('meta');
     csrf.name = 'csrf-token';
@@ -75,6 +79,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+    vi.useRealTimers();
+
     document.querySelectorAll("meta[name='csrf-token']").forEach((e) => e.remove());
     document.querySelectorAll("meta[name='django-webpush-vapid-key']").forEach((e) => e.remove());
 
