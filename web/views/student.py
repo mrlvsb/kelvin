@@ -1001,7 +1001,11 @@ def task_asset(request: HttpRequest, task_name: str, path: str) -> HttpResponse:
         raise HttpException403()
 
     deny_files = ["config.yml", "tests.yml", "script.py", "solution.c", "solution.cpp"]
-    if ".." in path or (path in deny_files and not is_teacher(request.user)):
+    if (
+        ".." in path
+        or (path in deny_files and not is_teacher(request.user))
+        or path.startswith("/")
+    ):
         raise HttpException403()
 
     system_path = os.path.join("tasks", task_name, path)
