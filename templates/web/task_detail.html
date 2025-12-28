@@ -280,7 +280,10 @@
 
             {% if submit %}
             <div class="tab-pane overflow-auto" id="tab_src">
-              <kelvin-submit-sources url="{% url 'submit_comments' submit.assignment.id submit.student submit.submit_num %}"></kelvin-submit-sources>
+                <kelvin-submit-sources
+                    url="{% url 'v2:retrieve_submit_details' submit.assignment.id submit.student submit.submit_num %}"
+                    comment_url="{% url 'v2:create_submit_comment' submit.assignment.id submit.student submit.submit_num %}"
+                ></kelvin-submit-sources>
             </div>
 
             {% if has_pipeline %}
