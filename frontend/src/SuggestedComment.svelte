@@ -3,7 +3,8 @@ import CommentForm from './CommentForm.svelte';
 import { safeMarkdown } from './markdown.js';
 import { user } from './global.js';
 import { hideComments, HideCommentsState } from './stores';
-import { createEventDispatcher } from 'svelte';
+import { createEventDispatcher, onMount } from 'svelte';
+import Toast from 'bootstrap/js/dist/toast';
 
 export let id;
 export let author;
@@ -12,6 +13,8 @@ export let meta;
 export let files;
 export let rating;
 export let summary = false;
+
+let toast = null;
 
 if (rating === undefined) {
   rating = 0;
@@ -36,6 +39,11 @@ async function handleAccept() {
 
   const json = await res.json();
 
+  if (!res.ok) {
+    showToast(json.detail, 'warning');
+    return;
+  }
+
   dispatch('resolveSuggestion', {
     id: suggestionId,
     comment: json
@@ -49,12 +57,19 @@ async function handleReject() {
   sending = true;
   const suggestionId = meta.review.id;
 
-  await fetch(`/api/v2/llm/suggestions/${suggestionId}`, {
+  const res = await fetch(`/api/v2/llm/suggestions/${suggestionId}`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json'
     }
   });
+
+  const json = await res.json();
+
+  if (!res.ok) {
+    showToast(json.detail, 'warning');
+    return;
+  }
 
   processed = true;
   sending = false;
@@ -82,6 +97,12 @@ async function handleSave(event) {
 
   const json = await res.json();
 
+  if (!res.ok) {
+    showToast(json.detail, 'warning');
+    editing = false;
+    return;
+  }
+
   dispatch('resolveSuggestion', {
     id: suggestionId,
     comment: json
@@ -91,7 +112,47 @@ async function handleSave(event) {
   sending = false;
   editing = false;
 }
+
+function showToast(message, status = 'success') {
+  if (toast) {
+    toast.querySelector('.toast-body').textContent = message;
+
+    let bg_color = 'bg-success';
+    let text_color = 'text-white';
+
+    if (status === 'error') {
+      bg_color = 'bg-danger';
+    } else if (status === 'warning') {
+      bg_color = 'bg-warning';
+      text_color = 'text-dark';
+    }
+
+    // Update toast color based on status
+    toast.className = `toast align-items-center ${text_color} ${bg_color} border-0`;
+
+    new Toast(toast).show();
+  }
+}
 </script>
+
+<div class="position-fixed top-0 end-0 mt-5 me-3">
+  <div
+    class="toast align-items-center text-white bg-success border-0"
+    role="alert"
+    aria-live="assertive"
+    aria-atomic="true"
+    bind:this={toast}>
+    <div class="d-flex">
+      <div class="toast-body">Unexpected error occurred. Please try again later.</div>
+
+      <button
+        type="button"
+        class="btn-close btn-close-dark me-2 m-auto"
+        data-bs-dismiss="toast"
+        aria-label="Close" />
+    </div>
+  </div>
+</div>
 
 {#if !($hideComments === HideCommentsState.AUTOMATED || $hideComments === HideCommentsState.ALL)}
   {#if $user?.teacher && !processed}
