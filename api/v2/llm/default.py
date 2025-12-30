@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 from ninja import Router
 from serde.json import from_json
 
-from api.auth import require_submit_token
+from api.auth import require_submit_access_by_token
 from common.ai_review.dto import AIReviewResult, SubmitSummary
 from common.models import Submit
 from common.models import SuggestedComment
@@ -18,7 +18,7 @@ router = Router()
     description="Receive and store the AI summary result for a given submit.",
 )
 @transaction.atomic
-@require_submit_token
+@require_submit_access_by_token
 def upload_submit_llm_review_result(request, submit_id: int):
     submit = get_object_or_404(Submit, id=submit_id)
     review: AIReviewResult = from_json(AIReviewResult, request.body)

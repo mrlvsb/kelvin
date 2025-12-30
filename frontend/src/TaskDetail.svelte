@@ -10,6 +10,8 @@ import { markRead } from './utilities/notifications';
 import { hideComments, HideCommentsState } from './stores.js';
 
 export let url;
+export let comment_url;
+
 let files = null;
 let summaryComments = [];
 let submits = null;
@@ -79,7 +81,7 @@ function updateCommentProps(id, newProps) {
 }
 
 async function addNewComment(comment) {
-  const res = await fetch(url, {
+  const res = await fetch(comment_url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -106,13 +108,12 @@ async function addNewComment(comment) {
 }
 
 async function updateComment(id, text) {
-  const res = await fetch(url, {
+  const res = await fetch(`${comment_url}/${id}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      id: id,
       text: text
     })
   });

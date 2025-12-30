@@ -14,7 +14,6 @@ from jinja2 import Environment, FileSystemLoader
 
 from kelvin.settings import BASE_DIR
 from .ai_review.dto import LlmReviewPromptDTO
-from .dto import CommentDTO
 from .event_log import UserEventModel  # noqa
 from .utils import is_teacher
 
@@ -367,18 +366,10 @@ class Comment(models.Model):
             + "#src"
         )
 
-    def to_dto(self, can_edit: bool, type: str, unread: bool) -> CommentDTO:
-        return CommentDTO(
-            id=self.id,
-            author=self.author.get_full_name(),
-            author_id=self.author.id,
-            text=self.text,
-            line=self.line,
-            source=self.source,
-            can_edit=can_edit,
-            type=type,
-            unread=unread,
-        )
+    def type(self):
+        if self.author == self.submit.student:
+            return "student"
+        return "teacher"
 
 
 class LlmReviewPrompt(models.Model):

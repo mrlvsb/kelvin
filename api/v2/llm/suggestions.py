@@ -6,6 +6,7 @@ from serde import to_dict
 
 from api.v2.llm.schema import ModifySuggestionSchema, RateSuggestionSchema
 from common.ai_review.dto import SuggestionState
+from common.comment import comment_to_dto
 from common.models import Comment, SuggestedComment
 from common.utils import is_teacher
 
@@ -61,7 +62,7 @@ def accept_submit_suggestion(request, suggestion_id: int):
 
     # TODO: Handle notifications
 
-    return to_dict(created_comment.to_dto(can_edit=True, type="teacher", unread=False))
+    return to_dict(comment_to_dto(created_comment, can_edit=True, type="teacher", unread=False))
 
 
 @router.patch(
@@ -91,7 +92,7 @@ def modify_submit_suggestion(request, suggestion_id: int, body: ModifySuggestion
 
     # TODO: Handle notifications
 
-    return to_dict(created_comment.to_dto(can_edit=True, type="teacher", unread=False))
+    return to_dict(comment_to_dto(created_comment, can_edit=True, type="teacher", unread=False))
 
 
 @router.delete(

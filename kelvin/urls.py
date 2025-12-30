@@ -24,6 +24,7 @@ from common.utils import is_teacher
 from ninja import NinjaAPI
 from api.v2.default import router as api_router
 from api.v2.llm import router as llm_router
+from api.v2.task import router as task_router
 
 api_v2 = NinjaAPI(
     title="Kelvin API",
@@ -33,6 +34,7 @@ api_v2 = NinjaAPI(
 )
 api_v2.add_router("", api_router)
 api_v2.add_router("llm", llm_router)
+api_v2.add_router("task", task_router)
 
 # import notifications.urls
 

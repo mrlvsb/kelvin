@@ -11,9 +11,9 @@ export let text;
 export let type;
 export let id;
 export let can_edit;
-export let url = null;
 export let unread = null;
 export let notification_id = null;
+export let meta = null;
 
 const dispatch = createEventDispatcher();
 
@@ -46,8 +46,8 @@ function handleNotification() {
       {#if !editing}
         {#if type === 'automated'}
           {text}
-          {#if url}
-            <a href={url}>
+          {#if meta && meta.url}
+            <a href={meta.url}>
               <span class="iconify" data-icon="entypo:help"></span>
             </a>
           {/if}
