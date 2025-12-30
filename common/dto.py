@@ -2,7 +2,6 @@ import datetime
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Union
 
-import django
 from serde import serde, Untagged
 
 
@@ -59,8 +58,6 @@ class TextSource:
 
 
 type SubmitSources = Dict[str, Union[ImageSource, VideoSource, TextSource]]
-
-type AuthUser = django.contrib.auth.models.User
 
 
 @serde(tagging=Untagged)

@@ -2,6 +2,7 @@ import datetime
 import logging
 import os
 
+from django.contrib.auth.models import User as DjangoUser
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import BadRequest
 from django.http import HttpRequest
@@ -11,7 +12,7 @@ from notifications.signals import notify
 
 from common.ai_review.dto import AIReviewResult, SubmitSummary, SuggestionState
 from common.ai_review.processor import AI_REVIEW_COMMENT_AUTHOR, AI_REVIEW_COMMENT_TYPE
-from common.dto import SubmitSources, ImageSource, VideoSource, TextSource, AuthUser, CommentDTO
+from common.dto import SubmitSources, ImageSource, VideoSource, TextSource, CommentDTO
 from common.evaluate import evaluate_submit
 from common.event_log import record_submit_event
 from common.models import AssignedTask, Submit
@@ -254,7 +255,7 @@ def process_submit_evaluation_result(result: EvaluationResult, sources: SubmitSo
 
 
 def process_submit_review_result(
-    requester: AuthUser,
+    requester: DjangoUser,
     result: AIReviewResult,
     sources: SubmitSources,
     summary_comments: list[CommentDTO],

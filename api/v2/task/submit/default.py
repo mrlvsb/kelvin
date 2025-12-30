@@ -1,6 +1,7 @@
 import logging
 from typing import Dict, List
 
+from django.contrib.auth.models import User as DjangoUser
 from django.contrib.contenttypes.models import ContentType
 from ninja import Router, Path
 from notifications.models import Notification
@@ -12,7 +13,6 @@ from common.dto import (
     AssignedSubmit,
     SubmitSources,
     TaskSubmitDetails,
-    AuthUser,
     CommentDTO,
 )
 from common.models import Submit, Comment
@@ -28,7 +28,7 @@ router = Router()
 
 
 def fetch_submit_comments(
-    requester: AuthUser,
+    requester: DjangoUser,
     submit: Submit,
     sources: SubmitSources,
     notifications: Dict[int, Notification],

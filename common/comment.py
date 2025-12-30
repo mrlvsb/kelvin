@@ -5,14 +5,15 @@ from django.shortcuts import get_object_or_404
 from notifications.models import Notification
 from notifications.signals import notify
 
-from common.dto import AuthUser, CommentDTO
+from common.dto import CommentDTO
+from django.contrib.auth.models import User as DjangoUser
 from common.exceptions.http_exceptions import HttpException403
 from common.models import Submit, Comment
 
 
 def create_submit_comment(
     submit: Submit,
-    author: AuthUser,
+    author: DjangoUser,
     content: str,
     source: str | None,
     line: int | None,
@@ -42,7 +43,7 @@ def create_submit_comment(
 def update_submit_comment(
     submit: Submit,
     comment_id: int,
-    author: AuthUser,
+    author: DjangoUser,
     new_content: str | None,
 ) -> Comment | None:
     """
@@ -84,7 +85,7 @@ def update_submit_comment(
     return comment
 
 
-def delete_submit_comment(comment_id: int, author: AuthUser):
+def delete_submit_comment(comment_id: int, author: DjangoUser):
     """
     Deletes a comment if authored by the requester and removes related notifications.
     """
@@ -103,7 +104,7 @@ def delete_submit_comment(comment_id: int, author: AuthUser):
     comment.delete()
 
 
-def fetch_comment_recipients(submit: Submit, current_author: AuthUser) -> List[AuthUser]:
+def fetch_comment_recipients(submit: Submit, current_author: DjangoUser) -> List[DjangoUser]:
     """
     Collects all users involved in a submission to determine who should receive notifications.
     Includes teacher, student, and all unique previous commenters except the triggering author.
