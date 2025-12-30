@@ -35,6 +35,7 @@ from quiz.quiz_utils import quiz_to_html, quiz_assigned_classes
 from . import statistics
 from .utils import file_response
 from serde.json import to_json
+from common.emails import send_email_points_assigned
 
 
 @user_passes_test(is_teacher)
@@ -176,6 +177,13 @@ def submit_assign_points(request: HttpRequest, submit_id: int) -> HttpResponseRe
             verb="assigned points to",
             action_object=submit,
             important=True,
+        )
+        send_email_points_assigned(
+            request=request,
+            sender=request.user,
+            student=submit.student,
+            submit=submit,
+            points=points,
         )
 
     submit.assigned_points = points
