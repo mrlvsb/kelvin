@@ -12,6 +12,7 @@ class Command(BaseCommand):
                 "evaluator.docker_container_cleanup.delete_old_containers",
                 cron_string="0 * * * *",
                 args=[("int", "1800")],
+                queue="evaluator",
             )
         # Database is not running, skip creating the cron task
         except Exception as e:
