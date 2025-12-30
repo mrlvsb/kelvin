@@ -12,22 +12,6 @@ let highlightedLines = [];
 
 const dispatch = createEventDispatcher();
 
-/* To fixt warning in JS console
-// In SubmitSource.svelte, when highlighting code:
-// Instead of:
-element.innerHTML = hljs.highlightAuto(code).value;
-
-// Use:
-const highlighted = hljs.highlight(code, { language: 'auto', ignoreIllegals: true });
-element.innerHTML = highlighted.value;
-
-// Or better yet, escape first:
-import { escape } from 'html-escaper'; // or use a similar utility
-const escaped = escape(code);
-const highlighted = hljs.highlight(escaped, { language: 'auto' });
-element.innerHTML = highlighted.value;
-*/
-
 $: {
   const container = document.createElement('div');
   container.innerHTML = hljs.highlightAuto(code)['value'];
