@@ -1,4 +1,5 @@
 import re
+from dataclasses import dataclass
 from typing import Annotated
 
 from pydantic import AnyHttpUrl, BaseModel, Field, field_validator
@@ -11,6 +12,12 @@ IMAGE_PATTERN = re.compile(
     r"(?P<image>[a-z0-9.\-_]+(?:/[a-z0-9.\-_]+|))"
     r":(?P<tag>[\w.\-_]{1,127})$"
 )
+
+
+@dataclass
+class ImageInfo:
+    tag: str | None
+    id: str | None
 
 
 class DeploymentRequest(BaseModel):

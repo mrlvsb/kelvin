@@ -87,6 +87,22 @@ async def check_deployment_concurrency():
                 }
             },
         },
+        status.HTTP_504_GATEWAY_TIMEOUT: {
+            "description": "Deployment failed due to build timeout",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "logs": [
+                            "[2025-09-01 13:45:12] [INFO] Starting deployment for commit 0474329d785bbb2c928b257f104847dc4f8f80f6",
+                            "[2025-09-01 13:45:13] [INFO] Trying to get new image from the local registry: 0474329d785bbb2c928b257f104847dc4f8f80f6",
+                            "[2025-09-01 13:45:14] [INFO] Pulling new image from the remote registry: 0474329d785bbb2c928b257f104847dc4f8f80f6",
+                            "[2025-09-01 13:46:10] [ERROR] Failed to pull Docker image: Timeout after 600 seconds.",
+                        ],
+                        "error": "Failed to pull Docker image: Timeout after 600 seconds.",
+                    }
+                }
+            },
+        },
     },
 )
 async def deploy(request: DeploymentRequest, response: Response):

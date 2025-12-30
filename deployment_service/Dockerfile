@@ -25,6 +25,8 @@ RUN uv sync \
 
 FROM python:3.13-slim-trixie AS runtime
 
+RUN groupadd -g 1000 webserver && useradd --uid 1000 --gid 1000 --shell /bin/false --system webserver
+
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get install -y \
@@ -53,11 +55,15 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 
 ENV PATH="/app/bin:$PATH"
 
-COPY --from=build /app /app
+COPY --from=build --chown=webserver:webserver /app /app
 
-COPY healthcheck.py /app/healthcheck.py
+COPY --chown=webserver:webserver healthcheck.py /app/healthcheck.py
 
 WORKDIR /app
+
+USER webserver
+
+ENV HOME=/tmp
 
 RUN git config --global --add safe.directory "*"
 
