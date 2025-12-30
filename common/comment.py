@@ -44,7 +44,7 @@ def update_submit_comment(
     comment_id: int,
     author: AuthUser,
     new_content: str | None,
-):
+) -> Comment | None:
     """
     Updates an existing comment if authored by the requester. When empty content is given,
     the comment is deleted instead. Existing notifications linked to the comment are cleared.

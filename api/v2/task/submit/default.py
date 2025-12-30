@@ -1,4 +1,5 @@
-from typing import Dict
+import logging
+from typing import Dict, List
 
 from django.contrib.contenttypes.models import ContentType
 from ninja import Router, Path
@@ -6,14 +7,16 @@ from notifications.models import Notification
 from serde import to_dict
 
 from api.auth import get_submit_write_access
+from common.comment import comment_to_dto
 from common.dto import (
     AssignedSubmit,
     SubmitSources,
     TaskSubmitDetails,
+    AuthUser,
+    CommentDTO,
 )
-from common.models import Submit
+from common.models import Submit, Comment
 from common.submit import (
-    fetch_submit_comments,
     fetch_submit_sources,
     process_submit_evaluation_result,
     process_submit_review_result,
@@ -22,6 +25,64 @@ from web.dto import SubmitData
 from web.views.student import get_submit_data
 
 router = Router()
+
+
+def fetch_submit_comments(
+    requester: AuthUser,
+    submit: Submit,
+    sources: SubmitSources,
+    notifications: Dict[int, Notification],
+) -> List[CommentDTO]:
+    """
+    Fetches all comments associated with a submission and attaches them to relevant sources.
+    General comments (not linked to files or lines) are returned separately.
+    Notification state and edit permissions are annotated per comment.
+    """
+
+    summary_comments: List[CommentDTO] = []
+
+    for comment in Comment.objects.filter(submit_id=submit.id).order_by("id"):
+        is_comment_author: bool = comment.author == requester
+        notification = notifications.get(comment.id, None)
+
+        notification_id = None
+        unread = False
+
+        if notification:
+            notification_id = notification.id
+            unread = notification.unread
+
+        try:
+            # Comments not tied to a file go to summary section
+            if not comment.source or comment.source not in sources:
+                summary_comments.append(
+                    comment_to_dto(
+                        comment=comment,
+                        can_edit=is_comment_author,
+                        type=comment.type(),
+                        unread=unread,
+                        notification_id=notification_id,
+                    )
+                )
+            else:
+                # Bounds check in case source changed and comment references invalid line
+                max_lines = sources[comment.source].content.count("\n")
+                line = 0 if comment.line > max_lines else comment.line
+
+                sources[comment.source].comments.setdefault(line - 1, []).append(
+                    comment_to_dto(
+                        comment=comment,
+                        can_edit=is_comment_author,
+                        type=comment.type(),
+                        unread=unread,
+                        notification_id=notification_id,
+                    )
+                )
+        except KeyError as e:
+            # Prevents failing rendering if unexpected source states occur
+            logging.exception(e)
+
+    return summary_comments
 
 
 @router.get("/details", url_name="retrieve_submit_details")

@@ -1,8 +1,8 @@
 from ninja import Router, Path, Body
+from ninja import Schema
 from serde import to_dict
 
 from api.auth import get_submit_write_access
-from api.v2.task.dto import SubmitCommentCreate, SubmitCommentUpdate
 from common.comment import (
     comment_to_dto,
     create_submit_comment,
@@ -12,6 +12,16 @@ from common.comment import (
 from common.models import Comment
 
 router = Router()
+
+
+class SubmitCommentCreate(Schema):
+    text: str
+    source: str | None = None
+    line: int | None = None
+
+
+class SubmitCommentUpdate(Schema):
+    text: str | None
 
 
 @router.post("", url_name="create_submit_comment")
@@ -46,7 +56,7 @@ def api_modify_submit_comment(
 ):
     submit = get_submit_write_access(request, assignment_id, login, submit_num)
 
-    comment: Comment = update_submit_comment(
+    comment: Comment | None = update_submit_comment(
         submit=submit,
         comment_id=comment_id,
         author=request.user,
@@ -67,5 +77,7 @@ def api_delete_submit_comment(
     submit_num: int = Path(...),
     comment_id: int = Path(...),
 ):
+    # Ensure the user has write access to the submission
     get_submit_write_access(request, assignment_id, login, submit_num)
+
     delete_submit_comment(comment_id=comment_id, author=request.user)
