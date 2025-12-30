@@ -128,8 +128,9 @@ class DeploymentManager:
         except TimeoutError:
             process.kill()
             await process.wait()
+            timeout_info = f" after {timeout} seconds" if timeout is not None else ""
             raise CriticalError(
-                f"Command timed out: {' '.join(command)}",
+                f"Command timed out{timeout_info}: {' '.join(command)}",
                 self.logs,
                 status.HTTP_504_GATEWAY_TIMEOUT,
             )
@@ -177,13 +178,11 @@ class DeploymentManager:
                     timeout=IMAGE_PULL_TIMEOUT,
                 ):
                     self.logger.info("Successfully pulled new image.")
-            except (ImageNotFound, APIError, TimeoutError) as e:
+            except (ImageNotFound, APIError) as e:
                 raise CriticalError(
                     f"Failed to pull Docker image: {e}",
                     self.logs,
-                    status.HTTP_504_GATEWAY_TIMEOUT
-                    if isinstance(e, TimeoutError)
-                    else status.HTTP_400_BAD_REQUEST,
+                    status.HTTP_400_BAD_REQUEST,
                 ) from e
 
     async def _watch_container_logs(self, stop_logs: asyncio.Event) -> None:
@@ -303,6 +302,7 @@ class DeploymentManager:
             self.logger.info(f"Successfully removed old image: {old_image_id}")
         except APIError as e:
             self.logger.error(f"Could not remove old image. It may be in use. Error: {e}")
+        return None
 
     async def run(self) -> deque:
         """Executes the full deployment flow with a temporary candidate of docker-compose.yml and atomic state update."""
