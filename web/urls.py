@@ -9,6 +9,7 @@ from .views import teacher as teacher_view
 
 urlpatterns = [
     path("", common_view.index, name="index"),
+    path("vue/", common_view.index_vue, name="index_vue"),
     path("import/inbus", common_view.import_inbus, name="import_inbus"),
     path("student-view", student_view.student_index, name="student_index"),
     path(
