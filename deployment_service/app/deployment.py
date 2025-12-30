@@ -316,6 +316,9 @@ class DeploymentManager:
             candidate_dir, os.path.basename(self.stable_compose_path)
         )
 
+        container_logs_task = None
+        stop_container_logs = asyncio.Event()
+
         try:
             self.logger.info("Fetching latest data from git origin...")
 
@@ -345,7 +348,6 @@ class DeploymentManager:
             previous_image_info = self._get_current_image()
             await self._obtain_new_image()
 
-            stop_container_logs = asyncio.Event()
             container_logs_task = asyncio.create_task(
                 self._watch_container_logs(stop_container_logs)
             )
@@ -397,10 +399,13 @@ class DeploymentManager:
             raise CriticalError(f"Unexpected deployment failure: {e}", self.logs) from e
         finally:
             stop_container_logs.set()
-            try:
-                await asyncio.wait_for(container_logs_task, timeout=5.0)
-            except TimeoutError:
-                self.logger.debug("Log streaming task did not finish in time and was cancelled.")
+            if container_logs_task:
+                try:
+                    await asyncio.wait_for(container_logs_task, timeout=5.0)
+                except TimeoutError:
+                    self.logger.debug(
+                        "Log streaming task did not finish in time and was cancelled."
+                    )
             # ALWAYS clean up the temporary directory, no matter what happened.
             self.logger.info("Cleaning up temporary directory...")
             shutil.rmtree(candidate_dir, ignore_errors=True)

@@ -9,6 +9,7 @@ from app.deployment import (
     DeploymentManager,
     FallbackError,
 )
+from app.models import ImageInfo
 
 
 @pytest_asyncio.fixture()
@@ -41,14 +42,14 @@ async def test_get_current_image_tag_success(manager_instance):
     mock_container = MagicMock()
     mock_container.image.id = "sha256:imgid"
     manager_instance.client.containers.get.return_value = mock_container
-    assert manager_instance._get_current_image() == ("imgid", "imgid")
+    assert manager_instance._get_current_image() == ImageInfo(tag="imgid", id="imgid")
 
 
 @pytest.mark.asyncio
-async def test_pull_new_image_already_exists(manager_instance):
+async def test_obtain_new_image_already_exists(manager_instance):
     mock_image = MagicMock()
     manager_instance.client.images.get.return_value = mock_image
-    manager_instance._pull_new_image()
+    await manager_instance._obtain_new_image()
     manager_instance.client.images.get.assert_called_once_with(manager_instance.new_image)
 
 
@@ -128,9 +129,9 @@ async def test_swap_service_critical_error(manager_instance):
 async def test_run_success(mock_rmtree, mock_mkdtemp, manager_instance):
     """Tests the entire successful deployment workflow."""
     manager_instance._get_current_image = MagicMock(
-        return_value=("previous_image_tag", "previous_image_id")
+        return_value=ImageInfo(tag="previous_image_tag", id="previous_image_id")
     )
-    manager_instance._pull_new_image = MagicMock()
+    manager_instance._obtain_new_image = AsyncMock()
     manager_instance._swap_service = AsyncMock(return_value=True)
     manager_instance._health_check = AsyncMock(return_value=True)
     manager_instance._cleanup = MagicMock()
@@ -149,7 +150,7 @@ async def test_run_success(mock_rmtree, mock_mkdtemp, manager_instance):
     )
 
     manager_instance._get_current_image.assert_called_once()
-    manager_instance._pull_new_image.assert_called_once()
+    manager_instance._obtain_new_image.assert_awaited_once()
     manager_instance._swap_service.assert_awaited_once()
     manager_instance._health_check.assert_awaited_once()
 
@@ -165,8 +166,10 @@ async def test_run_success(mock_rmtree, mock_mkdtemp, manager_instance):
 @pytest.mark.asyncio
 async def test_run_rollback_on_health_check_failure(manager_instance):
     """Tests that a rollback is triggered if the health check fails."""
-    manager_instance._get_current_image = MagicMock(return_value=("previous123", "previous123_id"))
-    manager_instance._pull_new_image = MagicMock()
+    manager_instance._get_current_image = MagicMock(
+        return_value=ImageInfo(tag="previous123", id="previous123_id")
+    )
+    manager_instance._obtain_new_image = AsyncMock()
     manager_instance._health_check = AsyncMock(return_value=False)
 
     # Mock _swap_service to inspect its calls
