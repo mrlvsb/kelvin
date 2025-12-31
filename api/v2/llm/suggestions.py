@@ -6,14 +6,11 @@ from serde import to_dict
 
 from api.v2.llm.schema import ModifySuggestionSchema, RateSuggestionSchema
 from common.ai_review.dto import SuggestionState
-from common.comment import comment_to_dto
-from common.models import Comment, SuggestedComment
+from common.comment import comment_to_dto, create_submit_comment
+from common.models import SuggestedComment
 from common.utils import is_teacher
 
 router = Router()
-
-
-# TODO: Add check, to ensure that only teacher, that teach the course can accept/reject suggestions
 
 
 @router.post(
@@ -28,6 +25,9 @@ def rate_submit_suggestion(request, suggestion_id: int, body: RateSuggestionSche
 
     if not (0 <= body.rating <= 10):
         raise HttpError(400, "Rating must be between 0 and 10")
+
+    if suggestion.submit.assignment.clazz.teacher != request.user:
+        raise HttpError(403, "Only the teacher of the class can rate suggestions")
 
     suggestion.rating = body.rating
     suggestion.save()
@@ -48,10 +48,13 @@ def accept_submit_suggestion(request, suggestion_id: int):
     if suggestion.state != SuggestionState.PENDING.value:
         raise HttpError(400, "Only pending suggestions can be accepted")
 
-    created_comment = Comment.objects.create(
+    if suggestion.submit.assignment.clazz.teacher != request.user:
+        raise HttpError(403, "Only the teacher of the class can accept suggestions")
+
+    created_comment = create_submit_comment(
         submit=suggestion.submit,
         author=request.user,
-        text=suggestion.text,
+        content=suggestion.text,
         source=suggestion.source,
         line=suggestion.line,
     )
@@ -60,9 +63,7 @@ def accept_submit_suggestion(request, suggestion_id: int):
     suggestion.comment = created_comment
     suggestion.save()
 
-    # TODO: Handle notifications
-
-    return to_dict(comment_to_dto(created_comment, can_edit=True, type="teacher", unread=False))
+    return to_dict(comment_to_dto(created_comment, can_edit=True, type="teacher", unread=True))
 
 
 @router.patch(
@@ -78,10 +79,14 @@ def modify_submit_suggestion(request, suggestion_id: int, body: ModifySuggestion
     if suggestion.state != SuggestionState.PENDING.value:
         raise HttpError(400, "Only pending suggestions can be modified and accepted")
 
-    created_comment = Comment.objects.create(
+    if suggestion.submit.assignment.clazz.teacher != request.user:
+        raise HttpError(403, "Only the teacher of the class can modify and accept suggestions")
+
+    final_text = body.modified_text if body.modified_text is not None else suggestion.text
+    created_comment = create_submit_comment(
         submit=suggestion.submit,
         author=request.user,
-        text=body.modified_text if body.modified_text is not None else suggestion.text,
+        content=final_text,
         source=suggestion.source,
         line=suggestion.line,
     )
@@ -90,9 +95,7 @@ def modify_submit_suggestion(request, suggestion_id: int, body: ModifySuggestion
     suggestion.comment = created_comment
     suggestion.save()
 
-    # TODO: Handle notifications
-
-    return to_dict(comment_to_dto(created_comment, can_edit=True, type="teacher", unread=False))
+    return to_dict(comment_to_dto(created_comment, can_edit=True, type="teacher", unread=True))
 
 
 @router.delete(
@@ -107,6 +110,9 @@ def decline_submit_suggestion(request, suggestion_id: int):
 
     if suggestion.state != SuggestionState.PENDING.value:
         raise HttpError(400, "Only pending suggestions can be rejected")
+
+    if suggestion.submit.assignment.clazz.teacher != request.user:
+        raise HttpError(403, "Only the teacher of the class can reject suggestions")
 
     suggestion.state = SuggestionState.REJECTED.value
     suggestion.save()
