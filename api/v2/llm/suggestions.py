@@ -63,7 +63,7 @@ def accept_submit_suggestion(request, suggestion_id: int):
     suggestion.comment = created_comment
     suggestion.save()
 
-    return to_dict(comment_to_dto(created_comment, can_edit=True, type="teacher", unread=False))
+    return to_dict(comment_to_dto(created_comment, can_edit=True, type="teacher", unread=True))
 
 
 @router.patch(
@@ -95,7 +95,7 @@ def modify_submit_suggestion(request, suggestion_id: int, body: ModifySuggestion
     suggestion.comment = created_comment
     suggestion.save()
 
-    return to_dict(comment_to_dto(created_comment, can_edit=True, type="teacher", unread=False))
+    return to_dict(comment_to_dto(created_comment, can_edit=True, type="teacher", unread=True))
 
 
 @router.delete(
