@@ -38,7 +38,7 @@ Also we don't forget about tables:
 |----------|----------|
 | Cell 1   | Cell 2   |
 | Cell 3   | Cell 4   |
-> which looks like, that we don't currently render :(.
+which looks like, that we don't currently render :(.
 `
         });
         expect(wrapper.container.innerHTML).toMatchSnapshot();

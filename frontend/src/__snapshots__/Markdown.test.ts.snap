@@ -23,10 +23,10 @@ Here is some <code>inline code</code> and here is a code block:</p>
 <li>Two</li>
 <li>Three</li>
 </ul>
-
+<blockquote>
 <p>Blockquote
 is very useful</p>
-
+</blockquote>
 <p>Also we don't forget about tables:</p>
 
 
@@ -39,8 +39,9 @@ Cell 3
 Cell 4
 
 
+which looks like, that we don't currently render :(.
 
-<p>which looks like, that we don't currently render :(.</p>
+
 
 </div>"
 `;
