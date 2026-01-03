@@ -250,18 +250,10 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Detect deployment-related changes
-        id: deployment-changes
-        shell: bash
-        run: |
-          BEFORE="HEAD^"
-          AFTER="HEAD"
-
-          if git diff --name-only "$BEFORE" "$AFTER" | grep -E \
-            '^(deployment_service/)'; then
-            echo "matched=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "matched=false" >> "$GITHUB_OUTPUT"
-          fi
+        id: changed-files-deployment
+        uses: tj-actions/changed-files@v47.0.1
+        with:
+          files: deployment_service/**
 
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
@@ -273,7 +265,7 @@ jobs:
           path: ${{ runner.temp }}
 
       - name: Download Deployment_service image
-        if: steps.deployment-changes.outputs.matched == 'true'
+        if: steps.changed-files-deployment.outputs.any_changed == 'true'
         uses: actions/download-artifact@v6
         with:
           name: deployment
@@ -289,7 +281,7 @@ jobs:
           echo "$LOADED"
           SHA_TAG=$(echo "$LOADED" | grep -v ':latest' | awk '{print $3}')
           echo "app_image_tag=$SHA_TAG" >> $GITHUB_OUTPUT
-          if [ "${{ steps.deployment-changes.outputs.matched }}" = "true" ]; then
+          if [ "${{ steps.changed-files-deployment.outputs.any_changed }}" = "true" ]; then
             docker load --input ${{ runner.temp }}/deployment.tar
           fi
           docker image ls -a
@@ -320,7 +312,7 @@ jobs:
         run: docker push ghcr.io/mrlvsb/kelvin:latest
 
       - name: Push Deployment_service Docker image with all tags
-        if: steps.deployment-changes.outputs.matched == 'true'
+        if: steps.changed-files-deployment.outputs.any_changed == 'true'
         run: docker push --all-tags ghcr.io/mrlvsb/deployment
 
       - uses: actions/delete-package-versions@v5
@@ -330,7 +322,7 @@ jobs:
           min-versions-to-keep: 15
 
       - uses: actions/delete-package-versions@v5
-        if: steps.deployment-changes.outputs.matched == 'true'
+        if: steps.changed-files-deployment.outputs.any_changed == 'true'
         with:
           package-name: 'deployment'
           package-type: 'container'
