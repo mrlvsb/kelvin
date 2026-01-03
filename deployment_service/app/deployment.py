@@ -13,9 +13,11 @@ from docker.errors import APIError, ImageNotFound, NotFound
 from fastapi import status
 
 from app.config import get_settings
+from app.models import ImageInfo
 
 HEALTH_CHECK_TIMEOUT = 90  # seconds
 HEALTH_CHECK_INTERVAL = 5  # seconds
+IMAGE_PULL_TIMEOUT = 600  # 10 minutes
 
 
 class BufferHandler(logging.Handler):
@@ -96,34 +98,45 @@ class DeploymentManager:
         cwd: Path,
         env: dict[str, str] | None = None,
         output_file: str | None = None,
+        timeout: float | None = None,
     ) -> bool:
         """Runs a shell command in a specified directory and logs its output."""
-        if output_file:
-            with open(output_file, "w") as f:
+        try:
+            if output_file:
+                with open(output_file, "w") as f:
+                    process = await asyncio.create_subprocess_exec(
+                        *command,
+                        cwd=cwd,
+                        env=env,
+                        stdout=f,
+                        stderr=f,
+                    )
+                    await asyncio.wait_for(process.wait(), timeout=timeout)
+            else:
                 process = await asyncio.create_subprocess_exec(
                     *command,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
                     cwd=cwd,
                     env=env,
-                    stdout=f,
-                    stderr=f,
                 )
-                await process.wait()
-        else:
-            process = await asyncio.create_subprocess_exec(
-                *command,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=cwd,
-                env=env,
+                stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
+                if stdout:
+                    self.logger.debug(f"stdout:\n{stdout.decode()}")
+                if stderr:
+                    self.logger.debug(f"stderr:\n{stderr.decode()}")
+        except TimeoutError:
+            process.kill()
+            await process.wait()
+            timeout_info = f" after {timeout} seconds" if timeout is not None else ""
+            raise CriticalError(
+                f"Command timed out{timeout_info}: {' '.join(command)}",
+                self.logs,
+                status.HTTP_504_GATEWAY_TIMEOUT,
             )
-            stdout, stderr = await process.communicate()
-            if stdout:
-                self.logger.debug(f"stdout:\n{stdout.decode()}")
-            if stderr:
-                self.logger.debug(f"stderr:\n{stderr.decode()}")
         return process.returncode == 0
 
-    def _get_current_image_tag(self) -> str | None:
+    def _get_current_image(self) -> ImageInfo:
         """Gets an image tag corresponding to the commit SHA of the currently running container
         for rollback."""
         try:
@@ -132,30 +145,39 @@ class DeploymentManager:
                 self.logger.error(
                     "The image of the container not found. Rollback will not be possible."
                 )
-                return None
+                return ImageInfo(tag=None, id=None)
             tags = [t.split(":")[-1] for t in container_image.tags]
             tags = sorted(t for t in tags if t != "latest")
+            container_image_id = str(container_image.id).split(":")[-1]
             if not tags:
                 self.logger.error(
                     f"A tag for image {container_image} was not found. Using image ID {container_image.id} as a fallback."
                 )
-                return str(container_image.id).split(":")[-1]
+                return ImageInfo(tag=container_image_id, id=container_image_id)
             self.logger.debug(f"Found previous image tag for rollback: {tags[0]}")
-            return tags[0]
+            return ImageInfo(tag=tags[0], id=container_image_id)
         except NotFound:
             self.logger.error("No running container found. Rollback will not be possible.")
-            return None
+            return ImageInfo(tag=None, id=None)
 
-    def _pull_new_image(self) -> None:
-        """Pulls the new Docker image from the registry."""
-        self.logger.info(f"Pulling new image: {self.new_image}...")
+    async def _obtain_new_image(self) -> None:
+        """Get or pull the new Docker image.
+        The process first checks the local registry for the image.
+        If the image is not found locally, it attempts to pull it from the remote registry.
+        """
+        self.logger.info(f"Trying to get new image from the local registry: {self.new_image}...")
         try:
             image = self.client.images.get(self.new_image)
             self.logger.info(f"Image {self.new_image} already exists locally: {image.id}")
         except (ImageNotFound, APIError):
             try:
-                self.client.images.pull(self.new_image)
-                self.logger.info("Successfully pulled new image.")
+                self.logger.info(f"Pulling new image from the remote registry: {self.new_image}...")
+                if await self._run_command(
+                    ["docker", "image", "pull", self.new_image],
+                    self.stable_repository_dir,
+                    timeout=IMAGE_PULL_TIMEOUT,
+                ):
+                    self.logger.info("Successfully pulled new image.")
             except (ImageNotFound, APIError) as e:
                 raise CriticalError(
                     f"Failed to pull Docker image: {e}",
@@ -274,12 +296,13 @@ class DeploymentManager:
     def _cleanup(self, old_image_id: str) -> None:
         """Removes the old Docker image after a successful deployment."""
         if not old_image_id or old_image_id == self.image_tag:
-            return
+            return None
         try:
             self.client.images.remove(old_image_id, force=True)
             self.logger.info(f"Successfully removed old image: {old_image_id}")
-        except APIError:
-            self.logger.error("Could not remove old image. It may be in use.")
+        except APIError as e:
+            self.logger.error(f"Could not remove old image. It may be in use. Error: {e}")
+        return None
 
     async def run(self) -> deque:
         """Executes the full deployment flow with a temporary candidate of docker-compose.yml and atomic state update."""
@@ -293,8 +316,8 @@ class DeploymentManager:
             candidate_dir, os.path.basename(self.stable_compose_path)
         )
 
+        container_logs_task = None
         stop_container_logs = asyncio.Event()
-        container_logs_task = asyncio.create_task(self._watch_container_logs(stop_container_logs))
 
         try:
             self.logger.info("Fetching latest data from git origin...")
@@ -322,8 +345,12 @@ class DeploymentManager:
                     self.logs,
                 )
 
-            previous_image_id = self._get_current_image_tag()
-            self._pull_new_image()
+            previous_image_info = self._get_current_image()
+            await self._obtain_new_image()
+
+            container_logs_task = asyncio.create_task(
+                self._watch_container_logs(stop_container_logs)
+            )
 
             self.logger.info(f"Deploying service using config from commit {self.commit_sha}")
             deployment_successful = False
@@ -333,12 +360,14 @@ class DeploymentManager:
             ):
                 deployment_successful = True
             if not deployment_successful:
-                self.logger.info(f"Initiating rollback to previous image ID: {previous_image_id}")
-                if previous_image_id:
+                self.logger.info(
+                    f"Initiating rollback to previous image tag or id: {previous_image_info.tag}"
+                )
+                if previous_image_info.tag:
                     await self._swap_service(
                         candidate_compose_path,
                         self.stable_compose_path,
-                        image_tag_override=previous_image_id,
+                        image_tag_override=previous_image_info.tag,
                     )
                     self.logger.info("Rollback completed successfully.")
                 else:
@@ -357,8 +386,8 @@ class DeploymentManager:
                     "Service is running, but failed to update stable git state!"
                 )  # TODO: Try to handle RuntimeError better?
 
-            if previous_image_id:
-                self._cleanup(previous_image_id)
+            if previous_image_info.id:
+                self._cleanup(previous_image_info.id)
             self.logger.info(f"Deployment successful for {self.service_name}:{self.image_tag}")
             return self.logs
         except FallbackError as e:
@@ -370,10 +399,13 @@ class DeploymentManager:
             raise CriticalError(f"Unexpected deployment failure: {e}", self.logs) from e
         finally:
             stop_container_logs.set()
-            try:
-                await asyncio.wait_for(container_logs_task, timeout=5.0)
-            except TimeoutError:
-                self.logger.debug("Log streaming task did not finish in time and was cancelled.")
+            if container_logs_task:
+                try:
+                    await asyncio.wait_for(container_logs_task, timeout=5.0)
+                except TimeoutError:
+                    self.logger.debug(
+                        "Log streaming task did not finish in time and was cancelled."
+                    )
             # ALWAYS clean up the temporary directory, no matter what happened.
             self.logger.info("Cleaning up temporary directory...")
             shutil.rmtree(candidate_dir, ignore_errors=True)

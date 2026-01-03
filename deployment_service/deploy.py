@@ -17,7 +17,7 @@ def format_for_github_summary(status_code, response_json):
     if not (200 <= status_code < 300):
         title = f"## ❌ Deployment Failed (Status: {status_code})"
         if not error_message:
-            summary_lines = [f"**Error:** `{response_json.get("detail", "Unknown error")}`"]
+            summary_lines = [f"**Error:** `{response_json.get('detail', 'Unknown error')}`"]
         else:
             summary_lines = [f"**Error:** `{error_message}`"]
     else:
@@ -64,7 +64,7 @@ def main():
     parser.add_argument(
         "--healthcheck-url",
         default="https://kelvin.cs.vsb.cz/api/v2/health",
-        help="The full URL for the application's health check endpoint. (e.g., 'https://nginx/api/health')",
+        help="The full URL for the application's health check endpoint. (e.g., 'https://nginx/api/v2/health')",
     )
 
     parser.add_argument(

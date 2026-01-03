@@ -1,4 +1,6 @@
-from fastapi import FastAPI, Response, Security, status
+import asyncio
+
+from fastapi import Depends, FastAPI, HTTPException, Response, Security, status
 
 from app.config import get_settings
 from app.deployment import DeploymentError, DeploymentManager
@@ -10,11 +12,30 @@ app = FastAPI(
     description="A Service to do on-premises deployments.",
 )
 
+deployment_lock = asyncio.Lock()
+
+
+async def get_exclusive_deployment_access():
+    """
+    Dependency to ensure only one deployment runs at a time.
+    """
+    if deployment_lock.locked():
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="A deployment is already in progress or was recently triggered. Please wait for it to complete before starting another one.",
+        )
+
+    await deployment_lock.acquire()
+    try:
+        yield
+    finally:
+        deployment_lock.release()
+
 
 @app.post(
     "/",
     summary="Trigger Deployment for a specified service",
-    dependencies=[Security(validate_signature)],
+    dependencies=[Security(validate_signature), Depends(get_exclusive_deployment_access)],
     response_model=DeploymentResponse,
     responses={
         status.HTTP_200_OK: {
@@ -74,6 +95,22 @@ app = FastAPI(
                 }
             },
         },
+        status.HTTP_504_GATEWAY_TIMEOUT: {
+            "description": "Deployment failed due to build timeout",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "logs": [
+                            "[2025-09-01 13:45:12] [INFO] Starting deployment for commit 0474329d785bbb2c928b257f104847dc4f8f80f6",
+                            "[2025-09-01 13:45:13] [INFO] Trying to get new image from the local registry: 0474329d785bbb2c928b257f104847dc4f8f80f6",
+                            "[2025-09-01 13:45:14] [INFO] Pulling new image from the remote registry: 0474329d785bbb2c928b257f104847dc4f8f80f6",
+                            "[2025-09-01 13:46:10] [ERROR] Failed to pull Docker image: Timeout while pulling image.",
+                        ],
+                        "error": "Failed to pull Docker image: Timeout while pulling image.",
+                    }
+                }
+            },
+        },
     },
 )
 async def deploy(request: DeploymentRequest, response: Response):
@@ -83,7 +120,6 @@ async def deploy(request: DeploymentRequest, response: Response):
     It instantiates and runs the DeploymentManager, returning its logs and
     a final HTTP status code reflecting the outcome.
     """
-
     manager = DeploymentManager(
         service_name=request.service_name,
         image=request.image,
