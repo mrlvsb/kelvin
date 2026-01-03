@@ -15,19 +15,27 @@ app = FastAPI(
 deployment_lock = asyncio.Lock()
 
 
-async def check_deployment_concurrency():
-    """Dependency to ensure only one deployment runs at a time."""
+async def get_exclusive_deployment_access():
+    """
+    Dependency to ensure only one deployment runs at a time.
+    """
     if deployment_lock.locked():
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="A deployment is already in progress or was recently triggered. Please wait for it to complete before starting another one.",
         )
 
+    await deployment_lock.acquire()
+    try:
+        yield
+    finally:
+        deployment_lock.release()
+
 
 @app.post(
     "/",
     summary="Trigger Deployment for a specified service",
-    dependencies=[Security(validate_signature), Depends(check_deployment_concurrency)],
+    dependencies=[Security(validate_signature), Depends(get_exclusive_deployment_access)],
     response_model=DeploymentResponse,
     responses={
         status.HTTP_200_OK: {
@@ -112,25 +120,24 @@ async def deploy(request: DeploymentRequest, response: Response):
     It instantiates and runs the DeploymentManager, returning its logs and
     a final HTTP status code reflecting the outcome.
     """
-    async with deployment_lock:
-        manager = DeploymentManager(
-            service_name=request.service_name,
-            image=request.image,
-            commit_sha=request.commit_sha,
-            compose_path=get_settings().docker.compose_file_path,
-            compose_env_file=get_settings().docker.compose_env_file,
-            container_name=request.container_name,
-            healthcheck_url=str(request.healthcheck_url),
+    manager = DeploymentManager(
+        service_name=request.service_name,
+        image=request.image,
+        commit_sha=request.commit_sha,
+        compose_path=get_settings().docker.compose_file_path,
+        compose_env_file=get_settings().docker.compose_env_file,
+        container_name=request.container_name,
+        healthcheck_url=str(request.healthcheck_url),
+    )
+    try:
+        logs = await manager.run()
+        response.status_code = status.HTTP_200_OK
+        return DeploymentResponse(
+            logs=list(logs),
         )
-        try:
-            logs = await manager.run()
-            response.status_code = status.HTTP_200_OK
-            return DeploymentResponse(
-                logs=list(logs),
-            )
-        except DeploymentError as e:
-            response.status_code = e.status_code
-            return DeploymentResponse(logs=list(e.logs), error=e.message)
+    except DeploymentError as e:
+        response.status_code = e.status_code
+        return DeploymentResponse(logs=list(e.logs), error=e.message)
 
 
 @app.get(
