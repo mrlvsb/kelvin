@@ -1,5 +1,6 @@
 import datetime
 import logging
+import traceback
 from typing import Callable, TYPE_CHECKING
 
 from django.conf import settings
@@ -39,6 +40,9 @@ def send_email_points_assigned(
     Email.create(subject="Obodování úlohy / solution scored", text=content, receiver=student)
 
 
+logger = logging.getLogger(__name__)
+
+
 def with_email_to_send(handle_email: Callable[[Email], None]):
     """
     Tries to pop a single e-mail from the database and pass it to the closure.
@@ -59,6 +63,9 @@ def with_email_to_send(handle_email: Callable[[Email], None]):
     if last_sent_email is not None and (now - last_sent_email.sent_at) < datetime.timedelta(
         seconds=10
     ):
+        logger.warning(
+            f"Trying to send e-mail too often. Last e-mail sent at {last_sent_email.sent_at}"
+        )
         return
 
     with transaction.atomic(durable=True):
@@ -79,15 +86,14 @@ def with_email_to_send(handle_email: Callable[[Email], None]):
             # transaction.
             email.attempt_count += 1
             try:
+                logger.info(f"Trying to send e-mail to {email.receiver.email}")
                 handle_email(email)
                 # The function did not throw an exception, so mark the email as sent
                 email.sent_at = datetime.datetime.now(datetime.UTC)
-            except:  # noqa
-                pass
+                logger.info("E-mail successfully sent")
+            except BaseException as e:
+                logger.error("Failure while sending e-mail\n{}", traceback.format_exception(e))
             email.save()
-
-
-logger = logging.getLogger(__name__)
 
 
 def try_send_email_from_queue():

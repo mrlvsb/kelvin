@@ -2,6 +2,7 @@ from django import forms
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
+from django.db.models import F
 
 import common.models as models
 import common.utils
@@ -153,9 +154,18 @@ class RoomAdmin(admin.ModelAdmin):
     form = RoomForm
 
 
+@admin.display(description="Email")
+def email(email: models.Email) -> str:
+    text = f"{email.subject} (to {email.receiver.username})"
+    if email.sent_at is not None:
+        text += f" [SENT at {email.sent_at}]"
+    return text
+
+
 @admin.register(models.Email)
 class EmailAdmin(admin.ModelAdmin):
-    pass
+    list_display = [email]
+    ordering = (F("sent_at").desc(nulls_last=False), "-created_at")
 
 
 admin.site.register(models.Task, TaskAdmin)
