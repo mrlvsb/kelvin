@@ -10,6 +10,7 @@ from django.db import transaction
 from django.http import HttpRequest
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils.html import strip_tags
 
 from .models import Email
 
@@ -103,9 +104,12 @@ def try_send_email_from_queue():
 
     def send(email: Email):
         logger.info(f"Sending an e-mail with subject `{email.subject}` to `{email.receiver.email}`")
+        plain_msg = strip_tags(email.text)
+
         send_mail(
             f"[Kelvin] {email.subject}",
-            message=email.text,
+            message=plain_msg,
+            html_message=email.text,
             from_email=settings.DEFAULT_FROM_EMAIL,
             # recipient_list=[email.receiver.email],
             # Temporarily send here for testing
