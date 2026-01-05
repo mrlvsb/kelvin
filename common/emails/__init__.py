@@ -88,7 +88,9 @@ def try_send_email_from_queue():
             f"[Kelvin] {email.subject}",
             message=email.text,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[email.receiver.email],
+            # recipient_list=[email.receiver.email],
+            # Temporarily send here for testing
+            recipient_list=["jakub.beranek@vsb.cz"],
             fail_silently=False,
         )
 
