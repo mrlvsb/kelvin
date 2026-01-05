@@ -1,4 +1,4 @@
-name: CI
+name: Kelvin CI
 on:
   pull_request:
   merge_group:
@@ -7,73 +7,157 @@ on:
       - master
   workflow_dispatch:
 
-# Do not allow parallel execution when deploying from the master branch
-concurrency: ${{ github.workflow }}-${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 'deploy' || github.sha }}
+concurrency:
+  group: ${{ github.workflow }}-${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 'deploy' || github.sha }}
+  cancel-in-progress: ${{ github.event_name != 'merge_group' }}
+
+env:
+  # Configure a constant location for the uv cache
+  UV_CACHE_DIR: /tmp/.uv-cache
+  UV_VERSION: "0.9.20"
+
 
 jobs:
   test-backend:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
-      - name: Install Python
-        uses: actions/setup-python@v5
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        id: setup_python
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version-file: "pyproject.toml"
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: "auto"
+          version: ${{ env.UV_VERSION }}
+
+      - name: Install OS dependencies
+        run: |
+          sudo apt-get install -y libgraphviz-dev build-essential
+
       - name: Install dependencies
         run: |
-          sudo apt-get install libgraphviz-dev build-essential
-          python -m pip install --upgrade pip
-          pip install uv==0.7.8
           uv sync --frozen
+
       - name: Check migrations
         run: uv run manage.py makemigrations api common web survey quiz --check
+
       # Update output format to enable automatic inline annotations.
       - name: Lint Python code
         run: uv run ruff check --output-format=github
+
       - name: Check Python formatting
         run: uv run ruff format --check
+
       - name: Check lockfile
         run: uv lock --locked
+
       - name: Pyrefly Python code
         run: uv run pyrefly check
         continue-on-error: true
+
   test-frontend:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
       - name: Install NodeJS
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 20
+
       - name: Install dependencies
+        working-directory: frontend/
         run: |
-          cd frontend
           npm ci
+
       - name: Build packages
+        working-directory: frontend/
         run: |
-          cd frontend
           npm run build
+
       - name: Run tests
+        working-directory: frontend/
         env:
           TZ: "CET"
         run: |
-          cd frontend
           npm run test
+
       - name: Check lints and formatting
+        working-directory: frontend/
         run: |
-          cd frontend
           npm run check
+
+  test-deployment-service:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        id: setup_python
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: "deployment_service/pyproject.toml"
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: "auto"
+          version: ${{ env.UV_VERSION }}
+          working-directory: "deployment_service"
+
+      - name: Install dependencies
+        working-directory: deployment_service/
+        run: |
+          uv sync --frozen
+
+      - name: Ruff Linter
+        working-directory: deployment_service/
+        run: uv run ruff check --output-format=github
+
+      - name: Ruff Formatter
+        if: success() || failure()
+        working-directory: deployment_service/
+        run: uv run ruff format --check
+
+      - name: Check lockfile
+        if: success() || failure()
+        working-directory: deployment_service/
+        run: uv lock --locked
+
+      - name: MyPy
+        if: success() || failure()
+        working-directory: deployment_service/
+        run: |
+          uv run mypy --check .
+
+      - name: Run tests
+        working-directory: deployment_service/
+        run: uv run pytest
+        env:
+          SECURITY__WEBHOOK_SECRET: "yoursecretvalue"
+          DOCKER__COMPOSE_FILE_PATH: "../docker-compose.yml"
 
   build-docker:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+
     steps:
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
+
       - name: Login to Docker registry
         uses: docker/login-action@v3
         continue-on-error: true
@@ -81,21 +165,42 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build Docker image
+
+      - name: Build Kelvin Docker image
         uses: docker/build-push-action@v6
         with:
           cache-from: type=registry,ref=ghcr.io/mrlvsb/kelvin-ci-cache
-          # Only write the cache in the main branch
+          # Only write the cache in the master branch or workflow_dispatch builds
           # https://github.com/docker/build-push-action/issues/845#issuecomment-1512619265
           cache-to: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 'type=registry,ref=ghcr.io/mrlvsb/kelvin-ci-cache,compression=zstd' || '' }}
           tags: ghcr.io/mrlvsb/kelvin:latest,ghcr.io/mrlvsb/kelvin:${{ github.sha }}
           outputs: type=docker,dest=${{ runner.temp }}/kelvin.tar
+
+      - name: Build Deployment_service Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: "{{defaultContext}}:deployment_service"
+          cache-from: type=registry,ref=ghcr.io/mrlvsb/deployment-ci-cache
+          # Only write the cache in the master branch or workflow_dispatch builds
+          # https://github.com/docker/build-push-action/issues/845#issuecomment-1512619265
+          cache-to: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 'type=registry,ref=ghcr.io/mrlvsb/deployment-ci-cache,compression=zstd' || '' }}
+          tags: ghcr.io/mrlvsb/deployment:latest,ghcr.io/mrlvsb/deployment:${{ github.sha }}
+          outputs: type=docker,dest=${{ runner.temp }}/deployment.tar
+
       - name: Share built image
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: kelvin
           path: ${{ runner.temp }}/kelvin.tar
           retention-days: 1
+
+      - name: Share built image
+        uses: actions/upload-artifact@v6
+        with:
+          name: deployment
+          path: ${{ runner.temp }}/deployment.tar
+          retention-days: 1
+
   build-docs:
     runs-on: ubuntu-latest
     steps:
@@ -126,28 +231,44 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs/build
+
   deploy-kelvin:
     runs-on: ubuntu-latest
     permissions:
       packages: write
-    needs: [ test-backend, test-frontend, build-docker ]
+    needs: [test-backend, test-frontend, test-deployment-service, build-docker]
     environment: production
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+
     steps:
       - name: Checkout deploy script
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
+          fetch-depth: 0
           sparse-checkout: |
             deployment_service/deploy.py
           sparse-checkout-cone-mode: false
+
+      - name: Detect deployment-related changes
+        id: changed-files-deployment
+        uses: tj-actions/changed-files@v47.0.1
+        with:
+          files: deployment_service/**
 
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
 
       - name: Download built image
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: kelvin
+          path: ${{ runner.temp }}
+
+      - name: Download Deployment_service image
+        if: steps.changed-files-deployment.outputs.any_changed == 'true'
+        uses: actions/download-artifact@v6
+        with:
+          name: deployment
           path: ${{ runner.temp }}
 
       - name: Load image
@@ -160,6 +281,9 @@ jobs:
           echo "$LOADED"
           SHA_TAG=$(echo "$LOADED" | grep -v ':latest' | awk '{print $3}')
           echo "app_image_tag=$SHA_TAG" >> $GITHUB_OUTPUT
+          if [ "${{ steps.changed-files-deployment.outputs.any_changed }}" = "true" ]; then
+            docker load --input ${{ runner.temp }}/deployment.tar
+          fi
           docker image ls -a
 
       - name: Login to Docker registry
@@ -172,20 +296,38 @@ jobs:
       - name: Push Docker image with SHA tag
         run: docker push ${{ steps.load_image.outputs.app_image_tag }}
 
-      #      - name: Trigger on-prem deployment
-      #        run: |
-      #          python3 deployment_service/deploy.py \
-      #            --service-name app \
-      #            --container-name kelvin_app \
-      #            --image ${{ steps.load_image.outputs.app_image_tag }} \
-      #            --commit-sha ${{ github.sha }} \
-      #            --healthcheck-url https://kelvin.cs.vsb.cz/api/v2/health \
-      #            --url https://kelvin.cs.vsb.cz/deployment/
-      #        env:
-      #          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+      - name: Trigger on-prem deployment
+        run: |
+          python3 deployment_service/deploy.py \
+            --service-name app \
+            --container-name kelvin_app \
+            --image ${{ steps.load_image.outputs.app_image_tag }} \
+            --commit-sha ${{ github.sha }} \
+            --healthcheck-url https://kelvin.cs.vsb.cz/api/v2/health \
+            --url https://kelvin.cs.vsb.cz/deployment/
+        env:
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
 
-      - name: Push Docker image with latest tag
+      - name: Push Kelvin Docker image with latest tag
         run: docker push ghcr.io/mrlvsb/kelvin:latest
+
+      - name: Push Deployment_service Docker image with all tags
+        if: steps.changed-files-deployment.outputs.any_changed == 'true'
+        run: docker push --all-tags ghcr.io/mrlvsb/deployment
+
+      - uses: actions/delete-package-versions@v5
+        with:
+          package-name: 'kelvin'
+          package-type: 'container'
+          min-versions-to-keep: 15
+
+      - uses: actions/delete-package-versions@v5
+        if: steps.changed-files-deployment.outputs.any_changed == 'true'
+        with:
+          package-name: 'deployment'
+          package-type: 'container'
+          min-versions-to-keep: 15
+
   deploy-docs:
     runs-on: ubuntu-latest
     needs: [ build-docs ]
@@ -204,11 +346,11 @@ jobs:
         uses: actions/deploy-pages@v4
 
   # Summary job to enable easier handling of required status checks.
-  # On PRs and merge queues, we need everything to be green, while deploy jobs are skipped.
+  # On PRs, we need everything to be green, while deploy jobs are skipped.
   # On master, we need everything to be green.
   # ALL THE PREVIOUS JOBS NEED TO BE ADDED TO THE `needs` SECTION OF THIS JOB!
   conclusion:
-    needs: [ test-frontend, test-backend, build-docker, deploy-kelvin, deploy-docs ]
+    needs: [test-frontend, test-backend, test-deployment-service, build-docker, deploy-kelvin, deploy-docs]
     # We need to ensure this job does *not* get skipped if its dependencies fail,
     # because a skipped job is considered a success by GitHub. So we have to
     # overwrite `if:`. We use `!cancelled()` to ensure the job does still not get run
