@@ -47,7 +47,20 @@ def with_email_to_send(handle_email: Callable[[Email], None]):
     If an exception is thrown, the e-mail will not be marked as sent.
 
     If there is no e-mail to send, the closure will not be called.
+
+    Also ensures that we do not send an e-mail too often.
     """
+
+    # Make sure that we do not send an e-mail more often than once every ten seconds
+    # This can be relevant especially when Kelvin is being restarted and multiple jobs have been
+    # queued up.
+    last_sent_email = Email.objects.filter(sent_at__isnull=False).order_by("-sent_at").first()
+    now = datetime.datetime.now(datetime.UTC)
+    if last_sent_email is not None and (now - last_sent_email.sent_at) < datetime.timedelta(
+        seconds=10
+    ):
+        return
+
     with transaction.atomic(durable=True):
         email = (
             Email.objects.filter(sent_at__isnull=True, attempt_count__lte=5)

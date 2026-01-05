@@ -153,6 +153,11 @@ class RoomAdmin(admin.ModelAdmin):
     form = RoomForm
 
 
+@admin.register(models.Email)
+class EmailAdmin(admin.ModelAdmin):
+    pass
+
+
 admin.site.register(models.Task, TaskAdmin)
 admin.site.register(models.Class, ClassAdmin)
 admin.site.register(models.Submit, SubmitAdmin)
