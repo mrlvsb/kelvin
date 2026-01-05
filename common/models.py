@@ -15,6 +15,7 @@ from jinja2 import Environment, FileSystemLoader
 from kelvin.settings import BASE_DIR
 from .ai_review.dto import LlmReviewPromptDTO
 from .event_log import UserEventModel  # noqa
+from .emails.models import Email  # noqa
 from .utils import is_teacher
 
 
