@@ -180,7 +180,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-DEFAULT_FROM_EMAIL = "kelvin@vsb.cz"
+DEFAULT_FROM_EMAIL = "noreply@vsb.cz"
 
 # This should be in sync with client_max_body_size from deploy/nginx.conf
 DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024
