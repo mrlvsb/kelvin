@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models import Q
 
 
 class Email(models.Model):
@@ -11,7 +10,7 @@ class Email(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(name="sent_at", fields=["sent_at"], condition=Q(sent_at__isnull=True)),
+            models.Index(name="sent_at", fields=["sent_at"]),
         ]
 
     subject = models.TextField()
