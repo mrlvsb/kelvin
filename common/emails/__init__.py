@@ -111,9 +111,7 @@ def try_send_email_from_queue():
             message=plain_msg,
             html_message=email.text,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            # recipient_list=[email.receiver.email],
-            # Temporarily send here for testing
-            recipient_list=["jakub.beranek@vsb.cz"],
+            recipient_list=[email.receiver.email],
             fail_silently=False,
         )
 
