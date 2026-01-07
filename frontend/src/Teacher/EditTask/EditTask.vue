@@ -118,9 +118,13 @@ async function prepareCreatingTask(): Promise<void> {
   const res = await fetch('/api/subject/' + props.params.subject);
   const json = await res.json();
 
+  const current_path = [props.params.subject, semester.value['abbr'], user.value.username].join(
+    '/'
+  );
+
   task.value = {
     classes: json['classes'],
-    path: [props.params.subject, semester.value['abbr'], user.value.username].join('/'),
+    path: current_path,
     subject_abbr: props.params.subject,
     type: 'homework'
   };
@@ -157,7 +161,7 @@ function synchronizePathWithReadMeTitle(): void {
   const readme = openedFiles.value['/readme.md'];
 
   if (readme && task.value) {
-    let parts = [props.params.subject, semester['abbr'], user.value.username];
+    let parts = [props.params.subject, semester.value['abbr'], user.value.username];
 
     let classes = task.value['classes'].filter((c) => c.assigned);
     if (classes.length == 1) {
@@ -212,6 +216,8 @@ watch(openedFiles, () => {
 
 async function save(): Promise<void> {
   syncing.value = true;
+
+  console.log(task.value);
 
   const res = await fetch('/api/tasks/' + (task.value.id ? task.value.id : ''), {
     method: 'POST',
@@ -410,7 +416,7 @@ async function deleteTask(proceed: boolean): Promise<void> {
             <tbody>
               <tr
                 v-for="(clazz, idx) in shownClasses"
-                :key="idx"
+                :key="clazz.id"
                 :class="{ 'table-success': clazz.assigned }"
               >
                 <td>

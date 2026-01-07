@@ -333,7 +333,7 @@ load();
             <span class="iconify" data-icon="humbleicons:times"></span>
           </button>
         </h3>
-        <Editor v-model="openedFiles[v].content" />
+        <Editor v-model="openedFiles[v].content" :filename="currentOpenedFile" />
       </div>
 
       <hr />
