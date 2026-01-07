@@ -1,70 +1,79 @@
 <script setup lang="ts">
-/*
- * Component used to display code mirror editor
- */
-
-import { ref, watch, onUnmounted, defineModel, markRaw } from 'vue';
-
-import CodeMirror from 'codemirror';
-import { lintPipeline } from '../PipelineValidation.js';
-import { curTheme as curThemeSvelte } from '../utils.js';
-import 'codemirror/lib/codemirror.css';
-import 'codemirror/mode/clike/clike.js';
-import 'codemirror/mode/yaml/yaml.js';
-import 'codemirror/mode/python/python.js';
-import 'codemirror/mode/markdown/markdown.js';
-import 'codemirror/mode/htmlmixed/htmlmixed.js';
-import 'codemirror/addon/display/fullscreen.js';
-import 'codemirror/addon/display/fullscreen.css';
-import 'codemirror/addon/lint/lint.js';
-import 'codemirror/addon/lint/lint.css';
-import 'codemirror/addon/hint/show-hint.js';
-import 'codemirror/addon/hint/show-hint.css';
-import { useReadableSvelteStore } from '../utilities/useSvelteStoreInVue';
-
 /**
- * @prop {string}  filename   - used to determine hints and highlighting from extension, default ''
- * @prop {boolean} autofocus  - enable/disable autofocus on editor, default false
- * @prop {boolean} disabled   - if true then editor is read only, default false
- * @prop {boolean} wrap       - wrap long lines, default false
- * @prop {Record<string, () => void>} extraKeys
- * default keys are:
- *    - Ctrl-Space   autocomplete
- *    - F11          full screen
- *    - ESC          escape full screen
- *    - Tab          soft tab
- *    You can add custom ones in form { 'key': function }
+ * This component is used as Editor for editing file content.
+ * It provides interface for adding Extensions, which
+ * can for example add custom linting or hinting.
+ * Currently it is nowhere available, since integration
+ * would need to rewrite much more components.
  */
+
+import CodeMirror, { EditorFromTextArea, type EditorConfiguration } from 'codemirror';
+import { markRaw, onMounted, ref, watch, onBeforeUnmount } from 'vue';
+import { theme, ThemeValue } from '../utilities/theme';
+import { EditorExtension, ExtraKeys } from '../utilities/EditorUtils';
+import { getExtension } from '../utilities/EditorUtils';
+
+const editorContent = defineModel<string>();
+
 let {
-  filename = '',
   autofocus = false,
   disabled = false,
   extraKeys = {},
-  wrap = false
+  wrap = false,
+  extensions = [],
+  lint = false,
+  filename,
+  spellcheck = true
 } = defineProps<{
-  filename?: string;
+  /**
+   * Autofocus editor on mount
+   * Defaults to false
+   */
   autofocus?: boolean;
+  /**
+   * Disables the editor (readonly)
+   * Defaults to false
+   */
   disabled?: boolean;
-  extraKeys?: Record<string, () => void>;
+  /**
+   * Define new key-combinations for editor
+   * It is object, where key is key-combination and value is function
+   * which will be executed when user presses this key-combination
+   * Defaults to empty object
+   */
+  extraKeys?: ExtraKeys<EditorConfiguration['extraKeys']>;
+  /**
+   * Whether CodeMirror should scroll or wrap for long lines.
+   * Defaults to false (scroll).
+   */
   wrap?: boolean;
+  /**
+   *List of extensions which will be used in editor
+   */
+  extensions?: EditorExtension[];
+  /**
+   * Whether to perform linting or not. Defaults to false
+   * If no extension is provided, this option will do nothing
+   * Defaults to false
+   */
+  lint?: boolean;
+  filename: string;
+  /**
+   * Should you browser spellcheck the content?
+   * Defaults to true
+   */
+  spellcheck?: boolean;
 }>();
 
-/**
- * @model
- * @type {string}
- * @description bound variable with editor text content
- */
-const modelValue = defineModel<string>();
+let editorElement = ref();
+let editor: EditorFromTextArea;
 
-let curTheme = useReadableSvelteStore<string>(curThemeSvelte);
+function getThemeName(value: ThemeValue) {
+  return value == 'dark' ? 'dracula' : 'default';
+}
 
-/**
- * returns MIME type from filename extension
- * @param filename name of file
- */
-function toMode(filename: string): string {
-  const parts = filename.split('.');
-  const ext = parts[parts.length - 1].toLowerCase();
+function toMode(filename: string) {
+  const ext = getExtension(filename);
   const map = {
     c: 'text/x-csrc',
     h: 'text/x-csrc',
@@ -79,105 +88,146 @@ function toMode(filename: string): string {
   return map[ext];
 }
 
-/**
- * Convert svelte theme name (light/ dark) to Code Mirror theme
- * @param value svelte theme name
- */
-function getTheme(value: string): string {
-  return value == 'dark' ? 'dracula' : 'default';
-}
+const handleHint = (editor: CodeMirror.Editor) => {
+  for (const extension of extensions) {
+    const result = extension(filename, editorContent.value, editor, 'hint');
+    if (!result) continue;
 
-let codeMirrorEditor = ref<CodeMirror.EditorFromTextArea | null>(null);
-let editorTag = ref<HTMLTextAreaElement | null>(null);
+    if (result.hint) {
+      CodeMirror.showHint(editor, () => result.hint);
+    }
+  }
+};
 
-//initialize codemirror once HTML tag is bound to variable
-watch(editorTag, (newEditorTag) => {
-  if (newEditorTag && !codeMirrorEditor.value) {
-    //https://stackoverflow.com/questions/67686617/codemirror-on-vue3-has-a-problem-when-setvalue-is-kicked
-    codeMirrorEditor.value = markRaw(
-      CodeMirror.fromTextArea(newEditorTag, {
-        mode: toMode(filename),
-        autofocus: autofocus,
-        lineWrapping: wrap,
-        gutters: ['CodeMirror-lint-markers'],
-        spellcheck: true,
-        theme: getTheme(curTheme.value),
-        readOnly: disabled,
-        tabSize: 2,
-        extraKeys: {
-          'Ctrl-Space': 'autocomplete',
-          F11: function (cm) {
-            cm.setOption('fullScreen', !cm.getOption('fullScreen'));
-          },
-          Esc: function (cm) {
-            if (cm.getOption('fullScreen')) {
-              cm.setOption('fullScreen', false);
-            }
-          },
-          Tab: function (cm) {
-            cm.execCommand('insertSoftTab');
-          },
-          ...extraKeys
-        }
-      })
-    );
+const handleLint = (code: string, _: unknown, editor: CodeMirror.Editor) => {
+  const lints: CodeMirror.LintError[] = [];
 
-    if (modelValue.value) codeMirrorEditor.value.setValue(modelValue.value);
+  for (const extension of extensions) {
+    const result = extension(filename, code, editor, 'lint');
+    if (!result) continue;
 
-    codeMirrorEditor.value.on('change', (doc) => {
-      modelValue.value = doc.getValue();
+    if (result.lint) {
+      lints.push(...result.lint);
+    }
+  }
+
+  return lints;
+};
+
+const handleSetup = (editor: CodeMirror.Editor) => {
+  const gutters: string[] = [];
+
+  for (const extension of extensions) {
+    const result = extension(filename, editorContent.value, editor, 'setup');
+
+    if (!result) continue;
+
+    if (result.gutters) {
+      gutters.push(...result.gutters);
+    }
+
+    if (result.spellCheck !== undefined) {
+      editor.setOption('spellcheck', result.spellCheck);
+    }
+  }
+
+  editor.setOption('gutters', gutters);
+  editor.refresh();
+};
+
+const DEFAULT_KEY_MAP = {
+  'Ctrl-Space': handleHint,
+  F11: function (cm) {
+    cm.setOption('fullScreen', !cm.getOption('fullScreen'));
+  },
+  Esc: function (cm) {
+    if (cm.getOption('fullScreen')) {
+      cm.setOption('fullScreen', false);
+    }
+  },
+  Tab: function (cm) {
+    cm.execCommand('insertSoftTab');
+  }
+} satisfies ExtraKeys<EditorConfiguration['extraKeys']>;
+
+//initialize editor
+const initializeEditor = () => {
+  //https://stackoverflow.com/questions/67686617/codemirror-on-vue3-has-a-problem-when-setvalue-is-kicked
+  editor = markRaw(CodeMirror.fromTextArea(editorElement.value, {
+    mode: toMode(filename),
+    filename,
+    autofocus,
+    lint: lint ? handleLint : lint,
+    lineWrapping: wrap,
+    gutters: ['CodeMirror-lint-markers'],
+    spellcheck,
+    theme: getThemeName(theme.value),
+    inputStyle: 'contenteditable',
+    readOnly: disabled,
+    tabSize: 2,
+    extraKeys: {
+      ...DEFAULT_KEY_MAP,
+      ...extraKeys
+    }
+  }));
+
+  //call setup first time, because editor is initialized
+  handleSetup(editor);
+
+  editor.on('change', (editor) => {
+    editorContent.value = editor.getValue();
+  });
+
+  if (editorContent.value) editor.setValue(editorContent.value);
+};
+
+onMounted(initializeEditor);
+
+//update editor based on value in model
+watch(editorContent, (value) => {
+  if (value != editor.getValue()) {
+    editor.setValue(value);
+  }
+});
+
+//re-initialize editor on filename change
+watch(
+  () => filename,
+  () => {
+    //remove the wrapper element to avoid multiple editors
+    editor.getWrapperElement().remove();
+    initializeEditor();
+  }
+);
+
+//because props are not ref, we need to wrap them into getter functions to be reactive
+watch(
+  [theme, () => autofocus, () => disabled, () => extraKeys],
+  ([theme, autofocus, disabled, extraKeys]) => {
+    editor.setOption('theme', getThemeName(theme));
+    editor.setOption('autofocus', autofocus);
+    editor.setOption('readOnly', disabled);
+    editor.setOption('extraKeys', {
+      ...DEFAULT_KEY_MAP,
+      ...extraKeys
     });
   }
-});
+);
 
-function setUpOptions() {
-  if (codeMirrorEditor.value) {
-    codeMirrorEditor.value.setOption('mode', toMode(filename));
-    codeMirrorEditor.value.setOption('readOnly', disabled);
-    codeMirrorEditor.value.setOption(
-      'gutters',
-      filename == '/config.yml' ? ['CodeMirror-lint-markers'] : []
-    );
-
-    codeMirrorEditor.value.setOption('lint', filename == '/config.yml' ? lintPipeline : null);
-    codeMirrorEditor.value.setOption('spellcheck', filename != '/config.yml');
-    codeMirrorEditor.value.setOption('theme', getTheme(curTheme.value));
-  }
-}
-
-watch(codeMirrorEditor, setUpOptions);
-
-watch(modelValue, (newVal) => {
-  if (codeMirrorEditor.value && codeMirrorEditor.value.getValue() != newVal)
-    codeMirrorEditor.value.setValue(newVal);
-  setUpOptions();
-});
-
-onUnmounted(() => {
-  if (codeMirrorEditor.value) {
-    codeMirrorEditor.value.toTextArea();
-  }
+onBeforeUnmount(() => {
+    editor.toTextArea();
+    editor = null;
 });
 </script>
 
 <template>
-  <div :class="{ disabled: disabled }">
-    <textarea ref="editorTag" class="form-control"></textarea>
-  </div>
+  <textarea ref="editorElement" class="form-control" :value="editorContent"></textarea>
 </template>
 
-<style scoped>
-:global(.CodeMirror) {
+<style global>
+.CodeMirror {
   border: 1px solid #ced4da;
   border-radius: 0.25rem;
   resize: vertical;
-}
-
-:global(.disabled > .CodeMirror) {
-  background: #eee;
-}
-
-:global(.disabled > .CodeMirror .CodeMirror-cursors) {
-  display: none;
 }
 </style>
