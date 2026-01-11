@@ -90,9 +90,7 @@ watch(
         {{ new Date(submit.submitted).toLocaleString('cs') }}
       </template>
 
-      <template v-if="submit.ip_address">
-        (from {{ submit.ip_address }})
-      </template>
+      <template v-if="submit.ip_address"> (from {{ submit.ip_address }}) </template>
 
       <span v-if="submit.points != null || submit.comments > 0" class="text-muted">
         {{ formatInfo(submit) }}

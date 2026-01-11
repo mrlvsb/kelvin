@@ -19,7 +19,7 @@ const tooltip = ref(null);
 // More can be found here: https://stackoverflow.com/a/71876238
 const copy = (event) => {
   const resolved = typeof props.content === 'function' ? props.content() : props.content;
-  // navigator.clipboard.writeText(resolved ?? '');
+  navigator.clipboard.writeText(resolved ?? '');
 
   const container = event.currentTarget?.closest('.tooltip-container');
 

@@ -54,8 +54,10 @@ const currentUser = useSvelteStore(user, null);
 const currentHideComments = useSvelteStore(hideComments, HideCommentsState.NONE);
 
 const showComment = computed(() => {
-  return (currentHideComments.value !== HideCommentsState.ALL)
-    && !(currentHideComments.value === HideCommentsState.AUTOMATED && props.type === 'automated');
+  return (
+    currentHideComments.value !== HideCommentsState.ALL &&
+    !(currentHideComments.value === HideCommentsState.AUTOMATED && props.type === 'automated')
+  );
 });
 
 const updateComment = (text) => {
@@ -80,7 +82,7 @@ const handleNotification = () => {
 </script>
 
 <template>
-  <div v-if="showComment" style="display: flex; flex-direction: row;">
+  <div v-if="showComment" style="display: flex; flex-direction: row">
     <div
       class="comment"
       :class="[`comment-${unread ? 'unread' : 'read'}`, type]"
