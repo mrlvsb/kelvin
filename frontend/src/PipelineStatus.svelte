@@ -1,6 +1,4 @@
 <script>
-import SyncLoader from './SyncLoader.svelte';
-
 export let submitid;
 let job_status = '';
 let message = '';
@@ -31,7 +29,7 @@ update();
     Your submit has been uploaded to Kelvin, it won't be lost if you close the browser.<br />
     {job_status}
     <div class="d-flex justify-content-center">
-      <SyncLoader />
+      <kelvin-sync-loader />
     </div>
   </div>
 {/if}

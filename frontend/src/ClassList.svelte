@@ -3,7 +3,6 @@ import { onMount } from 'svelte';
 import { fetch } from './api.js';
 import ClassDetail from './ClassDetail.svelte';
 import { querystring, link } from 'svelte-spa-router';
-import SyncLoader from './SyncLoader.svelte';
 import ClassFilter from './ClassFilter.svelte';
 import { semester, user } from './global.js';
 
@@ -84,7 +83,7 @@ $: {
 
   <div class="classes" class:loading>
     <div class="d-flex justify-content-center loading-animation">
-      <SyncLoader />
+      <kelvin-sync-loader />
     </div>
 
     <div class="classes-inner">

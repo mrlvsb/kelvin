@@ -1,21 +1,34 @@
-<script>
-export let size = 60;
-export let color = '#FF3E00';
-export let unit = 'px';
+<script setup>
+defineProps({
+  size: {
+    type: Number,
+    default: 60
+  },
+  color: {
+    type: String,
+    default: '#FF3E00'
+  },
+  unit: {
+    type: String,
+    default: 'px'
+  }
+});
 
 const range = (size, startAt = 0) => [...Array(size).keys()].map((i) => i + startAt);
 </script>
 
-<div class="wrapper" style="--size:{size}{unit}">
-  {#each range(3, 1) as i}
+<template>
+  <div class="wrapper" :style="`--size:${size}${unit}`">
     <div
+      v-for="i in range(3, 1)"
+      :key="i"
       class="dot"
-      style="--dotSize:{size * 0.25}{unit}; --color:{color}; animation-delay:  {i * 0.07}s;">
-    </div>
-  {/each}
-</div>
+      :style="`--dotSize:${size * 0.25}${unit}; --color:${color}; animation-delay:${i * 0.07}s;`"
+    ></div>
+  </div>
+</template>
 
-<style>
+<style scoped>
 .wrapper {
   height: var(--size);
   width: var(--size);
@@ -23,6 +36,7 @@ const range = (size, startAt = 0) => [...Array(size).keys()].map((i) => i + star
   align-items: center;
   justify-content: center;
 }
+
 .dot {
   height: var(--dotSize);
   width: var(--dotSize);
@@ -32,6 +46,7 @@ const range = (size, startAt = 0) => [...Array(size).keys()].map((i) => i + star
   border-radius: 100%;
   animation: sync 0.6s ease-in-out infinite alternate both running;
 }
+
 @-webkit-keyframes sync {
   33% {
     -webkit-transform: translateY(10px);
@@ -46,6 +61,7 @@ const range = (size, startAt = 0) => [...Array(size).keys()].map((i) => i + star
     transform: translateY(0);
   }
 }
+
 @keyframes sync {
   33% {
     -webkit-transform: translateY(10px);
