@@ -407,7 +407,7 @@ onUnmounted(() => {
   </div>
 
   <div v-else>
-    <div class="float-end">
+    <div class="float-end d-flex gap-1">
       <button
         v-if="files.length > 1"
         class="btn btn-link p-0"
@@ -466,21 +466,19 @@ onUnmounted(() => {
           <span title="Toggle file visibility">{{ file.source.path }}</span>
 
           <template v-if="file.source.comments && Object.keys(file.source.comments).length">
-            <template v-if="commentCountsByPath[file.source.path]?.user > 0">
-              <span
-                class="badge bg-secondary"
-                title="Student/teacher comments"
-                style="font-size: 60%"
-              >
-                {{ commentCountsByPath[file.source.path].user }}
-              </span>
-            </template>
+            <span class="comment-badges">
+              <template v-if="commentCountsByPath[file.source.path]?.user > 0">
+                <span class="badge bg-secondary" title="Student/teacher comments">
+                  {{ commentCountsByPath[file.source.path].user }}
+                </span>
+              </template>
 
-            <template v-if="commentCountsByPath[file.source.path]?.automated > 0">
-              <span class="badge bg-primary" title="Automation comments" style="font-size: 60%">
-                {{ commentCountsByPath[file.source.path].automated }}
-              </span>
-            </template>
+              <template v-if="commentCountsByPath[file.source.path]?.automated > 0">
+                <span class="badge bg-primary" title="Automation comments">
+                  {{ commentCountsByPath[file.source.path].automated }}
+                </span>
+              </template>
+            </span>
           </template>
         </span>
 
@@ -491,11 +489,6 @@ onUnmounted(() => {
         >
           <span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px" />
         </CopyToClipboard>
-
-        <!-- TODO: Fix download not working.. -->
-        <a class="text-body" :href="file.source.content_url" download title="Download the file">
-          <span class="iconify" data-icon="clarity:download-line" style="height: 20px" />
-        </a>
       </h2>
 
       <template v-if="file.opened">
@@ -546,5 +539,18 @@ img {
 
 .file-header span .badge:hover {
   text-decoration: none;
+}
+
+.comment-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+}
+
+.comment-badges .badge {
+  font-size: 0.6em;
+  padding: 2px 5px;
+  line-height: 1;
 }
 </style>
