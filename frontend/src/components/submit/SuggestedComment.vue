@@ -1,10 +1,10 @@
-<script setup>
-import { ref, computed } from 'vue';
+<script lang="ts" setup>
+import { computed, ref } from 'vue';
 import CommentForm from './CommentForm.vue';
 import { safeMarkdown } from '../../markdown.js';
 import { user } from '../../global.js';
 import { hideComments, HideCommentsState } from '../../stores';
-import { useSvelteStore } from '../../utilities/useSvelteStore.js';
+import { useSvelteStore } from '../../utilities/useSvelteStore';
 import Toast from 'bootstrap/js/dist/toast';
 
 const props = defineProps({
@@ -136,7 +136,7 @@ const handleEdit = () => {
   editing.value = true;
 };
 
-const handleSave = async (text) => {
+const handleSave = async (text: string) => {
   sending.value = true;
   const suggestionId = props.meta.review.id;
 

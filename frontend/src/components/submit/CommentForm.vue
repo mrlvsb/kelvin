@@ -1,4 +1,4 @@
-<script setup>
+<script lang="ts" setup>
 import { ref, watch } from 'vue';
 import Editor from '../Editor.vue';
 

@@ -1,12 +1,13 @@
-<script setup>
-import { ref } from 'vue';
+<script lang="ts" setup>
+import { ref, type PropType } from 'vue';
 import CommentForm from './CommentForm.vue';
 import Comment from './Comment.vue';
 import SuggestedComment from './SuggestedComment.vue';
+import type { Comment as TaskComment } from '../../types/TaskDetail';
 
 defineProps({
   summaryComments: {
-    type: Array,
+    type: Array as PropType<TaskComment[]>,
     default: () => []
   }
 });
@@ -15,7 +16,7 @@ const emit = defineEmits(['saveComment', 'setNotification', 'resolveSuggestion']
 
 const showForm = ref(false);
 
-const addComment = (text) => {
+const addComment = (text: string) => {
   emit('saveComment', {
     text,
     success: () => {

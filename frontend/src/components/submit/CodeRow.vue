@@ -1,10 +1,11 @@
-<script setup>
-import { computed, ref } from 'vue';
+<script lang="ts" setup>
+import { computed, ref, type PropType } from 'vue';
 import CommentForm from './CommentForm.vue';
 import Comment from './Comment.vue';
-import { user } from '../../global.js';
+import { user } from '../../global';
 import SuggestedComment from './SuggestedComment.vue';
-import { useSvelteStore } from '../../utilities/useSvelteStore.js';
+import { useSvelteStore } from '../../utilities/useSvelteStore';
+import type { Comment as TaskComment } from '../../types/TaskDetail';
 
 const props = defineProps({
   line: {
@@ -16,7 +17,7 @@ const props = defineProps({
     required: true
   },
   comments: {
-    type: Array,
+    type: Array as PropType<TaskComment[]>,
     default: () => []
   },
   showAddingForm: {
@@ -45,7 +46,7 @@ const currentUser = useSvelteStore(user, null);
 
 const commentRole = computed(() => (currentUser.value?.teacher ? 'teacher' : 'student'));
 
-const addNewComment = (text) => {
+const addNewComment = (text: string) => {
   if (text === '') {
     emit('showCommentForm', -1);
     return;

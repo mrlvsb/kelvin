@@ -1,4 +1,4 @@
-<script setup>
+<script lang="ts" setup>
 import { ref } from 'vue';
 
 const props = defineProps({
@@ -17,13 +17,15 @@ const tooltip = ref(null);
 
 // This method originally is not working on development environment (Without HTTPS).
 // More can be found here: https://stackoverflow.com/a/71876238
-const copy = (event) => {
+const copy = (event: MouseEvent) => {
   const resolved = typeof props.content === 'function' ? props.content() : props.content;
   navigator.clipboard.writeText(resolved ?? '');
 
-  const container = event.currentTarget?.closest('.tooltip-container');
+  const container = (event.currentTarget as HTMLElement | null)?.closest(
+    '.tooltip-container'
+  ) as HTMLElement | null;
 
-  if (container) {
+  if (container instanceof HTMLElement) {
     tooltip.value = {
       left: container.offsetLeft + container.offsetWidth,
       top: container.offsetTop - 5

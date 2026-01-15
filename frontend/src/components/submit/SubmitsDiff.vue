@@ -1,10 +1,26 @@
-<script setup>
-import { ref, watch } from 'vue';
+<script lang="ts" setup>
+import { ref, watch, type PropType } from 'vue';
 import TimeAgo from '../TimeAgo.vue';
+import type { Submit } from '../../types/TaskDetail';
+
+declare global {
+  interface Window {
+    Diff2Html: {
+      html: (
+        diff: string,
+        options: {
+          matching: string;
+          outputFormat: string;
+          drawFileList: boolean;
+        }
+      ) => string;
+    };
+  }
+}
 
 const props = defineProps({
   submits: {
-    type: Array,
+    type: Array as PropType<Submit[]>,
     default: () => []
   },
   current_submit: {
@@ -21,7 +37,7 @@ const a = ref(1);
 const b = ref(props.current_submit);
 const diffHtmlOutput = ref('');
 
-const formatInfo = (submit) => {
+const formatInfo = (submit: Submit) => {
   let result = '';
 
   if (submit.points !== null) {
@@ -83,7 +99,11 @@ watch(
       </a>
 
       <strong v-if="submit.submitted > deadline" class="text-danger">
-        <TimeAgo :datetime="submit.submitted" :rel="deadline" suffix="after the deadline" />
+        <TimeAgo
+          :datetime="String(submit.submitted)"
+          :rel="String(deadline)"
+          suffix="after the deadline"
+        />
       </strong>
 
       <template v-else>

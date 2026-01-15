@@ -1,15 +1,16 @@
-<script setup>
+<script lang="ts" setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import SubmitSource from '../components/submit/SubmitSource.vue';
 import SyncLoader from '../components/SyncLoader.vue';
 import CopyToClipboard from '../components/CopyToClipboard.vue';
 import SummaryComments from '../components/submit/SummaryComments.vue';
 import SubmitsDiff from '../components/submit/SubmitsDiff.vue';
-import { fetch } from '../api.js';
+import { fetch } from '../api';
 import { user } from '../global';
 import { markRead } from '../utilities/notifications';
-import { hideComments, HideCommentsState } from '../stores.js';
-import { useSvelteStore } from '../utilities/useSvelteStore.js';
+import { hideComments, HideCommentsState } from '../stores';
+import { useSvelteStore } from '../utilities/useSvelteStore';
+import type { Comment, Source, Submit } from '../types/TaskDetail';
 
 const props = defineProps({
   url: {
@@ -22,13 +23,13 @@ const props = defineProps({
   }
 });
 
-const files = ref(null);
-const summaryComments = ref([]);
-const submits = ref(null);
-const current_submit = ref(null);
-const deadline = ref(null);
+const files = ref<SourceFile[] | null>(null);
+const summaryComments = ref<Comment[]>([]);
+const submits = ref<Submit[] | null>(null);
+const current_submit = ref<number | null>(null);
+const deadline = ref<number | string | null>(null);
 const showDiff = ref(false);
-const selectedRows = ref(null);
+const selectedRows = ref<{ path: string; from: number; to: number } | null>(null);
 
 const currentUser = useSvelteStore(user, null);
 const hideCommentsValue = useSvelteStore(hideComments, HideCommentsState.NONE);
@@ -53,12 +54,14 @@ const downloadHref = computed(() => {
   if (typeof window === 'undefined') {
     return '';
   }
-
   return `kelvin:${window.location.href.split('#')[0]}download`;
 });
 
 class SourceFile {
-  constructor(source) {
+  source: Source;
+  opened: boolean;
+
+  constructor(source: Source) {
     this.source = source;
     this.opened = true;
   }
@@ -66,7 +69,6 @@ class SourceFile {
 
 const changeCommentState = () => {
   let nextState = HideCommentsState.NONE;
-
   switch (hideCommentsValue.value) {
     case HideCommentsState.NONE:
       nextState = HideCommentsState.AUTOMATED;
@@ -78,15 +80,14 @@ const changeCommentState = () => {
       nextState = HideCommentsState.NONE;
       break;
   }
-
   hideComments.set(nextState);
 };
 
-const updateCommentProps = (id, newProps) => {
-  const update = (items) => {
+const updateCommentProps = (id: number, newProps: Partial<Comment> | null) => {
+  const update = (items: Comment[]) => {
     return items
       .map((comment) => {
-        if (comment.id === id) {
+        if (comment.id == id) {
           if (newProps === null) {
             return null;
           }
@@ -114,7 +115,7 @@ const updateCommentProps = (id, newProps) => {
   summaryComments.value = update(summaryComments.value);
 };
 
-const markCommentAsRead = async (comment) => {
+const markCommentAsRead = async (comment: Comment) => {
   if (
     comment.unread &&
     currentUser.value &&
@@ -128,16 +129,29 @@ const markCommentAsRead = async (comment) => {
   return comment;
 };
 
-const addNewComment = async (comment) => {
+type CommentSavePayload = {
+  id?: number;
+  text: string;
+  success?: () => void;
+  line?: number;
+  source?: string;
+  type?: string;
+};
+
+const addNewComment = async (comment: CommentSavePayload) => {
+  const { success, ...payload } = comment;
+
   const res = await fetch(props.comment_url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(comment)
+    body: JSON.stringify(payload)
   });
 
   const json = await res.json();
+  if (res.ok) success();
+
   if (!comment.source) {
     summaryComments.value = [
       ...(await Promise.all(summaryComments.value.map(markCommentAsRead))),
@@ -160,7 +174,7 @@ const addNewComment = async (comment) => {
   }
 };
 
-const updateComment = async (id, text) => {
+const updateComment = async (id: number, text: string) => {
   await fetch(`${props.comment_url}/${id}`, {
     method: 'PATCH',
     headers: {
@@ -174,7 +188,7 @@ const updateComment = async (id, text) => {
   updateCommentProps(id, text === '' ? null : { text });
 };
 
-const saveComment = async (comment) => {
+const saveComment = async (comment: CommentSavePayload) => {
   if (comment.id) {
     await updateComment(comment.id, comment.text);
   } else {
@@ -186,8 +200,8 @@ const saveComment = async (comment) => {
   }
 };
 
-const setNotification = async (evt) => {
-  const walk = async (comments) => {
+const setNotification = async (evt: { comment_id: number; unread: boolean }) => {
+  const walk = async (comments: Comment[]) => {
     if (comments.filter((comment) => comment.id === evt.comment_id).length) {
       for (const comment of comments) {
         if (
@@ -213,7 +227,7 @@ const setNotification = async (evt) => {
   }
 };
 
-const resolveSuggestion = (evt) => {
+const resolveSuggestion = (evt: { id: number; comment: Comment }) => {
   const comment = evt.comment;
 
   if (comment.line === null || comment.line === undefined) {
@@ -234,21 +248,23 @@ const resolveSuggestion = (evt) => {
   });
 };
 
-const keydown = (event) => {
+const keydown = (event: KeyboardEvent) => {
+  const targetElement = event.target as HTMLElement | null;
+
   if (
-    event.target.getAttribute('contenteditable') ||
-    event.target.tagName === 'TEXTAREA' ||
-    event.target.tagName === 'INPUT'
+    targetElement?.getAttribute('contenteditable') ||
+    targetElement?.tagName === 'TEXTAREA' ||
+    targetElement?.tagName === 'INPUT'
   ) {
     return;
   }
 
-  let target = null;
+  let targetSubmit = null;
   if (event.key === 'ArrowLeft' && current_submit.value > 1) {
     if (event.shiftKey) {
-      target = 1;
+      targetSubmit = 1;
     } else {
-      target = current_submit.value - 1;
+      targetSubmit = current_submit.value - 1;
     }
   } else if (
     event.key === 'ArrowRight' &&
@@ -256,17 +272,18 @@ const keydown = (event) => {
     current_submit.value < submits.value.length
   ) {
     if (event.shiftKey) {
-      target = submits.value.length;
+      targetSubmit = submits.value.length;
     } else {
-      target = current_submit.value + 1;
+      targetSubmit = current_submit.value + 1;
     }
   }
-  if (target !== null) {
-    document.location.href = `../${target}${document.location.hash}`;
+
+  if (targetSubmit !== null) {
+    document.location.href = `../${targetSubmit}${document.location.hash}`;
   }
 };
 
-const countComments = (comments) => {
+const countComments = (comments: Record<string, Comment[]> | undefined) => {
   comments = comments || {};
 
   const counts = {
@@ -287,12 +304,20 @@ const countComments = (comments) => {
   return counts;
 };
 
-const allOpen = computed(() => {
-  if (!files.value || files.value.length === 0) {
-    return false;
+const commentCountsByPath = computed(() => {
+  if (!files.value) {
+    return {};
   }
+  return Object.fromEntries(
+    files.value.map((file) => [file.source.path, countComments(file.source.comments)])
+  );
+});
 
-  return files.value.every((file) => file.opened === true);
+const allOpen = computed(() => {
+  return (
+    files.value &&
+    files.value.reduce((sum, file) => sum + (file.opened ? 1 : 0), 0) === files.value.length
+  );
 });
 
 const toggleOpen = () => {
@@ -323,7 +348,7 @@ const goToSelectedLines = () => {
 
       setTimeout(() => {
         const el = document.querySelector(
-          `table[data-path="${CSS.escape(parts[0])}"] .linecode[data-line="${CSS.escape(selectedRows.value.from)}"]`
+          `table[data-path="${CSS.escape(parts[0])}"] .linecode[data-line="${CSS.escape(String(selectedRows.value.from))}"]`
         );
 
         if (el) {
@@ -441,19 +466,19 @@ onUnmounted(() => {
           <span title="Toggle file visibility">{{ file.source.path }}</span>
 
           <template v-if="file.source.comments && Object.keys(file.source.comments).length">
-            <template v-if="countComments(file.source.comments).user > 0">
+            <template v-if="commentCountsByPath[file.source.path]?.user > 0">
               <span
                 class="badge bg-secondary"
                 title="Student/teacher comments"
                 style="font-size: 60%"
               >
-                {{ countComments(file.source.comments).user }}
+                {{ commentCountsByPath[file.source.path].user }}
               </span>
             </template>
 
-            <template v-if="countComments(file.source.comments).automated > 0">
+            <template v-if="commentCountsByPath[file.source.path]?.automated > 0">
               <span class="badge bg-primary" title="Automation comments" style="font-size: 60%">
-                {{ countComments(file.source.comments).automated }}
+                {{ commentCountsByPath[file.source.path].automated }}
               </span>
             </template>
           </template>

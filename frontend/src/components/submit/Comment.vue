@@ -1,10 +1,10 @@
-<script setup>
+<script lang="ts" setup>
 import { computed, ref } from 'vue';
 import CommentForm from './CommentForm.vue';
 import { user } from '../../global';
-import { safeMarkdown } from '../../markdown.js';
-import { HideCommentsState, hideComments } from '../../stores';
-import { useSvelteStore } from '../../utilities/useSvelteStore.js';
+import { safeMarkdown } from '../../markdown';
+import { hideComments, HideCommentsState } from '../../stores';
+import { useSvelteStore } from '../../utilities/useSvelteStore';
 
 const props = defineProps({
   author: {
@@ -60,7 +60,7 @@ const showComment = computed(() => {
   );
 });
 
-const updateComment = (text) => {
+const updateComment = (text: string) => {
   sending.value = true;
 
   emit('saveComment', {
