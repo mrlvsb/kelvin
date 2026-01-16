@@ -2,7 +2,6 @@
 import yaml from 'js-yaml';
 import { fs, cwd, openedFiles, currentOpenedFile } from './fs.js';
 import Editor from './Editor.svelte';
-import SyncLoader from './SyncLoader.svelte';
 
 let loaded = false;
 $: tests = {};
@@ -236,7 +235,7 @@ load();
   </div>
 {:else}
   <div class="d-flex justify-content-center">
-    <SyncLoader />
+    <kelvin-sync-loader />
   </div>
 {/if}
 

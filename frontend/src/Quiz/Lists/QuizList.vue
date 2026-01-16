@@ -244,8 +244,8 @@ const filterChanged = () => {
   <DataTable ref="dataTable" class="table table-striped" :columns="columns" :options="options">
   </DataTable>
   <div
-    class="modal fade"
     id="quiz_add_modal"
+    class="modal fade"
     tabindex="-1"
     aria-labelledby="quiz_add_modal_label"
     aria-hidden="true"
@@ -253,7 +253,7 @@ const filterChanged = () => {
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="quiz_add_modal_label">Add quiz</h5>
+          <h5 id="quiz_add_modal_label" class="modal-title">Add quiz</h5>
           <button
             type="button"
             class="btn-close"
@@ -264,15 +264,15 @@ const filterChanged = () => {
         <div class="modal-body row justify-content-center">
           <div class="col-12 mb-1">
             <label for="subject-select" class="form-label">Subject</label>
-            <select id="subject-select" class="form-control" v-model="selectedSubjectAbbr">
-              <option :value="subject.abbr" v-for="subject in subjects" :key="subject.abbr">
+            <select id="subject-select" v-model="selectedSubjectAbbr" class="form-control">
+              <option v-for="subject in subjects" :key="subject.abbr" :value="subject.abbr">
                 {{ subject.name }}
               </option>
             </select>
           </div>
           <div class="col-12 mb-1">
             <label for="name-select" class="form-label">Name</label>
-            <input id="name-select" class="form-control" type="text" v-model="selectedName" />
+            <input id="name-select" v-model="selectedName" class="form-control" type="text" />
           </div>
         </div>
         <div class="modal-footer">

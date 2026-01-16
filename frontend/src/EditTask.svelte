@@ -7,7 +7,6 @@ import { push } from 'svelte-spa-router';
 import { semester, user } from './global.js';
 import { fetch } from './api.js';
 import { fs, currentPath, cwd, openedFiles } from './fs.js';
-import SyncLoader from './SyncLoader.svelte';
 import Modal from './Modal.svelte';
 import { task_types } from './taskTypes';
 
@@ -248,7 +247,7 @@ async function deleteTask(proceed) {
     <div style="position: relative">
       {#if syncing}
         <div style="position: absolute; top: 50%; left: 50%; z-index: 1">
-          <SyncLoader />
+          <kelvin-sync-loader />
         </div>
       {/if}
       <div>

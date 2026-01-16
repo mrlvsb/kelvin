@@ -43,7 +43,6 @@ import App from './App.svelte';
 import ColorTheme from './ColorTheme.svelte';
 import { safeMarkdown } from './markdown.js';
 import PipelineStatus from './PipelineStatus.svelte';
-import TaskDetail from './TaskDetail.svelte';
 import UploadSolution from './UploadSolution.svelte';
 
 class ReplaceHtmlElement extends HTMLElement {
@@ -119,7 +118,6 @@ const cookies = getCookies();
 const enableNewUI = Object.keys(cookies).includes('newUI') && cookies['newUI'] != 0;
 
 createElement('app', App);
-createElement('submit-sources', TaskDetail);
 createElement('upload-solution', UploadSolution);
 createElement('pipeline-status', PipelineStatus);
 
@@ -161,6 +159,8 @@ import QuizEdit from './Quiz/QuizEdit.vue';
 import QuizList from './Quiz/Lists/QuizList.vue';
 import QuizSubmitList from './Quiz/Lists/QuizSubmitList.vue';
 import MarkButton from './components/MarkButton.vue';
+import TaskDetail from './Student/TaskDetail.vue';
+import SyncLoader from './components/SyncLoader.vue';
 
 /**
  * Register new Vue component as a custom element.
@@ -201,11 +201,15 @@ registerVueComponent('student-list', StudentList);
 registerSuspendedVueComponent('student-transfer', StudentTransfer);
 registerSuspendedVueComponent('inbus-import', InbusImport);
 registerVueComponent('notifications', NotificationsNew);
+registerVueComponent('submit-sources', TaskDetail);
 registerVueComponent('quiz', Quiz);
 registerVueComponent('quiz-edit', QuizEdit);
 registerSuspendedVueComponent('quiz-list', QuizList);
 registerSuspendedVueComponent('quiz-submit-list', QuizSubmitList);
 if (enableNewUI) registerVueComponent('color-theme', ColorThemeNew);
+
+// TODO: Remove when all Svelte is converted. This will then not needed as custom components.
+registerVueComponent('sync-loader', SyncLoader);
 
 // Function that can be used outside the compiled JavaScript
 // to mount the student page with the passed props.

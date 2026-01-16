@@ -1,18 +1,25 @@
 <script setup lang="ts">
-defineProps({
-  open: { type: Boolean, default: false, required: true },
-  title: { type: String, default: '' },
-  cancelButtonLabel: { type: String, default: 'Cancel' },
-  proceedButtonLabel: { type: String, default: 'Proceed' },
-  onClosed: { type: Function, default: null, required: true }
-});
+withDefaults(
+  defineProps<{
+    open: boolean;
+    title?: string;
+    cancelButtonLabel?: string;
+    proceedButtonLabel?: string;
+    onClosed: (proceed: boolean) => void;
+  }>(),
+  {
+    title: '',
+    cancelButtonLabel: 'Cancel',
+    proceedButtonLabel: 'Proceed'
+  }
+);
 </script>
 
 <template>
   <div
     v-if="open"
-    class="modal"
     id="kelvin-modal"
+    class="modal"
     tabindex="-1"
     role="dialog"
     aria-labelledby="Modal"
