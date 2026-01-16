@@ -12,16 +12,10 @@ import { hideComments, HideCommentsState } from '../stores';
 import { useSvelteStore } from '../utilities/useSvelteStore';
 import type { Comment, Source, Submit } from '../types/TaskDetail';
 
-const props = defineProps({
-  url: {
-    type: String,
-    required: true
-  },
-  comment_url: {
-    type: String,
-    required: true
-  }
-});
+const props = defineProps<{
+  url: string;
+  comment_url: string;
+}>();
 
 const files = ref<SourceFile[] | null>(null);
 const summaryComments = ref<Comment[]>([]);

@@ -6,44 +6,30 @@ import { safeMarkdown } from '../../markdown';
 import { hideComments, HideCommentsState } from '../../stores';
 import { useSvelteStore } from '../../utilities/useSvelteStore';
 
-const props = defineProps({
-  author: {
-    type: String,
-    default: ''
-  },
-  author_id: {
-    type: Number,
-    default: null
-  },
-  text: {
-    type: String,
-    default: ''
-  },
-  type: {
-    type: String,
-    default: ''
-  },
-  id: {
-    type: Number,
-    default: null
-  },
-  can_edit: {
-    type: Boolean,
-    default: false
-  },
-  unread: {
-    type: Boolean,
-    default: null
-  },
-  notification_id: {
-    type: Number,
-    default: null
-  },
-  meta: {
-    type: Object,
-    default: null
+const props = withDefaults(
+  defineProps<{
+    author?: string;
+    author_id?: number | null;
+    text?: string;
+    type?: string;
+    id?: number | null;
+    can_edit?: boolean;
+    unread?: boolean | null;
+    notification_id?: number | null;
+    meta?: { url?: string; review?: { id: number } } | null;
+  }>(),
+  {
+    author: '',
+    author_id: null,
+    text: '',
+    type: '',
+    id: null,
+    can_edit: false,
+    unread: null,
+    notification_id: null,
+    meta: null
   }
-});
+);
 
 const emit = defineEmits(['saveComment', 'setNotification']);
 

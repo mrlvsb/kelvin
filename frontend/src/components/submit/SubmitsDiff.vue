@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, watch, type PropType } from 'vue';
+import { ref, watch } from 'vue';
 import TimeAgo from '../TimeAgo.vue';
 import type { Submit } from '../../types/TaskDetail';
 
@@ -18,20 +18,16 @@ declare global {
   }
 }
 
-const props = defineProps({
-  submits: {
-    type: Array as PropType<Submit[]>,
-    default: () => []
-  },
-  current_submit: {
-    type: Number,
-    required: true
-  },
-  deadline: {
-    type: [Number, String, Date],
-    required: true
+const props = withDefaults(
+  defineProps<{
+    submits?: Submit[];
+    current_submit: number;
+    deadline: number | string | Date;
+  }>(),
+  {
+    submits: () => []
   }
-});
+);
 
 const a = ref(1);
 const b = ref(props.current_submit);

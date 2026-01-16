@@ -1,16 +1,15 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 
-const props = defineProps({
-  content: {
-    type: [String, Function],
-    required: true
-  },
-  title: {
-    type: String,
-    default: 'Copy to clipboard'
+const props = withDefaults(
+  defineProps<{
+    content: string | (() => string);
+    title?: string;
+  }>(),
+  {
+    title: 'Copy to clipboard'
   }
-});
+);
 
 // TODO: Rework this tooltip to use global modal system instead of local implementation
 const tooltip = ref(null);

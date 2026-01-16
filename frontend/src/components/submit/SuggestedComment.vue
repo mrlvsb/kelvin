@@ -7,36 +7,26 @@ import { hideComments, HideCommentsState } from '../../stores';
 import { useSvelteStore } from '../../utilities/useSvelteStore';
 import Toast from 'bootstrap/js/dist/toast';
 
-const props = defineProps({
-  id: {
-    type: Number,
-    default: null
-  },
-  author: {
-    type: String,
-    default: ''
-  },
-  text: {
-    type: String,
-    default: ''
-  },
-  meta: {
-    type: Object,
-    default: null
-  },
-  files: {
-    type: Array,
-    default: null
-  },
-  rating: {
-    type: Number,
-    default: 0
-  },
-  summary: {
-    type: Boolean,
-    default: false
+const props = withDefaults(
+  defineProps<{
+    id?: number | null;
+    author?: string;
+    text?: string;
+    meta?: { review: { id: number } } | null;
+    files?: unknown[] | null;
+    rating?: number;
+    summary?: boolean;
+  }>(),
+  {
+    id: null,
+    author: '',
+    text: '',
+    meta: null,
+    files: null,
+    rating: 0,
+    summary: false
   }
-});
+);
 
 const emit = defineEmits(['resolveSuggestion']);
 

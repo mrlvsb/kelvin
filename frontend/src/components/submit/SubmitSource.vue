@@ -2,25 +2,20 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import CodeRow from './CodeRow.vue';
 import hljs from 'highlight.js/lib/core';
+import type { Comment } from '../../types/TaskDetail';
 
-const props = defineProps({
-  code: {
-    type: String,
-    required: true
-  },
-  comments: {
-    type: Object,
-    default: () => ({})
-  },
-  selectedRows: {
-    type: Object,
-    default: null
-  },
-  path: {
-    type: String,
-    required: true
+const props = withDefaults(
+  defineProps<{
+    code: string;
+    comments?: Record<string, Comment[]>;
+    selectedRows?: { from: number; to: number } | null;
+    path: string;
+  }>(),
+  {
+    comments: () => ({}),
+    selectedRows: null
   }
-});
+);
 
 const emit = defineEmits(['setNotification', 'resolveSuggestion', 'saveComment']);
 

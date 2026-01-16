@@ -4,9 +4,14 @@ import VueModal from './VueModal.vue';
 
 const showModal = ref(false);
 
-const props = defineProps({
-  formId: { type: String, default: '' }
-});
+const props = withDefaults(
+  defineProps<{
+    formId?: string;
+  }>(),
+  {
+    formId: ''
+  }
+);
 
 function setFlag(proceed: boolean) {
   if (proceed) {

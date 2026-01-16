@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, ref, type PropType } from 'vue';
+import { computed, ref } from 'vue';
 import CommentForm from './CommentForm.vue';
 import Comment from './Comment.vue';
 import { user } from '../../global';
@@ -7,32 +7,23 @@ import SuggestedComment from './SuggestedComment.vue';
 import { useSvelteStore } from '../../utilities/useSvelteStore';
 import type { Comment as TaskComment } from '../../types/TaskDetail';
 
-const props = defineProps({
-  line: {
-    type: String,
-    default: ''
-  },
-  lineNumber: {
-    type: Number,
-    required: true
-  },
-  comments: {
-    type: Array as PropType<TaskComment[]>,
-    default: () => []
-  },
-  showAddingForm: {
-    type: Boolean,
-    default: false
-  },
-  selected: {
-    type: Boolean,
-    default: false
-  },
-  scroll: {
-    type: Boolean,
-    default: false
+const props = withDefaults(
+  defineProps<{
+    line?: string;
+    lineNumber: number;
+    comments?: TaskComment[];
+    showAddingForm?: boolean;
+    selected?: boolean;
+    scroll?: boolean;
+  }>(),
+  {
+    line: '',
+    comments: () => [],
+    showAddingForm: false,
+    selected: false,
+    scroll: false
   }
-});
+);
 
 const emit = defineEmits([
   'showCommentForm',

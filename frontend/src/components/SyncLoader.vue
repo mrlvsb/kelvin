@@ -1,18 +1,16 @@
 <script lang="ts" setup>
-defineProps({
-  size: {
-    type: Number,
-    default: 60
-  },
-  color: {
-    type: String,
-    default: '#FF3E00'
-  },
-  unit: {
-    type: String,
-    default: 'px'
+withDefaults(
+  defineProps<{
+    size?: number;
+    color?: string;
+    unit?: string;
+  }>(),
+  {
+    size: 60,
+    color: '#FF3E00',
+    unit: 'px'
   }
-});
+);
 
 const range = (size, startAt = 0) => [...Array(size).keys()].map((i) => i + startAt);
 </script>

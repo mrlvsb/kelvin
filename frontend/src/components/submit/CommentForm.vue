@@ -2,16 +2,16 @@
 import { ref, watch } from 'vue';
 import Editor from '../Editor.vue';
 
-const props = defineProps({
-  comment: {
-    type: String,
-    default: ''
-  },
-  disabled: {
-    type: Boolean,
-    default: false
+const props = withDefaults(
+  defineProps<{
+    comment?: string;
+    disabled?: boolean;
+  }>(),
+  {
+    comment: '',
+    disabled: false
   }
-});
+);
 
 const emit = defineEmits(['save']);
 
