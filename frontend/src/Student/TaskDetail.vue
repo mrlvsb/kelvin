@@ -550,7 +550,7 @@ img {
 
 .comment-badges .badge {
   font-size: 0.6em;
-  padding: 2px 5px;
+  padding: 5px 10px;
   line-height: 1;
 }
 </style>
