@@ -1,16 +1,17 @@
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import SubmitSource from '../components/submit/SubmitSource.vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import SyncLoader from '../components/SyncLoader.vue';
-import CopyToClipboard from '../components/CopyToClipboard.vue';
 import SummaryComments from '../components/submit/SummaryComments.vue';
 import SubmitsDiff from '../components/submit/SubmitsDiff.vue';
+import TaskDetailSidebar from './TaskDetailSidebar.vue';
+import TaskDetailContent from './TaskDetailContent.vue';
 import { fetch } from '../api';
 import { user } from '../global';
 import { markRead } from '../utilities/notifications';
 import { hideComments, HideCommentsState } from '../stores';
 import { useSvelteStore } from '../utilities/useSvelteStore';
-import type { Comment, Source, Submit } from '../types/TaskDetail';
+import { localStorageStore } from '../utilities/storage';
+import { Comment, SelectedRows, Source, Submit } from '../types/TaskDetail';
 
 const props = defineProps<{
   url: string;
@@ -23,7 +24,14 @@ const submits = ref<Submit[] | null>(null);
 const current_submit = ref<number | null>(null);
 const deadline = ref<number | string | null>(null);
 const showDiff = ref(false);
-const selectedRows = ref<{ path: string; from: number; to: number } | null>(null);
+const selectedRows = ref<SelectedRows | null>(null);
+const selectedFilePath = ref<string | null>(null);
+
+// View mode is defaulted to 'auto', which switches between 'list' and 'tree' based on number of files
+// Soon as user changes the view mode, it is stored in local storage to persist across sessions
+export type ViewMode = 'auto' | 'list' | 'tree';
+const storedViewMode = localStorageStore<ViewMode>('view-mode', 'auto');
+const viewMode = ref<ViewMode>(storedViewMode.value);
 
 const currentUser = useSvelteStore(user, null);
 const hideCommentsValue = useSvelteStore(hideComments, HideCommentsState.NONE);
@@ -349,6 +357,39 @@ const allOpen = computed(() => {
   );
 });
 
+const detectViewMode = () => {
+  // Force list view if there is only one file
+  if (files.value.length <= 1) {
+    return 'list';
+  }
+
+  if (storedViewMode.value === 'auto') {
+    if (files.value.length > 1) {
+      return 'tree';
+    } else {
+      return 'list';
+    }
+  }
+
+  return storedViewMode.value;
+};
+
+const visibleFiles = computed(() => {
+  if (!files.value) {
+    return [];
+  }
+
+  if (viewMode.value === 'tree') {
+    if (!selectedFilePath.value) {
+      return [];
+    }
+
+    return files.value.filter((file) => file.source.path === selectedFilePath.value);
+  }
+
+  return files.value;
+});
+
 const toggleOpen = () => {
   const nextOpenedState = !allOpen.value;
 
@@ -360,6 +401,32 @@ const toggleOpen = () => {
   });
 };
 
+const toggleViewMode = () => {
+  if (!viewMode.value || viewMode.value === 'list') {
+    viewMode.value = 'tree';
+  } else {
+    viewMode.value = 'list';
+  }
+
+  // Store the user's preference
+  storedViewMode.value = viewMode.value;
+};
+
+const setSelectedFilePath = (path: string | null, options?: { openFile?: boolean }) => {
+  if (!path) {
+    return;
+  }
+
+  selectedFilePath.value = path;
+
+  if (options?.openFile) {
+    const file = files.value?.find((item) => item.source.path === path);
+    if (file) {
+      file.opened = true;
+    }
+  }
+};
+
 const goToSelectedLines = () => {
   const s = document.location.hash.split(';', 2);
 
@@ -368,16 +435,19 @@ const goToSelectedLines = () => {
 
     if (parts.length === 2) {
       const range = parts[1].split('-');
+      const targetPath = parts[0];
 
       selectedRows.value = {
-        path: parts[0],
+        path: targetPath,
         from: parseInt(range[0]),
         to: parseInt(range[1] || range[0])
       };
 
+      setSelectedFilePath(targetPath, { openFile: true });
+
       setTimeout(() => {
         const el = document.querySelector(
-          `table[data-path="${CSS.escape(parts[0])}"] .linecode[data-line="${CSS.escape(String(selectedRows.value.from))}"]`
+          `table[data-path="${CSS.escape(targetPath)}"] .linecode[data-line="${CSS.escape(String(selectedRows.value.from))}"]`
         );
 
         if (el) {
@@ -408,13 +478,11 @@ const load = async () => {
     }
   }
 
+  viewMode.value = detectViewMode();
   const selectedFile = goToSelectedLines();
+
   if (selectedFile !== null) {
-    for (const file of files.value) {
-      if (file.source.path === selectedFile) {
-        file.opened = true;
-      }
-    }
+    setSelectedFilePath(selectedFile, { openFile: true });
   }
 };
 
@@ -428,6 +496,24 @@ onUnmounted(() => {
   window.removeEventListener('keydown', keydown);
   window.removeEventListener('hashchange', goToSelectedLines);
 });
+
+watch([files, viewMode], () => {
+  if (viewMode.value !== 'tree') {
+    return;
+  }
+
+  if (!files.value || files.value.length === 0) {
+    return;
+  }
+
+  const hasSelection =
+    selectedFilePath.value &&
+    files.value.some((file) => file.source.path === selectedFilePath.value);
+
+  if (!hasSelection) {
+    setSelectedFilePath(files.value[0].source.path, { openFile: true });
+  }
+});
 </script>
 
 <template>
@@ -438,7 +524,7 @@ onUnmounted(() => {
   <div v-else>
     <div class="float-end d-flex gap-1">
       <button
-        v-if="files.length > 1"
+        v-if="files.length > 1 && viewMode === 'list'"
         class="btn btn-link p-0"
         title="Expand or collapse all files"
         @click="toggleOpen"
@@ -449,6 +535,21 @@ onUnmounted(() => {
 
         <span v-else>
           <span class="iconify" data-icon="ant-design:folder-filled"></span>
+        </span>
+      </button>
+
+      <button
+        v-if="files.length > 1"
+        class="btn btn-link p-0"
+        title="Switch between list and tree view"
+        @click="toggleViewMode"
+      >
+        <span v-if="viewMode === 'tree'">
+          <span class="iconify" data-icon="fa7-solid:folder-tree"></span>
+        </span>
+
+        <span v-else>
+          <span class="iconify" data-icon="fa-solid:list"></span>
         </span>
       </button>
 
@@ -489,75 +590,24 @@ onUnmounted(() => {
       @resolve-suggestion="resolveSuggestion"
     />
 
-    <template v-for="file in files" :key="file.source.path">
-      <h2 class="file-header">
-        <span @click="file.opened = !file.opened">
-          <span title="Toggle file visibility">{{ file.source.path }}</span>
+    <div :class="['task-detail-body', { 'task-detail-tree-body': viewMode === 'tree' }]">
+      <TaskDetailSidebar
+        v-if="viewMode === 'tree'"
+        :files="files || []"
+        :comment-counts-by-path="commentCountsByPath"
+        :selected-path="selectedFilePath"
+        @select="(path) => setSelectedFilePath(path, { openFile: true })"
+      />
 
-          <template v-if="file.source.comments && Object.keys(file.source.comments).length">
-            <span class="comment-badges">
-              <template v-if="commentCountsByPath[file.source.path]?.user > 0">
-                <span class="badge bg-secondary" title="Student/teacher comments">
-                  {{ commentCountsByPath[file.source.path].user }}
-                </span>
-              </template>
-
-              <template v-if="commentCountsByPath[file.source.path]?.automated > 0">
-                <span class="badge bg-primary" title="Automation comments">
-                  {{ commentCountsByPath[file.source.path].automated }}
-                </span>
-              </template>
-            </span>
-          </template>
-        </span>
-
-        <CopyToClipboard
-          v-if="file.source.type === 'source' && file.source.content"
-          :content="() => file.source.content"
-          title="Copy the source code to the clipboard"
-        >
-          <span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px" />
-        </CopyToClipboard>
-
-        <a
-          class="text-body"
-          :href="file.source.content_url || file.source.src"
-          download
-          title="Download the file"
-        >
-          <span class="iconify" data-icon="clarity:download-line" style="height: 20px" />
-        </a>
-      </h2>
-
-      <template v-if="file.opened">
-        <span v-if="file.source.error" class="text-muted">{{ file.source.error }}</span>
-        <template v-else-if="file.source.type === 'source'">
-          <template v-if="file.source.content === null">
-            Content too large, show <a :href="file.source.content_url">raw content</a>.
-          </template>
-
-          <SubmitSource
-            v-else
-            :path="file.source.path"
-            :code="file.source.content"
-            :comments="file.source.comments"
-            :selected-rows="
-              selectedRows && selectedRows.path === file.source.path ? selectedRows : null
-            "
-            @set-notification="setNotification"
-            @save-comment="(payload) => saveComment({ ...payload, source: file.source.path })"
-            @resolve-suggestion="resolveSuggestion"
-          />
-        </template>
-
-        <img v-else-if="file.source.type === 'img'" :src="file.source.src" />
-        <video v-else-if="file.source.type === 'video'" controls>
-          <source v-for="src in file.source.sources" :key="src" :src="src" />
-        </video>
-
-        <template v-else>The preview cannot be shown.</template>
-      </template>
-    </template>
+      <TaskDetailContent
+        :files="visibleFiles"
+        :comment-counts-by-path="commentCountsByPath"
+        :selected-rows="selectedRows"
+        @set-notification="setNotification"
+        @save-comment="saveComment"
+        @resolve-suggestion="resolveSuggestion"
+      />
+    </div>
   </div>
 </template>
 
@@ -567,28 +617,13 @@ img {
   max-width: 100%;
 }
 
-.file-header span {
-  cursor: pointer;
+.task-detail-body {
+  width: 100%;
 }
 
-.file-header span:hover {
-  text-decoration: underline;
-}
-
-.file-header span .badge:hover {
-  text-decoration: none;
-}
-
-.comment-badges {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: 6px;
-}
-
-.comment-badges .badge {
-  font-size: 0.6em;
-  padding: 5px 10px;
-  line-height: 1;
+.task-detail-tree-body {
+  display: flex;
+  gap: 16px;
+  overflow: hidden;
 }
 </style>
