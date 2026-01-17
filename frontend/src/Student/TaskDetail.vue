@@ -412,54 +412,92 @@ const toggleViewMode = () => {
   storedViewMode.value = viewMode.value;
 };
 
-const setSelectedFilePath = (path: string | null, options?: { openFile?: boolean }) => {
+const setSelectedFile = (path: string | null, updatePath: boolean = false) => {
   if (!path) {
     return;
   }
 
   selectedFilePath.value = path;
+  const file = files.value?.find((item) => item.source.path === path);
 
-  if (options?.openFile) {
-    const file = files.value?.find((item) => item.source.path === path);
-    if (file) {
-      file.opened = true;
+  if (file) {
+    file.opened = true;
+
+    if (updatePath) {
+      document.location.hash = `#src;${path}`;
     }
   }
 };
 
-const goToSelectedLines = () => {
+const getLineElement = (path: string, line: number) => {
+  return document.querySelector(
+    `table[data-path="${CSS.escape(path)}"] .linecode[data-line="${CSS.escape(String(line))}"]`
+  );
+};
+
+function isLineVisible(path: string, line: number): boolean {
+  const lineElement: HTMLElement | null = getLineElement(path, line) as HTMLElement | null;
+  if (!lineElement) {
+    return false;
+  }
+
+  // Check if line element is within the viewport
+  const rect = lineElement.getBoundingClientRect();
+  return (
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+  );
+}
+
+const updateSelectedFileAndRows = (): SelectedRows => {
   const s = document.location.hash.split(';', 2);
+  let selected: SelectedRows = null;
 
   if (s.length === 2) {
     const parts = s[1].split(':');
 
-    if (parts.length === 2) {
+    if (parts.length === 1) {
+      const targetPath = parts[0];
+
+      selected = {
+        path: targetPath,
+        from: 0,
+        to: 0
+      };
+    } else if (parts.length === 2) {
       const range = parts[1].split('-');
       const targetPath = parts[0];
 
-      selectedRows.value = {
+      selected = {
         path: targetPath,
         from: parseInt(range[0]),
         to: parseInt(range[1] || range[0])
       };
-
-      setSelectedFilePath(targetPath, { openFile: true });
-
-      setTimeout(() => {
-        const el = document.querySelector(
-          `table[data-path="${CSS.escape(targetPath)}"] .linecode[data-line="${CSS.escape(String(selectedRows.value.from))}"]`
-        );
-
-        if (el) {
-          el.scrollIntoView();
-        }
-      }, 0);
-
-      return parts[0];
     }
   }
 
-  return null;
+  selectedRows.value = selected;
+  return selected;
+};
+
+const scrollToSelection = () => {
+  const selection = selectedRows.value;
+  if (!selection) {
+    return;
+  }
+
+  const { path, from: line } = selection;
+
+  setTimeout(() => {
+    if (isLineVisible(path, line)) {
+      return;
+    }
+
+    const el = getLineElement(path, line) as HTMLElement | null;
+    if (el) el.scrollIntoView();
+  }, 0);
 };
 
 const load = async () => {
@@ -479,22 +517,23 @@ const load = async () => {
   }
 
   viewMode.value = detectViewMode();
-  const selectedFile = goToSelectedLines();
 
-  if (selectedFile !== null) {
-    setSelectedFilePath(selectedFile, { openFile: true });
+  const selectedFile = updateSelectedFileAndRows();
+  if (selectedFile) {
+    setSelectedFile(selectedFile.path);
+    scrollToSelection();
   }
 };
 
 onMounted(() => {
   load();
   window.addEventListener('keydown', keydown);
-  window.addEventListener('hashchange', goToSelectedLines);
+  window.addEventListener('hashchange', updateSelectedFileAndRows);
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', keydown);
-  window.removeEventListener('hashchange', goToSelectedLines);
+  window.removeEventListener('hashchange', updateSelectedFileAndRows);
 });
 
 watch([files, viewMode], () => {
@@ -510,8 +549,9 @@ watch([files, viewMode], () => {
     selectedFilePath.value &&
     files.value.some((file) => file.source.path === selectedFilePath.value);
 
+  // If no file is selected, select the first one
   if (!hasSelection) {
-    setSelectedFilePath(files.value[0].source.path, { openFile: true });
+    setSelectedFile(files.value[0].source.path);
   }
 });
 </script>
@@ -596,7 +636,7 @@ watch([files, viewMode], () => {
         :files="files || []"
         :comment-counts-by-path="commentCountsByPath"
         :selected-path="selectedFilePath"
-        @select="(path) => setSelectedFilePath(path, { openFile: true })"
+        @select="(path) => setSelectedFile(path, true)"
       />
 
       <TaskDetailContent
