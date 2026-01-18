@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onUnmounted, ref, watch } from 'vue';
+import { computed, onUnmounted, ref, watch, defineExpose } from 'vue';
 import type { SourceFile, CommentCounts } from '../types/TaskDetail';
 
 type FileTreeEntry = {
@@ -65,6 +65,21 @@ const isFolderCollapsed = (folderPath: string | null | undefined) => {
   }
   return collapsedByPath.value[folderPath] ?? false;
 };
+
+const allFoldersOpen = computed(() => {
+  const folderPaths = collectFolderPaths(props.files);
+  if (!folderPaths.size) {
+    return true;
+  }
+
+  for (const folderPath of folderPaths) {
+    if (collapsedByPath.value[folderPath]) {
+      return false;
+    }
+  }
+
+  return true;
+});
 
 watch(
   () => props.files,
@@ -204,6 +219,22 @@ const toggleFolder = (folderPath: string | null | undefined) => {
   };
 };
 
+const toggleAllFolders = () => {
+  const folderPaths = collectFolderPaths(props.files);
+  if (!folderPaths.size) {
+    return;
+  }
+
+  const nextCollapsedState = allFoldersOpen.value;
+  const nextCollapsedByPath: Record<string, boolean> = { ...collapsedByPath.value };
+
+  for (const folderPath of folderPaths) {
+    nextCollapsedByPath[folderPath] = nextCollapsedState;
+  }
+
+  collapsedByPath.value = nextCollapsedByPath;
+};
+
 const clampWidth = (value: number) => {
   return Math.min(Math.max(value, minWidth), maxWidth);
 };
@@ -274,6 +305,11 @@ watch(
 
 onUnmounted(() => {
   stopDragging();
+});
+
+defineExpose({
+  allFoldersOpen,
+  toggleAllFolders
 });
 </script>
 

@@ -25,6 +25,7 @@ const deadline = ref<number | string | null>(null);
 const showDiff = ref(false);
 const selectedRows = ref<SelectedRows | null>(null);
 const selectedFilePath = ref<string | null>(null);
+const sidebarRef = ref<InstanceType<typeof TaskDetailSidebar> | null>(null);
 
 const currentUser = useSvelteStore(user, null);
 const hideCommentsValue = useSvelteStore(hideComments, HideCommentsState.NONE);
@@ -392,6 +393,20 @@ const allOpen = computed(() => {
   );
 });
 
+const openAllState = computed(() => {
+  if (viewModeValue.value === ViewModeState.LIST) {
+    return allOpen.value;
+  }
+
+  return sidebarRef.value?.allFoldersOpen ?? true;
+});
+
+const openAllTitle = computed(() => {
+  return viewModeValue.value === ViewModeState.LIST
+    ? 'Expand or collapse all files'
+    : 'Expand or collapse all folders';
+});
+
 const visibleFiles = computed(() => {
   if (!files.value) {
     return [];
@@ -409,6 +424,11 @@ const visibleFiles = computed(() => {
 });
 
 const toggleOpen = () => {
+  if (viewModeValue.value === ViewModeState.TREE) {
+    sidebarRef.value?.toggleAllFolders();
+    return;
+  }
+
   if (!files.value) {
     return;
   }
@@ -609,13 +629,8 @@ watch([files, viewModeValue], () => {
 
   <div v-else>
     <div class="float-end d-flex gap-1">
-      <button
-        v-if="files.length > 1 && viewModeValue === ViewModeState.LIST"
-        class="btn btn-link p-0"
-        title="Expand or collapse all files"
-        @click="toggleOpen"
-      >
-        <span v-if="allOpen">
+      <button class="btn btn-link p-0" :title="openAllTitle" @click="toggleOpen">
+        <span v-if="openAllState">
           <span class="iconify" data-icon="ant-design:folder-open-filled"></span>
         </span>
 
@@ -675,6 +690,7 @@ watch([files, viewModeValue], () => {
     >
       <TaskDetailSidebar
         v-if="viewModeValue === ViewModeState.TREE"
+        ref="sidebarRef"
         :files="files || []"
         :comment-counts-by-path="commentCountsByPath"
         :selected-path="selectedFilePath"
