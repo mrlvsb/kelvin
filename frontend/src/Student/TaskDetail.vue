@@ -221,8 +221,35 @@ const setNotification = async (evt: { comment_id: number; unread: boolean }) => 
   }
 };
 
-const resolveSuggestion = (evt: { id: number; comment: Comment }) => {
+const resolveSuggestion = (evt: { id: number; comment: Comment | null }) => {
   const comment = evt.comment;
+
+  summaryComments.value = summaryComments.value.filter(
+    (existing) => existing.meta?.review?.id !== evt.id
+  );
+
+  files.value = files.value.map((file) => {
+    if (!file.source.comments) {
+      return file;
+    }
+
+    const updated = { ...file.source.comments };
+    Object.keys(updated).forEach((line) => {
+      updated[line] = updated[line].filter((existing) => existing.meta?.review?.id !== evt.id);
+    });
+
+    return {
+      ...file,
+      source: {
+        ...file.source,
+        comments: updated
+      }
+    };
+  });
+
+  if (!comment) {
+    return;
+  }
 
   if (comment.line === null || comment.line === undefined) {
     summaryComments.value = [...summaryComments.value, comment];
@@ -231,11 +258,19 @@ const resolveSuggestion = (evt: { id: number; comment: Comment }) => {
 
   files.value = files.value.map((file) => {
     if (file.source.path === comment.source) {
-      let comments = file.source.comments[comment.line - 1] || [];
+      const lineIndex = comment.line - 1;
+      const comments = file.source.comments?.[lineIndex] || [];
 
-      comments = comments.filter((c) => c.meta.review.id !== evt.id);
-
-      file.source.comments[comment.line - 1] = [...comments, comment];
+      return {
+        ...file,
+        source: {
+          ...file.source,
+          comments: {
+            ...file.source.comments,
+            [lineIndex]: [...comments, comment]
+          }
+        }
+      };
     }
 
     return file;
