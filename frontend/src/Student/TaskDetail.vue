@@ -8,9 +8,8 @@ import TaskDetailContent from './TaskDetailContent.vue';
 import { fetch } from '../api';
 import { user } from '../global';
 import { markRead } from '../utilities/notifications';
-import { hideComments, HideCommentsState } from '../stores';
+import { hideComments, viewMode, HideCommentsState, ViewModeState } from '../stores';
 import { useSvelteStore } from '../utilities/useSvelteStore';
-import { localStorageStore } from '../utilities/storage';
 import { Comment, SelectedRows, Source, Submit } from '../types/TaskDetail';
 
 const props = defineProps<{
@@ -27,14 +26,9 @@ const showDiff = ref(false);
 const selectedRows = ref<SelectedRows | null>(null);
 const selectedFilePath = ref<string | null>(null);
 
-// View mode is defaulted to 'auto', which switches between 'list' and 'tree' based on number of files
-// Soon as user changes the view mode, it is stored in local storage to persist across sessions
-export type ViewMode = 'auto' | 'list' | 'tree';
-const storedViewMode = localStorageStore<ViewMode>('view-mode', 'auto');
-const viewMode = ref<ViewMode>(storedViewMode.value);
-
 const currentUser = useSvelteStore(user, null);
 const hideCommentsValue = useSvelteStore(hideComments, HideCommentsState.NONE);
+const viewModeValue = useSvelteStore(viewMode, ViewModeState.LIST);
 
 const commentsButton = {
   [HideCommentsState.NONE]: {
@@ -51,11 +45,25 @@ const commentsButton = {
   }
 };
 
+const viewModeButton = {
+  [ViewModeState.LIST]: {
+    title: 'Switch to tree view',
+    icon: 'fa7-solid:folder-tree'
+  },
+  [ViewModeState.TREE]: {
+    title: 'Switch to list view',
+    icon: 'fa-solid:list'
+  }
+};
+
 const commentsUI = computed(() => commentsButton[hideCommentsValue.value]);
+const viewModeUI = computed(() => viewModeButton[viewModeValue.value]);
+
 const downloadHref = computed(() => {
   if (typeof window === 'undefined') {
     return '';
   }
+
   return `kelvin:${window.location.href.split('#')[0]}download`;
 });
 
@@ -71,6 +79,7 @@ class SourceFile {
 
 const changeCommentState = () => {
   let nextState = HideCommentsState.NONE;
+
   switch (hideCommentsValue.value) {
     case HideCommentsState.NONE:
       nextState = HideCommentsState.AUTOMATED;
@@ -82,7 +91,23 @@ const changeCommentState = () => {
       nextState = HideCommentsState.NONE;
       break;
   }
+
   hideComments.set(nextState);
+};
+
+const changeViewMode = () => {
+  let nextMode = ViewModeState.LIST;
+
+  switch (viewModeValue.value) {
+    case ViewModeState.LIST:
+      nextMode = ViewModeState.TREE;
+      break;
+    case ViewModeState.TREE:
+      nextMode = ViewModeState.LIST;
+      break;
+  }
+
+  viewMode.set(nextMode);
 };
 
 const updateCommentProps = (id: number, newProps: Partial<Comment> | null) => {
@@ -345,6 +370,7 @@ const commentCountsByPath = computed(() => {
   if (!files.value) {
     return {};
   }
+
   return Object.fromEntries(
     files.value.map((file) => [file.source.path, countComments(file.source.comments)])
   );
@@ -357,29 +383,12 @@ const allOpen = computed(() => {
   );
 });
 
-const detectViewMode = () => {
-  // Force list view if there is only one file
-  if (files.value.length <= 1) {
-    return 'list';
-  }
-
-  if (storedViewMode.value === 'auto') {
-    if (files.value.length > 1) {
-      return 'tree';
-    } else {
-      return 'list';
-    }
-  }
-
-  return storedViewMode.value;
-};
-
 const visibleFiles = computed(() => {
   if (!files.value) {
     return [];
   }
 
-  if (viewMode.value === 'tree') {
+  if (viewModeValue.value === ViewModeState.TREE) {
     if (!selectedFilePath.value) {
       return [];
     }
@@ -391,7 +400,12 @@ const visibleFiles = computed(() => {
 });
 
 const toggleOpen = () => {
-  const nextOpenedState = !allOpen.value;
+  if (!files.value) {
+    return;
+  }
+
+  const areAllOpened = allOpen.value;
+  const nextOpenedState = !areAllOpened;
 
   files.value = files.value.map((file) => {
     return {
@@ -401,24 +415,13 @@ const toggleOpen = () => {
   });
 };
 
-const toggleViewMode = () => {
-  if (!viewMode.value || viewMode.value === 'list') {
-    viewMode.value = 'tree';
-  } else {
-    viewMode.value = 'list';
-  }
-
-  // Store the user's preference
-  storedViewMode.value = viewMode.value;
-};
-
 const setSelectedFile = (path: string | null, updatePath: boolean = false) => {
-  if (!path) {
+  if (!path || !files.value) {
     return;
   }
 
   selectedFilePath.value = path;
-  const file = files.value?.find((item) => item.source.path === path);
+  const file = files.value.find((item) => item.source.path === path);
 
   if (file) {
     file.opened = true;
@@ -500,6 +503,23 @@ const scrollToSelection = () => {
   }, 0);
 };
 
+const findFirstFileIndex = () => {
+  if (!files.value) {
+    return -1;
+  }
+
+  // Firstly, try to locate README file
+  const readmeRegex = /^readme(\.md|\.txt)?$/i;
+  const readmeIndex = files.value.findIndex((file) => readmeRegex.test(file.source.path));
+
+  // Default to first file if no README found
+  if (readmeIndex === -1) {
+    return 0;
+  }
+
+  return readmeIndex;
+};
+
 const load = async () => {
   const res = await fetch(props.url);
   const json = await res.json();
@@ -516,12 +536,24 @@ const load = async () => {
     }
   }
 
-  viewMode.value = detectViewMode();
+  // If only one file, switch to list view
+  if (files.value.length <= 1) {
+    viewMode.set(ViewModeState.LIST);
+  } else {
+    viewMode.set(ViewModeState.TREE);
+  }
 
   const selectedFile = updateSelectedFileAndRows();
+
   if (selectedFile) {
     setSelectedFile(selectedFile.path);
     scrollToSelection();
+  } else {
+    const firstFileIndex = findFirstFileIndex();
+
+    if (firstFileIndex !== -1) {
+      setSelectedFile(files.value[firstFileIndex].source.path);
+    }
   }
 };
 
@@ -536,8 +568,8 @@ onUnmounted(() => {
   window.removeEventListener('hashchange', updateSelectedFileAndRows);
 });
 
-watch([files, viewMode], () => {
-  if (viewMode.value !== 'tree') {
+watch([files, viewModeUI], () => {
+  if (viewModeUI.value !== 'tree') {
     return;
   }
 
@@ -549,9 +581,12 @@ watch([files, viewMode], () => {
     selectedFilePath.value &&
     files.value.some((file) => file.source.path === selectedFilePath.value);
 
-  // If no file is selected, select the first one
   if (!hasSelection) {
-    setSelectedFile(files.value[0].source.path);
+    const firstFileIndex = findFirstFileIndex();
+
+    if (firstFileIndex !== -1) {
+      setSelectedFile(files.value[firstFileIndex].source.path);
+    }
   }
 });
 </script>
@@ -578,19 +613,10 @@ watch([files, viewMode], () => {
         </span>
       </button>
 
-      <button
-        v-if="files.length > 1"
-        class="btn btn-link p-0"
-        title="Switch between list and tree view"
-        @click="toggleViewMode"
-      >
-        <span v-if="viewMode === 'tree'">
-          <span class="iconify" data-icon="fa7-solid:folder-tree"></span>
-        </span>
-
-        <span v-else>
-          <span class="iconify" data-icon="fa-solid:list"></span>
-        </span>
+      <button class="btn p-0 btn-link" :title="viewModeUI.title" @click="changeViewMode">
+        <div :key="viewModeUI.icon">
+          <span class="iconify" :data-icon="viewModeUI.icon"></span>
+        </div>
       </button>
 
       <button class="btn p-0 btn-link" :title="commentsUI.title" @click="changeCommentState">
@@ -630,9 +656,9 @@ watch([files, viewMode], () => {
       @resolve-suggestion="resolveSuggestion"
     />
 
-    <div :class="['task-detail-body', { 'task-detail-tree-body': viewMode === 'tree' }]">
+    <div :class="['task-detail-body', { 'task-detail-tree-body': viewModeValue === 'tree' }]">
       <TaskDetailSidebar
-        v-if="viewMode === 'tree'"
+        v-if="viewModeValue === 'tree'"
         :files="files || []"
         :comment-counts-by-path="commentCountsByPath"
         :selected-path="selectedFilePath"
