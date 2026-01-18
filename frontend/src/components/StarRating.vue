@@ -1,10 +1,16 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
 
-const props = defineProps({
-  committedRating: { type: Number, default: 0 },
-  disabled: { type: Boolean, default: false }
-});
+const props = withDefaults(
+  defineProps<{
+    committedRating: number;
+    disabled?: boolean;
+  }>(),
+  {
+    committedRating: 0,
+    disabled: false
+  }
+);
 
 const emit = defineEmits<{
   (event: 'rate', value: number): void;
