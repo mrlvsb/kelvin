@@ -63,6 +63,7 @@ const isFolderCollapsed = (folderPath: string | null | undefined) => {
   if (!folderPath) {
     return false;
   }
+
   return collapsedByPath.value[folderPath] ?? false;
 };
 
@@ -235,16 +236,13 @@ const toggleAllFolders = () => {
   collapsedByPath.value = nextCollapsedByPath;
 };
 
-const clampWidth = (value: number) => {
-  return Math.min(Math.max(value, minWidth), maxWidth);
-};
-
 const handlePointerMove = (event: PointerEvent) => {
   if (!isDragging) {
     return;
   }
 
-  width.value = clampWidth(dragStartWidth + (event.clientX - dragStartX));
+  const calculatedWidth = dragStartWidth + (event.clientX - dragStartX);
+  width.value = Math.min(Math.max(calculatedWidth, minWidth), maxWidth);
 };
 
 const stopDragging = () => {
