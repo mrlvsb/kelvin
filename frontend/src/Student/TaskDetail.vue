@@ -124,10 +124,10 @@ const updateCommentProps = (id: number, newProps: Partial<Comment> | null) => {
 
         return comment;
       })
-      .filter((comment) => comment !== null);
+      .filter((comment) => comment !== null) as Comment[];
   };
 
-  files.value = files.value.map((file) => {
+  files.value = (files.value || []).map((file) => {
     if (file.source.comments) {
       file.source.comments = Object.fromEntries(
         Object.entries(file.source.comments).map(([lineNum, comments]) => {
@@ -177,7 +177,9 @@ const addNewComment = async (comment: CommentSavePayload) => {
   });
 
   const json = await res.json();
-  if (res.ok) success();
+  if (res.ok && success) {
+    success();
+  }
 
   if (!comment.source) {
     summaryComments.value = [
@@ -186,13 +188,17 @@ const addNewComment = async (comment: CommentSavePayload) => {
     ];
   } else {
     files.value = await Promise.all(
-      files.value.map(async (file) => {
+      (files.value || []).map(async (file) => {
         if (file.source.path === comment.source) {
-          let comments = await Promise.all(
-            (file.source.comments[comment.line - 1] || []).map(markCommentAsRead)
+          const existingComments: Comment[] = await Promise.all(
+            ((file.source.comments && file.source.comments[comment.line - 1]) || []).map(
+              markCommentAsRead
+            )
           );
 
-          file.source.comments[comment.line - 1] = [...comments, json];
+          if (file.source.comments) {
+            file.source.comments[comment.line - 1] = [...existingComments, json];
+          }
         }
 
         return file;
@@ -245,9 +251,10 @@ const setNotification = async (evt: { comment_id: number; unread: boolean }) => 
   };
 
   await walk(summaryComments.value);
-  for (const source of files.value) {
-    if (source.source.comments) {
-      for (const comments of Object.values(source.source.comments)) {
+
+  for (const sourceFile of files.value || []) {
+    if (sourceFile.source.comments) {
+      for (const comments of Object.values(sourceFile.source.comments)) {
         await walk(comments);
       }
     }
@@ -289,7 +296,7 @@ const resolveSuggestion = (evt: { id: number; comment: Comment | null }) => {
     return;
   }
 
-  files.value = files.value.map((file) => {
+  files.value = (files.value || []).map((file) => {
     if (file.source.path === comment.source) {
       const lineIndex = comment.line - 1;
       const comments = file.source.comments?.[lineIndex] || [];
@@ -321,8 +328,9 @@ const keydown = (event: KeyboardEvent) => {
     return;
   }
 
-  let targetSubmit = null;
-  if (event.key === 'ArrowLeft' && current_submit.value > 1) {
+  let targetSubmit: number | null = null;
+
+  if (event.key === 'ArrowLeft' && current_submit.value !== null && current_submit.value > 1) {
     if (event.shiftKey) {
       targetSubmit = 1;
     } else {
@@ -331,6 +339,7 @@ const keydown = (event: KeyboardEvent) => {
   } else if (
     event.key === 'ArrowRight' &&
     submits.value &&
+    current_submit.value !== null &&
     current_submit.value < submits.value.length
   ) {
     if (event.shiftKey) {
@@ -346,14 +355,14 @@ const keydown = (event: KeyboardEvent) => {
 };
 
 const countComments = (comments: Record<string, Comment[]> | undefined) => {
-  comments = comments || {};
+  const safeComments = comments || {};
 
   const counts = {
     user: 0,
     automated: 0
   };
 
-  for (const line of Object.values(comments)) {
+  for (const line of Object.values(safeComments)) {
     for (const comment of Object.values(line)) {
       if (comment.type === 'automated' || comment.type === 'ai-review') {
         counts.automated += 1;
@@ -455,11 +464,11 @@ function isLineVisible(path: string, line: number): boolean {
 }
 
 const updateSelectedFileAndRows = (): SelectedRows => {
-  const s = document.location.hash.split(';', 2);
+  const hashParts = document.location.hash.split(';', 2);
   let selected: SelectedRows = null;
 
-  if (s.length === 2) {
-    const parts = s[1].split(':');
+  if (hashParts.length === 2) {
+    const parts = hashParts[1].split(':');
 
     if (parts.length === 1) {
       const targetPath = parts[0];
@@ -475,8 +484,8 @@ const updateSelectedFileAndRows = (): SelectedRows => {
 
       selected = {
         path: targetPath,
-        from: parseInt(range[0]),
-        to: parseInt(range[1] || range[0])
+        from: parseInt(range[0], 10),
+        to: parseInt(range[1] || range[0], 10)
       };
     }
   }
@@ -499,7 +508,9 @@ const scrollToSelection = () => {
     }
 
     const el = getLineElement(path, line) as HTMLElement | null;
-    if (el) el.scrollIntoView();
+    if (el) {
+      el.scrollIntoView();
+    }
   }, 0);
 };
 
@@ -527,7 +538,7 @@ const load = async () => {
   current_submit.value = json.current_submit;
   deadline.value = json.deadline;
   submits.value = json.submits;
-  files.value = json.sources.map((source) => new SourceFile(source));
+  files.value = json.sources.map((source: Source) => new SourceFile(source));
   summaryComments.value = json.summary_comments;
 
   if (files.value.length > 1) {
@@ -568,8 +579,8 @@ onUnmounted(() => {
   window.removeEventListener('hashchange', updateSelectedFileAndRows);
 });
 
-watch([files, viewModeUI], () => {
-  if (viewModeUI.value !== 'tree') {
+watch([files, viewModeValue], () => {
+  if (viewModeValue.value !== ViewModeState.TREE) {
     return;
   }
 
@@ -599,7 +610,7 @@ watch([files, viewModeUI], () => {
   <div v-else>
     <div class="float-end d-flex gap-1">
       <button
-        v-if="files.length > 1 && viewMode === 'list'"
+        v-if="files.length > 1 && viewModeValue === ViewModeState.LIST"
         class="btn btn-link p-0"
         title="Expand or collapse all files"
         @click="toggleOpen"
@@ -656,9 +667,14 @@ watch([files, viewModeUI], () => {
       @resolve-suggestion="resolveSuggestion"
     />
 
-    <div :class="['task-detail-body', { 'task-detail-tree-body': viewModeValue === 'tree' }]">
+    <div
+      :class="[
+        'task-detail-body',
+        { 'task-detail-tree-body': viewModeValue === ViewModeState.TREE }
+      ]"
+    >
       <TaskDetailSidebar
-        v-if="viewModeValue === 'tree'"
+        v-if="viewModeValue === ViewModeState.TREE"
         :files="files || []"
         :comment-counts-by-path="commentCountsByPath"
         :selected-path="selectedFilePath"
@@ -669,6 +685,7 @@ watch([files, viewModeUI], () => {
         :files="visibleFiles"
         :comment-counts-by-path="commentCountsByPath"
         :selected-rows="selectedRows"
+        :collapsable="viewModeValue === ViewModeState.LIST"
         @set-notification="setNotification"
         @save-comment="saveComment"
         @resolve-suggestion="resolveSuggestion"

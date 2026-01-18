@@ -7,6 +7,7 @@ const props = defineProps<{
   files: SourceFile[];
   commentCountsByPath: Record<string, CommentCounts>;
   selectedRows: SelectedRows | null;
+  collapsable: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -23,6 +24,12 @@ const emit = defineEmits<{
   ];
   'resolve-suggestion': [payload: { id: number; comment: Comment }];
 }>();
+
+const collapseFile = (file: SourceFile) => {
+  if (props.collapsable) {
+    file.opened = !file.opened;
+  }
+};
 
 const handleSaveComment = (
   source: string,
@@ -42,7 +49,7 @@ const handleSaveComment = (
   <div class="task-detail-content">
     <template v-for="file in props.files" :key="file.source.path">
       <h2 class="file-header">
-        <span @click="file.opened = !file.opened">
+        <span @click="collapseFile(file)">
           <span title="Toggle file visibility">{{ file.source.path }}</span>
 
           <template v-if="file.source.comments && Object.keys(file.source.comments).length">
