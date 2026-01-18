@@ -1,18 +1,21 @@
 <script lang="ts" setup>
-import { computed, onUnmounted, ref } from 'vue';
+import { computed, onUnmounted, ref, watch } from 'vue';
 import type { SourceFile, CommentCounts } from '../types/TaskDetail';
 
 type FileTreeEntry = {
   name: string;
   path: string | null;
+  folderPath?: string | null;
   depth: number;
   isFile: boolean;
+  isCollapsed?: boolean;
   commentCounts?: CommentCounts;
 };
 
 type FileTreeNode = {
   name: string;
   path: string | null;
+  folderPath: string | null;
   children: Map<string, FileTreeNode>;
   isFile: boolean;
   commentCounts?: CommentCounts;
@@ -38,6 +41,71 @@ const minWidth = 250;
 const width = ref<number>(250);
 const maxWidth = 400;
 
+const collapsedByPath = ref<Record<string, boolean>>({});
+
+const collectFolderPaths = (sourceFiles: SourceFile[]) => {
+  const folders = new Set<string>();
+
+  for (const file of sourceFiles) {
+    const parts = file.source.path.split('/');
+    let currentPath = '';
+
+    for (let index = 0; index < parts.length - 1; index += 1) {
+      currentPath = currentPath ? `${currentPath}/${parts[index]}` : parts[index];
+      folders.add(currentPath);
+    }
+  }
+
+  return folders;
+};
+
+const isFolderCollapsed = (folderPath: string | null | undefined) => {
+  if (!folderPath) {
+    return false;
+  }
+  return collapsedByPath.value[folderPath] ?? false;
+};
+
+watch(
+  () => props.files,
+  (nextFiles, previousFiles) => {
+    const folderPaths = collectFolderPaths(nextFiles);
+    const previousFolderPaths = previousFiles
+      ? collectFolderPaths(previousFiles)
+      : new Set<string>();
+
+    // First load: collapse all folders by default
+    if (!previousFiles?.length) {
+      const nextCollapsedByPath: Record<string, boolean> = {};
+      for (const folderPath of folderPaths) {
+        nextCollapsedByPath[folderPath] = true;
+      }
+      collapsedByPath.value = nextCollapsedByPath;
+      return;
+    }
+
+    // Preserve existing collapse state, collapse newly added folders, drop removed folders
+    const nextCollapsedByPath: Record<string, boolean> = { ...collapsedByPath.value };
+
+    // Newly added folders start collapsed
+    for (const folderPath of folderPaths) {
+      if (!previousFolderPaths.has(folderPath) && nextCollapsedByPath[folderPath] !== true) {
+        nextCollapsedByPath[folderPath] = true;
+      }
+    }
+
+    // Remove folders that no longer exist
+    for (const key of Object.keys(nextCollapsedByPath)) {
+      if (!folderPaths.has(key)) {
+        delete nextCollapsedByPath[key];
+      }
+    }
+
+    collapsedByPath.value = nextCollapsedByPath;
+  },
+  { immediate: true }
+);
+
 const fileTreeEntries = computed<FileTreeEntry[]>(() => {
   if (!props.files.length) {
     return [];
@@ -46,20 +114,24 @@ const fileTreeEntries = computed<FileTreeEntry[]>(() => {
   const root: FileTreeNode = {
     name: '',
     path: null,
-    children: new Map(),
+    folderPath: null,
+    children: new Map<string, FileTreeNode>(),
     isFile: false
   };
 
   for (const file of props.files) {
     const parts = file.source.path.split('/');
     let current = root;
+    let currentPath = '';
 
     parts.forEach((part: string, index: number) => {
       if (!current.children.has(part)) {
+        const nextPath = currentPath ? `${currentPath}/${part}` : part;
         current.children.set(part, {
           name: part,
           path: null,
-          children: new Map(),
+          folderPath: nextPath,
+          children: new Map<string, FileTreeNode>(),
           isFile: false
         });
       }
@@ -70,6 +142,7 @@ const fileTreeEntries = computed<FileTreeEntry[]>(() => {
       }
 
       current = nextNode;
+      currentPath = current.folderPath ?? currentPath;
 
       if (index === parts.length - 1) {
         current.path = file.source.path;
@@ -90,15 +163,19 @@ const fileTreeEntries = computed<FileTreeEntry[]>(() => {
     });
 
     for (const child of children) {
+      const folderPath: string | null = child.folderPath;
+
       entries.push({
         name: child.name,
         path: child.path,
+        folderPath,
         depth,
         isFile: child.isFile,
+        isCollapsed: child.isFile ? undefined : isFolderCollapsed(folderPath),
         commentCounts: child.commentCounts
       });
 
-      if (child.children.size > 0) {
+      if (child.children.size > 0 && !isFolderCollapsed(folderPath)) {
         walk(child, depth + 1);
       }
     }
@@ -114,6 +191,17 @@ const handleSelect = (path: string | null) => {
   }
 
   emit('select', path);
+};
+
+const toggleFolder = (folderPath: string | null | undefined) => {
+  if (!folderPath) {
+    return;
+  }
+
+  collapsedByPath.value = {
+    ...collapsedByPath.value,
+    [folderPath]: !(collapsedByPath.value[folderPath] ?? false)
+  };
 };
 
 const clampWidth = (value: number) => {
@@ -153,6 +241,37 @@ const startDragging = (event: PointerEvent) => {
   window.addEventListener('pointerup', stopDragging);
 };
 
+const expandParentsForPath = (selectedPath: string) => {
+  const pathParts = selectedPath.split('/');
+  if (pathParts.length <= 1) {
+    return;
+  }
+
+  const nextCollapsedByPath: Record<string, boolean> = { ...collapsedByPath.value };
+  let currentFolderPath = '';
+
+  for (let index = 0; index < pathParts.length - 1; index += 1) {
+    currentFolderPath = currentFolderPath
+      ? `${currentFolderPath}/${pathParts[index]}`
+      : pathParts[index];
+
+    nextCollapsedByPath[currentFolderPath] = false;
+  }
+
+  collapsedByPath.value = nextCollapsedByPath;
+};
+
+watch(
+  () => props.selectedPath,
+  (nextSelectedPath) => {
+    if (!nextSelectedPath) {
+      return;
+    }
+    expandParentsForPath(nextSelectedPath);
+  },
+  { immediate: true }
+);
+
 onUnmounted(() => {
   stopDragging();
 });
@@ -179,7 +298,7 @@ onUnmounted(() => {
           :class="{ 'file-tree__item--active': entry.path === props.selectedPath }"
           @click="handleSelect(entry.path)"
         >
-          <span class="iconify" data-icon="fontisto:file-1"></span>
+          <span class="iconify" data-icon="fa7-solid:file-alt"></span>
 
           <span class="file-tree__label" :title="entry.name">{{ entry.name }}</span>
 
@@ -205,10 +324,24 @@ onUnmounted(() => {
           </span>
         </button>
 
-        <div v-else class="file-tree__folder">
-          <span class="iconify" data-icon="fa-solid:folder"></span>
+        <button
+          v-else
+          class="file-tree__folder"
+          type="button"
+          @click="toggleFolder(entry.folderPath)"
+        >
+          <span class="file-tree__toggle">
+            <span v-show="entry.isCollapsed">
+              <span class="iconify" data-icon="fa7-solid:folder"></span>
+            </span>
+
+            <span v-show="!entry.isCollapsed">
+              <span class="iconify" data-icon="fa7-solid:folder-open"></span>
+            </span>
+          </span>
+
           <span class="file-tree__label" :title="entry.name">{{ entry.name }}</span>
-        </div>
+        </button>
       </li>
     </ul>
 
@@ -242,13 +375,21 @@ onUnmounted(() => {
   align-items: center;
   gap: 6px;
   width: 100%;
-  padding: 4px 6px;
-  padding-left: calc(var(--tree-depth) * 16px + 6px);
+  padding: 4px 6px 4px calc(var(--tree-depth) * 15px + 5px);
   border: none;
   background: transparent;
   color: inherit;
   text-align: left;
   font-size: 0.9rem;
+}
+
+.file-tree__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  color: inherit;
 }
 
 .file-tree__label {
@@ -273,6 +414,10 @@ onUnmounted(() => {
 .file-tree__item {
   cursor: pointer;
   border-radius: 4px;
+}
+
+.file-tree__folder {
+  cursor: pointer;
 }
 
 :global(html[data-bs-theme='dark'] .file-tree__item:hover, .file-tree__item--active) {
