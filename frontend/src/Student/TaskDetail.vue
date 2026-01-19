@@ -518,6 +518,15 @@ onUnmounted(() => {
         >
           <span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px" />
         </CopyToClipboard>
+
+        <a
+          class="text-body"
+          :href="file.source.content_url || file.source.src"
+          download
+          title="Download the file"
+        >
+          <span class="iconify" data-icon="clarity:download-line" style="height: 20px" />
+        </a>
       </h2>
 
       <template v-if="file.opened">
