@@ -22,8 +22,7 @@ const addToast = (toastOptions: ToastOptions) => {
     {
       id,
       title: toastOptions.title,
-      header: toastOptions.header,
-      body: toastOptions.body,
+      message: toastOptions.message,
       type: toastOptions.type ?? 'success',
       duration
     }
@@ -39,7 +38,7 @@ const addToast = (toastOptions: ToastOptions) => {
 const normalizeWindowToastOptions = (windowToastOptions: ToastOptions): ToastOptions => {
   return {
     title: windowToastOptions.title,
-    body: windowToastOptions.message,
+    message: windowToastOptions.message,
     type: windowToastOptions.type ?? 'success',
     duration: windowToastOptions.duration
   };
@@ -54,7 +53,7 @@ onMounted(() => {
   window.toastApi = {
     success: (message: string, options?: Omit<ToastOptions, 'message' | 'type'>) => {
       addToast({
-        body: message,
+        message: message,
         type: 'success',
         title: options?.title,
         duration: options?.duration
@@ -63,7 +62,7 @@ onMounted(() => {
 
     warning: (message: string, options?: Omit<ToastOptions, 'message' | 'type'>) => {
       addToast({
-        body: message,
+        message: message,
         type: 'warning',
         title: options?.title,
         duration: options?.duration
@@ -72,7 +71,7 @@ onMounted(() => {
 
     error: (message: string, options?: Omit<ToastOptions, 'message' | 'type'>) => {
       addToast({
-        body: message,
+        message: message,
         type: 'error',
         title: options?.title,
         duration: options?.duration
@@ -99,8 +98,8 @@ onBeforeUnmount(() => {
         aria-live="assertive"
         aria-atomic="true"
       >
-        <div v-if="toastItem.title || toastItem.header" class="toast-header">
-          <strong class="me-auto">{{ toastItem.header || toastItem.title }}</strong>
+        <div v-if="toastItem.title" class="toast-header">
+          <strong class="me-auto">{{ toastItem.title }}</strong>
           <button
             type="button"
             class="btn-close"
@@ -110,10 +109,10 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="d-flex">
-          <div class="toast-body">{{ toastItem.body }}</div>
+          <div class="toast-body">{{ toastItem.message }}</div>
 
           <button
-            v-if="!toastItem.title && !toastItem.header"
+            v-if="!toastItem.title"
             type="button"
             class="btn-close me-2 m-auto"
             aria-label="Close"

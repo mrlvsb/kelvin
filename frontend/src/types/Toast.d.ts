@@ -8,17 +8,9 @@ export type ToastOptions = {
 };
 
 export type ToastApi = {
-    success: (
-        title: string,
-        message?: string,
-        options?: Omit<ToastOptions, 'body' | 'type'>
-    ) => void;
-    warning: (
-        title: string,
-        message?: string,
-        options?: Omit<ToastOptions, 'body' | 'type'>
-    ) => void;
-    error: (title: string, message?: string, options?: Omit<ToastOptions, 'body' | 'type'>) => void;
+    success: (message: string, options?: Omit<ToastOptions, 'message' | 'type'>) => void;
+    warning: (message: string, options?: Omit<ToastOptions, 'message' | 'type'>) => void;
+    error: (message: string, options?: Omit<ToastOptions, 'message' | 'type'>) => void;
 };
 
 declare global {
