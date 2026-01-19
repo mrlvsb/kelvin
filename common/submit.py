@@ -179,16 +179,14 @@ def fetch_submit_sources(submit: Submit) -> SubmitSources:
         # Text / fallback handling
         else:
             content_text: str = ""
-            content_url: str | None = None
             content_error: str | None = None
+            content_url = reverse("submit_source", args=[submit.id, source.virt])
 
             try:
                 # Load file contents when small enough, otherwise defer to URL
                 if is_file_small(source.phys):
                     with open(source.phys) as file_stream:
                         content_text = file_stream.read()
-                else:
-                    content_url = reverse("submit_source", args=[submit.id, source.virt])
             except UnicodeDecodeError:
                 content_error = "The file contains binary data or is not encoded in UTF-8"
             except FileNotFoundError:
