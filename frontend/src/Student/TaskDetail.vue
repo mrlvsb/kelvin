@@ -78,6 +78,15 @@ class SourceFile {
   }
 }
 
+const isViewOnMobile = computed(() => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const mediaQueryList = window.matchMedia('(max-width: 767.98px)');
+  return mediaQueryList.matches;
+});
+
 const changeCommentState = () => {
   let nextState = HideCommentsState.NONE;
 
@@ -568,7 +577,7 @@ const load = async () => {
   }
 
   // If only one file, switch to list view
-  if (files.value.length <= 1) {
+  if (files.value.length <= 1 || isViewOnMobile.value) {
     viewMode.set(ViewModeState.LIST);
   } else {
     viewMode.set(ViewModeState.TREE);
@@ -617,7 +626,12 @@ onUnmounted(() => {
         </span>
       </button>
 
-      <button class="btn p-0 btn-link" :title="viewModeUI.title" @click="changeViewMode">
+      <button
+        v-if="!isViewOnMobile"
+        class="btn p-0 btn-link"
+        :title="viewModeUI.title"
+        @click="changeViewMode"
+      >
         <div :key="viewModeUI.icon">
           <span class="iconify" :data-icon="viewModeUI.icon"></span>
         </div>

@@ -135,6 +135,7 @@ const handleSaveComment = (
   flex: 1;
   min-width: 0;
   overflow: auto;
+  width: 100%;
 }
 
 .file-header-clickable {
