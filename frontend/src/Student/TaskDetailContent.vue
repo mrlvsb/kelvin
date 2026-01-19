@@ -82,10 +82,10 @@ const handleSaveComment = (
         </CopyToClipboard>
 
         <a
-            class="text-body"
-            :href="file.source.content_url || file.source.src"
-            download
-            title="Download the file"
+          class="text-body"
+          :href="file.source.content_url || file.source.src"
+          download
+          title="Download the file"
         >
           <span class="iconify" data-icon="clarity:download-line" style="height: 20px" />
         </a>
