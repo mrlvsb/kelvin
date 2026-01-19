@@ -66,8 +66,9 @@ def fetch_submit_comments(
                 )
             else:
                 # Bounds check in case source changed and comment references invalid line
+                # If comment line exceeds max lines, attach to first line, that is always there
                 max_lines = sources[comment.source].content.count("\n")
-                line = 0 if comment.line > max_lines else comment.line
+                line = 1 if comment.line > max_lines + 1 else comment.line
 
                 sources[comment.source].comments.setdefault(line - 1, []).append(
                     comment_to_dto(
