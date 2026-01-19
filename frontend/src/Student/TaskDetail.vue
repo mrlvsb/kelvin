@@ -1,16 +1,16 @@
 <script lang="ts" setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-import SubmitSource from '../components/submit/SubmitSource.vue';
 import SyncLoader from '../components/SyncLoader.vue';
-import CopyToClipboard from '../components/CopyToClipboard.vue';
 import SummaryComments from '../components/submit/SummaryComments.vue';
 import SubmitsDiff from '../components/submit/SubmitsDiff.vue';
+import TaskDetailSidebar from './TaskDetailSidebar.vue';
+import TaskDetailContent from './TaskDetailContent.vue';
 import { fetch } from '../api';
 import { user } from '../global';
 import { markRead } from '../utilities/notifications';
-import { hideComments, HideCommentsState } from '../stores';
+import { hideComments, viewMode, HideCommentsState, ViewModeState } from '../stores';
 import { useSvelteStore } from '../utilities/useSvelteStore';
-import type { Comment, Source, Submit } from '../types/TaskDetail';
+import { Comment, SelectedRows, Source, Submit } from '../types/TaskDetail';
 
 const props = defineProps<{
   url: string;
@@ -23,10 +23,13 @@ const submits = ref<Submit[] | null>(null);
 const current_submit = ref<number | null>(null);
 const deadline = ref<number | string | null>(null);
 const showDiff = ref(false);
-const selectedRows = ref<{ path: string; from: number; to: number } | null>(null);
+const selectedRows = ref<SelectedRows | null>(null);
+const selectedFilePath = ref<string | null>(null);
+const sidebarRef = ref<InstanceType<typeof TaskDetailSidebar> | null>(null);
 
 const currentUser = useSvelteStore(user, null);
 const hideCommentsValue = useSvelteStore(hideComments, HideCommentsState.NONE);
+const viewModeValue = useSvelteStore(viewMode, ViewModeState.LIST);
 
 const commentsButton = {
   [HideCommentsState.NONE]: {
@@ -43,11 +46,25 @@ const commentsButton = {
   }
 };
 
+const viewModeButton = {
+  [ViewModeState.LIST]: {
+    title: 'Switch to tree view',
+    icon: 'fa7-solid:folder-tree'
+  },
+  [ViewModeState.TREE]: {
+    title: 'Switch to list view',
+    icon: 'fa-solid:list'
+  }
+};
+
 const commentsUI = computed(() => commentsButton[hideCommentsValue.value]);
+const viewModeUI = computed(() => viewModeButton[viewModeValue.value]);
+
 const downloadHref = computed(() => {
   if (typeof window === 'undefined') {
     return '';
   }
+
   return `kelvin:${window.location.href.split('#')[0]}download`;
 });
 
@@ -63,6 +80,7 @@ class SourceFile {
 
 const changeCommentState = () => {
   let nextState = HideCommentsState.NONE;
+
   switch (hideCommentsValue.value) {
     case HideCommentsState.NONE:
       nextState = HideCommentsState.AUTOMATED;
@@ -74,7 +92,23 @@ const changeCommentState = () => {
       nextState = HideCommentsState.NONE;
       break;
   }
+
   hideComments.set(nextState);
+};
+
+const changeViewMode = () => {
+  let nextMode = ViewModeState.LIST;
+
+  switch (viewModeValue.value) {
+    case ViewModeState.LIST:
+      nextMode = ViewModeState.TREE;
+      break;
+    case ViewModeState.TREE:
+      nextMode = ViewModeState.LIST;
+      break;
+  }
+
+  viewMode.set(nextMode);
 };
 
 const updateCommentProps = (id: number, newProps: Partial<Comment> | null) => {
@@ -91,10 +125,10 @@ const updateCommentProps = (id: number, newProps: Partial<Comment> | null) => {
 
         return comment;
       })
-      .filter((comment) => comment !== null);
+      .filter((comment) => comment !== null) as Comment[];
   };
 
-  files.value = files.value.map((file) => {
+  files.value = (files.value || []).map((file) => {
     if (file.source.comments) {
       file.source.comments = Object.fromEntries(
         Object.entries(file.source.comments).map(([lineNum, comments]) => {
@@ -144,7 +178,9 @@ const addNewComment = async (comment: CommentSavePayload) => {
   });
 
   const json = await res.json();
-  if (res.ok) success();
+  if (res.ok && success) {
+    success();
+  }
 
   if (!comment.source) {
     summaryComments.value = [
@@ -153,13 +189,17 @@ const addNewComment = async (comment: CommentSavePayload) => {
     ];
   } else {
     files.value = await Promise.all(
-      files.value.map(async (file) => {
+      (files.value || []).map(async (file) => {
         if (file.source.path === comment.source) {
-          let comments = await Promise.all(
-            (file.source.comments[comment.line - 1] || []).map(markCommentAsRead)
+          const existingComments: Comment[] = await Promise.all(
+            ((file.source.comments && file.source.comments[comment.line - 1]) || []).map(
+              markCommentAsRead
+            )
           );
 
-          file.source.comments[comment.line - 1] = [...comments, json];
+          if (file.source.comments) {
+            file.source.comments[comment.line - 1] = [...existingComments, json];
+          }
         }
 
         return file;
@@ -212,9 +252,10 @@ const setNotification = async (evt: { comment_id: number; unread: boolean }) => 
   };
 
   await walk(summaryComments.value);
-  for (const source of files.value) {
-    if (source.source.comments) {
-      for (const comments of Object.values(source.source.comments)) {
+
+  for (const sourceFile of files.value || []) {
+    if (sourceFile.source.comments) {
+      for (const comments of Object.values(sourceFile.source.comments)) {
         await walk(comments);
       }
     }
@@ -256,7 +297,7 @@ const resolveSuggestion = (evt: { id: number; comment: Comment | null }) => {
     return;
   }
 
-  files.value = files.value.map((file) => {
+  files.value = (files.value || []).map((file) => {
     if (file.source.path === comment.source) {
       const lineIndex = comment.line - 1;
       const comments = file.source.comments?.[lineIndex] || [];
@@ -288,8 +329,9 @@ const keydown = (event: KeyboardEvent) => {
     return;
   }
 
-  let targetSubmit = null;
-  if (event.key === 'ArrowLeft' && current_submit.value > 1) {
+  let targetSubmit: number | null = null;
+
+  if (event.key === 'ArrowLeft' && current_submit.value !== null && current_submit.value > 1) {
     if (event.shiftKey) {
       targetSubmit = 1;
     } else {
@@ -298,6 +340,7 @@ const keydown = (event: KeyboardEvent) => {
   } else if (
     event.key === 'ArrowRight' &&
     submits.value &&
+    current_submit.value !== null &&
     current_submit.value < submits.value.length
   ) {
     if (event.shiftKey) {
@@ -313,14 +356,14 @@ const keydown = (event: KeyboardEvent) => {
 };
 
 const countComments = (comments: Record<string, Comment[]> | undefined) => {
-  comments = comments || {};
+  const safeComments = comments || {};
 
   const counts = {
     user: 0,
     automated: 0
   };
 
-  for (const line of Object.values(comments)) {
+  for (const line of Object.values(safeComments)) {
     for (const comment of Object.values(line)) {
       if (comment.type === 'automated' || comment.type === 'ai-review') {
         counts.automated += 1;
@@ -337,6 +380,7 @@ const commentCountsByPath = computed(() => {
   if (!files.value) {
     return {};
   }
+
   return Object.fromEntries(
     files.value.map((file) => [file.source.path, countComments(file.source.comments)])
   );
@@ -349,8 +393,48 @@ const allOpen = computed(() => {
   );
 });
 
+const openAllState = computed(() => {
+  if (viewModeValue.value === ViewModeState.LIST) {
+    return allOpen.value;
+  }
+
+  return sidebarRef.value?.allFoldersOpen ?? true;
+});
+
+const openAllTitle = computed(() => {
+  return viewModeValue.value === ViewModeState.LIST
+    ? 'Expand or collapse all files'
+    : 'Expand or collapse all folders';
+});
+
+const visibleFiles = computed(() => {
+  if (!files.value) {
+    return [];
+  }
+
+  if (viewModeValue.value === ViewModeState.TREE) {
+    if (!selectedFilePath.value) {
+      return [];
+    }
+
+    return files.value.filter((file) => file.source.path === selectedFilePath.value);
+  }
+
+  return files.value;
+});
+
 const toggleOpen = () => {
-  const nextOpenedState = !allOpen.value;
+  if (viewModeValue.value === ViewModeState.TREE) {
+    sidebarRef.value?.toggleAllFolders();
+    return;
+  }
+
+  if (!files.value) {
+    return;
+  }
+
+  const areAllOpened = allOpen.value;
+  const nextOpenedState = !areAllOpened;
 
   files.value = files.value.map((file) => {
     return {
@@ -360,36 +444,111 @@ const toggleOpen = () => {
   });
 };
 
-const goToSelectedLines = () => {
-  const s = document.location.hash.split(';', 2);
+const setSelectedFile = (path: string | null, updatePath: boolean = false) => {
+  if (!path || !files.value) {
+    return;
+  }
 
-  if (s.length === 2) {
-    const parts = s[1].split(':');
+  selectedFilePath.value = path;
+  const file = files.value.find((item) => item.source.path === path);
 
-    if (parts.length === 2) {
-      const range = parts[1].split('-');
+  if (file) {
+    file.opened = true;
 
-      selectedRows.value = {
-        path: parts[0],
-        from: parseInt(range[0]),
-        to: parseInt(range[1] || range[0])
+    if (updatePath) {
+      document.location.hash = `#src;${path}`;
+    }
+  }
+};
+
+const getLineElement = (path: string, line: number) => {
+  return document.querySelector(
+    `table[data-path="${CSS.escape(path)}"] .linecode[data-line="${CSS.escape(String(line))}"]`
+  );
+};
+
+function isLineVisible(path: string, line: number): boolean {
+  const lineElement: HTMLElement | null = getLineElement(path, line) as HTMLElement | null;
+  if (!lineElement) {
+    return false;
+  }
+
+  // Check if line element is within the viewport
+  const rect = lineElement.getBoundingClientRect();
+  return (
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+  );
+}
+
+const updateSelectedFileAndRows = (): SelectedRows => {
+  const hashParts = document.location.hash.split(';', 2);
+  let selected: SelectedRows = null;
+
+  if (hashParts.length === 2) {
+    const parts = hashParts[1].split(':');
+
+    if (parts.length === 1) {
+      const targetPath = parts[0];
+
+      selected = {
+        path: targetPath,
+        from: 0,
+        to: 0
       };
+    } else if (parts.length === 2) {
+      const range = parts[1].split('-');
+      const targetPath = parts[0];
 
-      setTimeout(() => {
-        const el = document.querySelector(
-          `table[data-path="${CSS.escape(parts[0])}"] .linecode[data-line="${CSS.escape(String(selectedRows.value.from))}"]`
-        );
-
-        if (el) {
-          el.scrollIntoView();
-        }
-      }, 0);
-
-      return parts[0];
+      selected = {
+        path: targetPath,
+        from: parseInt(range[0], 10),
+        to: parseInt(range[1] || range[0], 10)
+      };
     }
   }
 
-  return null;
+  selectedRows.value = selected;
+  return selected;
+};
+
+const scrollToSelection = () => {
+  const selection = selectedRows.value;
+  if (!selection) {
+    return;
+  }
+
+  const { path, from: line } = selection;
+
+  setTimeout(() => {
+    if (isLineVisible(path, line)) {
+      return;
+    }
+
+    const el = getLineElement(path, line) as HTMLElement | null;
+    if (el) {
+      el.scrollIntoView();
+    }
+  }, 0);
+};
+
+const findFirstFileIndex = () => {
+  if (!files.value) {
+    return -1;
+  }
+
+  // Firstly, try to locate README file
+  const readmeRegex = /^readme(\.md|\.txt)?$/i;
+  const readmeIndex = files.value.findIndex((file) => readmeRegex.test(file.source.path));
+
+  // Default to first file if no README found
+  if (readmeIndex === -1) {
+    return 0;
+  }
+
+  return readmeIndex;
 };
 
 const load = async () => {
@@ -399,7 +558,7 @@ const load = async () => {
   current_submit.value = json.current_submit;
   deadline.value = json.deadline;
   submits.value = json.submits;
-  files.value = json.sources.map((source) => new SourceFile(source));
+  files.value = json.sources.map((source: Source) => new SourceFile(source));
   summaryComments.value = json.summary_comments;
 
   if (files.value.length > 1) {
@@ -408,12 +567,23 @@ const load = async () => {
     }
   }
 
-  const selectedFile = goToSelectedLines();
-  if (selectedFile !== null) {
-    for (const file of files.value) {
-      if (file.source.path === selectedFile) {
-        file.opened = true;
-      }
+  // If only one file, switch to list view
+  if (files.value.length <= 1) {
+    viewMode.set(ViewModeState.LIST);
+  } else {
+    viewMode.set(ViewModeState.TREE);
+  }
+
+  const selectedFile = updateSelectedFileAndRows();
+
+  if (selectedFile) {
+    setSelectedFile(selectedFile.path);
+    scrollToSelection();
+  } else {
+    const firstFileIndex = findFirstFileIndex();
+
+    if (firstFileIndex !== -1) {
+      setSelectedFile(files.value[firstFileIndex].source.path);
     }
   }
 };
@@ -421,12 +591,12 @@ const load = async () => {
 onMounted(() => {
   load();
   window.addEventListener('keydown', keydown);
-  window.addEventListener('hashchange', goToSelectedLines);
+  window.addEventListener('hashchange', updateSelectedFileAndRows);
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', keydown);
-  window.removeEventListener('hashchange', goToSelectedLines);
+  window.removeEventListener('hashchange', updateSelectedFileAndRows);
 });
 </script>
 
@@ -437,19 +607,20 @@ onUnmounted(() => {
 
   <div v-else>
     <div class="float-end d-flex gap-1">
-      <button
-        v-if="files.length > 1"
-        class="btn btn-link p-0"
-        title="Expand or collapse all files"
-        @click="toggleOpen"
-      >
-        <span v-if="allOpen">
+      <button class="btn btn-link p-0" :title="openAllTitle" @click="toggleOpen">
+        <span v-if="openAllState">
           <span class="iconify" data-icon="ant-design:folder-open-filled"></span>
         </span>
 
         <span v-else>
           <span class="iconify" data-icon="ant-design:folder-filled"></span>
         </span>
+      </button>
+
+      <button class="btn p-0 btn-link" :title="viewModeUI.title" @click="changeViewMode">
+        <div :key="viewModeUI.icon">
+          <span class="iconify" :data-icon="viewModeUI.icon"></span>
+        </div>
       </button>
 
       <button class="btn p-0 btn-link" :title="commentsUI.title" @click="changeCommentState">
@@ -489,75 +660,31 @@ onUnmounted(() => {
       @resolve-suggestion="resolveSuggestion"
     />
 
-    <template v-for="file in files" :key="file.source.path">
-      <h2 class="file-header">
-        <span @click="file.opened = !file.opened">
-          <span title="Toggle file visibility">{{ file.source.path }}</span>
+    <div
+      :class="[
+        'task-detail-body',
+        { 'task-detail-tree-body': viewModeValue === ViewModeState.TREE }
+      ]"
+    >
+      <TaskDetailSidebar
+        v-if="viewModeValue === ViewModeState.TREE"
+        ref="sidebarRef"
+        :files="files || []"
+        :comment-counts-by-path="commentCountsByPath"
+        :selected-path="selectedFilePath"
+        @select="(path) => setSelectedFile(path, true)"
+      />
 
-          <template v-if="file.source.comments && Object.keys(file.source.comments).length">
-            <span class="comment-badges">
-              <template v-if="commentCountsByPath[file.source.path]?.user > 0">
-                <span class="badge bg-secondary" title="Student/teacher comments">
-                  {{ commentCountsByPath[file.source.path].user }}
-                </span>
-              </template>
-
-              <template v-if="commentCountsByPath[file.source.path]?.automated > 0">
-                <span class="badge bg-primary" title="Automation comments">
-                  {{ commentCountsByPath[file.source.path].automated }}
-                </span>
-              </template>
-            </span>
-          </template>
-        </span>
-
-        <CopyToClipboard
-          v-if="file.source.type === 'source' && file.source.content"
-          :content="() => file.source.content"
-          title="Copy the source code to the clipboard"
-        >
-          <span class="iconify" data-icon="clarity:copy-to-clipboard-line" style="height: 20px" />
-        </CopyToClipboard>
-
-        <a
-          class="text-body"
-          :href="file.source.content_url || file.source.src"
-          download
-          title="Download the file"
-        >
-          <span class="iconify" data-icon="clarity:download-line" style="height: 20px" />
-        </a>
-      </h2>
-
-      <template v-if="file.opened">
-        <span v-if="file.source.error" class="text-muted">{{ file.source.error }}</span>
-        <template v-else-if="file.source.type === 'source'">
-          <template v-if="file.source.content === null">
-            Content too large, show <a :href="file.source.content_url">raw content</a>.
-          </template>
-
-          <SubmitSource
-            v-else
-            :path="file.source.path"
-            :code="file.source.content"
-            :comments="file.source.comments"
-            :selected-rows="
-              selectedRows && selectedRows.path === file.source.path ? selectedRows : null
-            "
-            @set-notification="setNotification"
-            @save-comment="(payload) => saveComment({ ...payload, source: file.source.path })"
-            @resolve-suggestion="resolveSuggestion"
-          />
-        </template>
-
-        <img v-else-if="file.source.type === 'img'" :src="file.source.src" />
-        <video v-else-if="file.source.type === 'video'" controls>
-          <source v-for="src in file.source.sources" :key="src" :src="src" />
-        </video>
-
-        <template v-else>The preview cannot be shown.</template>
-      </template>
-    </template>
+      <TaskDetailContent
+        :files="visibleFiles"
+        :comment-counts-by-path="commentCountsByPath"
+        :selected-rows="selectedRows"
+        :collapsable="viewModeValue === ViewModeState.LIST"
+        @set-notification="setNotification"
+        @save-comment="saveComment"
+        @resolve-suggestion="resolveSuggestion"
+      />
+    </div>
   </div>
 </template>
 
@@ -567,28 +694,13 @@ img {
   max-width: 100%;
 }
 
-.file-header span {
-  cursor: pointer;
+.task-detail-body {
+  width: 100%;
 }
 
-.file-header span:hover {
-  text-decoration: underline;
-}
-
-.file-header span .badge:hover {
-  text-decoration: none;
-}
-
-.comment-badges {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: 6px;
-}
-
-.comment-badges .badge {
-  font-size: 0.6em;
-  padding: 5px 10px;
-  line-height: 1;
+.task-detail-tree-body {
+  display: flex;
+  gap: 16px;
+  overflow: hidden;
 }
 </style>

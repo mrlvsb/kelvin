@@ -37,3 +37,19 @@ export type Submit = {
     comments: number;
     ip_address?: string | null;
 };
+
+export type SourceFile = {
+    source: Source;
+    opened: boolean;
+};
+
+export type CommentCounts = {
+    user: number;
+    automated: number;
+};
+
+export type SelectedRows = {
+    path: string;
+    from: number;
+    to: number;
+};

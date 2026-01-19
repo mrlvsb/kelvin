@@ -70,7 +70,7 @@ const updateSelection = (to) => {
 const mousedown = (event: MouseEvent) => {
   const target = event.target as HTMLElement | null;
 
-  if (target?.tagName === 'SPAN') {
+  if (target?.closest('td:first-of-type span')) {
     return;
   }
 
