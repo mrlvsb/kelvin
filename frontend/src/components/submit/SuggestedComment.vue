@@ -8,6 +8,7 @@ import { hideComments, HideCommentsState } from '../../stores';
 import { useSvelteStore } from '../../utilities/useSvelteStore';
 import { fetch as apiFetch } from '../../api.js';
 import { Comment } from '../../types/TaskDetail';
+import { toastApi } from '../../utilities/toast';
 
 const props = withDefaults(defineProps<Comment & { summary?: boolean }>(), {
   summary: false
@@ -87,7 +88,7 @@ const handleAccept = async () => {
   );
 
   if (error) {
-    window.toastApi.error(error);
+    toastApi.error(error);
     return;
   }
 
@@ -97,9 +98,9 @@ const handleAccept = async () => {
       comment: data
     });
 
-    window.toastApi.success('Suggestion accepted successfully.');
+    toastApi.success('Suggestion accepted successfully.');
   } else {
-    window.toastApi.error('Unexpected error occurred. Please try again later.');
+    toastApi.error('Unexpected error occurred. Please try again later.');
   }
 };
 
@@ -121,7 +122,7 @@ const handleReject = async () => {
   );
 
   if (error) {
-    window.toastApi.error(error);
+    toastApi.error(error);
     return;
   }
 
@@ -130,7 +131,7 @@ const handleReject = async () => {
     comment: null
   });
 
-  window.toastApi.success('Suggestion rejected successfully.');
+  toastApi.success('Suggestion rejected successfully.');
 };
 
 const handleEdit = () => {
@@ -159,7 +160,7 @@ const handleSave = async (text: string) => {
   );
 
   if (error) {
-    window.toastApi.error(error);
+    toastApi.error(error);
     return;
   }
 
@@ -169,9 +170,9 @@ const handleSave = async (text: string) => {
       comment: data
     });
 
-    window.toastApi.success('Suggestion accepted successfully.');
+    toastApi.success('Suggestion accepted successfully.');
   } else {
-    window.toastApi.error('Unexpected error occurred. Please try again later.');
+    toastApi.error('Unexpected error occurred. Please try again later.');
   }
 };
 
@@ -200,12 +201,12 @@ const handleRating = async (rating: number) => {
   );
 
   if (error) {
-    window.toastApi.error(error);
+    toastApi.error(error);
     committedRating.value = previousRating;
     return;
   }
 
-  window.toastApi.success('Rating submitted successfully.');
+  toastApi.success('Rating submitted successfully.');
 };
 </script>
 

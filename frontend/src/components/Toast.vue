@@ -1,89 +1,13 @@
-<script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue';
-import type { ToastStatus, ToastOptions } from '../types/Toast';
+<script lang="ts" setup>
+import { useToastStore } from '../utilities/toast';
 
-type ToastItem = ToastOptions & { id: number };
+const toastStore = useToastStore();
+const toasts = toastStore.toasts;
+const statusClasses = toastStore.statusClasses;
 
-const toasts = ref<ToastItem[]>([]);
-let toastId = 0;
-
-const statusClasses: Record<ToastStatus, string> = {
-  success: 'text-bg-success',
-  warning: 'text-bg-warning',
-  error: 'text-bg-danger'
-};
-
-const addToast = (toastOptions: ToastOptions) => {
-  const id = toastId++;
-  const duration = toastOptions.duration ?? 4000;
-
-  toasts.value = [
-    ...toasts.value,
-    {
-      id,
-      title: toastOptions.title,
-      message: toastOptions.message,
-      type: toastOptions.type ?? 'success',
-      duration
-    }
-  ];
-
-  if (duration > 0) {
-    window.setTimeout(() => {
-      toasts.value = toasts.value.filter((toastItem) => toastItem.id !== id);
-    }, duration);
-  }
-};
-
-const normalizeWindowToastOptions = (windowToastOptions: ToastOptions): ToastOptions => {
-  return {
-    title: windowToastOptions.title,
-    message: windowToastOptions.message,
-    type: windowToastOptions.type ?? 'success',
-    duration: windowToastOptions.duration
-  };
-};
-
-onMounted(() => {
-  window.showToast = (windowToastOptions: ToastOptions) => {
-    const toastOptions: ToastOptions = normalizeWindowToastOptions(windowToastOptions);
-    addToast(toastOptions);
-  };
-
-  window.toastApi = {
-    success: (message: string, options?: Omit<ToastOptions, 'message' | 'type'>) => {
-      addToast({
-        message: message,
-        type: 'success',
-        title: options?.title,
-        duration: options?.duration
-      });
-    },
-
-    warning: (message: string, options?: Omit<ToastOptions, 'message' | 'type'>) => {
-      addToast({
-        message: message,
-        type: 'warning',
-        title: options?.title,
-        duration: options?.duration
-      });
-    },
-
-    error: (message: string, options?: Omit<ToastOptions, 'message' | 'type'>) => {
-      addToast({
-        message: message,
-        type: 'error',
-        title: options?.title,
-        duration: options?.duration
-      });
-    }
-  };
-});
-
-onBeforeUnmount(() => {
-  delete window.showToast;
-  delete window.toastApi;
-});
+function closeToast(toastId: number): void {
+  toastStore.removeToast(toastId);
+}
 </script>
 
 <template>
@@ -104,7 +28,7 @@ onBeforeUnmount(() => {
             type="button"
             class="btn-close"
             aria-label="Close"
-            @click="toasts = toasts.filter((toast) => toast.id !== toastItem.id)"
+            @click="closeToast(toastItem.id)"
           />
         </div>
 
@@ -116,7 +40,7 @@ onBeforeUnmount(() => {
             type="button"
             class="btn-close me-2 m-auto"
             aria-label="Close"
-            @click="toasts = toasts.filter((toast) => toast.id !== toastItem.id)"
+            @click="closeToast(toastItem.id)"
           />
         </div>
       </div>

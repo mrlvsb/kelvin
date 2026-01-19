@@ -12,10 +12,3 @@ export type ToastApi = {
     warning: (message: string, options?: Omit<ToastOptions, 'message' | 'type'>) => void;
     error: (message: string, options?: Omit<ToastOptions, 'message' | 'type'>) => void;
 };
-
-declare global {
-    interface Window {
-        toastApi?: ToastApi;
-        showToast?: (options: ToastOptions | string, status?: ToastStatus) => void;
-    }
-}
