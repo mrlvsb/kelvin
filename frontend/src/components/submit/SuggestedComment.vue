@@ -7,8 +7,8 @@ import { user } from '../../global.js';
 import { hideComments, HideCommentsState } from '../../stores';
 import { useSvelteStore } from '../../utilities/useSvelteStore';
 import { fetch as apiFetch } from '../../api.js';
-import Toast from 'bootstrap/js/dist/toast';
 import { Comment } from '../../types/TaskDetail';
+import { toastApi } from '../../utilities/toast';
 
 const props = withDefaults(defineProps<Comment & { summary?: boolean }>(), {
   summary: false
@@ -16,7 +16,6 @@ const props = withDefaults(defineProps<Comment & { summary?: boolean }>(), {
 
 const emit = defineEmits(['resolveSuggestion']);
 
-const toast = ref(null);
 const editing = ref(false);
 const sending = ref(false);
 const committedRating = ref(props.meta.review.rating ?? 0);
@@ -30,28 +29,6 @@ const showComment = computed(() => {
     hideCommentsValue.value === HideCommentsState.ALL
   );
 });
-
-// TODO: Implement global toast notification system and remove this local one
-const showToast = (message, status = 'success') => {
-  if (!toast.value) {
-    return;
-  }
-
-  toast.value.querySelector('.toast-body').textContent = message;
-
-  let bgColor = 'bg-success';
-  let textColor = 'text-white';
-
-  if (status === 'error') {
-    bgColor = 'bg-danger';
-  } else if (status === 'warning') {
-    bgColor = 'bg-warning';
-    textColor = 'text-dark';
-  }
-
-  toast.value.className = `toast align-items-center ${textColor} ${bgColor} border-0`;
-  new Toast(toast.value).show();
-};
 
 type SuggestionRequestOptions = {
   method: 'POST' | 'DELETE' | 'PATCH';
@@ -111,7 +88,7 @@ const handleAccept = async () => {
   );
 
   if (error) {
-    showToast(error, 'warning');
+    toastApi.error(error);
     return;
   }
 
@@ -120,8 +97,10 @@ const handleAccept = async () => {
       id: suggestionId,
       comment: data
     });
+
+    toastApi.success('Suggestion accepted successfully.');
   } else {
-    showToast('Unexpected error occurred. Please try again later.', 'error');
+    toastApi.error('Unexpected error occurred. Please try again later.');
   }
 };
 
@@ -143,7 +122,7 @@ const handleReject = async () => {
   );
 
   if (error) {
-    showToast(error, 'warning');
+    toastApi.error(error);
     return;
   }
 
@@ -151,6 +130,8 @@ const handleReject = async () => {
     id: suggestionId,
     comment: null
   });
+
+  toastApi.success('Suggestion rejected successfully.');
 };
 
 const handleEdit = () => {
@@ -179,7 +160,7 @@ const handleSave = async (text: string) => {
   );
 
   if (error) {
-    showToast(error, 'warning');
+    toastApi.error(error);
     return;
   }
 
@@ -188,8 +169,10 @@ const handleSave = async (text: string) => {
       id: suggestionId,
       comment: data
     });
+
+    toastApi.success('Suggestion accepted successfully.');
   } else {
-    showToast('Unexpected error occurred. Please try again later.', 'error');
+    toastApi.error('Unexpected error occurred. Please try again later.');
   }
 };
 
@@ -218,35 +201,17 @@ const handleRating = async (rating: number) => {
   );
 
   if (error) {
-    showToast(error, 'warning');
+    toastApi.error(error);
     committedRating.value = previousRating;
+    return;
   }
+
+  toastApi.success('Rating submitted successfully.');
 };
 </script>
 
 <template>
   <div class="suggested-comment" v-bind="$attrs">
-    <div class="position-fixed top-0 end-0 mt-5 me-3">
-      <div
-        ref="toast"
-        class="toast align-items-center text-white bg-success border-0"
-        role="alert"
-        aria-live="assertive"
-        aria-atomic="true"
-      >
-        <div class="d-flex">
-          <div class="toast-body">Unexpected error occurred. Please try again later.</div>
-
-          <button
-            type="button"
-            class="btn-close btn-close-dark me-2 m-auto"
-            data-bs-dismiss="toast"
-            aria-label="Close"
-          />
-        </div>
-      </div>
-    </div>
-
     <div v-if="showComment && currentUser?.teacher" class="comment ai-review">
       <div class="comment-header">
         <strong>{{ author }}</strong>
