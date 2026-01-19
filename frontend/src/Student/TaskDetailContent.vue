@@ -49,8 +49,12 @@ const handleSaveComment = (
   <div class="task-detail-content">
     <template v-for="file in props.files" :key="file.source.path">
       <h2 class="file-header">
-        <span @click="collapseFile(file)">
-          <span title="Toggle file visibility">{{ file.source.path }}</span>
+        <span
+          :class="{ 'file-header-clickable': props.collapsable }"
+          :title="props.collapsable ? 'Toggle file visibility' : undefined"
+          @click="collapseFile(file)"
+        >
+          <span>{{ file.source.path }}</span>
 
           <template v-if="file.source.comments && Object.keys(file.source.comments).length">
             <span class="comment-badges">
@@ -133,11 +137,11 @@ const handleSaveComment = (
   overflow: auto;
 }
 
-.file-header span {
+.file-header-clickable {
   cursor: pointer;
 }
 
-.file-header span:hover {
+.file-header-clickable:hover {
   text-decoration: underline;
 }
 
