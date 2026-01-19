@@ -41,7 +41,7 @@ const minWidth = 250;
 const width = ref<number>(250);
 const maxWidth = 400;
 
-const collapsedByPath = ref<Record<string, boolean>>({});
+const collapsedFolders = ref<Set<string>>(new Set<string>());
 
 const collectFolderPaths = (sourceFiles: SourceFile[]) => {
   const folders = new Set<string>();
@@ -64,60 +64,39 @@ const isFolderCollapsed = (folderPath: string | null | undefined) => {
     return false;
   }
 
-  return collapsedByPath.value[folderPath] ?? false;
+  return collapsedFolders.value.has(folderPath);
 };
 
-const allFoldersOpen = computed(() => {
-  const folderPaths = collectFolderPaths(props.files);
-  if (!folderPaths.size) {
-    return true;
-  }
-
-  for (const folderPath of folderPaths) {
-    if (collapsedByPath.value[folderPath]) {
-      return false;
-    }
-  }
-
-  return true;
-});
+const allFoldersOpen = computed(() => collapsedFolders.value.size === 0);
 
 watch(
   () => props.files,
   (nextFiles, previousFiles) => {
-    const folderPaths = collectFolderPaths(nextFiles);
+    const nextFolderPaths = collectFolderPaths(nextFiles);
     const previousFolderPaths = previousFiles
       ? collectFolderPaths(previousFiles)
       : new Set<string>();
 
-    // First load: collapse all folders by default
     if (!previousFiles?.length) {
-      const nextCollapsedByPath: Record<string, boolean> = {};
-      for (const folderPath of folderPaths) {
-        nextCollapsedByPath[folderPath] = true;
-      }
-      collapsedByPath.value = nextCollapsedByPath;
+      collapsedFolders.value = new Set<string>(nextFolderPaths);
       return;
     }
 
-    // Preserve existing collapse state, collapse newly added folders, drop removed folders
-    const nextCollapsedByPath: Record<string, boolean> = { ...collapsedByPath.value };
+    const nextCollapsedFolders = new Set<string>();
 
-    // Newly added folders start collapsed
-    for (const folderPath of folderPaths) {
-      if (!previousFolderPaths.has(folderPath) && nextCollapsedByPath[folderPath] !== true) {
-        nextCollapsedByPath[folderPath] = true;
+    for (const folderPath of collapsedFolders.value) {
+      if (nextFolderPaths.has(folderPath)) {
+        nextCollapsedFolders.add(folderPath);
       }
     }
 
-    // Remove folders that no longer exist
-    for (const key of Object.keys(nextCollapsedByPath)) {
-      if (!folderPaths.has(key)) {
-        delete nextCollapsedByPath[key];
+    for (const folderPath of nextFolderPaths) {
+      if (!previousFolderPaths.has(folderPath)) {
+        nextCollapsedFolders.add(folderPath);
       }
     }
 
-    collapsedByPath.value = nextCollapsedByPath;
+    collapsedFolders.value = nextCollapsedFolders;
   },
   { immediate: true }
 );
@@ -214,10 +193,14 @@ const toggleFolder = (folderPath: string | null | undefined) => {
     return;
   }
 
-  collapsedByPath.value = {
-    ...collapsedByPath.value,
-    [folderPath]: !(collapsedByPath.value[folderPath] ?? false)
-  };
+  const nextCollapsedFolders = new Set<string>(collapsedFolders.value);
+  if (nextCollapsedFolders.has(folderPath)) {
+    nextCollapsedFolders.delete(folderPath);
+  } else {
+    nextCollapsedFolders.add(folderPath);
+  }
+
+  collapsedFolders.value = nextCollapsedFolders;
 };
 
 const toggleAllFolders = () => {
@@ -226,14 +209,11 @@ const toggleAllFolders = () => {
     return;
   }
 
-  const nextCollapsedState = allFoldersOpen.value;
-  const nextCollapsedByPath: Record<string, boolean> = { ...collapsedByPath.value };
-
-  for (const folderPath of folderPaths) {
-    nextCollapsedByPath[folderPath] = nextCollapsedState;
+  if (allFoldersOpen.value) {
+    collapsedFolders.value = new Set<string>(folderPaths);
+  } else {
+    collapsedFolders.value = new Set<string>();
   }
-
-  collapsedByPath.value = nextCollapsedByPath;
 };
 
 const handlePointerMove = (event: PointerEvent) => {
@@ -276,7 +256,7 @@ const expandParentsForPath = (selectedPath: string) => {
     return;
   }
 
-  const nextCollapsedByPath: Record<string, boolean> = { ...collapsedByPath.value };
+  const nextCollapsedFolders = new Set<string>(collapsedFolders.value);
   let currentFolderPath = '';
 
   for (let index = 0; index < pathParts.length - 1; index += 1) {
@@ -284,10 +264,11 @@ const expandParentsForPath = (selectedPath: string) => {
       ? `${currentFolderPath}/${pathParts[index]}`
       : pathParts[index];
 
-    nextCollapsedByPath[currentFolderPath] = false;
+    // expanding = removing from collapsed set
+    nextCollapsedFolders.delete(currentFolderPath);
   }
 
-  collapsedByPath.value = nextCollapsedByPath;
+  collapsedFolders.value = nextCollapsedFolders;
 };
 
 watch(

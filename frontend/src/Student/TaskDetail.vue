@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import SyncLoader from '../components/SyncLoader.vue';
 import SummaryComments from '../components/submit/SummaryComments.vue';
 import SubmitsDiff from '../components/submit/SubmitsDiff.vue';
@@ -597,28 +597,6 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('keydown', keydown);
   window.removeEventListener('hashchange', updateSelectedFileAndRows);
-});
-
-watch([files, viewModeValue], () => {
-  if (viewModeValue.value !== ViewModeState.TREE) {
-    return;
-  }
-
-  if (!files.value || files.value.length === 0) {
-    return;
-  }
-
-  const hasSelection =
-    selectedFilePath.value &&
-    files.value.some((file) => file.source.path === selectedFilePath.value);
-
-  if (!hasSelection) {
-    const firstFileIndex = findFirstFileIndex();
-
-    if (firstFileIndex !== -1) {
-      setSelectedFile(files.value[firstFileIndex].source.path);
-    }
-  }
 });
 </script>
 
