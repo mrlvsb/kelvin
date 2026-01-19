@@ -7,7 +7,14 @@ export type Comment = {
     unread?: boolean;
     author_id?: number;
     notification_id?: number;
-    meta?: { review: { id: number } };
+    meta?: {
+        review?: {
+            id: number;
+            state: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+            rating?: number;
+        };
+        url?: string;
+    };
     line?: number | null;
     source?: string;
 };

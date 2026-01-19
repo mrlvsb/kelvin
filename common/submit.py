@@ -291,6 +291,7 @@ def process_submit_review_result(
                         "review": {
                             "id": summary.id,
                             "state": summary.state.name,
+                            "rating": summary.rating,
                         }
                     },
                 )
@@ -316,6 +317,7 @@ def process_submit_review_result(
                         "review": {
                             "id": suggestion.id,
                             "state": suggestion.state.name,
+                            "rating": suggestion.rating,
                         }
                     },
                 )
