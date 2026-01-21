@@ -120,7 +120,7 @@ const handleSaveComment = (
           style="max-width: 100%"
         />
 
-        <video v-else-if="file.source.type === 'video'" controls>
+        <video v-else-if="file.source.type === 'video'" style="max-width: 100%" controls>
           <source v-for="src in file.source.sources" :key="src" :src="src" />
         </video>
 
