@@ -216,6 +216,67 @@ const toggleAllFolders = () => {
   }
 };
 
+const fileIconByExtension: Record<string, string> = {
+  c: 'vscode-icons:file-type-c',
+  h: 'vscode-icons:file-type-cheader',
+  cpp: 'vscode-icons:file-type-cpp3',
+  cc: 'vscode-icons:file-type-cpp3',
+  cxx: 'vscode-icons:file-type-cpp3',
+  hpp: 'vscode-icons:file-type-cppheader',
+  hh: 'vscode-icons:file-type-cppheader',
+  py: 'vscode-icons:file-type-python',
+  js: 'vscode-icons:file-type-js',
+  jsx: 'vscode-icons:file-type-reactjs',
+  ts: 'vscode-icons:file-type-typescript',
+  tsx: 'vscode-icons:file-type-reactts',
+  java: 'vscode-icons:file-type-java',
+  rs: 'fluent-mdl2:rust-language-logo',
+  go: 'vscode-icons:file-type-go',
+  html: 'vscode-icons:file-type-html',
+  css: 'vscode-icons:file-type-css',
+  scss: 'vscode-icons:file-type-scss',
+  json: 'vscode-icons:file-type-json',
+  md: 'vscode-icons:file-type-markdown',
+  yml: 'vscode-icons:file-type-yaml',
+  yaml: 'vscode-icons:file-type-yaml',
+  sh: 'codicon:terminal-powershell',
+  bash: 'codicon:terminal-powershell',
+  zsh: 'codicon:terminal-powershell',
+  txt: 'vscode-icons:file-type-text',
+  gradle: 'vscode-icons:file-type-gradle',
+  toml: 'vscode-icons:file-type-toml',
+  ini: 'vscode-icons:file-type-ini',
+  xml: 'vscode-icons:file-type-xml',
+  log: 'vscode-icons:file-type-log',
+  kt: 'vscode-icons:file-type-kotlin',
+  cs: 'vscode-icons:file-type-csharp',
+  php: 'devicon:php',
+  vue: 'vscode-icons:file-type-vue',
+  svelte: 'vscode-icons:file-type-svelte',
+  less: 'vscode-icons:file-type-less',
+  sql: 'vscode-icons:file-type-sql',
+  sqlite: 'vscode-icons:file-type-sqlite'
+};
+
+const fileIconByName: Record<string, string> = {
+  dockerfile: 'vscode-icons:file-type-docker',
+  makefile: 'vscode-icons:file-type-makefile',
+  env: 'eos-icons:env'
+};
+
+const getFileIcon = (filename: string) => {
+  const normalized = filename.toLowerCase();
+
+  if (fileIconByName[normalized]) {
+    return fileIconByName[normalized];
+  }
+
+  const parts = normalized.split('.');
+  const extension = parts.length > 1 ? parts[parts.length - 1] : '';
+
+  return fileIconByExtension[extension] ?? 'fa7-solid:file-alt';
+};
+
 const handlePointerMove = (event: PointerEvent) => {
   if (!isDragging) {
     return;
@@ -313,7 +374,7 @@ defineExpose({
           :class="{ 'file-tree__item--active': entry.path === props.selectedPath }"
           @click="handleSelect(entry.path)"
         >
-          <span class="iconify" data-icon="fa7-solid:file-alt"></span>
+          <span class="iconify file-tree__icon" :data-icon="getFileIcon(entry.name)"></span>
 
           <span class="file-tree__label" :title="entry.name">{{ entry.name }}</span>
 
@@ -411,6 +472,10 @@ defineExpose({
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.file-tree__icon {
+  overflow: clip;
 }
 
 .comment-badges {
