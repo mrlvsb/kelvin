@@ -124,9 +124,26 @@ const dragstop = () => {
   }, 300);
 };
 
+const isInternalDrag = (event: DragEvent) => {
+  if (event.dataTransfer?.types) {
+    for (const type of event.dataTransfer.types) {
+      // Kelvin-internal-drag is used to mark drag events that originate from within
+      if (type === 'text/kelvin-internal-drag') {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
+
 const dragstart = (event: DragEvent) => {
   if (dragLeaveTimer) {
     window.clearTimeout(dragLeaveTimer);
+  }
+
+  if (isInternalDrag(event)) {
+    return;
   }
 
   const hasFiles = () => {
@@ -200,6 +217,11 @@ const setupUploadInput = () => {
 const setupDragAndDrop = () => {
   // Use uppie so folders dropped from the file manager are expanded.
   uppie()(window, { name: 'solution' }, (_event: Event, formData: FormData, files: string[]) => {
+    const event = _event as DragEvent;
+    if (isInternalDrag(event)) {
+      return;
+    }
+
     if (!files.length || uploadFormData.value !== null) {
       return;
     }

@@ -22,6 +22,12 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 };
 
+// This function marks the drag event as an internal drag within Kelvin
+// to prevent unwanted uploads when dragging images.
+const markInternalDrag = (event: DragEvent) => {
+  event.dataTransfer?.setData('text/kelvin-internal-drag', 'true');
+};
+
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown);
 });
@@ -33,7 +39,13 @@ onUnmounted(() => {
 
 <template>
   <div>
-    <img :src="src" :alt="alt" class="preview-image" @click="openFullscreenImage" />
+    <img
+      :src="src"
+      :alt="alt"
+      class="preview-image"
+      @click="openFullscreenImage"
+      @dragstart="markInternalDrag"
+    />
 
     <div
       v-if="fullscreenImageSrc"
@@ -42,7 +54,12 @@ onUnmounted(() => {
       aria-label="Close fullscreen image"
       @click="closeFullscreenImage"
     >
-      <img :src="fullscreenImageSrc" class="fullscreen-image" :alt="alt" />
+      <img
+        :src="fullscreenImageSrc"
+        class="fullscreen-image"
+        :alt="alt"
+        @dragstart="markInternalDrag"
+      />
     </div>
   </div>
 </template>
