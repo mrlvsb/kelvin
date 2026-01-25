@@ -7,6 +7,7 @@ requires-python = "==3.12.*"
 
 dependencies = [
     "beautifulsoup4==4.11.1",
+    "bleach>=6.0.0",
     "bokeh==2.3.2",
     "cssselect==1.1.0",
     "django==4.2.16",
@@ -49,8 +50,8 @@ dependencies = [
     "py7zr==1.0.0",
 ]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pre-commit>=3.8.0",
     "ruff==0.6.3",
     "pyrefly==0.18.0",
@@ -58,7 +59,6 @@ dev-dependencies = [
 ]
 
 [tool.ruff]
-target-version = "py312"
 line-length = 100
 indent-width = 4
 

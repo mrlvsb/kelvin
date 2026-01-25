@@ -11,6 +11,7 @@ from .results import TestResult
 from . import testsets
 
 from .utils import parse_human_size, copyfile
+from . import type_handlers
 
 logger = logging.getLogger("evaluator")
 
@@ -135,6 +136,39 @@ def prepare_container(name, before=None):
             raise ImageNotFoundException(name)
         raise Exception(e.output)
     return target_name
+
+
+class TypePipe:
+    handler_cls = None
+    id = None
+
+    def __init__(self, image=None, limits=None, before=None, **kwargs):
+        self.image = image
+        self.kwargs = kwargs
+        self.limits = limits
+        self.before = [] if not before else before
+
+    def run(self, evaluation):
+        result_dir = os.path.join(evaluation.result_path, self.id)
+        os.mkdir(result_dir)
+
+        image_name = self.image
+        if self.image:
+            image_name = prepare_container(docker_image(self.image), self.before)
+
+        handler = self.handler_cls(self.kwargs, evaluation)
+        result = handler.compile(image_name)
+
+        return {"failed": not result.success, "html": result.html}
+
+
+class GccPipe(TypePipe):
+    handler_cls = type_handlers.Gcc
+
+    def __init__(self, **kwargs):
+        if "image" not in kwargs:
+            kwargs["image"] = "kelvin/gcc"
+        super().__init__(**kwargs)
 
 
 class DockerPipe:
@@ -267,7 +301,15 @@ def text_compare(expected, actual):
 
 
 class TestsPipe:
-    def __init__(self, executable="./main", limits=None, timeout=5, before=None, image="kelvin/display", **kwargs):
+    def __init__(
+        self,
+        executable="./main",
+        limits=None,
+        timeout=5,
+        before=None,
+        image="kelvin/run",
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.executable = [executable] if isinstance(executable, str) else executable
         self.limits = limits
