@@ -43,7 +43,6 @@ import App from './App.svelte';
 import ColorTheme from './ColorTheme.svelte';
 import { safeMarkdown } from './markdown.js';
 import PipelineStatus from './PipelineStatus.svelte';
-import UploadSolution from './UploadSolution.svelte';
 
 class ReplaceHtmlElement extends HTMLElement {
     constructor() {
@@ -118,7 +117,6 @@ const cookies = getCookies();
 const enableNewUI = Object.keys(cookies).includes('newUI') && cookies['newUI'] != 0;
 
 createElement('app', App);
-createElement('upload-solution', UploadSolution);
 createElement('pipeline-status', PipelineStatus);
 
 if (!enableNewUI) createElement('color-theme', ColorTheme);
@@ -152,6 +150,7 @@ import InbusImport from './Teacher/InbusImport.vue';
 import NotificationsNew from './components/Notifications.vue';
 import Toast from './components/Toast.vue';
 import ColorThemeNew from './components/ColorTheme.vue';
+import UploadSolution from './components/UploadSolution.vue';
 import StudentList from './Teacher/StudentList.vue';
 import StudentPage from './Teacher/student-page/StudentPage.vue';
 import StudentTransfer from './Teacher/StudentTransfer.vue';
@@ -204,6 +203,7 @@ registerSuspendedVueComponent('inbus-import', InbusImport);
 registerVueComponent('notifications', NotificationsNew);
 registerVueComponent('toast', Toast);
 registerVueComponent('submit-sources', TaskDetail);
+registerVueComponent('upload-solution', UploadSolution);
 registerVueComponent('quiz', Quiz);
 registerVueComponent('quiz-edit', QuizEdit);
 registerSuspendedVueComponent('quiz-list', QuizList);
