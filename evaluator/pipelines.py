@@ -267,19 +267,20 @@ def text_compare(expected, actual):
 
 
 class TestsPipe:
-    def __init__(self, executable="./main", limits=None, timeout=5, before=None, **kwargs):
+    def __init__(self, executable="./main", limits=None, timeout=5, before=None, image="kelvin/display", **kwargs):
         super().__init__(**kwargs)
         self.executable = [executable] if isinstance(executable, str) else executable
         self.limits = limits
         self.timeout = timeout
         self.before = [] if not before else before
+        self.image = image
 
     def run(self, evaluation):
         results = []
         result_dir = os.path.join(evaluation.result_path, self.id)
         os.mkdir(result_dir)
 
-        image = prepare_container(docker_image("kelvin/run"), self.before)
+        image = prepare_container(docker_image(self.image), self.before)
         container = (
             subprocess.check_output(
                 create_docker_cmd(
