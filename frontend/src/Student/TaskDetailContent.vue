@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import CopyToClipboard from '../components/CopyToClipboard.vue';
+import FullscreenImage from '../components/FullscreenImage.vue';
 import SubmitSource from '../components/submit/SubmitSource.vue';
 import { Comment, SourceFile, CommentCounts, SelectedRows } from '../types/TaskDetail';
 
@@ -114,10 +115,10 @@ const handleSaveComment = (
           />
         </template>
 
-        <img
+        <FullscreenImage
           v-else-if="file.source.type === 'img'"
           :src="file.source.src"
-          style="max-width: 100%"
+          alt="Image preview"
         />
 
         <video v-else-if="file.source.type === 'video'" style="max-width: 100%" controls>
