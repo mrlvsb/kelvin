@@ -42,8 +42,6 @@ from common.exceptions.http_exceptions import (
     HttpException400,
     HttpException403,
     HttpException404,
-    HttpException409,
-    HttpException429,
 )
 from common.models import (
     AssignedTask,
@@ -439,19 +437,29 @@ def task_detail(
         try:
             submit = store_submit(request, assignment)
         except TooManyFilesError:
-            raise HttpException400(
-                f"You have uploaded too many files. The maximum allowed file count is {MAX_UPLOAD_FILECOUNT}.",
+            return JsonResponse(
+                {
+                    "error": f"You have uploaded too many files. The maximum allowed file count is {MAX_UPLOAD_FILECOUNT}.",
+                },
+                status=400,
             )
         except SubmitRateLimited as e:
             # We show an error so that users can re-send the same submit with F5.
             # It can be spammy, but probably better than forcing them to select the files
             # repeatedly.
-            raise HttpException429(
-                f"Too many submits. You need to wait {e.time_until_limit_expires.total_seconds():.0f}s before sending another submit",
+            return JsonResponse(
+                {
+                    "error": f"Too many submits. You need to wait {e.time_until_limit_expires.total_seconds():.0f}s before sending another submit",
+                    "retry_after": e.time_until_limit_expires.total_seconds(),
+                },
+                status=429,
             )
         except SubmitPastHardDeadline:
-            raise HttpException409(
-                "Your submit was sent after the deadline, which is not allowed for this task.",
+            return JsonResponse(
+                {
+                    "error": "Your submit was sent after the hard deadline, which is not allowed for this task.",
+                },
+                status=409,
             )
 
         return redirect(

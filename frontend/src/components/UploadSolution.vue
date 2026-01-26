@@ -23,6 +23,7 @@ const uploadFormData = ref<FormData | null>(null);
 const dropping = ref(false);
 const progress = ref<number | null>(null);
 const error = ref(false);
+const errorMessage = ref<string>('Upload failed.\nTry again or use the upload button.');
 const remainingMS = ref(-1);
 const queued = ref<FormData | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -68,10 +69,39 @@ const clearFormData = () => {
   filesQuestion.value = [];
 };
 
+const parseErrorMessage = (xhr: XMLHttpRequest) => {
+  const fallback = `Upload failed (HTTP ${xhr.status}).\nTry again or use the upload button.`;
+
+  const responseText = xhr.responseText;
+  if (!responseText) {
+    return fallback;
+  }
+
+  try {
+    const parsed = JSON.parse(responseText) as { error?: unknown; message?: unknown };
+
+    if (typeof parsed.error === 'string' && parsed.error.trim().length > 0) {
+      return parsed.error;
+    }
+
+    if (typeof parsed.message === 'string' && parsed.message.trim().length > 0) {
+      return parsed.message;
+    }
+
+    return fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 const upload = (formData: FormData) => {
   progress.value = 0;
+  error.value = false;
+  errorMessage.value = 'Upload failed.\nTry again or use the upload button.';
 
   const xhr = new XMLHttpRequest();
+  xhr.responseType = 'text';
+
   xhr.upload.addEventListener('progress', (event) => {
     if (event.lengthComputable) {
       progress.value = Math.round((event.loaded * 100) / event.total);
@@ -79,18 +109,27 @@ const upload = (formData: FormData) => {
   });
 
   xhr.addEventListener('loadend', () => {
-    if (xhr.status === 200 && xhr.responseURL) {
+    if (xhr.status >= 200 && xhr.status < 300 && xhr.responseURL) {
       setStoredDate(new Date());
       setSubmittedToast(true);
       window.location.href = `${xhr.responseURL}#result`;
       return;
     }
 
+    errorMessage.value = parseErrorMessage(xhr);
     error.value = true;
+    progress.value = null;
+  });
+
+  xhr.addEventListener('error', () => {
+    errorMessage.value = 'Network error.\nCheck your connection and try again.';
+    error.value = true;
+    progress.value = null;
   });
 
   xhr.open('POST', window.location.href);
   xhr.setRequestHeader('X-CSRFToken', csrfToken());
+  xhr.setRequestHeader('Accept', 'application/json');
   xhr.send(formData);
 };
 
@@ -109,6 +148,7 @@ const dismiss = () => {
   }
 
   error.value = false;
+  errorMessage.value = 'Upload failed.\nTry again or use the upload button.';
   dropping.value = false;
   progress.value = null;
   queued.value = null;
@@ -289,13 +329,12 @@ onUnmounted(() => {
     }"
     @click="dismiss"
   >
-    <span v-if="error" class="text-danger">
-      Upload failed.<br />
-      Try again or use the upload button.
+    <span v-if="error" class="text-danger" style="white-space: pre-line">
+      {{ errorMessage }}
     </span>
 
     <span v-else-if="queued !== null">
-      uploading in {{ Math.ceil(remainingMS / 1000) }} seconds...
+      Uploading in {{ Math.ceil(remainingMS / 1000) }} seconds...
     </span>
 
     <span v-else-if="progress !== null">{{ progress }}%</span>
@@ -343,6 +382,7 @@ onUnmounted(() => {
 
 .dropzone.dropping,
 .dropzone.uploading,
+.dropzone.error,
 .dropzone.queued {
   visibility: visible;
   background: #007bff50;
