@@ -11,6 +11,8 @@ from .results import TestResult
 from . import testsets
 
 from .utils import parse_human_size, copyfile
+from . import type_handlers
+from dataclasses import replace, asdict
 
 logger = logging.getLogger("evaluator")
 
@@ -135,6 +137,156 @@ def prepare_container(name, before=None):
             raise ImageNotFoundException(name)
         raise Exception(e.output)
     return target_name
+
+
+class TypePipe:
+    handler_cls = None
+    id = None
+    default_limits = type_handlers.ExecutionLimits(
+        fsize="16M",
+        memory="128M",
+        network="none"
+    )
+
+    def __init__(self, image=None, limits=None, before=None, **kwargs):
+        self.image = image
+        self.kwargs = kwargs
+        self.limits = limits if limits else {}
+        self.before = [] if not before else before
+
+    def _resolve_limits(self):
+        # 1. Start with class defaults (e.g. GccPipe defaults)
+        limits_obj = self.default_limits
+        
+        # 2. Update with user config limits
+        # We need to map dict values to the dataclass, parsing sizes
+        u_limits = self.limits
+        
+        updates = {}
+        if "time" in u_limits:
+            updates["time"] = int(u_limits["time"])
+            
+        if "memory" in u_limits:
+            updates["memory"] = u_limits["memory"]
+            
+        if "fsize" in u_limits:
+            updates["fsize"] = u_limits["fsize"]
+            
+        if "network" in u_limits:
+            updates["network"] = u_limits["network"]
+
+        return replace(limits_obj, **updates)
+
+    def run(self, evaluation):
+        result_dir = os.path.join(evaluation.result_path, self.id)
+        os.mkdir(result_dir)
+
+        image_name = self.image
+        if self.image:
+            image_name = prepare_container(docker_image(self.image), self.before)
+
+        resolved_limits = self._resolve_limits()
+
+        handler = self.handler_cls(self.kwargs, evaluation, resolved_limits)
+        result = handler.compile(image_name)
+
+        if result.comments or result.tests:
+            with open(os.path.join(result_dir, "piperesult.json"), "w") as f:
+                json.dump({"comments": result.simple_comments, "tests": result.tests}, f, indent=4)
+
+        with open(os.path.join(result_dir, "result.html"), "w") as f:
+            f.write(result.html)
+
+        return {
+            "failed": not result.success,
+            "html": result.html,
+            "comments": result.simple_comments,
+            "tests": result.tests
+        }
+
+
+class GccPipe(TypePipe):
+    handler_cls = type_handlers.Gcc
+    default_limits = type_handlers.ExecutionLimits(
+        fsize="64M",
+        memory="128M",
+        network="none"
+    )
+
+    def __init__(self, **kwargs):
+        if "image" not in kwargs:
+            kwargs["image"] = "kelvin/gcc"
+        super().__init__(**kwargs)
+
+
+class DotnetPipe(TypePipe):
+    handler_cls = type_handlers.Dotnet
+    default_limits = type_handlers.ExecutionLimits(
+        fsize="128M",
+        memory="512M",
+        time=300,
+        network="bridge",
+    )
+
+    def __init__(self, **kwargs):
+        if "image" not in kwargs:
+            kwargs["image"] = "kelvin/dotnet"
+        super().__init__(**kwargs)
+
+
+class JavaPipe(TypePipe):
+    handler_cls = type_handlers.Java
+    default_limits = type_handlers.ExecutionLimits(
+        fsize="128M",
+        memory="512M",
+        time=300,
+        network="bridge"
+    )
+
+    def __init__(self, **kwargs):
+        if "image" not in kwargs:
+            kwargs["image"] = "kelvin/java"
+        super().__init__(**kwargs)
+
+
+class Flake8Pipe(TypePipe):
+    handler_cls = type_handlers.Flake8
+    default_limits = type_handlers.ExecutionLimits(
+        fsize="16M",
+        memory="128M",
+        time=300,
+        network="none"
+    )
+    def __init__(self, **kwargs):
+        if "image" not in kwargs:
+            kwargs["image"] = "kelvin/flake8"
+        super().__init__(**kwargs)
+
+class ClangTidyPipe(TypePipe):
+    handler_cls = type_handlers.ClangTidy
+    default_limits = type_handlers.ExecutionLimits(
+        fsize="16M",
+        memory="128M",
+        time=300,
+        network="none"
+    )
+    def __init__(self, **kwargs):
+        if "image" not in kwargs: kwargs["image"] = "kelvin/clang-tidy"
+        super().__init__(**kwargs)
+
+
+class CargoPipe(TypePipe):
+    handler_cls = type_handlers.Cargo
+    default_limits = type_handlers.ExecutionLimits(
+        fsize="128M",
+        memory="512M",
+        network="bridge" # Cargo needs network for fetching crates usually, though ideally cached
+    )
+
+    def __init__(self, **kwargs):
+        if "image" not in kwargs:
+            kwargs["image"] = "kelvin/cargo"
+        super().__init__(**kwargs)
 
 
 class DockerPipe:
@@ -267,19 +419,28 @@ def text_compare(expected, actual):
 
 
 class TestsPipe:
-    def __init__(self, executable="./main", limits=None, timeout=5, before=None, **kwargs):
+    def __init__(
+        self,
+        executable="./main",
+        limits=None,
+        timeout=5,
+        before=None,
+        image="kelvin/run",
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.executable = [executable] if isinstance(executable, str) else executable
         self.limits = limits
         self.timeout = timeout
         self.before = [] if not before else before
+        self.image = image
 
     def run(self, evaluation):
         results = []
         result_dir = os.path.join(evaluation.result_path, self.id)
         os.mkdir(result_dir)
 
-        image = prepare_container(docker_image("kelvin/run"), self.before)
+        image = prepare_container(docker_image(self.image), self.before)
         container = (
             subprocess.check_output(
                 create_docker_cmd(

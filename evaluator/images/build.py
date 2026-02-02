@@ -20,13 +20,13 @@ def build_deps(arg):
     return r
 
 
-deps = {}
+deps: dict[str, list[str]] = {}
 base_path = os.path.dirname(os.path.realpath(__file__))
 for path in Path(base_path).rglob("Dockerfile"):
     name = "kelvin/" + os.path.basename(os.path.dirname(path))
 
     parent = None
-    with open(path) as f:
+    with open(path, "r") as f:
         for line in f:
             parts = line.strip().split(" ")
             if parts[0].upper() == "FROM":
