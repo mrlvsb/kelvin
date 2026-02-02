@@ -20,6 +20,3 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     aspnetcore-runtime-9.0 \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-ADD entry.py /
-CMD /entry.py

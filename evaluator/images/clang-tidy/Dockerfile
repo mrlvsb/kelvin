@@ -9,6 +9,5 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-ADD analyze.py build_urls.py /
+ADD build_urls.py /
 RUN /build_urls.py
-CMD /analyze.py

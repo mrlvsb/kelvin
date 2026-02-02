@@ -25,6 +25,3 @@ ENV PATH="$M2_HOME/bin:$PATH"
 
 RUN mkdir /.m2
 RUN chmod u+rwx,g+rwx,o+rwx /.m2
-
-ADD entry.py /
-CMD /entry.py

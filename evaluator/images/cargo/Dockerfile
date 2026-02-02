@@ -13,6 +13,3 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 RUN python3 -m pip install --break-system-packages bleach==6.3.0
 
 RUN rustup component add clippy
-
-ADD entry.py /
-CMD /entry.py
