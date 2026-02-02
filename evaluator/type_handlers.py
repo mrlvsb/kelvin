@@ -7,9 +7,11 @@ import json
 import bleach
 import glob
 import re
+
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from collections import defaultdict
-from typing import Any, Optional
+from typing import Any, Optional, ClassVar
 from dataclasses import dataclass, field
 
 from evaluator.utils import parse_human_size
@@ -47,7 +49,8 @@ class BuildResult:
             out[c.file].append({
                 "line": c.line,
                 "text": c.text,
-                "source": c.source
+                "source": c.source,
+                "url": c.url,
             })
         return dict(out)
 
@@ -74,32 +77,23 @@ class BinaryArtifact:
     path: str
 
 @dataclass
-class CargoOutput:
-    stdout: str
-    stderr: str
-    comments: list[Comment]
-    binary_artifacts: list[BinaryArtifact]
-
-@dataclass
-class ProjectFileResult:
-    path: Optional[str] = None
-    error: Optional[str] = None
-
-@dataclass
 class BuildCommand:
     cmd: list[str]
-    env: dict[str, str]
-    output_dir: str
+    env: dict[str, str] = field(default_factory=dict)
+    output_dir: Optional[str] = None
 
 @dataclass
-class ParseOutputResult:
-    comments: list[Comment]
-    tests: list[dict]
+class AnalysisResult:
+    comments: list[Comment] = field(default_factory=list)
+    tests: list[dict] = field(default_factory=list)
+    artifacts: list[BinaryArtifact] = field(default_factory=list)
+    stdout: str = ""
+    stderr: str = ""
 
-@dataclass
-class CargoLocation:
-    file: str
-    line: int
+class BuildError(Exception):
+    def __init__(self, message: str, logs: str = ""):
+        self.message = message
+        self.logs = logs
 
 class TypeHandler:
     def __init__(self, pipeline_config: dict[str, Any], evaluation: Any, limits: ExecutionLimits):
@@ -120,7 +114,14 @@ class TypeHandler:
         Runs the compilation/linting step.
         Returns BuildResult(success, html_output).
         """
-        return BuildResult(True, "")
+        try:
+            return self._compile(container_image)
+        except BuildError as e:
+            html = e.logs + f"<div style='color: red'>{e.message}</div>"
+            return BuildResult.fail(html)
+
+    def _compile(self, container_image: str) -> BuildResult:
+        raise NotImplementedError
 
     def _run_docker_command(self, image: str, cmd: list[str], env: dict[str, str] | None = None) -> DockerCommandResult:
         """
@@ -195,30 +196,50 @@ class TypeHandler:
         except Exception as e:
             return DockerCommandResult(-1, "", f"Error running docker: {e}")
 
-    def _sanitize(self, text: str) -> str:
-        return bleach.clean(text)
-
-    def _format_command_output(self, cmd_str: str, output: str) -> str:
-        """Helper to format command execution for the HTML report"""
+    def _format_html_generic(self, cmd: list[str], stdout: str, stderr: str, returncode: int, message: Optional[str] = None) -> str:
+        cmd_str = " ".join(cmd)
         html_out = f"<code style='filter: opacity(.7);'>$ {html.escape(cmd_str)}</code>"
-        if output:
-            html_out += f"<kelvin-terminal-output>{html.escape(output)}</kelvin-terminal-output>"
+        
+        safe_out = bleach.clean(stdout.strip())
+        safe_err = bleach.clean(stderr.strip())
+        
+        content = ""
+        
+        if safe_err:
+            if returncode == 0:
+                content += f"<details><summary>Stderr</summary>{safe_err}</details>"
+                if safe_out:
+                    content += "\n"
+            else:
+                # Show stderr openly on failure
+                content += f"{safe_err}"
+                if safe_out:
+                    content += "\n"
+
+        if safe_out:
+             content += safe_out
+
+        if content:
+            html_out += f"<kelvin-terminal-output>{content}</kelvin-terminal-output>"
+            
+        if returncode == 0:
+            if message:
+                html_out += f"<div style='color: green'>{message} (Exit code: {returncode})</div>"
+            else:
+                html_out += f"<div style='color: green'>Build successful (Exit code: {returncode})</div>"
+        else:
+             if message:
+                 html_out += f"<div style='color: red'>{message} (Exit code: {returncode})</div>"
+             else:
+                 html_out += f"<div style='color: red'>Build failed (Exit code: {returncode})</div>"
         return html_out
 
 class Gcc(TypeHandler):
-    def compile(self, container_image: str) -> BuildResult:
+    @property
+    def _common_env(self) -> dict[str, str]:
         flags = self.config.get("flags", "")
         ldflags = self.config.get("ldflags", "")
-        cmakeflags = self.config.get("cmakeflags", "[]") # Json string in config
-        makeflags = self.config.get("makeflags", "[]")   # Json string in config
-        output_bin = self.config.get("output", "main")
-        
-        html_chunks = []
-        
-        # Determine what build system to use
-        files = [f.lower() for f in os.listdir(self.evaluation.submit_path)]
-        
-        env = {
+        return {
             "CC": "gcc",
             "CXX": "g++",
             "CFLAGS": flags,
@@ -228,82 +249,121 @@ class Gcc(TypeHandler):
             "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         }
 
-        # 1. CMake
+    def _compile(self, container_image: str) -> BuildResult:
+        build_cmds = self._build_command()
+        
+        last_res = None
+        html_output = ""
+        
+        for i, bcmd in enumerate(build_cmds):
+            res = self._run_docker_command(container_image, bcmd.cmd, bcmd.env)
+            last_res = res
+            
+            # Determine message based on command type (heuristics)
+            msg = None
+            if bcmd.cmd[0] == "cmake":
+                 if len(bcmd.cmd) > 1 and bcmd.cmd[1] == "--build":
+                     msg = "Build succeeded" if res.returncode == 0 else "Build failed"
+                 else:
+                     msg = "CMake configuration succeeded" if res.returncode == 0 else "Could not run CMake"
+            elif bcmd.cmd[0] == "make":
+                 msg = "Make succeeded" if res.returncode == 0 else "Could not run Make"
+            elif bcmd.cmd[0].endswith("gcc") or bcmd.cmd[0].endswith("g++"):
+                  msg = "Compilation succeeded" if res.returncode == 0 else "Failed to run GCC"
+            
+            html_output += self._format_html_generic(
+                bcmd.cmd,
+                res.stdout, res.stderr, res.returncode,
+                message=msg
+            )
+            
+            if res.returncode != 0:
+                # Return immediately if build command fails
+                # We return BuildResult directly here as it is not a "check" failure but a "run" failure
+                return BuildResult.fail(html_output)
+
+        # Find any new executable and rename it to the expected output
+        output_bin = self.config.get("output", "main")
+        output_path = os.path.join(self.evaluation.submit_path, output_bin)
+        
+        if not os.path.exists(output_path):
+            executables = []
+            for f in os.listdir(self.evaluation.submit_path):
+                fpath = os.path.join(self.evaluation.submit_path, f)
+                if os.access(fpath, os.X_OK) and not os.path.isdir(fpath):
+                    executables.append(f)
+            
+            if len(executables) == 0:
+                 raise BuildError("No executable has been built.", logs=html_output)
+            elif len(executables) > 1:
+                 raise BuildError(f"Multiple executables have been built: {','.join(executables)}", logs=html_output)
+            else:
+                 # Rename found executable to output
+                 src = os.path.join(self.evaluation.submit_path, executables[0])
+                 os.rename(src, output_path)
+                 
+                 # Fake the mv command log using generic formatter
+                 html_output += self._format_html_generic(
+                     ["mv", executables[0], output_bin],
+                     "", "", 0,
+                     message="Artifact moved and renamed"
+                 )
+
+        return BuildResult(True, html_output)
+
+
+    def _build_command(self) -> list[BuildCommand]:
+        files = [f.lower() for f in os.listdir(self.evaluation.submit_path)]
+        env = self._common_env
+        
         if "cmakelists.txt" in files:
+            cmakeflags = self.config.get("cmakeflags", "[]")
             try:
                 c_flags_parsed = json.loads(cmakeflags)
             except Exception:
                 c_flags_parsed = []
-                
-            cmd = ["cmake", *c_flags_parsed, "."]
-            res = self._run_docker_command(container_image, cmd, env)
-            html_chunks.append(self._format_command_output("cmake " + " ".join(c_flags_parsed) + " .", res.stdout + res.stderr))
             
-            if res.returncode != 0:
-                html_chunks.append(f"<div style='color: red'>Could not run CMake, exit code {res.returncode}</div>")
-                return BuildResult(False, "".join(html_chunks))
-
-        # 2. Make
+            # 1. Configure
+            cmd_conf = BuildCommand(["cmake", *c_flags_parsed, "."], env)
+            # 2. Build
+            cmd_build = BuildCommand(["cmake", "--build", "."], env)
+            return [cmd_conf, cmd_build]
+            
         if "makefile" in files:
+            makeflags = self.config.get("makeflags", "[]")
             try:
                 m_flags_parsed = json.loads(makeflags)
             except Exception:
                 m_flags_parsed = []
-                
-            cmd = ["make", *m_flags_parsed]
-            res = self._run_docker_command(container_image, cmd, env)
-            html_chunks.append(self._format_command_output("make " + " ".join(m_flags_parsed), res.stdout + res.stderr))
+            return [BuildCommand(["make", *m_flags_parsed], env)]
             
-            if res.returncode != 0:
-                html_chunks.append(f"<div style='color: red'>Could not run Make, exit code {res.returncode}</div>")
-                return BuildResult(False, "".join(html_chunks))
-        else:
-            # 3. Direct GCC/G++ invocation
-            sources = []
-            for root, dirs, filenames in os.walk(self.evaluation.submit_path):
-                for f in filenames:
-                    if f.split(".")[-1] in ["c", "cpp"]:
-                        # We use relative path for docker execution
-                        rel_dir = os.path.relpath(root, self.evaluation.submit_path)
-                        if rel_dir == ".":
-                            sources.append(f)
-                        else:
-                            sources.append(os.path.join(rel_dir, f))
-            
-            if not sources:
-                 html_chunks.append("<div style='color: red'>Missing source files! please upload .c or .cpp files!</div>")
-                 return BuildResult(False, "".join(html_chunks))
-
-            use_cpp = any(f.endswith(".cpp") for f in sources)
-            compiler = "g++" if use_cpp else "gcc"
-            
-            cmd = [compiler] + sources + ["-o", output_bin] + shlex.split(flags) + shlex.split(ldflags)
-            
-            res = self._run_docker_command(container_image, cmd, env)
-            html_chunks.append(self._format_command_output(" ".join(cmd), res.stdout + res.stderr))
-            
-            if res.returncode != 0:
-                html_chunks.append(f"<div style='color: red'>Failed to run GCC, exit code {res.returncode}</div>")
-                return BuildResult(False, "".join(html_chunks))
+        # GCC fallback
+        output_bin = self.config.get("output", "main")
+        flags = self.config.get("flags", "")
+        ldflags = self.config.get("ldflags", "")
         
-        if res.returncode == 0:
-            html_chunks.append("<div style='color: green'>Compilation succeeded</div>")
+        sources = []
+        for root, dirs, filenames in os.walk(self.evaluation.submit_path):
+            for f in filenames:
+                if f.split(".")[-1] in ["c", "cpp"]:
+                    # We use relative path for docker execution
+                    rel_dir = os.path.relpath(root, self.evaluation.submit_path)
+                    if rel_dir == ".":
+                        sources.append(f)
+                    else:
+                        sources.append(os.path.join(rel_dir, f))
+        
+        if not sources:
+                raise BuildError("Missing source files! please upload .c or .cpp files!")
 
-        return BuildResult(True, "".join(html_chunks))
+        use_cpp = any(f.endswith(".cpp") for f in sources)
+        compiler = "g++" if use_cpp else "gcc"
+        
+        cmd = [compiler] + sources + ["-o", output_bin] + shlex.split(flags) + shlex.split(ldflags)
+        return [BuildCommand(cmd, env)]
 
 class Cargo(TypeHandler):
-    def _get_location_from_cargo_msg(self, message: dict) -> Optional[CargoLocation]:
-        spans = message.get("spans")
-        if spans is None or len(spans) < 1:
-            return None
-        span = spans[0]
-        line = span.get("line_start")
-        file = span.get("file_name")
-        if line is not None and file is not None:
-            return CargoLocation(file=file, line=line)
-        return None
-
-    def _parse_cargo_output(self, cargo_stdout: str, cargo_stderr: str) -> CargoOutput:
+    def _parse_cargo_output(self, cargo_stdout: str, cargo_stderr: str) -> AnalysisResult:
         """
         Parses the output of `cargo --message-format json`.
         """
@@ -322,7 +382,6 @@ class Cargo(TypeHandler):
                     if rendered:
                         stderr_human += rendered
                     
-                    location = self._get_location_from_cargo_msg(m_content)
                     text = m_content.get("message")
                     code_obj = m_content.get("code")
                     if code_obj and isinstance(code_obj, dict):
@@ -330,8 +389,13 @@ class Cargo(TypeHandler):
                          if code_val:
                              text += f" ({code_val})"
                     
-                    if location and text:
-                        comments.append(Comment(file=location.file, line=location.line, text=text, source="cargo"))
+                    spans = m_content.get("spans")
+                    if spans and len(spans) > 0:
+                        span = spans[0]
+                        line_start = span.get("line_start")
+                        file_name = span.get("file_name")
+                        if line_start is not None and file_name is not None and text:
+                             comments.append(Comment(file=file_name, line=line_start, text=text, source="cargo"))
 
                 elif reason == "compiler-artifact":
                     target = msg.get("target", {})
@@ -347,14 +411,34 @@ class Cargo(TypeHandler):
         if cargo_stderr:
             stderr_human = f"{stderr_human.strip()}\n{cargo_stderr.strip()}"
 
-        return CargoOutput(
+        return AnalysisResult(
             stdout=stdout_human.strip(),
             stderr=stderr_human,
-            binary_artifacts=artifacts,
+            artifacts=artifacts,
             comments=comments
         )
 
-    def compile(self, container_image: str) -> CompileResult:
+    def _compile(self, container_image: str) -> BuildResult:
+        cwd = self.evaluation.submit_path
+        build_cmd = self._build_command(cwd)
+        
+        res = self._run_docker_command(container_image, build_cmd.cmd, build_cmd.env)
+        
+        parsed_output = self._parse_cargo_output(res.stdout, res.stderr)
+        
+        self._handle_artifacts(parsed_output, cwd, build_cmd.cmd, res.returncode)
+
+        html_out = self._format_html_generic(
+            build_cmd.cmd,
+            parsed_output.stdout,
+            parsed_output.stderr,
+            res.returncode,
+            message="Compilation succeeded" if res.returncode == 0 else "Compilation failed"
+        )
+
+        return BuildResult(res.returncode == 0, html_out, comments=parsed_output.comments)
+
+    def _build_command(self, cwd: str) -> BuildCommand:
         cmd_type = self.config.get("cmd", "build")
         args = self.config.get("args", [])
         is_lib = self.config.get("lib", False)
@@ -363,13 +447,27 @@ class Cargo(TypeHandler):
             args = shlex.split(args)
             
         # 1. Synthesize Cargo.toml if missing
-        local_files = os.listdir(self.evaluation.submit_path)
+        self._ensure_manifest(cwd, is_lib)
+
+        # 2. Run Cargo with JSON output
+        cargo_cmd = ["cargo", cmd_type, "--message-format", "json"] + args
+        
+        env = {
+            "RUST_BACKTRACE": "1",
+            "CARGO_HOME": "/tmp/cargo",
+            "CARGO_INCREMENTAL": "0",
+            "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
+        }
+        return BuildCommand(cargo_cmd, env)
+
+    def _ensure_manifest(self, cwd: str, is_lib: bool):
+        local_files = os.listdir(cwd)
         if "Cargo.toml" not in local_files:
             rs_files = [f for f in local_files if f.endswith(".rs")]
             if len(rs_files) != 1:
-                return BuildResult(False, "<div style='color: red'>No `Cargo.toml` found. Upload a crate or a single .rs file.</div>")
+                # If we can't synthesize, and no Cargo.toml, it's a critical error
+                raise BuildError("No `Cargo.toml` found. Upload a crate or a single .rs file.")
             
-            # Synthesize a Cargo project
             manifest_content = f"""
 [package]
 name = "submit"
@@ -387,42 +485,25 @@ path = "{rs_files[0]}"
 name = "main"
 path = "{rs_files[0]}"
 """
-
-            with open(os.path.join(self.evaluation.submit_path, "Cargo.toml"), "w") as f:
+            with open(os.path.join(cwd, "Cargo.toml"), "w") as f:
                 f.write(manifest_content)
 
-        # 2. Run Cargo with JSON output
-        cargo_cmd = ["cargo", cmd_type, "--message-format", "json"]
-        cargo_cmd.extend(args)
-        
-        env = {
-            "RUST_BACKTRACE": "1",
-            "CARGO_HOME": "/tmp/cargo",
-            "CARGO_INCREMENTAL": "0",
-            "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
-        }
+    def _handle_artifacts(self, parsed_output: AnalysisResult, cwd: str, cmd: list[str], returncode: int):
+        # Add exit code info to stdout if failed
+        if returncode != 0:
+             parsed_output.stdout = f"`{' '.join(cmd)}` has exited with code {returncode}\n{parsed_output.stdout}"
 
-        res = self._run_docker_command(container_image, cargo_cmd, env)
-        
-        # 3. Parse Output
-        parsed_output = self._parse_cargo_output(res.stdout, res.stderr)
-        
-        # 4. Handle Artifacts (Battle-tested logic from entry.py)
-        if res.returncode != 0:
-             public_cmd = ["cargo", cmd_type] + args
-             parsed_output.stdout = f"`{' '.join(public_cmd)}` has exited with code {res.returncode}\n{parsed_output.stdout}"
-
-        if len(parsed_output.binary_artifacts) > 1:
-            names = ", ".join([a.name for a in parsed_output.binary_artifacts])
+        if len(parsed_output.artifacts) > 1:
+            names = ", ".join([a.name for a in parsed_output.artifacts])
             parsed_output.stdout += f"\nWarning: multiple binary artifacts built ({names}).\nUsing the first one for further commands.\n"
             
-        if len(parsed_output.binary_artifacts) > 0:
+        if len(parsed_output.artifacts) > 0:
             # Artifact path is inside container: /work/target/...
             # We need to link it on host.
-            artifact_rel = os.path.relpath(parsed_output.binary_artifacts[0].path, "/work")
-            artifact_host = os.path.join(self.evaluation.submit_path, artifact_rel)
+            artifact_rel = os.path.relpath(parsed_output.artifacts[0].path, "/work")
+            artifact_host = os.path.join(cwd, artifact_rel)
             
-            main_link = os.path.join(self.evaluation.submit_path, "main")
+            main_link = os.path.join(cwd, "main")
             if os.path.isfile(main_link):
                 os.unlink(main_link)
             
@@ -430,57 +511,34 @@ path = "{rs_files[0]}"
             if os.path.exists(artifact_host):
                 os.symlink(artifact_host, main_link)
 
-        # 5. Format HTML
-        if not parsed_output.stdout:
-            parsed_output.stdout = "Cargo finished successfully"
-            
-        html_out = f"<code style='filter: opacity(.7);'>$ {' '.join(cargo_cmd)}</code>"
-        
-        # Bleach and Format
-        if parsed_output.stderr:
-            safe_err = self._sanitize(parsed_output.stderr)
-            if res.returncode == 0:
-                html_out += f"<details><summary>Stderr</summary><pre><code>{safe_err}</code></pre></details>"
-            else:
-                 html_out += f"<pre><code>{safe_err}</code></pre>"
-        
-        html_out += f"<pre><code>{self._sanitize(parsed_output.stdout)}</code></pre>"
 
-        if res.returncode == 0:
-            html_out += "<div style='color: green'>Compilation succeeded</div>"
-        else:
-            html_out += f"<div style='color: red'>Exit code {res.returncode}</div>"
-
-        # No need to convert to dict anymore, BuildResult handles it
-        return BuildResult(res.returncode == 0, html_out, comments=parsed_output.comments)
 
 class Dotnet(TypeHandler):
-    def compile(self, container_image: str) -> BuildResult:
+    OUTPUT_RE: ClassVar[re.Pattern] = re.compile(r"^/work/(?P<path>[^(]+)\((?P<line>[0-9]+),[0-9]+\): [^ ]+ (?P<source>[^ :])+:\s*(?P<text>.*?)\s\[.*?\]$")
+
+    def _compile(self, container_image: str) -> BuildResult:
         run_tests = self.config.get("unittests", False)
         cwd = self.evaluation.submit_path
         
-        proj_res = self._find_project_file(cwd)
-        if proj_res.error:
-            return BuildResult.fail(f"<span style='color:red'>{proj_res.error}</span>")
+        proj_path = self._find_project_file(cwd)
 
-        build_command = self._build_command(run_tests, proj_res.path)
+        build_command = self._build_command(run_tests, proj_path)
         
         res = self._run_docker_command(container_image, build_command.cmd, build_command.env)
         
-        # Handle Artifacts
         if not run_tests and res.returncode == 0:
             exe_names = self._find_executable_projects(cwd)
             err = self._link_main_executable(cwd, build_command.output_dir, exe_names)
             if err:
-                return BuildResult.fail(f"<span style='color:red'>{err}</span>")
+                raise BuildError(err)
 
         parse_res = self._parse_output(res.stdout, run_tests, cwd)
         
-        html_out = self._format_html(build_command.cmd, res.stdout, res.returncode)
+        html_out = self._format_html_generic(build_command.cmd, res.stdout, res.stderr, res.returncode)
 
         return BuildResult(res.returncode == 0, html_out, comments=parse_res.comments, tests=parse_res.tests)
 
-    def _find_project_file(self, cwd: str) -> ProjectFileResult:
+    def _find_project_file(self, cwd: str) -> str:
         paths = os.listdir(cwd)
         sln = [p for p in paths if p.endswith(".sln")]
         csproj = [p for p in paths if p.endswith(".csproj")]
@@ -495,14 +553,14 @@ class Dotnet(TypeHandler):
                 if nested_sln_path:
                     break
              if not nested_sln_path:
-                 return ProjectFileResult(error="No .sln or .csproj file was found in the root directory.")
+                 raise BuildError("No .sln or .csproj file was found in the root directory.")
         
         if len(sln) > 1:
-            return ProjectFileResult(error="Multiple .sln files were found")
+            raise BuildError("Multiple .sln files were found")
         if len(csproj) > 1:
-             return ProjectFileResult(error="Multiple .csproj files were found")
+             raise BuildError("Multiple .csproj files were found")
              
-        return ProjectFileResult(path=nested_sln_path)
+        return nested_sln_path
 
     def _build_command(self, run_tests: bool, nested_sln_path: Optional[str]) -> BuildCommand:
         output_dir = "kelvin_output"
@@ -531,7 +589,7 @@ class Dotnet(TypeHandler):
         Scans for .csproj files in the directory to find projects with OutputType=Exe.
         Returns a list of project names (without extension).
         """
-        import xml.etree.ElementTree as ET
+
         exe_names = []
         for proj_path in glob.glob(f"{cwd}/**/*.csproj", recursive=True):
                 try:
@@ -563,14 +621,12 @@ class Dotnet(TypeHandler):
                 return f"Multiple executable projects found ({','.join(exe_names)}). Only upload one executable project."
         return None
 
-    def _parse_output(self, stdout: str, run_tests: bool, cwd: str) -> ParseOutputResult:
+    def _parse_output(self, stdout: str, run_tests: bool, cwd: str) -> AnalysisResult:
         comments = []
         tests = []
         
-        comment_re = re.compile(r"^/work/(?P<path>[^(]+)\((?P<line>[0-9]+),[0-9]+\): [^ ]+ (?P<source>[^ :])+:\s*(?P<text>.*?)\s\[.*?\]$")
-        
         for line in stdout.splitlines():
-                match = comment_re.match(line)
+                match = re.match(self.OUTPUT_RE, line)
                 if match:
                     item = match.groupdict()
                     comments.append(Comment(
@@ -583,7 +639,6 @@ class Dotnet(TypeHandler):
         if run_tests:
             tests_xml_path = os.path.join(cwd, "tests.xml")
             if os.path.exists(tests_xml_path):
-                    import xml.etree.ElementTree as ET
                     ns = {"ns": "http://microsoft.com/schemas/VisualStudio/TeamTest/2010"}
                     try:
                         tree = ET.parse(tests_xml_path)
@@ -603,21 +658,16 @@ class Dotnet(TypeHandler):
                         os.unlink(tests_xml_path)
                     except FileNotFoundError:
                         pass
-        return ParseOutputResult(comments, tests)
+        return AnalysisResult(comments=comments, tests=tests)
 
-    def _format_html(self, cmd: list[str], stdout: str, returncode: int) -> str:
-        html_out = f"<code style='filter: opacity(.7);'>$ {' '.join(cmd)}</code>"
-        html_out += f"<pre>{bleach.clean(stdout).replace(chr(10), '<br />')}</pre>"
-        
-        if returncode == 0:
-                html_out += "<div style='color: green'>Build successful</div>"
-        else:
-                html_out += "<div style='color: red'>Build failed</div>"
-        return html_out
+
 
 
 class Java(TypeHandler):
-    def compile(self, container_image: str) -> BuildResult:
+    OUTPUT_RE: ClassVar[re.Pattern] = re.compile(r"^\[(?P<source>ERROR|WARNING)\] (?P<path>.*?):\[(?P<line>[0-9]+),(?P<column>[0-9]+)\] (?P<text>.+)$")
+    MAIN_METHOD_RE: ClassVar[re.Pattern] = re.compile(r"public\s+static\s+void\s+main\s*\(\s*String\s*\[\]\s+args\s*\)")
+
+    def _compile(self, container_image: str) -> BuildResult:
         run_tests = self.config.get("unittests", False)
         cwd = self.evaluation.submit_path
         
@@ -625,19 +675,16 @@ class Java(TypeHandler):
         
         res = self._run_docker_command(container_image, build_cmd.cmd)
         
-        # 3. Handle Artifacts
         if not run_tests and res.returncode == 0:
             exec_classes = self._get_executable_class_names(cwd)
             if len(exec_classes) == 1:
                 self._create_main_script(cwd, exec_classes[0])
             elif len(exec_classes) > 1:
-                 return BuildResult(False, f"<span style='color:red'>Multiple executable classes found ({','.join(exec_classes)}). Only upload one executable class.</span>")
+                 raise BuildError(f"Multiple executable classes found ({','.join(exec_classes)}). Only upload one executable class.")
 
-        # 4. Parse Comments & Tests
         parse_res = self._parse_output(res.stdout, run_tests, cwd)
 
-        # 5. HTML Output
-        html_out = self._format_html(build_cmd.cmd, res.stdout, res.returncode)
+        html_out = self._format_html_generic(build_cmd.cmd, res.stdout, res.stderr, res.returncode)
 
         return BuildResult(res.returncode == 0, html_out, comments=parse_res.comments, tests=parse_res.tests)
 
@@ -670,8 +717,7 @@ class Java(TypeHandler):
             with open(file_path, "r", encoding="utf-8", errors="ignore") as file:
                 content = file.read()
                 # Pattern to find main method in Java file
-                pattern = re.compile(r"public\s+static\s+void\s+main\s*\(\s*String\s*\[\]\s+args\s*\)")
-                return bool(re.search(pattern, content))
+            return bool(re.search(self.MAIN_METHOD_RE, content))
 
         def get_qualified_class_name(file_path, base_directory):
             # Remove .java extension and get relative path
@@ -692,15 +738,13 @@ class Java(TypeHandler):
             f.write(main_script_content)
         os.chmod(main_script_path, 0o755)
 
-    def _parse_output(self, stdout: str, run_tests: bool, cwd: str) -> ParseOutputResult:
+    def _parse_output(self, stdout: str, run_tests: bool, cwd: str) -> AnalysisResult:
         # parse compiler warnings / errors and add them as comments to the code
         comments = []
         # [WARNING] /work/src/main/java/kelvin/test_java/Application.java:[9,21] checkAccess() in java.lang.Thread has been deprecated and marked for removal
         # [ERROR] /work/src/main/java/kelvin/test_java/Application.java:[10,9] not a statement
-        comment_re = re.compile(r"^\[(?P<source>ERROR|WARNING)\] (?P<path>.*?):\[(?P<line>[0-9]+),(?P<column>[0-9]+)\] (?P<text>.+)$")
-        
         for line in stdout.splitlines():
-             match = comment_re.match(line)
+             match = re.match(self.OUTPUT_RE, line)
              if match:
                  item = match.groupdict()
                  comments.append(Comment(
@@ -715,13 +759,12 @@ class Java(TypeHandler):
         if run_tests:
             tests = self._parse_tests_report(cwd)
             
-        return ParseOutputResult(comments, tests)
+        return AnalysisResult(comments=comments, tests=tests)
 
     def _parse_tests_report(self, cwd: str) -> list[dict]:
         tests = []
         reports_path = os.path.join(cwd, "target", "surefire-reports")
         if os.path.exists(reports_path):
-             import xml.etree.ElementTree as ET
              for p in glob.glob(os.path.join(reports_path, "*.xml")):
                  try:
                      tree = ET.parse(p)
@@ -751,32 +794,25 @@ class Java(TypeHandler):
                      pass
         return tests
 
-    def _format_html(self, cmd: list[str], stdout: str, returncode: int) -> str:
-        html_out = f"<code>$ {' '.join(cmd)}</code>"
-        safe_out = bleach.clean(stdout.strip())
-        
-        if returncode == 0:
-             html_out += f"<details><summary>Stdout</summary><pre><code>{safe_out}</code></pre></details>"
-             html_out += "<div style='color: green'>Build successful</div>"
-        else:
-             html_out += f"<pre><code>{safe_out}</code></pre>"
-             html_out += "<div style='color: red'>Build failed</div>"
-        return html_out
+
 
 
 class Flake8(TypeHandler):
-    def compile(self, container_image: str) -> BuildResult:
+    def _compile(self, container_image: str) -> BuildResult:
         cwd = self.evaluation.submit_path
         
-        cmd = self._build_command()
+        build_cmd = self._build_command()
         
-        res = self._run_docker_command(container_image, cmd, {})
+        res = self._run_docker_command(container_image, build_cmd.cmd, build_cmd.env)
         
         comments = self._parse_output(res.stdout)
         
-        html_out = self._format_html(cmd, res.stdout, res.returncode)
+        html_out = self._format_html_generic(
+            build_cmd.cmd, res.stdout, res.stderr, res.returncode,
+            message="Analysis finished" if res.returncode == 0 else "Analysis finished with issues"
+        )
 
-        return BuildResult(True, html_out, comments=comments)
+        return BuildResult(res.returncode == 0, html_out, comments=comments)
 
     def _add_list_arg(self, name: str) -> list[str]:
         items = self.config.get(name)
@@ -790,13 +826,14 @@ class Flake8(TypeHandler):
                 pass
         return []
 
-    def _build_command(self) -> list[str]:
-        return [
+    def _build_command(self) -> BuildCommand:
+        cmd = [
             "flake8",
             "--format=%(path)s:%(row)d:%(code)s:%(text)s",
             *self._add_list_arg("select"),
             *self._add_list_arg("ignore"),
         ]
+        return BuildCommand(cmd)
 
     def _parse_output(self, stdout: str) -> list[Comment]:
         # (file, line) -> [text]
@@ -822,43 +859,48 @@ class Flake8(TypeHandler):
             ))
         return comments
 
-    def _format_html(self, cmd: list[str], stdout: str, returncode: int) -> str:
-        html_out = f"<code>$ {' '.join(cmd)}</code>"
-        safe_out = bleach.clean(stdout.strip())
-        html_out += f"<pre><code>{safe_out}</code></pre>"
-        
-        if returncode == 0:
-             html_out += "<div style='color: green'>Analysis finished (return code 0)</div>"
-        else:
-             html_out += f"<div style='color: orange'>Analysis finished with issues (exit code {returncode})</div>"
-        return html_out
+
 
 
 class ClangTidy(TypeHandler):
-    def compile(self, container_image: str) -> BuildResult:
+    OUTPUT_RE: ClassVar[re.Pattern] = re.compile(r"^(?P<path>[^:]+):(?P<line>\d+):(?P<col>\d+):\s*(?P<severity>[^:]+):\s*(?P<text>.*)$")
+    CHECK_NAME_RE: ClassVar[re.Pattern] = re.compile(r"\[([^\]]+)\]$")
+    DEFAULT_CHECKS: ClassVar[list[str]] = [
+        "*",
+        "-cppcoreguidelines-avoid-magic-numbers",
+        "-readability-magic-numbers",
+        "-cert-*",
+        "-llvm-include-order",
+        "-cppcoreguidelines-init-variables",
+        "-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling",
+        "-bugprone-narrowing-conversions",
+        "-cppcoreguidelines-narrowing-conversions",
+        "-android-cloexec-fopen",
+        "-readability-braces-around-statements",
+        "-google-readability-todo",
+    ]
+
+    def _compile(self, container_image: str) -> BuildResult:
         cwd = self.evaluation.submit_path
         
-        # 1. Find files
         files = self._find_files(cwd)
         if not files:
              return BuildResult(True, "No files found to analyze.")
 
-        # 2. Build Command
-        cmd = self._build_command(files)
+        build_cmd = self._build_command(files)
         
-        # 3. Run command
-        res = self._run_docker_command(container_image, cmd, {})
+        res = self._run_docker_command(container_image, build_cmd.cmd, build_cmd.env)
         
-        # 4. Load URLs
         urls = self._load_urls(container_image)
 
-        # 5. Parse Comments
         comments = self._parse_output(res.stdout, urls)
+
+        html_out = self._format_html_generic(
+            build_cmd.cmd, res.stdout, res.stderr, res.returncode,
+            message="Analysis finished" if res.returncode == 0 else "Analysis finished with issues"
+        )
         
-        # 6. HTML Output
-        html_out = self._format_html(cmd, res.stdout, res.returncode)
-        
-        return BuildResult(True, html_out, comments=comments)
+        return BuildResult(res.returncode == 0, html_out, comments=comments)
 
     def _load_urls(self, container_image: str) -> dict[str, str]:
         urls = {}
@@ -886,7 +928,7 @@ class ClangTidy(TypeHandler):
                         files.append(os.path.relpath(os.path.join(root, f), cwd))
         return files
 
-    def _build_command(self, files: list[str]) -> list[str]:
+    def _build_command(self, files: list[str]) -> BuildCommand:
         checks_arg = "*" # Default
         if self.config.get("checks") is not None:
             checks = self.config.get("checks")
@@ -894,39 +936,24 @@ class ClangTidy(TypeHandler):
             checks_arg = checks
         else:
              # Match legacy default checks
-             checks = [
-                "*",
-                "-cppcoreguidelines-avoid-magic-numbers",
-                "-readability-magic-numbers",
-                "-cert-*",
-                "-llvm-include-order",
-                "-cppcoreguidelines-init-variables",
-                "-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling",
-                "-bugprone-narrowing-conversions",
-                "-cppcoreguidelines-narrowing-conversions",
-                "-android-cloexec-fopen",
-                "-readability-braces-around-statements",
-                "-google-readability-todo",
-             ]
-             checks_arg = ",".join(checks)
+             checks_arg = ",".join(self.DEFAULT_CHECKS)
 
-        return [
+        cmd = [
             "clang-tidy",
             "-extra-arg=-std=c++17",
             f"--checks={checks_arg}",
             *files
         ]
+        return BuildCommand(cmd)
 
     def _parse_output(self, stdout: str, urls: dict[str, str]) -> list[Comment]:
         comments = []
         # Regex for standard clang output: path:line:col: severity: message [check-name]
         # Example: /work/main.c:10:5: warning: message [check-name]
-        regex = re.compile(r"^(?P<path>[^:]+):(?P<line>\d+):(?P<col>\d+):\s*(?P<severity>[^:]+):\s*(?P<text>.*)$")
-        check_name_regex = re.compile(r"\[([^\]]+)\]$")
-
+        # Example: /work/main.c:10:5: warning: message [check-name]
         for line in stdout.splitlines():
             line = line.strip()
-            match = regex.match(line)
+            match = re.match(self.OUTPUT_RE, line)
             if match:
                 item = match.groupdict()
                 path = item["path"]
@@ -938,7 +965,7 @@ class ClangTidy(TypeHandler):
                 url = None
                 
                 # Extract check name from text
-                check_match = check_name_regex.search(text)
+                check_match = re.search(self.CHECK_NAME_RE, text)
                 if check_match:
                     check_name = check_match.group(1)
                     url = urls.get(check_name)
@@ -951,15 +978,3 @@ class ClangTidy(TypeHandler):
                     url=url
                 ))
         return comments
-
-    def _format_html(self, cmd: list[str], stdout: str, returncode: int) -> str:
-        html_out = f"<code>$ {' '.join(cmd)}</code>"
-        safe_out = bleach.clean(stdout.strip())
-        
-        if returncode == 0:
-             html_out += f"<details><summary>Output</summary><pre><code>{safe_out}</code></pre></details>"
-             html_out += "<div style='color: green'>Analysis finished (return code 0)</div>"
-        else:
-             html_out += f"<pre><code>{safe_out}</code></pre>"
-             html_out += f"<div style='color: orange'>Analysis finished with issues (exit code {returncode})</div>"
-        return html_out
