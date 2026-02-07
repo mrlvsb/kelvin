@@ -76,19 +76,7 @@ class ImageBuilder:
         for batch in self.get_build_order():
             print(batch)
 
-    def _inject_params(self, cache_arg: str, token: str, repo: str) -> str:
-        if cache_arg and "type=gha" in cache_arg:
-            parts = [cache_arg]
-            if token and "ghtoken=" not in cache_arg:
-                parts.append(f"ghtoken={token}")
-            if repo and "scope=" not in cache_arg:
-                parts.append(f"scope={repo}")
-            return ",".join(parts)
-        return cache_arg
-
-    def _build_single_image(
-        self, image: str, dry_run: bool, cache_from: str, cache_to: str, gh_token: str, gh_repo: str
-    ):
+    def _build_single_image(self, image: str, dry_run: bool):
         if image.startswith("kelvin/"):
             name = image.split("/")[1]
             logging.info(f"============ {name} ============")
@@ -101,39 +89,20 @@ class ImageBuilder:
 
             image_name_hash = f"{image}:{file_hash}"
 
-            cmd = ["docker", "buildx", "build", "--load"]
-
-            if cache_from:
-                cmd.extend(["--cache-from", self._inject_params(cache_from, gh_token, gh_repo)])
-            if cache_to:
-                cmd.extend(["--cache-to", self._inject_params(cache_to, gh_token, gh_repo)])
-
-            if image in self.deps:
-                for parent in self.deps[image]:
-                    if parent.startswith("kelvin/"):
-                        # Inject build contexts for local dependencies (GitHub Actions)
-                        cmd.extend(
-                            ["--build-context", f"{parent}:latest=docker-image://{parent}:latest"]
-                        )
-
-            cmd.extend(["-t", image_name_hash, "-t", f"{image}:latest", "."])
+            # Use simple docker build (or buildx which defaults to docker driver if not setup otherwise)
+            # We remove --load because default driver loads automatically.
+            # We remove --build-context because default driver shares daemon state.
+            cmd = ["docker", "build", "-t", image_name_hash, "-t", f"{image}:latest", "."]
 
             if dry_run:
                 logging.info(f"cd {image_dir} && {shlex.join(cmd)}")
             else:
                 subprocess.check_call(cmd, cwd=image_dir)
 
-    def build(
-        self,
-        dry_run: bool = False,
-        cache_from: str = None,
-        cache_to: str = None,
-        gh_token: str = None,
-        gh_repo: str = None,
-    ):
+    def build(self, dry_run: bool = False):
         for batch in self.get_build_order():
             for image in batch:
-                self._build_single_image(image, dry_run, cache_from, cache_to, gh_token, gh_repo)
+                self._build_single_image(image, dry_run)
 
 
 def main():
@@ -141,10 +110,6 @@ def main():
 
     parser.add_argument("--list-order", action="store_true", help="Show the build dependency order")
     parser.add_argument("--dry-run", action="store_true", help="Print commands without executing")
-    parser.add_argument("--cache-from", help="Cache source (e.g. type=gha)")
-    parser.add_argument("--cache-to", help="Cache destination (e.g. type=gha,mode=max)")
-    parser.add_argument("--gh-token", help="GitHub token for type=gha cache")
-    parser.add_argument("--gh-repo", help="GitHub repository scope for type=gha cache")
 
     args = parser.parse_args()
 
@@ -153,13 +118,7 @@ def main():
     if args.list_order:
         builder.list_order()
     else:
-        builder.build(
-            dry_run=args.dry_run,
-            cache_from=args.cache_from,
-            cache_to=args.cache_to,
-            gh_token=args.gh_token,
-            gh_repo=args.gh_repo,
-        )
+        builder.build(dry_run=args.dry_run)
 
 
 if __name__ == "__main__":

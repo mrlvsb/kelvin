@@ -27,16 +27,13 @@ jobs:
       - name: Set up Docker Buildx
         if: steps.changed-files.outputs.any_changed == 'true'
         uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker
 
       - name: Build images
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
-          docker buildx use default
-          python3 evaluator/images/build.py \
-            --gh-token ${{ secrets.GITHUB_TOKEN }} \
-            --gh-repo ${{ github.repository }} \
-            --cache-from type=gha \
-            --cache-to "${{ (github.event_name == 'merge_group' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/master') && 'type=gha,mode=max' || '' }}"
+          python3 evaluator/images/build.py
 
   # Summary job to enable easier handling of required status checks.
   # On PRs, we need everything to be green, while deploy jobs are skipped.
