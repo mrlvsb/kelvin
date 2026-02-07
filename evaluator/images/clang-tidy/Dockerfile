@@ -5,7 +5,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get install -y \
     -o APT::Install-Recommends=false \
     -o APT::Install-Suggests=false \
-    clang-tidy python3-yaml \
+    clang-tidy \
+    python3-yaml && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 

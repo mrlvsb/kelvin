@@ -9,6 +9,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get install -y \
     -o APT::Install-Recommends=false \
     -o APT::Install-Suggests=false \
+    build-essential \
     locales=2.39-0ubuntu8 \
     gcc=4:13.2.0-7ubuntu1 \
     g++=4:13.2.0-7ubuntu1 \

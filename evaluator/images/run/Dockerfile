@@ -8,7 +8,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     asciinema \
     imagemagick \
     webp \
-    python3-magic \
+    python3-magic && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
