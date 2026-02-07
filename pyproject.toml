@@ -49,8 +49,8 @@ dependencies = [
     "py7zr==1.0.0",
 ]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pre-commit>=3.8.0",
     "ruff==0.6.3",
     "pyrefly==0.18.0",

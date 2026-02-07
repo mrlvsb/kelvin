@@ -568,7 +568,10 @@ const rules = new DictRule({
         tests: [
             new DockerPipeRule({
                 executable: new UnionRule(new ValueRule(), new ArrayRule()),
-                image: [new ValueRule(), 'Docker image to use for running tests. Default: <strong>kelvin/run</strong>']
+                image: [
+                    new ValueRule(),
+                    'Docker image to use for running tests. Default: <strong>kelvin/run</strong>'
+                ]
             }),
             'Run input/output/files tests on compiled program.'
         ],
