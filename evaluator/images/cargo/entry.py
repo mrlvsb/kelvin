@@ -180,7 +180,7 @@ path = "{rs_files[0]}"
     artifacts = output.binary_artifacts
     if len(artifacts) > 1:
         stdout += f"""
-Warning: multiple binary artifacts built ({', '.join([artifact.name for artifact in artifacts])}).
+Warning: multiple binary artifacts built ({", ".join([artifact.name for artifact in artifacts])}).
 Using the first one for further commands.
 """
     if len(artifacts) > 0:

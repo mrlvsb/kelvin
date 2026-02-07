@@ -87,7 +87,7 @@ services:
     pull_policy: always
     restart: unless-stopped
     group_add:
-      - "${DOCKER_GROUP_ID:?DOCKER_GROUP_ID is not set}"
+      - "${DOCKER_GROUP_ID}"
     environment:
       # Hardcode the docker-compose.yml path inside the container to match the repository volume mount path (must be in sync with volume that mounts the repo)
       - DOCKER__COMPOSE_FILE_PATH=/kelvin/docker-compose.yml

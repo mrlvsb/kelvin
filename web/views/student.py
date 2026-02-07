@@ -192,8 +192,8 @@ def student_index(request: HttpRequest) -> HttpResponse:
     ):
         semesters.append(
             {
-                "label": f'{year}/{year + 1} {"winter" if winter else "summer"}',
-                "value": f'{year}{"W" if winter else "S"}',
+                "label": f"{year}/{year + 1} {'winter' if winter else 'summer'}",
+                "value": f"{year}{'W' if winter else 'S'}",
             }
         )
 

@@ -1,10 +1,13 @@
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm AS build-backend
+FROM python:3.12-slim-bookworm AS build-backend
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     apt-get install -y \
     -o APT::Install-Recommends=false \
     -o APT::Install-Suggests=false \
+    build-essential \
     libsasl2-dev \
     libgraphviz-dev
 
@@ -26,7 +29,7 @@ RUN npm ci
 
 RUN npm run build
 
-FROM python:3.12-bookworm AS runtime
+FROM python:3.12-slim-bookworm AS runtime
 
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
@@ -43,6 +46,8 @@ WORKDIR /app
 # We want to use ID 1000, to have the same ID as the default outside user
 # And we also want group 101, to provide share access to the Unix uWSGI
 # socket with the nginx image.
+RUN groupadd -g 101 webserver
+
 RUN useradd --uid 1000 --gid 101 --shell /bin/false --system webserver
 
 RUN chown -R webserver .

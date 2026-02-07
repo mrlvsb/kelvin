@@ -3,3 +3,31 @@ submits/
 submit_results/
 .venv/
 node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.pyo
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node
+**/dist/
+**/.vite/
+
+# VCS / tooling
+.git/
+
+# Local data (avoid baking into images)
+kelvin_data/
+**/*.log
+
+# Editor
+.vscode/
+.idea/
+.DS_Store

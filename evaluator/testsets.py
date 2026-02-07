@@ -233,7 +233,7 @@ class TestSet:
 
                     self.pipeline.append(pipe)
                 except Exception as e:
-                    self.add_warning(f'pipe {item["type"]}: {e}\n{traceback.format_exc()}')
+                    self.add_warning(f"pipe {item['type']}: {e}\n{traceback.format_exc()}")
 
     def parse_conf_tests(self, conf):
         allowed_keys = ["name", "title", "exit_code", "args", "files"]
