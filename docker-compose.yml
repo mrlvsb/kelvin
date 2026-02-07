@@ -76,34 +76,6 @@ services:
       - app_static:/app/static:ro
       - app_socket:/socket
 
-  evaluator:
-    container_name: kelvin_evaluator
-    profiles: [ evaluator ]
-    build:
-      context: evaluator
-      dockerfile: Dockerfile
-    image: "ghcr.io/mrlvsb/kelvin-evaluator:${EVALUATOR_IMAGE_TAG:-latest}"
-    pull_policy: always
-    restart: unless-stopped
-    group_add:
-      - "${DOCKER_GROUP_ID}"
-    environment:
-      # Option to specify Redis host and port to connect from other machines where evaluator runs,
-      # fallbacks to 'redis' hostname and default port, which means same machine
-      - REDIS__HOST=${REDIS__HOST:-redis}
-      - REDIS__PORT=${REDIS__PORT:-6379}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      # Mount /tmp/kelvin so Docker-in-Docker can access temporary evaluation directories
-      - /tmp/kelvin:/tmp/kelvin
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-
   deployment:
     container_name: kelvin_deployment_service
     profiles: [ prod ]
