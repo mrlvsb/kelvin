@@ -34,6 +34,8 @@ class ImageBuilder:
                     if parts and parts[0].upper() == "FROM":
                         # Handle multi-stage builds
                         image_name = parts[1]
+                        if image_name.startswith("kelvin/") and image_name.endswith(":latest"):
+                            image_name = image_name[:-7]
                         parents.add(image_name)
 
             if not parents:
