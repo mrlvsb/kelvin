@@ -31,6 +31,7 @@ jobs:
       - name: Build images
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
+          docker buildx use default
           python3 evaluator/images/build.py \
             --gh-token ${{ secrets.GITHUB_TOKEN }} \
             --gh-repo ${{ github.repository }} \
