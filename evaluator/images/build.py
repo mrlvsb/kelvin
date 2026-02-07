@@ -114,7 +114,7 @@ class ImageBuilder:
                             ["--build-context", f"{parent}:latest=docker-image://{parent}:latest"]
                         )
 
-            cmd.extend(["-t", image_name_hash, "-t", image, "."])
+            cmd.extend(["-t", image_name_hash, "-t", f"{image}:latest", "."])
 
             if dry_run:
                 logging.info(f"cd {image_dir} && {shlex.join(cmd)}")
