@@ -50,7 +50,7 @@ jobs:
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
-      - name: Conclusion
+      - name: Conclusion Images
         run: |
           # Print the dependent jobs to see them in the CI log
           jq -C <<< '${{ toJson(needs) }}'
