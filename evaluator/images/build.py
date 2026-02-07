@@ -106,26 +106,6 @@ class ImageBuilder:
             if cache_to:
                 cmd.extend(["--cache-to", self._inject_params(cache_to, gh_token, gh_repo)])
 
-            if image in self.deps:
-                for parent in self.deps[image]:
-                    if parent.startswith("kelvin/"):
-                        # Inject build contexts for local dependencies (GitHub Actions)
-                        # We map:
-                        # 1. The exact string from FROM (e.g. kelvin/base)
-                        # 2. The canonical latest tag (e.g. docker.io/kelvin/base:latest) to handle BuildKit normalization
-                        cmd.extend(["--build-context", f"{parent}=docker-image://{parent}"])
-                        if ":" not in parent:
-                            cmd.extend(
-                                [
-                                    "--build-context",
-                                    f"docker.io/{parent}:latest=docker-image://{parent}",
-                                ]
-                            )
-                        else:
-                            cmd.extend(
-                                ["--build-context", f"docker.io/{parent}=docker-image://{parent}"]
-                            )
-
             cmd.extend(["-t", image_name_hash, "-t", image, "."])
 
             if dry_run:
