@@ -110,7 +110,9 @@ class ImageBuilder:
                 for parent in self.deps[image]:
                     if parent.startswith("kelvin/"):
                         # Inject build contexts for local dependencies (GitHub Actions)
-                        cmd.extend(["--build-context", f"{parent}=docker-image://{parent}:latest"])
+                        cmd.extend(
+                            ["--build-context", f"{parent}:latest=docker-image://{parent}:latest"]
+                        )
 
             cmd.extend(["-t", image_name_hash, "-t", image, "."])
 
