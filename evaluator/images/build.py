@@ -27,22 +27,24 @@ class ImageBuilder:
             name = "kelvin/" + os.path.basename(os.path.dirname(path))
             self.images[name] = str(path)
 
-            parent = None
+            parents = set()
             with open(path, "r") as f:
                 for line in f:
-                    parts = line.strip().split(" ")
+                    parts = line.strip().split()
                     if parts and parts[0].upper() == "FROM":
-                        parent = parts[1]
-                        break
+                        # Handle multi-stage builds
+                        image_name = parts[1]
+                        parents.add(image_name)
 
-            if not parent:
+            if not parents:
                 logging.warning(f"Image {name} has no FROM instruction")
                 continue
 
             if name not in self.deps:
                 self.deps[name] = []
 
-            self.deps[name].append(parent)
+            for parent in parents:
+                self.deps[name].append(parent)
 
     def _build_deps(self, deps: Dict[str, List[str]]) -> List[Set[str]]:
         """Original dependency resolution algorithm."""
@@ -103,6 +105,12 @@ class ImageBuilder:
                 cmd.extend(["--cache-from", self._inject_params(cache_from, gh_token, gh_repo)])
             if cache_to:
                 cmd.extend(["--cache-to", self._inject_params(cache_to, gh_token, gh_repo)])
+
+            if image in self.deps:
+                for parent in self.deps[image]:
+                    if parent.startswith("kelvin/"):
+                        # Inject build contexts for local dependencies (GitHub Actions)
+                        cmd.extend(["--build-context", f"{parent}=docker-image://{parent}"])
 
             cmd.extend(["-t", image_name_hash, "-t", image, "."])
 
