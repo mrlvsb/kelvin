@@ -8,7 +8,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     -o APT::Install-Recommends=false \
     -o APT::Install-Suggests=false \
     ca-certificates \
-    curl
+    curl \
+    procps
 
 RUN mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
@@ -34,3 +35,5 @@ COPY --chown=webserver entrypoint.sh /app/entrypoint.sh
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["rqworker", "default", "evaluator", "--with-scheduler"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD pgrep -f "rqworker" || exit 1

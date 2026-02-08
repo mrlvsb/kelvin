@@ -63,8 +63,8 @@ def main():
     )
     parser.add_argument(
         "--healthcheck-url",
-        default="https://kelvin.cs.vsb.cz/api/v2/health",
-        help="The full URL for the application's health check endpoint. (e.g., 'https://nginx/api/v2/health')",
+        default=None,
+        help="The full URL for the application's health check endpoint. (e.g., 'https://nginx/api/v2/health'). If not provided, the container's health status will be checked.",
     )
 
     parser.add_argument(

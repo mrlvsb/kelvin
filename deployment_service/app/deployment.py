@@ -66,7 +66,7 @@ class DeploymentManager:
         compose_path: Path,
         compose_env_file: Path | None,
         container_name: str,
-        healthcheck_url: str,
+        healthcheck_url: str | None,
     ):
         self.service_name = service_name
         self.container_name = container_name
@@ -275,10 +275,8 @@ class DeploymentManager:
             )
         return True
 
-    async def _health_check(self) -> bool:
-        """Performs a health check by making HTTP requests to a specified URL."""
-        self.logger.info(f"Performing health check on {self.healthcheck_url}...")
-        end_time = time.time() + HEALTH_CHECK_TIMEOUT
+    async def _health_check_http(self, end_time: float) -> bool:
+        self.logger.info(f"Performing HTTP health check on {self.healthcheck_url}...")
         async with httpx.AsyncClient(verify=not get_settings().debug) as client:
             while time.time() < end_time:
                 try:
@@ -290,8 +288,44 @@ class DeploymentManager:
                 except httpx.RequestError as exc:
                     self.logger.warning(f"Health check request failed: {exc}")
                 await asyncio.sleep(HEALTH_CHECK_INTERVAL)
-        self.logger.error("Health check timed out.")
+        self.logger.error("HTTP health check timed out.")
         return False
+
+    async def _health_check_docker(self, end_time: float) -> bool:
+        self.logger.info(
+            f"Performing Docker container health state check for {self.container_name}..."
+        )
+        while time.time() < end_time:
+            try:
+                container = self.client.containers.get(self.container_name)
+                container.reload()
+                status = container.attrs.get("State", {}).get("Health", {}).get("Status")
+
+                self.logger.info(f"Container health status: {status}")
+
+                if status == "healthy":
+                    self.logger.info("Docker health check passed.")
+                    return True
+            except NotFound:
+                self.logger.warning("Container not found during health check.")
+            except Exception as e:
+                self.logger.warning(f"Error checking container health: {e}")
+
+            await asyncio.sleep(HEALTH_CHECK_INTERVAL)
+
+        self.logger.error("Docker health check timed out.")
+        return False
+
+    async def _health_check(self) -> bool:
+        """Performs a health check.
+        If healthcheck_url is provided, makes HTTP requests to it.
+        If healthcheck_url is None, checks the container's Docker health status.
+        """
+        end_time = time.time() + HEALTH_CHECK_TIMEOUT
+
+        if self.healthcheck_url:
+            return await self._health_check_http(end_time)
+        return await self._health_check_docker(end_time)
 
     def _cleanup(self, old_image_id: str) -> None:
         """Removes the old Docker image after a successful deployment."""
