@@ -18,6 +18,7 @@ RUN ln -s /opt/apache-maven-3.9.9/ /opt/maven
 
 # To find out exactly folder path, run the docker image and enter
 # `update-alternatives --config java` or `dirname $(dirname $(readlink -f $(which java)))` command
+# We support only amd64 architecture, so the path is hardcoded to java-21-openjdk-amd64, but it can be changed if needed
 ENV JAVA_HOME="/usr/lib/jvm/java-21-openjdk-amd64"
 ENV M2_HOME="/opt/maven"
 ENV MAVEN_HOME="/opt/maven"

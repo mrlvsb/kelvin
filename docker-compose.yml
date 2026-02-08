@@ -68,10 +68,6 @@ services:
     depends_on:
       - app
     restart: unless-stopped
-    networks:
-      default:
-        aliases:
-          - ${KELVIN__HOST_URL}
     profiles: [ prod ]
     ports:
       - "80:80"
