@@ -29,5 +29,5 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 
 USER webserver
 
-ENTRYPOINT ["python", "manage.py", "rqworker"]
-CMD ["default", "evaluator", "--with-scheduler"]
+ENTRYPOINT ["python", "manage.py"]
+CMD ["rqworker", "default", "evaluator", "--with-scheduler"]
