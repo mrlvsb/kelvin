@@ -8,6 +8,7 @@ from typing import NewType
 
 import django.contrib.auth.models
 import requests
+from django.conf import settings
 from django.http import HttpRequest
 from ipware import get_client_ip
 
@@ -109,6 +110,13 @@ def download_source_to_path(source_url: str, destination_path: str) -> None:
 
 def build_absolute_uri(request, location):
     base_uri = os.getenv("API_INTERNAL_BASEURL", None)
+
+    # If the URL is the default Docker-internal one, only use it in DEBUG mode.
+    # This prevents Production from accidentally using the internal container hostname
+    # instead of the public domain, unless explicitly forced.
+    if base_uri == "https://nginx" and not settings.DEBUG:
+        base_uri = None
+
     if base_uri:
         return "".join([base_uri, location])
     return request.build_absolute_uri(location)

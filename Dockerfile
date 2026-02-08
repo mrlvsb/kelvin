@@ -36,7 +36,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get install -y \
     -o APT::Install-Recommends=false \
     -o APT::Install-Suggests=false \
-    graphviz && \
+    graphviz \
+    libmagic1 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 

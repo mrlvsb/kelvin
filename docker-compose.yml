@@ -26,6 +26,9 @@ services:
       - DATABASE__USERNAME=${DATABASE__USERNAME}
       - DATABASE__PASSWORD=${DATABASE__PASSWORD}
       - KELVIN__HOST_URL=${KELVIN__HOST_URL}
+      # - Defaults to 'https://nginx' for local docker development (to fix loopback ref to 127.0.0.1)
+      # - IGNORED by app if value is 'https://nginx' AND DEBUG=False
+      - API_INTERNAL_BASEURL=${API_INTERNAL_BASEURL:-https://nginx}
     volumes:
       - app_static:/app/static
       - app_socket:/socket
@@ -65,6 +68,10 @@ services:
     depends_on:
       - app
     restart: unless-stopped
+    networks:
+      default:
+        aliases:
+          - ${KELVIN__HOST_URL}
     profiles: [ prod ]
     ports:
       - "80:80"
@@ -78,7 +85,10 @@ services:
 
   evaluator_scheduler:
     container_name: kelvin_evaluator_scheduler
-    profiles: [ evaluator ]
+    depends_on:
+      - redis
+      - app
+    profiles: [ prod ]
     build:
       context: evaluator
       dockerfile: Dockerfile
@@ -89,10 +99,8 @@ services:
     group_add:
       - "${DOCKER_GROUP_ID}"
     environment:
-      # Option to specify Redis host and port to connect from other machines where evaluator runs,
-      # fallbacks to 'redis' hostname and default port, which means same machine
-      - REDIS__HOST=${REDIS__HOST:-redis}
-      - REDIS__PORT=${REDIS__PORT:-6379}
+      - REDIS__HOST=redis
+      - REDIS__PORT=6379
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       # Mount /tmp/kelvin so Docker-in-Docker can access temporary evaluation directories

@@ -8,6 +8,7 @@ from typing import Optional
 import django_rq
 import requests
 import yaml
+from django.conf import settings
 from django.core import signing
 from django.urls import reverse
 from django.utils import timezone
@@ -101,6 +102,8 @@ def get_meta(login):
 def evaluate_job(submit_url, task_url, token, meta):
     logging.basicConfig(level=logging.DEBUG)
     s = requests.Session()
+    if settings.DEBUG:
+        s.verify = False
 
     logging.info(f"Evaluating {submit_url}")
 
