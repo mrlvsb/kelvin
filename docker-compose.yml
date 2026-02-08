@@ -86,8 +86,9 @@ services:
       - app
     profiles: [ prod ]
     build:
-      context: evaluator
+      context: .
       dockerfile: Dockerfile
+      target: evaluator
     image: "ghcr.io/mrlvsb/kelvin-evaluator:${EVALUATOR_IMAGE_TAG:-latest}"
     pull_policy: always
     restart: unless-stopped
@@ -106,8 +107,9 @@ services:
     container_name: kelvin_evaluator_cpu
     profiles: [ evaluator-cpu ]
     build:
-      context: evaluator
+      context: .
       dockerfile: Dockerfile
+      target: evaluator
     image: "ghcr.io/mrlvsb/kelvin-evaluator:${EVALUATOR_IMAGE_TAG:-latest}"
     pull_policy: always
     restart: unless-stopped
@@ -128,8 +130,9 @@ services:
     container_name: kelvin_evaluator_cuda
     profiles: [ evaluator-cuda ]
     build:
-      context: evaluator
+      context: .
       dockerfile: Dockerfile
+      target: evaluator
     image: "ghcr.io/mrlvsb/kelvin-evaluator:${EVALUATOR_IMAGE_TAG:-latest}"
     pull_policy: always
     restart: unless-stopped

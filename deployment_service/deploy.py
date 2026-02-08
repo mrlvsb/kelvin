@@ -10,18 +10,18 @@ import urllib.error
 import urllib.request
 
 
-def format_for_github_summary(status_code, response_json):
+def format_for_github_summary(status_code, response_json, service_name):
     logs = response_json.get("logs", [])
     error_message = response_json.get("error")
 
     if not (200 <= status_code < 300):
-        title = f"## ❌ Deployment Failed (Status: {status_code})"
+        title = f"## ❌ Deployment Failed: {service_name} (Status: {status_code})"
         if not error_message:
             summary_lines = [f"**Error:** `{response_json.get('detail', 'Unknown error')}`"]
         else:
             summary_lines = [f"**Error:** `{error_message}`"]
     else:
-        title = f"## ✅ Deployment Succeeded (Status: {status_code})"
+        title = f"## ✅ Deployment Succeeded: {service_name} (Status: {status_code})"
         summary_lines = ["The deployment process completed successfully."]
 
     summary_lines.append("\n<details>\n\n<summary>View full deployment logs</summary>\n\n```text")
@@ -128,7 +128,7 @@ def main():
             "error": f"Invalid JSON response from server (Status: {status_code}).",
         }
 
-    summary_content = format_for_github_summary(status_code, response_json)
+    summary_content = format_for_github_summary(status_code, response_json, args.service_name)
     if is_github_env:
         summary_file_path = str(os.getenv("GITHUB_STEP_SUMMARY"))
         with open(summary_file_path, "a", encoding="utf-8") as f:
