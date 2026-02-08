@@ -1,6 +1,6 @@
 FROM python:3.12-slim-bookworm AS build-backend
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.10.0 /uv /usr/local/bin/uv
 
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
@@ -47,7 +47,7 @@ WORKDIR /app
 # We want to use ID 1000, to have the same ID as the default outside user
 # And we also want group 101, to provide share access to the Unix uWSGI
 # socket with the nginx image.
-RUN groupadd -g 101 webserver
+RUN getent group 101 >/dev/null || groupadd -g 101 webserver
 
 RUN useradd --uid 1000 --gid 101 --shell /bin/false --system webserver
 

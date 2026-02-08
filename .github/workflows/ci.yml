@@ -11,7 +11,7 @@ concurrency:
 env:
   # Configure a constant location for the uv cache
   UV_CACHE_DIR: /tmp/.uv-cache
-  UV_VERSION: "0.9.20"
+  UV_VERSION: "0.10.0"
 
 
 jobs:

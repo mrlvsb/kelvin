@@ -273,7 +273,7 @@ class TestsPipe:
         limits=None,
         timeout=5,
         before=None,
-        image="kelvin/display",
+        image="kelvin/run",
         **kwargs,
     ):
         super().__init__(**kwargs)

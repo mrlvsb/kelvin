@@ -10,7 +10,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     ca-certificates \
     curl
 
-RUN curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+RUN mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
 RUN chmod a+r /etc/apt/keyrings/docker.asc
 
 RUN echo \
