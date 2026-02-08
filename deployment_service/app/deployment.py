@@ -297,13 +297,25 @@ class DeploymentManager:
             try:
                 container = self.client.containers.get(container_name)
                 container.reload()
-                status = container.attrs.get("State", {}).get("Health", {}).get("Status")
 
-                self.logger.info(f"Container health status: {status}")
+                state = container.attrs.get("State", {})
+                if "Health" not in state:
+                    self.logger.error(
+                        "Container has no HEALTHCHECK configured. "
+                        "Please add a HEALTHCHECK to your Dockerfile or provide a --healthcheck-url."
+                    )
+                    return False
 
-                if status == "healthy":
+                health_status = state.get("Health", {}).get("Status")
+
+                self.logger.info(f"Container health status: {health_status}")
+
+                if health_status == "healthy":
                     self.logger.info("Docker health check passed.")
                     return True
+                if health_status == "unhealthy":
+                    self.logger.warning("Container is unhealthy.")
+                    return False
             except NotFound:
                 self.logger.warning("Container not found during health check.")
             except Exception as e:

@@ -90,7 +90,9 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     -o APT::Install-Suggests=false \
     ca-certificates \
     curl \
-    procps
+    procps && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
