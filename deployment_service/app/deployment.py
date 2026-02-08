@@ -275,12 +275,12 @@ class DeploymentManager:
             )
         return True
 
-    async def _health_check_http(self, end_time: float) -> bool:
-        self.logger.info(f"Performing HTTP health check on {self.healthcheck_url}...")
+    async def _health_check_http(self, end_time: float, healthcheck_url: str) -> bool:
+        self.logger.info(f"Performing HTTP health check on {healthcheck_url}...")
         async with httpx.AsyncClient(verify=not get_settings().debug) as client:
             while time.time() < end_time:
                 try:
-                    response = await client.get(self.healthcheck_url, timeout=2.0)
+                    response = await client.get(healthcheck_url, timeout=2.0)
                     self.logger.info(f"Health check response status: {response.status_code}")
                     if response.status_code == 200:
                         self.logger.info("Health check passed.")
@@ -291,13 +291,11 @@ class DeploymentManager:
         self.logger.error("HTTP health check timed out.")
         return False
 
-    async def _health_check_docker(self, end_time: float) -> bool:
-        self.logger.info(
-            f"Performing Docker container health state check for {self.container_name}..."
-        )
+    async def _health_check_docker(self, end_time: float, container_name: str) -> bool:
+        self.logger.info(f"Performing Docker container health state check for {container_name}...")
         while time.time() < end_time:
             try:
-                container = self.client.containers.get(self.container_name)
+                container = self.client.containers.get(container_name)
                 container.reload()
                 status = container.attrs.get("State", {}).get("Health", {}).get("Status")
 
@@ -324,8 +322,8 @@ class DeploymentManager:
         end_time = time.time() + HEALTH_CHECK_TIMEOUT
 
         if self.healthcheck_url:
-            return await self._health_check_http(end_time)
-        return await self._health_check_docker(end_time)
+            return await self._health_check_http(end_time, self.healthcheck_url)
+        return await self._health_check_docker(end_time, self.container_name)
 
     def _cleanup(self, old_image_id: str) -> None:
         """Removes the old Docker image after a successful deployment."""
