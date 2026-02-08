@@ -30,5 +30,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 
 USER webserver
 
-ENTRYPOINT ["python", "manage.py"]
+COPY --chown=webserver entrypoint.sh /app/entrypoint.sh
+
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["rqworker", "default", "evaluator", "--with-scheduler"]
