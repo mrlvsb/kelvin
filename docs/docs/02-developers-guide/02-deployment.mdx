@@ -142,7 +142,6 @@ If the health check times out, it triggers a rollback.
 The Docker-healthcheck fallback only works if the container image defines a Docker `HEALTHCHECK`; if no `HEALTHCHECK` is configured and no `healthcheck_url` is provided, the deployment will fail immediately.
 :::
 
-
 ### 5. Rollback (on Failure)
 
 - If the service fails to start or the health check times out,the logic initiates a rollback by calling the swap logic again, but in
