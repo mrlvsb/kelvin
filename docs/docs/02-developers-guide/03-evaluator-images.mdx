@@ -1,0 +1,61 @@
+---
+sidebar_position: 3
+title: Evaluator Images
+---
+
+Kelvin uses a set of Docker images to evaluate student submissions safely and consistently.
+These images are built in a hierarchical manner to minimize duplication and ensure consistency.
+
+## Image Structure
+
+All evaluator images are located in `evaluator/images/`. The structure is designed to allow dependency inheritance between images.
+
+- **`base`**: The base image (`kelvin/base`) that all other images typically inherit from. It contains common tools and configurations (like `locale` settings, common libraries).
+- **Language-specific images**: Images like `gcc`, `java`, `pythonrun`, etc. These inherit from `kelvin/base` (or other kelvin images) and install specific compilers or interpreters.
+
+## Dependency Management
+
+The build system automatically detects dependencies between images by parsing their `Dockerfile` `FROM` instructions.
+For example, if `evaluator/images/gcc/Dockerfile` contains `FROM kelvin/base`, the build system ensures `kelvin/base` is built before `kelvin/gcc`.
+
+## Building Images
+
+To build the images, use the provided `build.py` script located in `evaluator/images/`.
+
+```bash
+cd evaluator/images
+uv run build.py
+```
+
+### Build Options
+
+- **`--dry-run`**: Print the `docker build` commands that would be executed without running them.
+- **`--list-order`**: Print the calculated build order (batches of images that can be built in parallel).
+
+```bash
+uv run build.py --dry-run
+```
+
+## Adding a New Runtime Environment
+
+To add support for a new language or tool:
+
+1. **Create a new directory** in `evaluator/images/` (e.g., `evaluator/images/rust`).
+2. **Create a `Dockerfile`** in that directory.
+3. **Inherit from `kelvin/base`** (or another appropriate parent).
+
+   Example `Dockerfile`:
+
+   ```dockerfile
+   FROM kelvin/base
+
+   RUN apt-get update && apt-get install -y rustc
+   ```
+
+4. **Run the build script**. It will automatically detect the new image and its dependency.
+
+```bash
+uv run build.py
+```
+
+The image will be named `kelvin/<directory_name>` (e.g., `kelvin/rust`).
