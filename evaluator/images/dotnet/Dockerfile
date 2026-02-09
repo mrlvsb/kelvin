@@ -1,4 +1,4 @@
-FROM kelvin/base:latest
+FROM kelvin/base
 
 ENV DOTNET_EnableWriteXorExecute=0
 
