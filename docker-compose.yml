@@ -12,7 +12,7 @@ services:
       dockerfile: Dockerfile
       target: runtime
     image: "ghcr.io/mrlvsb/kelvin:${APP_IMAGE_TAG:-latest}" # Interpolation for Deployment Service
-    pull_policy: never
+    pull_policy: always
     restart: unless-stopped
     environment:
       # Hardcode the DB and Redis hostnames and ports, since they necessarily
@@ -90,7 +90,7 @@ services:
       dockerfile: Dockerfile
       target: evaluator
     image: "ghcr.io/mrlvsb/kelvin-evaluator:${EVALUATOR_IMAGE_TAG:-latest}"
-    pull_policy: never
+    pull_policy: always
     restart: unless-stopped
     command: "rqworker default evaluator --with-scheduler"
     environment:
