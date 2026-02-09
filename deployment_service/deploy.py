@@ -66,6 +66,12 @@ def main():
         default=None,
         help="The full URL for the application's health check endpoint. (e.g., 'https://nginx/api/v2/health'). If not provided, the container's health status will be checked.",
     )
+    parser.add_argument(
+        "--health-check-timeout",
+        type=int,
+        default=None,
+        help="Optional timeout for the health check in seconds. Overrides the server-side default.",
+    )
 
     parser.add_argument(
         "--url",
@@ -97,6 +103,7 @@ def main():
         "image": args.image,
         "commit_sha": args.commit_sha,
         "healthcheck_url": args.healthcheck_url,
+        "health_check_timeout": args.health_check_timeout,
     }
     message_data = json.dumps(message_dict).encode("utf-8")
     signature = hmac.new(secret.encode("utf-8"), message_data, hashlib.sha256).hexdigest()
