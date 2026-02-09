@@ -302,6 +302,14 @@ jobs:
             --commit-sha ${{ github.sha }} \
             --healthcheck-url https://kelvin.cs.vsb.cz/api/v2/health \
             --url https://kelvin.cs.vsb.cz/deployment/
+
+          python3 deployment_service/deploy.py \
+            --service-name evaluator_scheduler \
+            --container-name kelvin_evaluator_scheduler \
+            --image ${{ steps.load_image.outputs.evaluator_image_tag }} \
+            --commit-sha ${{ github.sha }} \
+            --url https://kelvin.cs.vsb.cz/deployment/ \
+            --health-check-timeout 240
         env:
           WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
 
