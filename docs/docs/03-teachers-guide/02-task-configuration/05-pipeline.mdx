@@ -196,6 +196,16 @@ pipeline:
 Commands prefixed with **#** are not shown on the result page.
 :::
 
+### i) Tests
+
+Action for running predefined input/output tests. See [Tests configuration](./03-tests.mdx) for more details.
+
+```yaml
+pipeline:
+  - type: tests
+    image: kelvin/run      # Docker image to use for running tests. Default: kelvin/run
+```
+
 ## Docker
 
 Own private actions can be implemented in any language in a [docker container](https://github.com/mrlvsb/kelvin/tree/master/evaluator/images) and published to the official docker hub.
