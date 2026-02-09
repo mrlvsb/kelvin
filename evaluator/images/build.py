@@ -6,7 +6,7 @@ import subprocess
 import shlex
 
 from pathlib import Path
-from typing import Dict, List, Set, Generator
+from typing import Generator
 
 BASE_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -14,8 +14,8 @@ BASE_PATH = os.path.dirname(os.path.realpath(__file__))
 class ImageBuilder:
     def __init__(self, base_path: str):
         self.base_path = base_path
-        self.deps: Dict[str, List[str]] = {}
-        self.images: Dict[str, str] = {}  # name -> path
+        self.deps: dict[str, list[str]] = {}
+        self.images: dict[str, str] = {}  # name -> path
         self._scan_images()
 
     def _scan_images(self):
@@ -36,8 +36,7 @@ class ImageBuilder:
                         parents.add(image_name)
 
             if not parents:
-                print(f"Image {name} has no FROM instruction")
-                continue
+                raise ValueError(f"Image {name} has no FROM instruction")
 
             if name not in self.deps:
                 self.deps[name] = []
@@ -45,8 +44,8 @@ class ImageBuilder:
             for parent in parents:
                 self.deps[name].append(parent)
 
-    def _build_deps(self, deps: Dict[str, List[str]]) -> List[Set[str]]:
-        """Original dependency resolution algorithm."""
+    def _build_deps(self, deps: dict[str, list[str]]) -> list[set[str]]:
+        """Dependency resolution algorithm."""
         d = dict((k, set(deps[k])) for k in deps)
         r = []
         while d:
@@ -60,7 +59,7 @@ class ImageBuilder:
             d = dict(((k, v - t) for k, v in d.items() if v))
         return r
 
-    def get_build_order(self) -> Generator[List[str], None, None]:
+    def get_build_order(self) -> Generator[list[str], None, None]:
         """Returns batches of images that can be built in parallel, in dependency order."""
         build_groups = self._build_deps(self.deps)
         for group in build_groups:

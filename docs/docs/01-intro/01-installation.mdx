@@ -117,16 +117,10 @@ And then you should be able to find the application on [`http://localhost:8000`]
 
 ### Git pre-commit (prek) hooks
 
-To ensure that the code is formatted correctly and linted, you can install pre-commit (prek) hooks:
+To enable hooks with their installation:
 
 ```bash
-curl --proto '=https' --tlsv1.2 -LsSf https://github.com/j178/prek/releases/download/v0.3.2/prek-installer.sh | sh
-```
-
-and then enable hooks with their installation:
-
-```bash
-prek install
+uv run prek install
 ```
 
 ### Deploying workers
