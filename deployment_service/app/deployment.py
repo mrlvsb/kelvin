@@ -15,7 +15,6 @@ from fastapi import status
 from app.config import get_settings
 from app.models import ImageInfo
 
-HEALTH_CHECK_TIMEOUT = 90  # seconds
 HEALTH_CHECK_INTERVAL = 5  # seconds
 IMAGE_PULL_TIMEOUT = 600  # 10 minutes
 
@@ -67,10 +66,12 @@ class DeploymentManager:
         compose_env_file: Path | None,
         container_name: str,
         healthcheck_url: str | None,
+        health_check_timeout: int | None = None,
     ):
         self.service_name = service_name
         self.container_name = container_name
         self.healthcheck_url = healthcheck_url
+        self.health_check_timeout = health_check_timeout
         self.image_tag = image["tag"]
         self.commit_sha = commit_sha
         self.stable_compose_path = str(compose_path.resolve())
@@ -331,7 +332,8 @@ class DeploymentManager:
         If healthcheck_url is provided, makes HTTP requests to it.
         If healthcheck_url is None, checks the container's Docker health status.
         """
-        end_time = time.time() + HEALTH_CHECK_TIMEOUT
+        timeout = self.health_check_timeout or get_settings().health_check_timeout
+        end_time = time.time() + timeout
 
         if self.healthcheck_url:
             return await self._health_check_http(end_time, self.healthcheck_url)

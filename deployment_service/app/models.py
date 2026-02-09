@@ -54,6 +54,11 @@ class DeploymentRequest(BaseModel):
             examples=["https://kelvin.cs.vsb.cz/api/v2/health"],
         ),
     ]
+    health_check_timeout: int | None = Field(
+        default=None,
+        description="Optional timeout for the health check in seconds. Defaults to global setting if not provided.",
+        examples=[120],
+    )
 
     @field_validator("healthcheck_url", mode="after")
     @classmethod
