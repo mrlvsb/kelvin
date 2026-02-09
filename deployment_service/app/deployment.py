@@ -303,7 +303,7 @@ class DeploymentManager:
                 if "Health" not in state:
                     self.logger.error(
                         "Container has no HEALTHCHECK configured. "
-                        "Please add a HEALTHCHECK to your Dockerfile or provide a --healthcheck-url."
+                        "Please add a HEALTHCHECK to your Dockerfile or provide a healthcheck_url."
                     )
                     return False
 
