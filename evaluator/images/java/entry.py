@@ -126,10 +126,6 @@ def build_java_project(run_tests: bool) -> BuildResult:
     if len(executable_class_names) == 1:
         main_script_lines = [
             "#!/bin/bash",
-            f"JAVA_HOME={os.environ['JAVA_HOME']}",
-            f"MAVEN_HOME={os.environ['MAVEN_HOME']}",
-            f"M2_HOME={os.environ['M2_HOME']}",
-            f"PATH={os.environ['PATH']}",
             f"mvn --quiet exec:java -Dexec.mainClass={executable_class_names[0]}",
         ]
         script_name = "main"
@@ -169,25 +165,6 @@ def build_java_project(run_tests: bool) -> BuildResult:
         tests=tests,
     )
 
-
-def get_java_home():
-    try:
-        java_bin_path = subprocess.check_output("which java", shell=True, text=True).strip()
-        java_real_path = subprocess.check_output(
-            f"readlink -f {java_bin_path}", shell=True, text=True
-        ).strip()
-        java_home = os.path.dirname(os.path.dirname(java_real_path))
-        return java_home
-    except subprocess.CalledProcessError:
-        # Zde můžete logovat chybu nebo vrátit výchozí hodnotu
-        return None
-
-
-# set environment variables
-os.environ["JAVA_HOME"] = get_java_home() or "/usr/lib/jvm/default-java"
-os.environ["M2_HOME"] = "/opt/maven"
-os.environ["MAVEN_HOME"] = "/opt/maven"
-os.environ["PATH"] = f"{os.environ['M2_HOME']}/bin:{os.environ['PATH']}"
 
 run_tests = os.getenv("PIPE_UNITTESTS", False)
 result = build_java_project(run_tests)
