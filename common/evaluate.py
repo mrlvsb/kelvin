@@ -107,11 +107,7 @@ def evaluate_job(submit_url, task_url, token, meta):
 
     logging.info(f"Evaluating {submit_url}")
 
-    # Create kelvin subdirectory in system temp (cross-platform)
-    kelvin_temp = os.path.join(tempfile.gettempdir(), "kelvin")
-    os.makedirs(kelvin_temp, exist_ok=True)
-
-    with tempfile.TemporaryDirectory(dir=kelvin_temp) as workdir:
+    with tempfile.TemporaryDirectory() as workdir:
         os.chdir(workdir)
 
         def untar(url, dest):

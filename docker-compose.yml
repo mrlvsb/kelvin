@@ -99,7 +99,7 @@ services:
       - DOCKER_HOST=docker_proxy:2375
     volumes:
       # Mount /tmp/kelvin so Docker-in-Docker can access temporary evaluation directories
-      - /tmp/kelvin:/tmp/kelvin
+      - /tmp:/tmp
 
   evaluator_cpu:
     container_name: kelvin_evaluator_cpu
@@ -119,8 +119,8 @@ services:
       - REDIS__PORT=${EVALUATOR_REDIS__PORT:-6379}
       - DOCKER_HOST=docker_proxy:2375
     volumes:
-      # Mount /tmp/kelvin so Docker-in-Docker can access temporary evaluation directories
-      - /tmp/kelvin:/tmp/kelvin
+      # Mount /tmp so Docker-in-Docker can access temporary evaluation directories
+      - /tmp:/tmp
 
   evaluator_cuda:
     container_name: kelvin_evaluator_cuda
@@ -140,8 +140,8 @@ services:
       - REDIS__PORT=${EVALUATOR_REDIS__PORT:-6379}
       - DOCKER_HOST=docker_proxy:2375
     volumes:
-      # Mount /tmp/kelvin so Docker-in-Docker can access temporary evaluation directories
-      - /tmp/kelvin:/tmp/kelvin
+      # Mount /tmp so Docker-in-Docker can access temporary evaluation directories
+      - /tmp:/tmp
     deploy:
       resources:
         reservations:
