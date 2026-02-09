@@ -39,7 +39,7 @@ jobs:
   # On PRs, we need everything to be green, while deploy jobs are skipped.
   # On master, we need everything to be green.
   # ALL THE PREVIOUS JOBS NEED TO BE ADDED TO THE `needs` SECTION OF THIS JOB!
-  conclusion:
+  conclusion-images:
     needs: [ build ]
     # We need to ensure this job does *not* get skipped if its dependencies fail,
     # because a skipped job is considered a success by GitHub. So we have to
