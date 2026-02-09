@@ -84,6 +84,7 @@ services:
     depends_on:
       - redis
       - app
+      - docker_proxy
     profiles: [ prod ]
     build:
       context: .
@@ -103,6 +104,8 @@ services:
 
   evaluator_cpu:
     container_name: kelvin_evaluator_cpu
+    depends_on:
+      - docker_proxy
     profiles: [ evaluator-cpu ]
     build:
       context: .
@@ -124,6 +127,8 @@ services:
 
   evaluator_cuda:
     container_name: kelvin_evaluator_cuda
+    depends_on:
+      - docker_proxy
     profiles: [ evaluator-cuda ]
     build:
       context: .
@@ -152,6 +157,8 @@ services:
 
   deployment:
     container_name: kelvin_deployment_service
+    depends_on:
+      - docker_proxy
     profiles: [ prod ]
     build:
       context: deployment_service
@@ -178,6 +185,7 @@ services:
     container_name: kelvin_docker_proxy
     profiles: [ prod ]
     image: alpine/socat
+    restart: unless-stopped
     command: tcp-listen:2375,fork,reuseaddr unix-connect:/var/run/docker.sock
     user: root
     volumes:
