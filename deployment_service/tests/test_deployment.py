@@ -110,8 +110,42 @@ async def test_health_check_timeout(mock_sleep, mock_async_client, manager_insta
         result = await manager_instance._health_check()
 
         assert result is False
-        assert "Health check timed out" in manager_instance.logs[-1]
+        assert "HTTP health check timed out." in manager_instance.logs[-1]
         assert mock_sleep.called
+
+
+@pytest.mark.asyncio
+async def test_health_check_docker_healthy(manager_instance):
+    manager_instance.healthcheck_url = None
+    mock_container = MagicMock()
+    mock_container.attrs = {"State": {"Health": {"Status": "healthy"}}}
+    manager_instance.client.containers.get.return_value = mock_container
+
+    result = await manager_instance._health_check()
+    assert result is True
+    assert "Docker health check passed." in manager_instance.logs[-1]
+
+
+@pytest.mark.asyncio
+@patch("asyncio.sleep", new_callable=AsyncMock)
+async def test_health_check_docker_timeout(mock_sleep, manager_instance):
+    manager_instance.healthcheck_url = None
+    # Fake time that increases every call
+    current_time = 0
+
+    def fake_time():
+        nonlocal current_time
+        current_time += 1
+        return current_time
+
+    with patch("time.time", side_effect=fake_time):
+        mock_container = MagicMock()
+        mock_container.attrs = {"State": {"Health": {"Status": "starting"}}}
+        manager_instance.client.containers.get.return_value = mock_container
+
+        result = await manager_instance._health_check()
+        assert result is False
+        assert "Docker health check timed out." in manager_instance.logs[-1]
 
 
 @pytest.mark.asyncio

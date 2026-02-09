@@ -129,8 +129,10 @@ the specified commit_sha into it using git show. This isolates the new configura
 
 ### 4. Health Check
 
-The manager performs an active health check by repeatedly sending HTTP GET requests to a specified `healthcheck_url`.
-It continuously polls this endpoint until it receives a 200 OK status code, which indicates the service is ready. If the health check times out, it triggers a rollback.
+The manager performs an active health check by repeatedly sending HTTP GET requests to a specified `healthcheck_url` or by using the Docker healthcheck (if the `healthcheck_url` is not specified).
+It continuously polls this endpoint until it receives a 200 OK status code or docker container status changes to `healthy`, which indicates the service is ready.
+
+The timeout for this check defaults to **90 seconds** (configurable via `health_check_timeout` in `config.py`). It can also be overridden per-request by providing a `health_check_timeout` in the deployment payload. If the health check times out, it triggers a rollback.
 
 ### 5. Rollback (on Failure)
 
