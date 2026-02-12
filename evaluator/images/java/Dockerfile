@@ -2,14 +2,13 @@ FROM kelvin/base
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    openjdk-21-jdk \
+    openjdk-25-jdk \
     python3-pip \
     wget && \
     rm -rf /var/lib/apt/lists/*
-#RUN wget https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz -P /tmp
-RUN wget https://repo1.maven.org/maven2/org/apache/maven/apache-maven/3.9.9/apache-maven-3.9.9-bin.tar.gz -P /tmp
+RUN wget https://repo1.maven.org/maven2/org/apache/maven/apache-maven/3.9.12/apache-maven-3.9.12-bin.tar.gz -P /tmp
 RUN tar xf /tmp/apache-maven-*-bin.tar.gz -C /opt
-RUN ln -s /opt/apache-maven-3.9.9/ /opt/maven
+RUN ln -s /opt/apache-maven-3.9.12/ /opt/maven
 RUN echo 'export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))\n\
 export M2_HOME=/opt/maven\n\
 export MAVEN_HOME=/opt/maven\n\
