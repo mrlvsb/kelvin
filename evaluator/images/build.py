@@ -88,8 +88,28 @@ class ImageBuilder:
             else:
                 subprocess.check_call(cmd, cwd=image_dir)
 
-    def build(self, dry_run: bool = False):
+    def _get_all_parents(self, image: str) -> set[str]:
+        """Returns all transitive kelvin/ parents of the given image, including itself."""
+        result = {image}
+        queue = [image]
+        while queue:
+            current = queue.pop()
+            for parent in self.deps.get(current, []):
+                if parent.startswith("kelvin/") and parent not in result:
+                    result.add(parent)
+                    queue.append(parent)
+        return result
+
+    def build(self, dry_run: bool = False, only: str | None = None):
+        if only is not None:
+            if only not in self.images:
+                available = ", ".join(sorted(self.images.keys()))
+                raise ValueError(f"Unknown image '{only}'. Available images: {available}")
+            needed = self._get_all_parents(only)
+
         for batch in self.get_build_order():
+            if only is not None:
+                batch = [img for img in batch if img in needed]
             for image in batch:
                 self._build_single_image(image, dry_run)
 
@@ -98,11 +118,22 @@ def main():
     parser = argparse.ArgumentParser(description="Manage Kelvin Docker images")
 
     parser.add_argument("--dry-run", action="store_true", help="Print commands without executing")
+    parser.add_argument(
+        "--image",
+        default=None,
+        help="Build only this image (and its parents). "
+        "Use the short name (e.g. 'gcc') or full name (e.g. 'kelvin/gcc').",
+    )
 
     args = parser.parse_args()
 
     builder = ImageBuilder(BASE_PATH)
-    builder.build(dry_run=args.dry_run)
+
+    only = args.image
+    if only is not None and not only.startswith("kelvin/"):
+        only = f"kelvin/{only}"
+
+    builder.build(dry_run=args.dry_run, only=only)
 
 
 if __name__ == "__main__":
