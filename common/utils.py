@@ -7,11 +7,29 @@ from functools import lru_cache
 from typing import NewType
 
 import django.contrib.auth.models
+import nh3
 import requests
 from django.http import HttpRequest
 from ipware import get_client_ip
 
 from .inbus import inbus
+
+# Characters that are dangerous in HTML context and have no legitimate use in source filenames.
+_UNSAFE_FILENAME_CHARS = re.compile(r'[<>"\'&;`|]')
+
+
+def has_unsafe_filename(path: str) -> bool:
+    """
+    Returns True if any component of the path contains characters that could
+    be used for XSS or shell injection attacks.
+    Legitimate source files should never contain these characters.
+
+    Uses two layers of detection:
+    1. Regex for shell/HTML dangerous characters
+    2. nh3.is_html() to catch any HTML syntax patterns the regex might miss
+    """
+    return bool(_UNSAFE_FILENAME_CHARS.search(path)) or nh3.is_html(path)
+
 
 IPAddressString = NewType("IPAddressString", str)
 
