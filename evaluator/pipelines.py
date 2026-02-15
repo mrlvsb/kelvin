@@ -11,6 +11,8 @@ from .results import TestResult
 from . import testsets
 
 from .utils import parse_human_size, copyfile
+from . import type_handlers
+from dataclasses import fields, replace
 
 logger = logging.getLogger("evaluator")
 
@@ -38,6 +40,69 @@ IMAGE_LIMITS = {
         "fsize": "16M",
     },
 }
+
+
+class TypePipe:
+    handler_cls = None
+    id = None
+    default_limits = type_handlers.ExecutionLimits(fsize="16M", memory="128M", network="none")
+
+    def __init__(self, image=None, limits=None, before=None, **kwargs):
+        self.image = image
+        self.kwargs = kwargs
+        self.limits = limits if limits else {}
+        self.before = [] if not before else before
+
+    def _resolve_limits(self):
+        # 1. Start with class defaults (e.g. GccPipe defaults)
+        limits_obj = self.default_limits
+
+        # 2. Update with user config limits by iterating over dataclass fields
+        updates = {}
+        for f in fields(type_handlers.ExecutionLimits):
+            if f.name in self.limits:
+                val = self.limits[f.name]
+                # Coerce to the field's declared type
+                updates[f.name] = f.type(val) if callable(f.type) else val
+
+        return replace(limits_obj, **updates)
+
+    def run(self, evaluation):
+        result_dir = os.path.join(evaluation.result_path, self.id)
+        os.mkdir(result_dir)
+
+        image_name = self.image
+        if self.image:
+            image_name = prepare_container(docker_image(self.image), self.before)
+
+        resolved_limits = self._resolve_limits()
+
+        handler = self.handler_cls(self.kwargs, evaluation, resolved_limits)
+        result = handler.compile(image_name)
+
+        if result.comments or result.tests:
+            with open(os.path.join(result_dir, "piperesult.json"), "w") as f:
+                json.dump({"comments": result.simple_comments, "tests": result.tests}, f, indent=4)
+
+        with open(os.path.join(result_dir, "result.html"), "w") as f:
+            f.write(result.html)
+
+        return {
+            "failed": not result.success,
+            "html": result.html,
+            "comments": result.simple_comments,
+            "tests": result.tests,
+        }
+
+
+class GccPipe(TypePipe):
+    handler_cls = type_handlers.Gcc
+    default_limits = type_handlers.ExecutionLimits(fsize="64M", memory="128M", network="none")
+
+    def __init__(self, **kwargs):
+        if "image" not in kwargs:
+            kwargs["image"] = "kelvin/gcc"
+        super().__init__(**kwargs)
 
 
 def create_docker_cmd(evaluation, image, additional_args=None, cmd=None, limits=None, env=None):
