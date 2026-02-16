@@ -9,7 +9,7 @@ Kelvin relies on several runtime services, so some setup is required before use.
 
 ```bash
 apt-get install libsasl2-dev libgraphviz-dev graphviz gcc libxml2-dev libxslt1-dev libffi-dev \
-  libz-dev python3-pip curl pre-commit
+  libz-dev curl
 ```
 
 ## Install Python dependencies
@@ -115,12 +115,12 @@ And then you should be able to find the application on [`http://localhost:8000`]
 
 ---
 
-### Git pre-commit hooks
+### Git pre-commit (prek) hooks
 
-To ensure that the code is formatted correctly and linted, you can install pre-commit hooks:
+To enable hooks with their installation:
 
 ```bash
-pre-commit install
+uv run prek install
 ```
 
 ### Deploying workers
@@ -146,5 +146,5 @@ uv run build.py
 Then you can start a worker with the following command (in kelvin root folder):
 
 ```bash
-uv run manage.py rqworker default evaluator summary --with-scheduler
+uv run manage.py rqworker default evaluator --with-scheduler
 ```

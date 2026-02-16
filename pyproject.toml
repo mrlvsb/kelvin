@@ -49,12 +49,12 @@ dependencies = [
     "py7zr==1.0.0",
 ]
 
-[tool.uv]
-dev-dependencies = [
-    "pre-commit>=3.8.0",
+[dependency-groups]
+dev = [
     "ruff==0.6.3",
     "pyrefly==0.18.0",
     "django-debug-toolbar>=6.0.0",
+    "prek>=0.3.2",
 ]
 
 [tool.ruff]
