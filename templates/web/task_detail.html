@@ -122,30 +122,30 @@
 <div class="card mb-3">
     <div class="card-header">
         <ul class="nav nav-tabs card-header-tabs navbar-expand-lg" role="tablist">
-            <li class="nav-item">
-                <a class="nav-link active" data-toggle="tab" href="#assignment">Assignment</a>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab_assignment" data-tab-name="assignment" type="button" role="tab">Assignment</button>
             </li>
             {% if inputs.tests_dict %}
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="tab" href="#tests">Tests</a>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab_tests" data-tab-name="tests" type="button" role="tab">Tests</button>
             </li>
             {% endif %}
             {% if submit %}
 
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="tab" href="#src">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab_src" data-tab-name="src" type="button" role="tab">
                   Source code
                   {% if comment_count and comment_count > 0 %}
                     <span class="badge bg-secondary">{{ comment_count }}</span>
                   {% endif %}
-                </a>
+                </button>
             </li>
 
             {% if has_pipeline %}
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="tab" href="#result">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab_result" data-tab-name="result" type="button" role="tab">
                   Result #{{ submit.submit_num }} <span class="iconify" data-icon="{{ pipeline_result_icon }}"></span>
-                </a>
+                </button>
             </li>
             {% endif %}
 
@@ -306,22 +306,22 @@
     const tabControl = document.querySelector('.nav-tabs');
     if (!tabControl) return;
 
-    const tabLinks = tabControl.querySelectorAll('a');
-    if (!tabLinks) return;
+    const tabButtons = tabControl.querySelectorAll('button[data-tab-name]');
+    if (!tabButtons) return;
 
     const keyTabMap = {};
-    tabLinks.forEach((tab, index) => {
+    tabButtons.forEach((tab, index) => {
       if (index < 9)
-        keyTabMap[`Digit${index + 1}`] = tab.href;
+        keyTabMap[`Digit${index + 1}`] = tab;
       else if (index === 9)
-        keyTabMap.Digit0 = tab.href;
+        keyTabMap.Digit0 = tab;
     });
 
     window.addEventListener('keydown', e => {
         if (e.target.tagName === 'INPUT' || e.target.isContentEditable) return;
 
         if (e.code in keyTabMap) {
-            window.location.href = keyTabMap[e.code];
+            keyTabMap[e.code].click();
         }
     });
 

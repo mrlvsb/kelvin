@@ -125,15 +125,15 @@ if (!enableNewUI) createElement('color-theme', ColorTheme);
 
 function focusTab() {
     const hash = document.location.hash.replace('#', '').split('-')[0].split(';')[0];
-    const link = document.querySelector(`[data-toggle="tab"][href="#${hash}"]`);
-    if (!link) {
+    const btn = document.querySelector(`[data-tab-name="${hash}"]`);
+    if (!btn) {
         return;
     }
 
-    link.closest('ul')
+    btn.closest('ul')
         .querySelectorAll('.nav-link')
         .forEach((el) => el.classList.remove('active'));
-    link.classList.add('active');
+    btn.classList.add('active');
 
     document
         .querySelectorAll('.tab-content .tab-pane')
@@ -144,6 +144,17 @@ function focusTab() {
 
 window.addEventListener('hashchange', focusTab);
 window.addEventListener('DOMContentLoaded', focusTab);
+
+// Handle Markdown-generated hash links (e.g. [Tests](#tests)) by activating the corresponding tab
+document.addEventListener('click', function(e) {
+    const anchor = e.target.closest('a[href^="#"]');
+    if (!anchor) return;
+    const hash = anchor.getAttribute('href').replace('#', '');
+    const btn = document.querySelector(`[data-tab-name="${hash}"]`);
+    if (!btn) return;
+    e.preventDefault();
+    btn.click();
+});
 
 import { createApp, defineCustomElement, h } from 'vue';
 import SuspensionWrapper from './components/SuspensionWrapper.vue';
