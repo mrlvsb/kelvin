@@ -80,7 +80,6 @@ class ExecutionLimits:
 class BuildCommand:
     cmd: list[str]
     env: dict[str, str] = field(default_factory=dict)
-    output_dir: Optional[str] = None
 
 
 class BuildError(Exception):
@@ -303,6 +302,7 @@ class Gcc(TypeHandler):
 
         # Find any new executable and rename it to the expected output
         output_bin = self.config.get("output", "main")
+        output_bin = os.path.basename(output_bin)
         output_path = os.path.join(self.evaluation.submit_path, output_bin)
 
         if not os.path.exists(output_path):
@@ -362,6 +362,7 @@ class Gcc(TypeHandler):
 
         # GCC fallback
         output_bin = self.config.get("output", "main")
+        output_bin = os.path.basename(output_bin)
         flags = self.config.get("flags", "")
         ldflags = self.config.get("ldflags", "")
 
@@ -378,7 +379,7 @@ class Gcc(TypeHandler):
                         sources.append(os.path.join(rel_dir, f))
 
         if not sources:
-            raise BuildError("Missing source files! please upload .c or .cpp files!")
+            raise BuildError("Missing source files! Please upload .c or .cpp files!")
 
         use_cpp = any(Path(f).suffix in (".cpp", ".cc", ".cxx") for f in sources)
         compiler = "g++" if use_cpp else "gcc"

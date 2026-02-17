@@ -62,8 +62,22 @@ class TypePipe:
         for f in fields(type_handlers.ExecutionLimits):
             if f.name in self.limits:
                 val = self.limits[f.name]
-                # Coerce to the field's declared type
-                updates[f.name] = f.type(val) if callable(f.type) else val
+                if val is None:
+                    continue
+                # Coerce val to the field's type if needed (e.g. "30" → int).
+                # isinstance(field_type, type) skips complex hints like Optional[str].
+                field_type = f.type
+                try:
+                    if isinstance(field_type, type) and not isinstance(val, field_type):
+                        val = field_type(val)
+                    updates[f.name] = val
+                except (TypeError, ValueError):
+                    logger.warning(
+                        "Could not coerce limit %r value %r to %s, using default",
+                        f.name,
+                        val,
+                        field_type.__name__,
+                    )
 
         return replace(limits_obj, **updates)
 
@@ -151,7 +165,7 @@ def create_docker_cmd(evaluation, image, additional_args=None, cmd=None, limits=
         "-v",
         evaluation.submit_path + ":/work",
         "--ulimit",
-        f'fsize={limits["fsize"]}:{limits["fsize"]}',
+        f"fsize={limits['fsize']}:{limits['fsize']}",
         "-m",
         str(limits["memory"]),
         "--memory-swap",
