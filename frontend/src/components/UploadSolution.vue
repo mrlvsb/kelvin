@@ -22,8 +22,7 @@ const filesQuestion = ref<string[]>([]);
 const uploadFormData = ref<FormData | null>(null);
 const dropping = ref(false);
 const progress = ref<number | null>(null);
-const error = ref(false);
-const errorMessage = ref<string>('Upload failed.\nTry again or use the upload button.');
+const error = ref<string | null>(null);
 const remainingMS = ref(-1);
 const queued = ref<FormData | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -96,8 +95,7 @@ const parseErrorMessage = (xhr: XMLHttpRequest) => {
 
 const upload = (formData: FormData) => {
   progress.value = 0;
-  error.value = false;
-  errorMessage.value = 'Upload failed.\nTry again or use the upload button.';
+  error.value = null;
 
   const xhr = new XMLHttpRequest();
   xhr.responseType = 'text';
@@ -116,14 +114,12 @@ const upload = (formData: FormData) => {
       return;
     }
 
-    errorMessage.value = parseErrorMessage(xhr);
-    error.value = true;
+    error.value = parseErrorMessage(xhr);
     progress.value = null;
   });
 
   xhr.addEventListener('error', () => {
-    errorMessage.value = 'Network error.\nCheck your connection and try again.';
-    error.value = true;
+    error.value = 'Network error.\nCheck your connection and try again.';
     progress.value = null;
   });
 
@@ -143,12 +139,11 @@ const acceptUpload = () => {
 };
 
 const dismiss = () => {
-  if (!error.value && !queued.value) {
+  if (error.value === null && !queued.value) {
     return;
   }
 
-  error.value = false;
-  errorMessage.value = 'Upload failed.\nTry again or use the upload button.';
+  error.value = null;
   dropping.value = false;
   progress.value = null;
   queued.value = null;
@@ -325,12 +320,12 @@ onUnmounted(() => {
       dropping,
       uploading: progress !== null,
       queued: queued !== null,
-      error
+      error: error !== null
     }"
     @click="dismiss"
   >
-    <span v-if="error" class="text-danger" style="white-space: pre-line">
-      {{ errorMessage }}
+    <span v-if="error !== null" class="text-danger" style="white-space: pre-line">
+      {{ error }}
     </span>
 
     <span v-else-if="queued !== null">
