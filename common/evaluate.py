@@ -15,7 +15,7 @@ from django.utils import timezone
 from common.ai_review.processor import enqueue_llm_review_job
 from common.utils import is_teacher, build_absolute_uri
 from evaluator.evaluator import Evaluation
-from evaluator.testsets import TestSet
+from evaluator.evaluation import EvaluationContext
 from kelvin.settings import BASE_DIR
 
 
@@ -71,7 +71,7 @@ def evaluate_submit(request, submit, meta=None):
     meta = {
         **get_meta(submit.student.username),
         "before_announce": not is_teacher(submit.student)
-        and submit.assignment.assigned > timezone.now(),
+                           and submit.assignment.assigned > timezone.now(),
         "deadline": submit.assignment.deadline,
         "max_points": submit.assignment.max_points,
         "submitted_at": submit.created_at,
@@ -79,7 +79,7 @@ def evaluate_submit(request, submit, meta=None):
     }
 
     task_dir = os.path.join(BASE_DIR, "tasks", submit.assignment.task.code)
-    task = TestSet(task_dir, meta)
+    task = EvaluationContext(task_dir, meta)
 
     # Async configuration section
     task_config = load_task_config(str(task_dir))

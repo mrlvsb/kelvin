@@ -3,6 +3,7 @@ import os
 import shlex
 import re
 import traceback
+from typing import Any, Dict, Optional
 
 import yaml
 
@@ -128,8 +129,25 @@ def parse_bool(value):
     raise ValueError(f"Could not convert {value} to bool")
 
 
-class TestSet:
-    def __init__(self, task_path, meta=None):
+class EvaluationContext:
+    """
+    Context for evaluating submits of a given task.
+
+    The context is loaded from a task directory, and it may contain:
+    - config.yml: defines the individual jobs of the evaluation workflow
+    - tests.yml: defines tests which should be executed when running the `tests` job
+    - test files: those are automatically detected and added to the test set
+    - script.py: custom Python script that can generate custom tests and provide variables for
+      readme.md
+    - readme.md: task README which can be enhanced by script.py
+    """
+
+    def __init__(self, task_path: str, meta: Optional[Dict[str, Any]] = None):
+        """
+        - `task_path` is a task directory
+        - `meta` contains additional metadata which is passed to script.py when evaluating dynamic
+        context data.
+        """
         self.task_path = task_path
         self.meta = meta if meta else {}
         self.tests_dict = {}
@@ -176,7 +194,7 @@ class TestSet:
             name = f.split(".")[0]
             path = os.path.join(self.task_path, f)
 
-            n = f[len(name) + 1 :]
+            n = f[len(name) + 1:]
             if n in ["in", "out", "err"]:
                 self.create_test(name).files["std" + n] = TestFile(File(path), n == "in")
 

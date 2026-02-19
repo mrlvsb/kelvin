@@ -1,13 +1,13 @@
 import io
 from pathlib import Path
 
-from evaluator.testsets import TestSet
+from evaluator.evaluation import EvaluationContext
 
 ASSETS_DIR = Path(__file__).absolute().parent / "assets"
 SCRIPT_TEMPLATE = ASSETS_DIR / "run-tests.py"
 
 
-def render_test_script(tests: TestSet) -> io.BytesIO:
+def render_test_script(tests: EvaluationContext) -> io.BytesIO:
     """
     Renders the script at assets/run-tests.py, and passes information about tests to it.
     The script will then run all tests and check if they were executed correctly.

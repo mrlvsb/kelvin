@@ -8,7 +8,7 @@ import hashlib
 import logging
 from common.utils import points_to_color
 from .results import TestResult
-from . import testsets
+from . import evaluation as eval_module
 
 from .utils import parse_human_size, copyfile
 
@@ -377,7 +377,7 @@ class TestsPipe:
                     elif name == "stderr":
                         msg = "Standard error (<strong>stderr</strong>) is empty. Did you mean to use this?<pre><code class='c'>fprintf(stderr, \"message\\n\");</code></pre>"
 
-                    opts["actual"] = testsets.TestFile(testsets.File(io.StringIO()))
+                    opts["actual"] = eval_module.TestFile(eval_module.File(io.StringIO()))
 
                 success, output, diff = text_compare(opts["expected"].path, opts["actual"].path)
                 if output:

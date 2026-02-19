@@ -4,7 +4,7 @@ import shutil
 import re
 import io
 
-from .testsets import File, TestFile
+from .evaluation import File, TestFile
 from .utils import copyfile
 
 
@@ -38,7 +38,7 @@ class TestResult:
                 if not file.startswith(f"{self['name']}."):
                     continue
 
-                n = file[len(self["name"]) + 1 :]
+                n = file[len(self["name"]) + 1:]
                 base = re.sub(r"\.expected$", "", n)
                 base = re.sub(r"^(file_in|html|diff)\.", "", base)
                 base = aliases.get(base, base)

@@ -59,7 +59,7 @@ from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadlin
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher
 from evaluator.results import EvaluationResult
-from evaluator.testsets import TestSet
+from evaluator.evaluation import EvaluationContext
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from quiz.models import AssignedQuiz, EnrolledQuiz
 from quiz.quiz_utils import quiz_to_html, score_quiz
@@ -186,9 +186,9 @@ def student_index(request: HttpRequest) -> HttpResponse:
     semesters = []
     for year, winter in (
         Class.objects.filter(students__pk=request.user.id)
-        .values_list("semester__year", "semester__winter")
-        .distinct()
-        .order_by("semester__begin", "semester__winter")
+            .values_list("semester__year", "semester__winter")
+            .distinct()
+            .order_by("semester__begin", "semester__winter")
     ):
         semesters.append(
             {
@@ -346,7 +346,7 @@ def task_detail(
         "max_inline_content_bytes": MAX_INLINE_CONTENT_BYTES,
         "has_pipeline": bool(testset.pipeline),
         "upload": (not user_is_teacher or request.user.username == login)
-        and not (hard_deadline and assignment.is_past_deadline()),
+                  and not (hard_deadline and assignment.is_past_deadline()),
     }
 
     # Provide a link to a student with the same assignment who doesn't yet have any assigned points
@@ -616,13 +616,14 @@ def raw_test_content(request, task_name, test_name, file):
     raise HttpException404()
 
 
-def create_taskset(task: Task, user: str, meta: Optional[Dict[str, Any]] = None) -> TestSet:
+def create_taskset(task: Task, user: str,
+                   meta: Optional[Dict[str, Any]] = None) -> EvaluationContext:
     meta_dict = get_meta(user)
 
     if meta is not None:
         meta_dict.update(meta)
     task_dir = os.path.join(BASE_DIR, "tasks", task.code)
-    return TestSet(task_dir, meta_dict)
+    return EvaluationContext(task_dir, meta_dict)
 
 
 def check_is_task_accessible(request: HttpRequest, task: Task):
@@ -636,7 +637,7 @@ def check_is_task_accessible(request: HttpRequest, task: Task):
 
 @login_required
 def tar_test_data(request: HttpRequest, task_name: str) -> HttpResponse:
-    def include_tests_script(tar, tests: TestSet):
+    def include_tests_script(tar, tests: EvaluationContext):
         test_script = render_test_script(tests)
         info = tarfile.TarInfo("run-tests.py")
         info.size = len(test_script.getvalue())

@@ -28,7 +28,7 @@ from common.models import (
 )
 from common.utils import is_teacher
 from evaluator.results import EvaluationResult
-from evaluator.testsets import TestSet
+from evaluator.evaluation import EvaluationContext
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
 from quiz.models import Quiz, EnrolledQuiz
 from quiz.quiz_utils import quiz_to_html, quiz_assigned_classes
@@ -43,7 +43,7 @@ def teacher_task(request: HttpRequest, task_id: int) -> HttpResponse:
     task = get_object_or_404(Task, pk=task_id)
     task_dir = os.path.join(BASE_DIR, "tasks", task.code)
 
-    testset = TestSet(task_dir, get_meta(request.user.username))
+    testset = EvaluationContext(task_dir, get_meta(request.user.username))
 
     return render(
         request,
