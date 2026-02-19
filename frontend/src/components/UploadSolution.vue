@@ -237,9 +237,26 @@ const setupUploadInput = () => {
   fileInputLabel.value = input.nextElementSibling as HTMLElement | null;
 
   const handleChange = () => {
-    setStoredDate(new Date());
-    setSubmittedToast(true);
-    input.form?.submit();
+    if (!input.files?.length) {
+      return;
+    }
+
+    const formData = new FormData();
+    const fileNames: string[] = [];
+
+    for (const file of Array.from(input.files)) {
+      formData.append('solution', file);
+      fileNames.push(file.name);
+    }
+
+    formData.append('paths', fileNames.join('\n'));
+
+    if (remainingMS.value <= 0) {
+      upload(formData);
+      return;
+    }
+
+    queued.value = formData;
   };
 
   input.addEventListener('change', handleChange);

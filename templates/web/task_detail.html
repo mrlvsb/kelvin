@@ -201,8 +201,7 @@
                         <form method="post" enctype="multipart/form-data" class="d-inline">
                             {% csrf_token %}
                             <input type="file" name="solution" multiple hidden id="upload-choose"
-                                   onclick="this.value=null;"
-                                   onchange="this.form.submit()">
+                                   onclick="this.value=null;">
 
                             <span id="upload_button"
                                   class="btn btn-sm btn-primary"
