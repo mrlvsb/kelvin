@@ -79,15 +79,15 @@ def evaluate_submit(request, submit, meta=None):
     }
 
     task_dir = os.path.join(BASE_DIR, "tasks", submit.assignment.task.code)
-    task = EvaluationContext(task_dir, meta)
+    eval_ctx = EvaluationContext(task_dir, meta)
 
     # Async configuration section
     task_config = load_task_config(str(task_dir))
     enqueue_llm_review_job(request, submit, task_config, submit_url, token)
 
     # Enqueue the evaluation job
-    return django_rq.get_queue(task.queue).enqueue(
-        evaluate_job, submit_url, task_url, token, meta, job_timeout=task.timeout
+    return django_rq.get_queue(eval_ctx.queue).enqueue(
+        evaluate_job, submit_url, task_url, token, meta, job_timeout=eval_ctx.timeout
     )
 
 

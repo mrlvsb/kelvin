@@ -247,29 +247,27 @@
             <div class="tab-pane" id="tab_tests">
                 <a href="{% url 'tar_test_data' task.code %}{% if submit %}?student={{submit.student}}{%endif%}" class="float-end">Download all tests</a>
 
-                {% for input in inputs %}
-                <h2>{{ input.title }}{% if input.title != input.name %} <span class="text-muted">({{ input.name }})</span>{% endif %}</h2>
+                {% for test in inputs.tests %}
+                <h2>{{ test.title }}{% if test.title != test.name %} <span class="text-muted">({{ test.name }})</span>{% endif %}</h2>
 
-                {{ input.assignment | markdown:task.code | safe }}
-
-                <code style="display: block">$ ./main {{ input.escaped_args }}</code>
-                {% if input.exit_code != 0 %}
-                <div class="text-muted">exit code: {{ input.exit_code }}</div>
+                <code style="display: block">$ ./main {{ test.escaped_args }}</code>
+                {% if test.exit_code != 0 %}
+                <div class="text-muted">exit code: {{ test.exit_code }}</div>
                 {% endif %}
 
-                {% for path, file in input.sorted_files %}
+                {% for path, file in test.sorted_files %}
                 <div class="card mb-3">
                     <div class="card-header">
                         <h5>
                           {{ path }}
-                          (<a href="{% url 'raw_test_content' task.code input.name path %}{% if submit %}?student={{submit.student}}{%endif%}">Raw content</a>)
+                          (<a href="{% url 'raw_test_content' task.code test.name path %}{% if submit %}?student={{submit.student}}{%endif%}">Raw content</a>)
                         </h5>
                     </div>
                     <div class="card-body">
                         {% if file.size < max_inline_content_bytes or not max_inline_content_bytes %}
                         <pre>{{ file.read }}</pre>
                         {% else %}
-                            Content too large, show <a href='{% url 'raw_test_content' task.code input.name path %}'>raw content</a>.
+                            Content too large, show <a href='{% url 'raw_test_content' task.code test.name path %}'>raw content</a>.
                         {% endif %}
                     </div>
                 </div>

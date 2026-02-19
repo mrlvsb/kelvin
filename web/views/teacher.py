@@ -43,15 +43,15 @@ def teacher_task(request: HttpRequest, task_id: int) -> HttpResponse:
     task = get_object_or_404(Task, pk=task_id)
     task_dir = os.path.join(BASE_DIR, "tasks", task.code)
 
-    testset = EvaluationContext(task_dir, get_meta(request.user.username))
+    eval_ctx = EvaluationContext(task_dir, get_meta(request.user.username))
 
     return render(
         request,
         "web/task_detail.html",
         {
             "task": task,
-            "text": testset.load_readme(),
-            "inputs": testset,
+            "text": eval_ctx.load_readme(),
+            "inputs": eval_ctx,
             "max_inline_content_bytes": MAX_INLINE_CONTENT_BYTES,
         },
     )

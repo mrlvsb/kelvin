@@ -314,12 +314,11 @@ def task_detail(
             raise HttpException403()
 
     assignment = get_object_or_404(AssignedTask, id=assignment_id)
-    testset = create_taskset(
+    eval_ctx = load_eval_ctx(
         assignment.task,
         login if login else request.user.username,
         meta=dict(assignment=assignment.id),
     )
-
     is_announce = False
     if assignment.assigned > timezone.now() and not user_is_teacher:
         is_announce = True
@@ -341,10 +340,10 @@ def task_detail(
         "hard_deadline": hard_deadline,
         "submits": submits,
         "multiple_ip_addresses": len(set(s.ip_address for s in submits)) > 1,
-        "text": testset.load_readme().announce if is_announce else testset.load_readme(),
-        "inputs": None if is_announce else testset,
+        "text": eval_ctx.load_readme().announce if is_announce else eval_ctx.load_readme(),
+        "inputs": None if is_announce else eval_ctx,
         "max_inline_content_bytes": MAX_INLINE_CONTENT_BYTES,
-        "has_pipeline": bool(testset.pipeline),
+        "has_pipeline": bool(eval_ctx.pipeline),
         "upload": (not user_is_teacher or request.user.username == login)
                   and not (hard_deadline and assignment.is_past_deadline()),
     }
@@ -605,19 +604,18 @@ def raw_test_content(request, task_name, test_name, file):
     if is_teacher(request.user) and "student" in request.GET:
         username = request.GET["student"]
 
-    tests = create_taskset(task, username)
+    eval_ctx = load_eval_ctx(task, username)
 
-    for test in tests:
-        if test.name == test_name:
-            if file in test.files:
-                return file_response(
-                    test.files[file].open("rb"), f"{test_name}.{file}", "text/plain"
-                )
+    test = eval_ctx.tests_dict.get(test_name)
+    if test is not None and file in test.files:
+        return file_response(
+            test.files[file].open("rb"), f"{test_name}.{file}", "text/plain"
+        )
     raise HttpException404()
 
 
-def create_taskset(task: Task, user: str,
-                   meta: Optional[Dict[str, Any]] = None) -> EvaluationContext:
+def load_eval_ctx(task: Task, user: str,
+                  meta: Optional[Dict[str, Any]] = None) -> EvaluationContext:
     meta_dict = get_meta(user)
 
     if meta is not None:
@@ -637,8 +635,8 @@ def check_is_task_accessible(request: HttpRequest, task: Task):
 
 @login_required
 def tar_test_data(request: HttpRequest, task_name: str) -> HttpResponse:
-    def include_tests_script(tar, tests: EvaluationContext):
-        test_script = render_test_script(tests)
+    def include_tests_script(tar, eval_ctx: EvaluationContext):
+        test_script = render_test_script(eval_ctx)
         info = tarfile.TarInfo("run-tests.py")
         info.size = len(test_script.getvalue())
         # Owner: rwx, group: rwx, other: r
@@ -653,17 +651,17 @@ def tar_test_data(request: HttpRequest, task_name: str) -> HttpResponse:
     if is_teacher(request.user) and "student" in request.GET:
         username = request.GET["student"]
 
-    tests = create_taskset(task, username)
+    eval_ctx = load_eval_ctx(task, username)
 
     with io.BytesIO() as f:
         with tarfile.open(fileobj=f, mode="w:gz") as tar:
-            for test in tests:
+            for test in eval_ctx.tests:
                 for file_path in test.files:
                     test_file = test.files[file_path]
                     info = tarfile.TarInfo(os.path.join(test.name, file_path))
                     info.size = test_file.size()
                     tar.addfile(info, fileobj=test_file.open("rb"))
-            include_tests_script(tar, tests)
+            include_tests_script(tar, eval_ctx)
 
         f.seek(0)
         return file_response(f, f"{task_name}.tar.gz", "application/tar")

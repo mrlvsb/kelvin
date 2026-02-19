@@ -293,7 +293,7 @@ class TestsPipe:
             .decode("utf-8")
             .strip()
         )
-        for test in evaluation.tests:
+        for test in evaluation.tests.tests:
             result = TestResult(result_dir, {"name": test.name})
 
             # copy input files to the sandbox
