@@ -186,9 +186,9 @@ def student_index(request: HttpRequest) -> HttpResponse:
     semesters = []
     for year, winter in (
         Class.objects.filter(students__pk=request.user.id)
-            .values_list("semester__year", "semester__winter")
-            .distinct()
-            .order_by("semester__begin", "semester__winter")
+        .values_list("semester__year", "semester__winter")
+        .distinct()
+        .order_by("semester__begin", "semester__winter")
     ):
         semesters.append(
             {
@@ -345,7 +345,7 @@ def task_detail(
         "max_inline_content_bytes": MAX_INLINE_CONTENT_BYTES,
         "has_pipeline": bool(eval_ctx.pipeline),
         "upload": (not user_is_teacher or request.user.username == login)
-                  and not (hard_deadline and assignment.is_past_deadline()),
+        and not (hard_deadline and assignment.is_past_deadline()),
     }
 
     # Provide a link to a student with the same assignment who doesn't yet have any assigned points
@@ -608,14 +608,13 @@ def raw_test_content(request, task_name, test_name, file):
 
     test = eval_ctx.tests_dict.get(test_name)
     if test is not None and file in test.files:
-        return file_response(
-            test.files[file].open("rb"), f"{test_name}.{file}", "text/plain"
-        )
+        return file_response(test.files[file].open("rb"), f"{test_name}.{file}", "text/plain")
     raise HttpException404()
 
 
-def load_eval_ctx(task: Task, user: str,
-                  meta: Optional[Dict[str, Any]] = None) -> EvaluationContext:
+def load_eval_ctx(
+    task: Task, user: str, meta: Optional[Dict[str, Any]] = None
+) -> EvaluationContext:
     meta_dict = get_meta(user)
 
     if meta is not None:

@@ -440,7 +440,7 @@ def record_test_files(tests: Dict[str, Test], task_path: str):
         name = f.split(".")[0]
         path = os.path.join(task_path, f)
 
-        n = f[len(name) + 1:]
+        n = f[len(name) + 1 :]
         if n in ["in", "out", "err"]:
             get_test(name).files["std" + n] = TestFile(File(path), n == "in")
 
