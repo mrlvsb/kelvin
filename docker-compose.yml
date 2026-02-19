@@ -26,8 +26,12 @@ services:
       - DATABASE__USERNAME=${DATABASE__USERNAME}
       - DATABASE__PASSWORD=${DATABASE__PASSWORD}
       - KELVIN__HOST_URL=${KELVIN__HOST_URL}
-      # - Defaults to 'https://nginx' for local docker development (to fix loopback ref to 127.0.0.1)
-      # - IGNORED by app if value is 'https://nginx' AND DEBUG=False
+      # - Defaults to 'https://nginx' for local Docker development.
+      #   In Docker, 'localhost' refers to the container itself, so we use the service name 'nginx'
+      #   to communicate with the Nginx container through Docker's internal DNS.
+      # - IMPORTANT: This default value is IGNORED in Production (DEBUG=False).
+      #   For production, we use a real public URL from the public hostname from the incoming HTTP request (e.g., https://kelvin.cs.vsb.cz).
+      #   Using the internal 'https://nginx' URL in production would result in broken links for users.
       - API_INTERNAL_BASEURL=${API_INTERNAL_BASEURL:-https://nginx}
     volumes:
       - app_static:/app/static
@@ -93,7 +97,7 @@ services:
     image: "ghcr.io/mrlvsb/kelvin-evaluator:${EVALUATOR_IMAGE_TAG:-latest}"
     pull_policy: always
     restart: unless-stopped
-    command: "rqworker default evaluator --with-scheduler"
+    command: "rqworker default --with-scheduler"
     environment:
       - REDIS__HOST=redis
       - REDIS__PORT=6379
@@ -114,7 +118,7 @@ services:
     image: "ghcr.io/mrlvsb/kelvin-evaluator:${EVALUATOR_IMAGE_TAG:-latest}"
     pull_policy: always
     restart: unless-stopped
-    command: "rqworker-pool default evaluator --num-workers ${EVALUATOR_CPU_REPLICAS:-32}"
+    command: "rqworker-pool evaluator --num-workers ${EVALUATOR_CPU_REPLICAS:-32}"
     environment:
       # Option to specify Redis host and port to connect from other machines where evaluator runs,
       # fallbacks to 'redis' hostname and default port, which means same machine

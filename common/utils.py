@@ -111,9 +111,22 @@ def download_source_to_path(source_url: str, destination_path: str) -> None:
 def build_absolute_uri(request, location):
     base_uri = os.getenv("API_INTERNAL_BASEURL", None)
 
-    # If the URL is the default Docker-internal one, only use it in DEBUG mode.
-    # This prevents Production from accidentally using the internal container hostname
-    # instead of the public domain, unless explicitly forced.
+    # If the URL is the default Docker-internal one ('https://nginx'), only use it in DEBUG mode which means it is local development.
+    #
+    # EXPLANATION:
+    # 1. In Docker, 'localhost' inside a container refers to the container itself, not the host machine.
+    #    Therefore, to reach the Nginx container from the App container, we must use the service name 'nginx',
+    #    which Docker's internal DNS resolves to the Nginx container's IP address.
+    # 2. However, this internal URL (https://nginx/...) is only accessible within the Docker network.
+    #    It MUST NOT be used in Production for generating links sent to users (e.g. emails) or redirects,
+    #    as users cannot resolve 'nginx' or access the private Docker network.
+    #
+    # If we are in Production (DEBUG=False) and the env var is still set to the default 'https://nginx',
+    # we explicitly unset it (set to None).
+    #
+    # This ensures that we do not mistakenly use the internal Docker URL 'https://nginx' in production.
+    # Instead, the code will fall back to using 'request.build_absolute_uri(location)', which constructs
+    # the URL using the public hostname from the incoming HTTP request.
     if base_uri == "https://nginx" and not settings.DEBUG:
         base_uri = None
 

@@ -81,6 +81,7 @@ ENTRYPOINT ["/app/entrypoint.sh"]
 
 FROM runtime AS evaluator
 
+# Switch temporary to root user to install Docker CLI and other system dependencies
 USER root
 
 RUN export DEBIAN_FRONTEND=noninteractive && \

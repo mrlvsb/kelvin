@@ -102,6 +102,16 @@ def get_meta(login):
 def evaluate_job(submit_url, task_url, token, meta):
     logging.basicConfig(level=logging.DEBUG)
     s = requests.Session()
+
+    # Disable SSL verification in DEBUG mode (local Docker development environment).
+    #
+    # EXPLANATION:
+    # In the local Docker development environment (DEBUG=True), the services communicate
+    # via internal Docker network names (e.g. 'https://nginx').
+    # The Nginx service uses self-signed certificates for HTTPS.
+    # Since these certificates are not issued by a trusted Certificate Authority (CA),
+    # requests would fail with an SSL error. Disabling verification allows
+    # the evaluator to download submissions and upload results in this dev environment.
     if settings.DEBUG:
         s.verify = False
 
