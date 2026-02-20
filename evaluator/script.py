@@ -4,6 +4,7 @@ import traceback
 import os
 import sys
 import io
+from typing import Any, Dict
 
 
 @contextlib.contextmanager
@@ -17,7 +18,7 @@ def change_cwd(new_cwd):
 
 
 class Script:
-    def __init__(self, task_path, meta, output_fn, filename="script.py"):
+    def __init__(self, task_path: str, meta: Dict[str, Any], output_fn, filename="script.py"):
         self.task_path = task_path
         self.meta = meta
         self.output_fn = output_fn

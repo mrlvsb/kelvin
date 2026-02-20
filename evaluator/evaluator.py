@@ -1,7 +1,7 @@
 import os
 import logging
 
-from . import testsets
+from . import evaluation
 from .results import EvaluationResult
 
 from rq import get_current_job
@@ -16,7 +16,7 @@ class Evaluation:
         self.result_path = result_path
         self.result = None
         self.meta = meta
-        self.tests = testsets.TestSet(task_path, meta)
+        self.tests = evaluation.EvaluationContext(task_path, meta)
         os.makedirs(result_path)
 
     def run(self):
