@@ -12,6 +12,7 @@ from django.core.exceptions import SuspiciousOperation
 from django.core.files.uploadedfile import UploadedFile
 
 from common.models import Submit
+from common.utils import has_unsafe_filename
 
 mimedetector = magic.Magic(mime=True)
 
@@ -207,6 +208,7 @@ def upload_submit_files(submit: Submit, paths: List[str], files: List[UploadedFi
     try:
         files = uploader.get_files()
         files = [(os.path.normpath(path), f) for (path, f) in files]
+        files = [(path, f) for (path, f) in files if not has_unsafe_filename(path)]
         files = filter_files_by_filename(files)
 
         for path, file in files:

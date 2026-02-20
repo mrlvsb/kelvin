@@ -47,6 +47,7 @@ dependencies = [
     "django-ninja==1.4.5",
     "docker~=7.1.0",
     "py7zr==1.0.0",
+    "nh3>=0.3.3",
 ]
 
 [dependency-groups]

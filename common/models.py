@@ -16,7 +16,7 @@ from kelvin.settings import BASE_DIR
 from .ai_review.dto import LlmReviewPromptDTO
 from .event_log import UserEventModel  # noqa
 from .emails.models import Email  # noqa
-from .utils import is_teacher
+from .utils import has_unsafe_filename, is_teacher
 
 
 def current_semester() -> Optional["Semester"]:
@@ -316,7 +316,12 @@ class Submit(models.Model):
         for root, dirs, files in os.walk(self.dir()):
             for f in files:
                 path = os.path.join(root, f)
-                sources.append(SourcePath(path[offset:], path))
+                virt = path[offset:]
+                # Skip files with XSS-dangerous characters in their names.
+                # These can be created by student code during Docker execution.
+                if has_unsafe_filename(virt):
+                    continue
+                sources.append(SourcePath(virt, path))
 
         return sources
 
