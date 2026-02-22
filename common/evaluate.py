@@ -14,7 +14,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from common.ai_review.processor import enqueue_llm_review_job
-from common.utils import is_teacher, build_absolute_uri
+from common.utils import is_teacher, build_evaluation_download_uri
 from evaluator.evaluator import Evaluation
 from evaluator.testsets import TestSet
 from kelvin.settings import BASE_DIR
@@ -40,7 +40,7 @@ def load_task_config(task_path: str) -> Optional[dict]:
 
 
 def evaluate_submit(request, submit, meta=None):
-    submit_url = build_absolute_uri(
+    submit_url = build_evaluation_download_uri(
         request,
         reverse(
             "task_detail",
@@ -52,7 +52,7 @@ def evaluate_submit(request, submit, meta=None):
         ),
     )
 
-    task_url = build_absolute_uri(
+    task_url = build_evaluation_download_uri(
         request,
         reverse(
             "teacher_task_tar",

@@ -115,9 +115,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 
 USER webserver
 
-COPY --chown=webserver evaluator/evaluator-entrypoint.sh /app/evaluator-entrypoint.sh
-
-ENTRYPOINT ["/app/evaluator-entrypoint.sh"]
-CMD ["rqworker", "default", "evaluator", "--with-scheduler"]
+ENTRYPOINT []
+CMD ["python", "manage.py", "rqworker", "default", "evaluator", "--with-scheduler"]
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD pgrep -f "rqworker" || exit 1

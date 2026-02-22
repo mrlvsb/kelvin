@@ -14,7 +14,7 @@ from common.ai_review.dto import (
 )
 from common.ai_review.job import review_job
 from common.models import SuggestedComment, Submit
-from common.utils import build_absolute_uri
+from common.utils import build_evaluation_download_uri
 
 AI_REVIEW_COMMENT_TYPE: str = "ai-review"
 AI_REVIEW_COMMENT_AUTHOR: str = "LLM"
@@ -30,7 +30,7 @@ def enqueue_llm_review_job(
     if not llm_config.enabled:
         return None
 
-    review_upload_url = build_absolute_uri(
+    review_upload_url = build_evaluation_download_uri(
         request,
         reverse(
             "v2:upload_submit_llm_review_result",
@@ -40,7 +40,7 @@ def enqueue_llm_review_job(
         ),
     )
 
-    review_prompt_url = build_absolute_uri(
+    review_prompt_url = build_evaluation_download_uri(
         request,
         reverse(
             "v2:retrieve_llm_review_prompt",

@@ -5,6 +5,7 @@ from typing import Dict, Optional, List
 
 import django_rq
 import requests
+from django.conf import settings
 from serde import from_dict
 from serde.json import to_json
 
@@ -32,6 +33,17 @@ def detect_language(filename: str) -> Optional[str]:
 
 def upload_result(submit_url: str, result: AIReviewResult) -> None:
     session = requests.Session()
+    # Disable SSL verification in DEBUG mode (local Docker development environment).
+    #
+    # EXPLANATION:
+    # In the local Docker development environment (DEBUG=True), the services communicate
+    # via internal Docker network names (e.g. 'https://nginx').
+    # The Nginx service uses self-signed certificates for HTTPS.
+    # Since these certificates are not issued by a trusted Certificate Authority (CA),
+    # requests would fail with an SSL error. Disabling verification allows
+    # the evaluator to download submissions and upload results in this dev environment.
+    if settings.DEBUG:
+        session.verify = False
 
     json_body = to_json(result, indent=2)
     logging.debug("Result JSON body: \n%s", json_body)

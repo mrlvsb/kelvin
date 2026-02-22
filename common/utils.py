@@ -1,5 +1,4 @@
 import io
-import os
 import re
 import tarfile
 from datetime import timedelta
@@ -99,6 +98,18 @@ def download_source_to_path(source_url: str, destination_path: str) -> None:
     """
 
     session = requests.Session()
+    # Disable SSL verification in DEBUG mode (local Docker development environment).
+    #
+    # EXPLANATION:
+    # In the local Docker development environment (DEBUG=True), the services communicate
+    # via internal Docker network names (e.g. 'https://nginx').
+    # The Nginx service uses self-signed certificates for HTTPS.
+    # Since these certificates are not issued by a trusted Certificate Authority (CA),
+    # requests would fail with an SSL error. Disabling verification allows
+    # the evaluator to download submissions and upload results in this dev environment.
+    if settings.DEBUG:
+        session.verify = False
+
     response = session.get(source_url)
 
     if response.status_code != 200:
@@ -108,28 +119,7 @@ def download_source_to_path(source_url: str, destination_path: str) -> None:
         tar.extractall(destination_path)
 
 
-def build_absolute_uri(request, location):
-    base_uri = os.getenv("API_INTERNAL_BASEURL", None)
-
-    # If the URL is the default Docker-internal one ('https://nginx'), only use it in DEBUG mode which means it is local development.
-    #
-    # EXPLANATION:
-    # 1. In Docker, 'localhost' inside a container refers to the container itself, not the host machine.
-    #    Therefore, to reach the Nginx container from the App container, we must use the service name 'nginx',
-    #    which Docker's internal DNS resolves to the Nginx container's IP address.
-    # 2. However, this internal URL (https://nginx/...) is only accessible within the Docker network.
-    #    It MUST NOT be used in Production for generating links sent to users (e.g. emails) or redirects,
-    #    as users cannot resolve 'nginx' or access the private Docker network.
-    #
-    # If we are in Production (DEBUG=False) and the env var is still set to the default 'https://nginx',
-    # we explicitly unset it (set to None).
-    #
-    # This ensures that we do not mistakenly use the internal Docker URL 'https://nginx' in production.
-    # Instead, the code will fall back to using 'request.build_absolute_uri(location)', which constructs
-    # the URL using the public hostname from the incoming HTTP request.
-    if base_uri == "https://nginx" and not settings.DEBUG:
-        base_uri = None
-
-    if base_uri:
-        return "".join([base_uri, location])
+def build_evaluation_download_uri(request, location):
+    if settings.EVALUATION_LINK_BASEURL:
+        return settings.EVALUATION_LINK_BASEURL + location
     return request.build_absolute_uri(location)
