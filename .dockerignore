@@ -1,5 +1,34 @@
+# Kelvin
 tasks/
 submits/
 submit_results/
+kelvin_data/
+
+# Python
 .venv/
+__pycache__/
+*.py[cod]
+*.pyd
+*.pyo
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node
 node_modules/
+**/dist/
+**/.vite/
+
+# VCS / tooling
+.git/
+
+# Logs
+**/*.log
+
+# Editor
+.vscode/
+.idea/
+.DS_Store

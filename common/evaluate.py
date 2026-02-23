@@ -8,12 +8,13 @@ from typing import Optional
 import django_rq
 import requests
 import yaml
+from django.conf import settings
 from django.core import signing
 from django.urls import reverse
 from django.utils import timezone
 
 from common.ai_review.processor import enqueue_llm_review_job
-from common.utils import is_teacher, build_absolute_uri
+from common.utils import is_teacher, build_evaluation_download_uri
 from evaluator.evaluator import Evaluation
 from evaluator.testsets import TestSet
 from kelvin.settings import BASE_DIR
@@ -39,7 +40,7 @@ def load_task_config(task_path: str) -> Optional[dict]:
 
 
 def evaluate_submit(request, submit, meta=None):
-    submit_url = build_absolute_uri(
+    submit_url = build_evaluation_download_uri(
         request,
         reverse(
             "task_detail",
@@ -51,7 +52,7 @@ def evaluate_submit(request, submit, meta=None):
         ),
     )
 
-    task_url = build_absolute_uri(
+    task_url = build_evaluation_download_uri(
         request,
         reverse(
             "teacher_task_tar",
@@ -101,6 +102,18 @@ def get_meta(login):
 def evaluate_job(submit_url, task_url, token, meta):
     logging.basicConfig(level=logging.DEBUG)
     s = requests.Session()
+
+    # Disable SSL verification in DEBUG mode (local Docker development environment).
+    #
+    # EXPLANATION:
+    # In the local Docker development environment (DEBUG=True), the services communicate
+    # via internal Docker network names (e.g. 'https://nginx').
+    # The Nginx service uses self-signed certificates for HTTPS.
+    # Since these certificates are not issued by a trusted Certificate Authority (CA),
+    # requests would fail with an SSL error. Disabling verification allows
+    # the evaluator to download submissions and upload results in this dev environment.
+    if settings.DEBUG:
+        s.verify = False
 
     logging.info(f"Evaluating {submit_url}")
 

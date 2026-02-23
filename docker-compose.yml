@@ -26,6 +26,9 @@ services:
       - DATABASE__USERNAME=${DATABASE__USERNAME}
       - DATABASE__PASSWORD=${DATABASE__PASSWORD}
       - KELVIN__HOST_URL=${KELVIN__HOST_URL}
+      # Only needed for local Docker development (see .env.example for explanation).
+      # Leave unset in production.
+      - EVALUATION_LINK_BASEURL=${EVALUATION_LINK_BASEURL:-}
     volumes:
       - app_static:/app/static
       - app_socket:/socket
@@ -75,9 +78,109 @@ services:
       - ${NGINX__LOGS_PATH}:/var/log/nginx
       - app_static:/app/static:ro
       - app_socket:/socket
+    networks:
+      default:
+        aliases:
+          # Allows containers (e.g. evaluators) to reach nginx using the public hostname internally.
+          # Safe to use KELVIN__HOST_URL directly: if set to an IP (e.g. 127.0.0.1 for local development),
+          # docker registers it as an alias but it is never DNS-queried (IPs bypass DNS resolution entirely).
+          - ${KELVIN__HOST_URL:-}
+
+  evaluator_scheduler:
+    container_name: kelvin_evaluator_scheduler
+    depends_on:
+      - redis
+      - app
+      - docker_proxy
+    profiles: [ prod ]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: evaluator
+    image: "ghcr.io/mrlvsb/kelvin-evaluator:${EVALUATOR_IMAGE_TAG:-latest}"
+    pull_policy: always
+    restart: unless-stopped
+    command: "python manage.py rqworker default --with-scheduler"
+    environment:
+      - REDIS__HOST=redis
+      - REDIS__PORT=6379
+      # For local development set debug to True in .env (e.g. disable TLS verification for HTTP client)
+      - DEBUG=${DEBUG:-false}
+      - DOCKER_HOST=docker_proxy:2375
+    volumes:
+      # Mount /tmp/kelvin so Docker-in-Docker can access temporary evaluation directories
+      - /tmp:/tmp
+    networks:
+      - default
+      - docker_proxy_net
+
+  evaluator_cpu:
+    container_name: kelvin_evaluator_cpu
+    depends_on:
+      - docker_proxy
+    profiles: [ evaluator_cpu ]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: evaluator
+    image: "ghcr.io/mrlvsb/kelvin-evaluator:${EVALUATOR_IMAGE_TAG:-latest}"
+    pull_policy: always
+    restart: unless-stopped
+    command: "sh -c 'python /app/evaluator/images/build.py && python manage.py rqworker-pool evaluator --num-workers ${EVALUATOR_CPU_REPLICAS:-32}'"
+    environment:
+      # Option to specify Redis host and port to connect from other machines where evaluator runs,
+      # fallbacks to 'redis' hostname and default port, which means same machine
+      - REDIS__HOST=${EVALUATOR_REDIS__HOST:-redis}
+      - REDIS__PORT=${EVALUATOR_REDIS__PORT:-6379}
+      # For local development set debug to True in .env (e.g. disable TLS verification for HTTP client)
+      - DEBUG=${DEBUG:-false}
+      - DOCKER_HOST=docker_proxy:2375
+    volumes:
+      # Mount /tmp so Docker-in-Docker can access temporary evaluation directories
+      - /tmp:/tmp
+    networks:
+      - default
+      - docker_proxy_net
+
+  evaluator_cuda:
+    container_name: kelvin_evaluator_cuda
+    depends_on:
+      - docker_proxy
+    profiles: [ evaluator_cuda ]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: evaluator
+    image: "ghcr.io/mrlvsb/kelvin-evaluator:${EVALUATOR_IMAGE_TAG:-latest}"
+    pull_policy: always
+    restart: unless-stopped
+    command: "sh -c 'python /app/evaluator/images/build.py && python manage.py rqworker-pool cuda --num-workers ${EVALUATOR_CUDA_REPLICAS:-32}'"
+    environment:
+      # Option to specify Redis host and port to connect from other machines where evaluator runs,
+      # fallbacks to 'redis' hostname and default port, which means same machine
+      - REDIS__HOST=${EVALUATOR_REDIS__HOST:-redis}
+      - REDIS__PORT=${EVALUATOR_REDIS__PORT:-6379}
+      # For local development set debug to True in .env (e.g. disable TLS verification for HTTP client)
+      - DEBUG=${DEBUG:-false}
+      - DOCKER_HOST=docker_proxy:2375
+    volumes:
+      # Mount /tmp so Docker-in-Docker can access temporary evaluation directories
+      - /tmp:/tmp
+    networks:
+      - default
+      - docker_proxy_net
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
 
   deployment:
     container_name: kelvin_deployment_service
+    depends_on:
+      - docker_proxy
     profiles: [ prod ]
     build:
       context: deployment_service
@@ -86,8 +189,6 @@ services:
     image: "ghcr.io/mrlvsb/deployment:latest"
     pull_policy: always
     restart: unless-stopped
-    group_add:
-      - "${DOCKER_GROUP_ID:?DOCKER_GROUP_ID is not set}"
     environment:
       # Hardcode the docker-compose.yml path inside the container to match the repository volume mount path (must be in sync with volume that mounts the repo)
       - DOCKER__COMPOSE_FILE_PATH=/kelvin/docker-compose.yml
@@ -95,11 +196,33 @@ services:
       - DEBUG=${DEBUG:-false}
       - SECURITY__WEBHOOK_SECRET=${SECURITY__WEBHOOK_SECRET}
       - SECURITY__ALLOWED_HOSTS=${SECURITY__ALLOWED_HOSTS}
+      - DOCKER_HOST=docker_proxy:2375
     volumes:
       # Mount the Kelvin repo to /kelvin inside the container,must be in sync with DOCKER__COMPOSE_FILE_PATH
       - ${REPO__DIRECTORY_PATH}:/kelvin
+    networks:
+      - default
+      - docker_proxy_net
+
+  # proxy from TCP to unix socket, so we dont need to run web as root with different uid
+  # or solve issues with socket permissions
+  docker_proxy:
+    container_name: kelvin_docker_proxy
+    profiles: [ prod,evaluator_cpu,evaluator_cuda ]
+    image: alpine/socat
+    restart: unless-stopped
+    command: tcp-listen:2375,fork,reuseaddr unix-connect:/var/run/docker.sock
+    user: root
+    networks:
+      - docker_proxy_net
+    volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
   app_static:
   app_socket:
+
+networks:
+  docker_proxy_net:
+    # Internal network: no external internet access, only reachable by attached services
+    internal: true

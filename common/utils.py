@@ -1,5 +1,4 @@
 import io
-import os
 import re
 import tarfile
 from datetime import timedelta
@@ -8,6 +7,7 @@ from typing import NewType
 
 import django.contrib.auth.models
 import requests
+from django.conf import settings
 from django.http import HttpRequest
 from ipware import get_client_ip
 
@@ -98,6 +98,18 @@ def download_source_to_path(source_url: str, destination_path: str) -> None:
     """
 
     session = requests.Session()
+    # Disable SSL verification in DEBUG mode (local Docker development environment).
+    #
+    # EXPLANATION:
+    # In the local Docker development environment (DEBUG=True), the services communicate
+    # via internal Docker network names (e.g. 'https://nginx').
+    # The Nginx service uses self-signed certificates for HTTPS.
+    # Since these certificates are not issued by a trusted Certificate Authority (CA),
+    # requests would fail with an SSL error. Disabling verification allows
+    # the evaluator to download submissions and upload results in this dev environment.
+    if settings.DEBUG:
+        session.verify = False
+
     response = session.get(source_url)
 
     if response.status_code != 200:
@@ -107,8 +119,7 @@ def download_source_to_path(source_url: str, destination_path: str) -> None:
         tar.extractall(destination_path)
 
 
-def build_absolute_uri(request, location):
-    base_uri = os.getenv("API_INTERNAL_BASEURL", None)
-    if base_uri:
-        return "".join([base_uri, location])
+def build_evaluation_download_uri(request, location):
+    if settings.EVALUATION_LINK_BASEURL:
+        return settings.EVALUATION_LINK_BASEURL + location
     return request.build_absolute_uri(location)

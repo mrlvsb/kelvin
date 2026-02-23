@@ -17,7 +17,7 @@ import dotenv
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Load environment variables from an .env file
+# Load environment variables from an '.env'  file
 dotenv_file = os.path.join(BASE_DIR, ".env")
 if os.path.isfile(dotenv_file):
     dotenv.load_dotenv(dotenv_file)
@@ -25,6 +25,13 @@ if os.path.isfile(dotenv_file):
 KELVIN_ROOT_HOST = os.getenv("KELVIN__HOST_URL")
 
 PUBLIC_URL = f"https://{KELVIN_ROOT_HOST}"
+
+# Base URL used internally by the evaluator to contact the app.
+# Needed in local Docker development where the request Host header is 'localhost'
+# (unreachable from other containers). Set to e.g. 'https://nginx' in '.env' .
+# In production, leave unset — the DNS alias on the nginx service makes the
+# real hostname resolve to nginx inside the Docker network.
+EVALUATION_LINK_BASEURL: str | None = os.getenv("EVALUATION_LINK_BASEURL", None)
 
 
 # Quick-start development settings - unsuitable for production
@@ -34,7 +41,7 @@ PUBLIC_URL = f"https://{KELVIN_ROOT_HOST}"
 SECRET_KEY = "***REMOVED***"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG: bool = os.getenv("DEBUG", "true").lower() in ("1", "true", "yes")
 
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", "app", "nginx", KELVIN_ROOT_HOST]
 
