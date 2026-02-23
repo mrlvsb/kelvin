@@ -5,7 +5,7 @@ import { csrfToken } from '../api';
 import VueModal from './VueModal.vue';
 import { toastApi } from '../utilities/toast';
 
-const props = withDefaults(
+withDefaults(
   defineProps<{
     cooldown?: number | string;
   }>(),
@@ -15,7 +15,6 @@ const props = withDefaults(
 );
 
 const MAXIMUM_FILE_SHOWN = 20;
-const LAST_SUBMIT_KEY = 'KELVIN_LAST_SUBMIT_DATE';
 const SUBMITTED_TOAST_KEY = 'KELVIN_SUBMITTED_TOAST';
 
 const filesQuestion = ref<string[]>([]);
@@ -23,36 +22,11 @@ const uploadFormData = ref<FormData | null>(null);
 const dropping = ref(false);
 const progress = ref<number | null>(null);
 const error = ref<string | null>(null);
-const remainingMS = ref(-1);
-const queued = ref<FormData | null>(null);
-const fileInput = ref<HTMLInputElement | null>(null);
-const fileInputLabel = ref<HTMLElement | null>(null);
-
-const cooldownSeconds = computed(() => Number(props.cooldown ?? 0) || 0);
 
 let dragLeaveTimer: number | undefined;
-let cooldownTimer: number | undefined;
 
 const uploadFileList = computed(() => filesQuestion.value.slice(0, MAXIMUM_FILE_SHOWN));
 const uploadFileRest = computed(() => Math.max(0, filesQuestion.value.length - MAXIMUM_FILE_SHOWN));
-
-const readStoredDate = () => {
-  const stored = localStorage.getItem(LAST_SUBMIT_KEY);
-  if (!stored) {
-    return new Date(0);
-  }
-
-  try {
-    const parsed = JSON.parse(stored) as string | number;
-    return new Date(parsed);
-  } catch {
-    return new Date(stored);
-  }
-};
-
-const setStoredDate = (date: Date) => {
-  localStorage.setItem(LAST_SUBMIT_KEY, date.toISOString());
-};
 
 const readSubmittedToast = () => {
   const stored = localStorage.getItem(SUBMITTED_TOAST_KEY);
@@ -108,7 +82,6 @@ const upload = (formData: FormData) => {
 
   xhr.addEventListener('loadend', () => {
     if (xhr.status >= 200 && xhr.status < 300 && xhr.responseURL) {
-      setStoredDate(new Date());
       setSubmittedToast(true);
       window.location.href = `${xhr.responseURL}#result`;
       return;
@@ -139,14 +112,13 @@ const acceptUpload = () => {
 };
 
 const dismiss = () => {
-  if (error.value === null && !queued.value) {
+  if (error.value === null) {
     return;
   }
 
   error.value = null;
   dropping.value = false;
   progress.value = null;
-  queued.value = null;
 };
 
 const dragstop = () => {
@@ -197,44 +169,11 @@ const dragstart = (event: DragEvent) => {
   }
 };
 
-const updateCooldown = () => {
-  const target = new Date();
-  target.setUTCMilliseconds(target.getUTCMilliseconds() - cooldownSeconds.value * 1000);
-  remainingMS.value = readStoredDate().getTime() - target.getTime();
-
-  if (!fileInput.value || !fileInputLabel.value) {
-    return;
-  }
-
-  if (remainingMS.value <= 0) {
-    fileInput.value.removeAttribute('disabled');
-    fileInputLabel.value.classList.remove('disabled');
-    fileInputLabel.value.innerText = 'Upload';
-
-    if (queued.value) {
-      const pending = queued.value;
-      queued.value = null;
-      upload(pending);
-    }
-
-    return;
-  }
-
-  fileInput.value.setAttribute('disabled', 'disabled');
-  fileInputLabel.value.classList.add('disabled');
-  fileInputLabel.value.innerText = `next upload in ${Math.ceil(remainingMS.value / 1000)} seconds`;
-
-  cooldownTimer = window.setTimeout(updateCooldown, 1000);
-};
-
 const setupUploadInput = () => {
   const input = document.getElementById('upload-choose') as HTMLInputElement | null;
   if (!input) {
     return;
   }
-
-  fileInput.value = input;
-  fileInputLabel.value = input.nextElementSibling as HTMLElement | null;
 
   const handleChange = () => {
     if (!input.files?.length) {
@@ -250,13 +189,7 @@ const setupUploadInput = () => {
     }
 
     formData.append('paths', fileNames.join('\n'));
-
-    if (remainingMS.value <= 0) {
-      upload(formData);
-      return;
-    }
-
-    queued.value = formData;
+    upload(formData);
   };
 
   input.addEventListener('change', handleChange);
@@ -279,13 +212,8 @@ const setupDragAndDrop = () => {
     }
 
     formData.append('paths', files.join('\n'));
-    if (remainingMS.value <= 0) {
-      uploadFormData.value = formData;
-      filesQuestion.value = files;
-      return;
-    }
-
-    queued.value = formData;
+    uploadFormData.value = formData;
+    filesQuestion.value = files;
   });
 
   window.addEventListener('dragleave', dragstop);
@@ -312,17 +240,11 @@ onMounted(() => {
     setSubmittedToast(false);
     toastApi.success('The files have been submitted successfully.');
   }
-
-  updateCooldown();
 });
 
 onUnmounted(() => {
   removeInputListener?.();
   removeDragListeners?.();
-
-  if (cooldownTimer) {
-    window.clearTimeout(cooldownTimer);
-  }
 
   if (dragLeaveTimer) {
     window.clearTimeout(dragLeaveTimer);
@@ -336,17 +258,12 @@ onUnmounted(() => {
     :class="{
       dropping,
       uploading: progress !== null,
-      queued: queued !== null,
       error: error !== null
     }"
     @click="dismiss"
   >
     <span v-if="error !== null" class="text-danger" style="white-space: pre-line">
       {{ error }}
-    </span>
-
-    <span v-else-if="queued !== null">
-      Uploading in {{ Math.ceil(remainingMS / 1000) }} seconds...
     </span>
 
     <span v-else-if="progress !== null">{{ progress }}%</span>
@@ -394,14 +311,9 @@ onUnmounted(() => {
 
 .dropzone.dropping,
 .dropzone.uploading,
-.dropzone.error,
-.dropzone.queued {
+.dropzone.error {
   visibility: visible;
   background: #007bff50;
-}
-
-.dropzone.queued {
-  font-size: 3rem;
 }
 
 .dropzone.error {
