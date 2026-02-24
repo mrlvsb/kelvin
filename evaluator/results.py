@@ -4,7 +4,7 @@ import shutil
 import re
 import io
 
-from .testsets import File, TestFile
+from .evaluation import File, TestFile
 from .utils import copyfile
 
 
