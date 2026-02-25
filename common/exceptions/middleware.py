@@ -1,7 +1,12 @@
+import logging
+
 from django.http import HttpRequest
 
+from common.exceptions import HttpExceptionData
 from kelvin import settings
 from web.views.common import render_custom_error_page
+
+logger = logging.getLogger(__name__)
 
 """
 Having custom error pages in Django is.. stupidly hard.
@@ -42,7 +47,19 @@ class KelvinExceptionMiddleware:
 
     def process_exception(self, request, exception):
         if should_exception_be_handled(request):
-            return render_custom_error_page(request, exception=exception)
+            # Log the error ourselves, otherwise Django would not add a stacktrace
+            if HttpExceptionData.from_exception(exception).status >= 500:
+                logger.error(
+                    "Internal Server Error: %s",
+                    request.path,
+                    exc_info=True,
+                    extra={"status_code": 500, "request": request},
+                )
+            response = render_custom_error_page(request, exception=exception)
+            # Prevent Django's get_response from calling log_response again without exc_info,
+            # which would send a duplicate email without a stacktrace.
+            response._has_been_logged = True
+            return response
         return None
 
 
