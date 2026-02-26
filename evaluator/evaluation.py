@@ -1,5 +1,6 @@
 import dataclasses
 import io
+import logging
 import os
 import re
 import shlex
@@ -12,6 +13,8 @@ import yaml
 from kelvin.settings import BASE_DIR
 from web.markdown_utils import load_readme
 from .script import Script
+
+logger = logging.getLogger(__name__)
 
 
 class File:
@@ -261,7 +264,13 @@ class WorkflowConfig:
 
         try:
             with open(config_path) as f:
-                conf = yaml.load(f.read(), Loader=yaml.SafeLoader)
+                try:
+                    conf = yaml.load(f.read(), Loader=yaml.SafeLoader)
+                except:  # noqa
+                    logger.error(
+                        f"Cannot parse YML file at `{config_path}`:\n{traceback.format_exc()}"
+                    )
+                    raise InvalidWorkflowYaml("Invalid config.yml file")
                 if conf:
                     for key, value in conf.items():
                         if key == "queue":
@@ -318,6 +327,10 @@ def parse_config_tests(value: list[Any]) -> list[TestDefinition]:
 
 
 class WorkflowValidationError(BaseException):
+    pass
+
+
+class InvalidWorkflowYaml(WorkflowValidationError):
     pass
 
 
