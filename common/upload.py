@@ -1,9 +1,7 @@
 import os
 import re
-import stat
 import zipfile
 import tarfile
-import py7zr
 from os.path import basename, dirname
 from typing import List, Tuple
 
@@ -75,45 +73,6 @@ class TarUploader(Uploader):
         target_path = submit.source_path(path)
         os.makedirs(dirname(target_path), exist_ok=True)
         self.archive.extract(path, path=submit.dir(), filter="data")
-        self.count += 1
-        return target_path
-
-    def close(self) -> None:
-        self.archive.close()
-
-
-class SevenZipUploader(Uploader):
-    def __init__(self, file: UploadedFile):
-        super().__init__()
-        self.archive = py7zr.SevenZipFile(
-            file.file,
-            "r",
-        )
-
-    def __is_file(self, file: py7zr.py7zr.ArchiveFile):
-        """
-        Checks if an ArchiveFile is a regular file and not a link, directory or socket.
-        py7zr library doesn't have this method available in stable versions at the moment.
-        Source: https://github.com/miurahr/py7zr/blob/master/py7zr/py7zr.py
-        """
-        e = file._get_unix_extension()
-        if e is not None:
-            return stat.S_ISREG(e)
-        return not (file.is_directory or file.is_symlink or file.is_junction or file.is_socket)
-
-    def get_files(self) -> List[Tuple[str, py7zr.py7zr.ArchiveFile]]:
-        return [(f.filename, f) for f in self.archive.files if self.__is_file(f)]
-
-    def upload_file(self, path: str, file, submit: Submit) -> str:
-        self.check_file_type(file, py7zr.py7zr.ArchiveFile)
-
-        target_path = submit.source_path(path)
-        os.makedirs(dirname(target_path), exist_ok=True)
-        # Once extract() called, the SevenZipFile object become exhausted, and an EOF state.
-        # If you want to call extract(), extractall() again, you should call reset() before it.
-        # https://py7zr.readthedocs.io/en/latest/api.html#py7zr.SevenZipFile.extract
-        self.archive.reset()
-        self.archive.extract(targets=[path], path=submit.dir())
         self.count += 1
         return target_path
 
@@ -198,8 +157,6 @@ def upload_submit_files(submit: Submit, paths: List[str], files: List[UploadedFi
             uploader = ZipUploader(reset_file())
         elif tarfile.is_tarfile(reset_file()):
             uploader = TarUploader(reset_file())
-        elif py7zr.is_7zfile(reset_file().file):
-            uploader = SevenZipUploader(reset_file())
 
     if uploader is None:
         uploader = FileUploader(paths, files)
