@@ -326,15 +326,10 @@ def is_file_small(path: str) -> bool:
     def count_lines(path: str) -> int:
         lines = 0
         with open(path) as f:
-            for line in f:
+            for _ in f:
                 lines += 1
         return lines
 
-    try:
-        return (
-            os.path.getsize(path) <= MAX_INLINE_CONTENT_BYTES
-            and count_lines(path) < MAX_INLINE_LINES
-        )
-    except UnicodeDecodeError:
-        # probably a binary file
-        return False
+    return (
+        os.path.getsize(path) <= MAX_INLINE_CONTENT_BYTES and count_lines(path) < MAX_INLINE_LINES
+    )

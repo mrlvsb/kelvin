@@ -563,7 +563,11 @@ def submit_diff(
         for f in files:
             path = os.path.join(root, f)
             mime = mimedetector.from_file(path)
-            if mime and not mime.startswith("image/") and not is_file_small(path):
+            try:
+                is_small = is_file_small(path)
+            except UnicodeDecodeError:
+                is_small = False
+            if mime and not mime.startswith("image/") and not is_small:
                 excludes.append("--exclude")
 
                 p = os.path.relpath(path, base_dir).split("/")[1:]
