@@ -187,6 +187,8 @@ def fetch_submit_sources(submit: Submit) -> SubmitSources:
                 if is_file_small(source.phys):
                     with open(source.phys) as file_stream:
                         content_text = file_stream.read()
+                else:
+                    content_error = "File is too large"
             except UnicodeDecodeError:
                 content_error = "The file contains binary data or is not encoded in UTF-8"
             except FileNotFoundError:
@@ -326,15 +328,10 @@ def is_file_small(path: str) -> bool:
     def count_lines(path: str) -> int:
         lines = 0
         with open(path) as f:
-            for line in f:
+            for _ in f:
                 lines += 1
         return lines
 
-    try:
-        return (
-            os.path.getsize(path) <= MAX_INLINE_CONTENT_BYTES
-            and count_lines(path) < MAX_INLINE_LINES
-        )
-    except UnicodeDecodeError:
-        # probably a binary file
-        return False
+    return (
+        os.path.getsize(path) <= MAX_INLINE_CONTENT_BYTES and count_lines(path) < MAX_INLINE_LINES
+    )
