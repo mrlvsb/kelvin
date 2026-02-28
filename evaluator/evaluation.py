@@ -266,12 +266,9 @@ class WorkflowConfig:
             with open(config_path) as f:
                 try:
                     conf = yaml.load(f.read(), Loader=yaml.SafeLoader)
-                except:  # noqa
-                    logger.error(
-                        f"Cannot parse YML file at `{config_path}`:\n{traceback.format_exc()}"
-                    )
-                    raise InvalidWorkflowYaml("Invalid config.yml file")
-                if conf:
+                except BaseException as e:
+                    raise InvalidWorkflowYaml(f"Invalid config.yml file: {e}")
+                if conf and isinstance(conf, dict):
                     for key, value in conf.items():
                         if key == "queue":
                             queue = value
@@ -283,6 +280,10 @@ class WorkflowConfig:
                             jobs = parse_config_jobs(value)
                         elif key not in ignored_keys:
                             unknown_keys.append(key)
+                else:
+                    raise InvalidWorkflowYaml(
+                        f"Invalid config.yml file. Expected a dictionary, found {type(conf)}"
+                    )
         except FileNotFoundError:
             pass
         return WorkflowConfigParseResult(
