@@ -1,7 +1,5 @@
-import hashlib
 import io
 import json
-import logging
 import os
 import re
 import shutil
@@ -516,20 +514,6 @@ def submit_source(request: HttpRequest, submit_id: int, path: str) -> HttpRespon
         if s.virt == path:
             path = s.phys
             mime = mimedetector.from_file(s.phys)
-            if request.GET.get("convert", False):
-                key = hashlib.sha1(f"{submit_id}{path}".encode("utf-8")).hexdigest()
-                path = os.path.join(BASE_DIR, "cache", "media", key[0], key[1], key)
-                os.makedirs(os.path.dirname(path), exist_ok=True)
-                if not os.path.exists(path):
-                    if mime.startswith("image/"):
-                        try:
-                            subprocess.check_call(["/usr/bin/convert", s.phys, f"WEBP:{path}"])
-                        except subprocess.CalledProcessError as e:
-                            path = s.phys
-                            logging.exception(e)
-                    else:
-                        raise Exception(f"Unsuppored mime {mime} for convert")
-                mime = mimedetector.from_file(path)
 
             with open(path, "rb") as f:
                 res = HttpResponse(f)

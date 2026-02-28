@@ -26,14 +26,6 @@ from kelvin.settings import MAX_INLINE_CONTENT_BYTES, MAX_INLINE_LINES
 # better than nothing.
 SUBMIT_RATELIMIT = datetime.timedelta(seconds=30)
 
-SUPPORTED_IMAGES = [
-    "image/png",
-    "image/jpeg",
-    "image/gif",
-    "image/webp",
-    "image/svg+xml",
-]
-
 SOURCE_PRIORITY = {
     "video": 0,
     "img": 1,
@@ -158,11 +150,6 @@ def fetch_submit_sources(submit: Submit) -> SubmitSources:
         # Image handling
         if mime_type and mime_type.startswith("image/"):
             source_url: str = reverse("submit_source", args=[submit.id, source.virt])
-
-            # Append conversion on unsupported formats
-            if mime_type not in SUPPORTED_IMAGES:
-                source_url = f"{source_url}?convert=1"
-
             result[source.virt] = ImageSource(path=source.virt, src=source_url)
 
         # Video handling
