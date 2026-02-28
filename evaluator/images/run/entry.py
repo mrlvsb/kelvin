@@ -9,14 +9,6 @@ import magic
 
 mimes = mime = magic.Magic(mime=True)
 
-SUPPORTED_IMAGES = [
-    "image/png",
-    "image/jpeg",
-    "image/gif",
-    "image/webp",
-    "image/svg+xml",
-]
-
 DEFAULT_TIMEOUT = 5
 
 
@@ -27,12 +19,7 @@ def display(patterns, out, delete=False):
             try:
                 mimetype = mimes.from_file(filename)
                 if mimetype.startswith("image/"):
-                    toshow = filename
-                    if mimetype not in SUPPORTED_IMAGES:
-                        toshow = "/tmp/image.webp"
-                        subprocess.check_call(["convert", filename, toshow])
-
-                    with open(toshow, "rb") as f:
+                    with open(filename, "rb") as f:
                         out.write(
                             f"<img src='data:image/webp;base64,{base64.b64encode(f.read()).decode('utf-8')}' />"
                         )
