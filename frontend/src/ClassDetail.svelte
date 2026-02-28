@@ -137,7 +137,7 @@ let showSummary = false;
 <div class="card mb-2" style="position: initial">
   <div class="card-header p-0">
     <div class="float-end p-2" style="display: flex; align-items: center;">
-      <a href="/task/add/{clazz.subject_abbr}" use:link title="Assign new task">
+      <a href="/task/add/{clazz.subject_abbr}" title="Assign new task">
         <span class="iconify" data-icon="bx:bx-calendar-plus"></span>
       </a>
       <button
@@ -223,7 +223,7 @@ let showSummary = false;
                       </a>
                       <div class="more-content border shadow rounded bg-body p-1">
                         {assignment.name}
-                        <a use:link={`/task/edit/${assignment.task_id}`} title="Edit"
+                        <a href={`/task/edit/${assignment.task_id}`} title="Edit"
                           ><span class="iconify" data-icon="clarity:edit-solid"></span></a>
                         <div style="display: flex; align-items: center;">
                           <a href={assignment.plagcheck_link} title="Plagiarism check"

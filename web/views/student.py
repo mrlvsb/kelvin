@@ -1091,3 +1091,13 @@ def quiz_asset(request: HttpRequest, quiz_src: str, asset_path: str) -> HttpResp
             return resp
     except FileNotFoundError:
         raise HttpException404()
+
+
+@user_passes_test(is_teacher)
+def edit_task(request, task_id):
+    return render(request, "web/edit_task.html", {"task_id": task_id})
+
+
+@user_passes_test(is_teacher)
+def edit_new_task(request, subject_name):
+    return render(request, "web/edit_task.html", {"subject_name": subject_name})

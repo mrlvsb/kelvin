@@ -13,7 +13,7 @@
 <h2>
     {{ task.name }}
     {% if is_teacher %}
-    <a href="/#/task/edit/{{task.id}}" class="text-muted" title="Edit task"><span class="iconify" data-icon="fa-solid:pen"></span></a>
+    <a href="/task/edit/{{task.id}}" class="text-muted" title="Edit task"><span class="iconify" data-icon="fa-solid:pen"></span></a>
     {% endif %}
 </h2>
 {% if teacher %}
