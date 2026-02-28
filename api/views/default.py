@@ -572,7 +572,7 @@ def add_student_to_class(request, class_id):
     username = data["username"]
 
     errors = []
-
+    already_assigned = []
     for username in data["username"]:
         username = username.strip().upper()
         user = None
@@ -586,6 +586,10 @@ def add_student_to_class(request, class_id):
                 user.save()
 
         if user:
+            if Class.objects.filter(subject=clazz.subject, students=user).exists():
+                already_assigned.append(username)
+                errors.append(username)
+                continue
             clazz.students.add(user)
         else:
             errors.append(username)
@@ -594,6 +598,7 @@ def add_student_to_class(request, class_id):
         {
             "success": not errors,
             "not_found": errors,
+            "already_assigned": already_assigned,
         }
     )
 
