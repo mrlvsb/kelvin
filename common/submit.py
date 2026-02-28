@@ -187,6 +187,8 @@ def fetch_submit_sources(submit: Submit) -> SubmitSources:
                 if is_file_small(source.phys):
                     with open(source.phys) as file_stream:
                         content_text = file_stream.read()
+                else:
+                    content_error = "File is too large"
             except UnicodeDecodeError:
                 content_error = "The file contains binary data or is not encoded in UTF-8"
             except FileNotFoundError:
