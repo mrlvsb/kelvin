@@ -19,26 +19,29 @@ if TYPE_CHECKING:
 
 
 def send_email_points_assigned(
-    request: HttpRequest, sender: User, student: User, submit: "Submit", points: float
+    request: HttpRequest, sender: User, student: User, submit: "Submit", points: float | None
 ):
-    content = render_to_string(
-        "emails/points-assigned.html",
-        context=dict(
-            teacher=sender,
-            student=student,
-            submit=submit,
-            points=format_points(points),
-            max_points=submit.assignment.max_points,
-            url=request.build_absolute_uri(
-                reverse(
-                    "task_detail",
-                    kwargs=dict(assignment_id=submit.assignment.pk, login=student.username),
-                )
+    # When points is None, the teacher removed the point assignment
+    # We currently do not send an e-mail in this case
+    if points is not None:
+        content = render_to_string(
+            "emails/points-assigned.html",
+            context=dict(
+                teacher=sender,
+                student=student,
+                submit=submit,
+                points=format_points(points),
+                max_points=submit.assignment.max_points,
+                url=request.build_absolute_uri(
+                    reverse(
+                        "task_detail",
+                        kwargs=dict(assignment_id=submit.assignment.pk, login=student.username),
+                    )
+                ),
             ),
-        ),
-    )
+        )
 
-    Email.create(subject="Obodování úlohy / solution scored", text=content, receiver=student)
+        Email.create(subject="Obodování úlohy / solution scored", text=content, receiver=student)
 
 
 logger = logging.getLogger(__name__)
