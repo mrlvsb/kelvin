@@ -2,6 +2,7 @@ import datetime
 import logging
 import os
 import re
+from collections import defaultdict
 from typing import List, Optional
 
 from django.conf import settings
@@ -486,3 +487,109 @@ def assignedtask_results(assignment, students=None, **kwargs):
             student_submit_stats["accepted_submit_id"] = submit.pk
 
     return sorted(results.values(), key=lambda s: s["student"])
+
+
+def extract_subject_assignment_points(
+    subject_abbr: str, semester_ids: list[int] | None = None
+) -> list[dict]:
+    """
+    Extract assignment-level student metrics for the selected subject.
+
+    The extraction is based on `assignedtask_results`, so accepted/final assigned points semantics
+    stay aligned with existing teacher-facing behavior.
+    """
+
+    def hours_between(start: datetime.datetime, end: datetime.datetime | None) -> float | None:
+        if end is None:
+            return None
+        return (end - start).total_seconds() / 3600.0
+
+    classes_query = Class.objects.filter(subject__abbr__iexact=subject_abbr)
+    if semester_ids is not None:
+        classes_query = classes_query.filter(semester_id__in=semester_ids)
+
+    assignments = (
+        AssignedTask.objects.filter(clazz__in=classes_query)
+        .select_related("task", "clazz", "clazz__subject", "clazz__semester", "clazz__teacher")
+        .order_by("clazz_id", "assigned", "id")
+    )
+
+    records: list[dict] = []
+    assignment_order_counter: dict[tuple[int, str], int] = defaultdict(int)
+
+    for assignment in assignments:
+        submit_stats = assignedtask_results(assignment)
+        stats_by_student = {item["student"]: item for item in submit_stats}
+
+        first_graded_submit_at: dict[str, datetime.datetime] = {}
+        assignment_submits = (
+            Submit.objects.filter(assignment_id=assignment.id)
+            .select_related("student")
+            .order_by("created_at", "id")
+        )
+        for submit in assignment_submits:
+            login = submit.student.username
+            if login not in stats_by_student:
+                continue
+            if submit.assigned_points is not None and login not in first_graded_submit_at:
+                first_graded_submit_at[login] = submit.created_at
+
+        for login, student_stats in sorted(stats_by_student.items(), key=lambda item: item[0]):
+            assignment_order_key = (assignment.clazz_id, login)
+            assignment_order_counter[assignment_order_key] += 1
+            assignment_order = assignment_order_counter[assignment_order_key]
+
+            assigned_points = student_stats.get("assigned_points")
+            max_points = student_stats.get("max_points")
+            if max_points is None:
+                max_points = assignment.max_points
+
+            points_ratio = None
+            if assigned_points is not None and max_points not in (None, 0):
+                points_ratio = float(assigned_points) / float(max_points)
+
+            first_submit_at = student_stats.get("first_submit_date")
+            first_graded_at = first_graded_submit_at.get(login)
+
+            semester = assignment.clazz.semester
+            teacher = assignment.clazz.teacher
+            subject = assignment.clazz.subject
+
+            records.append(
+                {
+                    "subject_abbr": subject.abbr,
+                    "subject_name": subject.name,
+                    "semester_id": semester.id,
+                    "semester_code": str(semester),
+                    "semester_year": semester.year,
+                    "semester_winter": semester.winter,
+                    "semester_begin": semester.begin,
+                    "semester_end": semester.end,
+                    "semester_active": semester.active,
+                    "class_id": assignment.clazz_id,
+                    "class_code": assignment.clazz.code,
+                    "teacher_id": teacher.id if teacher else None,
+                    "teacher_username": teacher.username if teacher else "",
+                    "student_login": login,
+                    "assignment_id": assignment.id,
+                    "task_id": assignment.task_id,
+                    "task_name": assignment.task.name,
+                    "task_code": assignment.task.code,
+                    "task_type": assignment.task.type,
+                    "assigned_at": assignment.assigned,
+                    "deadline": assignment.deadline,
+                    "assignment_order": assignment_order,
+                    "assigned_points": assigned_points,
+                    "max_points": max_points,
+                    "points_ratio": points_ratio,
+                    "submit_count": student_stats.get("submits", 0),
+                    "graded_submit_count": student_stats.get("submits_with_assigned_pts", 0),
+                    "first_submit_at": first_submit_at,
+                    "first_submit_delay_hours": hours_between(assignment.assigned, first_submit_at),
+                    "first_graded_submit_at": first_graded_at,
+                    "first_graded_delay_hours": hours_between(assignment.assigned, first_graded_at),
+                    "has_final_submit": bool(student_stats.get("has_final_submit", False)),
+                }
+            )
+
+    return records

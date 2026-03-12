@@ -46,6 +46,8 @@ dependencies = [
     "pycountry~=24.6.1",
     "django-ninja==1.4.5",
     "docker~=7.1.0",
+    "xgboost==2.1.4",
+    "scikit-learn==1.5.2",
 ]
 
 [dependency-groups]
