@@ -144,6 +144,7 @@ window.addEventListener('hashchange', focusTab);
 window.addEventListener('DOMContentLoaded', focusTab);
 
 import { createApp, defineCustomElement, h } from 'vue';
+import { createRouter, createWebHistory } from 'vue-router';
 import SuspensionWrapper from './components/SuspensionWrapper.vue';
 import TaskList from './Teacher/TaskList.vue';
 import InbusImport from './Teacher/InbusImport.vue';
@@ -162,6 +163,30 @@ import MarkButton from './components/MarkButton.vue';
 import TaskDetail from './Student/TaskDetail.vue';
 import SyncLoader from './components/SyncLoader.vue';
 import EditTask from './Teacher/EditTask/EditTask.vue';
+
+const router = createRouter({
+    history: createWebHistory(),
+    routes: [
+        {
+            path: '/task/edit/:id',
+            name: 'edit-task',
+            component: EditTask,
+            strict: false,
+            props: (route) => ({
+                params: { id: Number(route.params.id) }
+            })
+        },
+        {
+            path: '/task/add/:subject',
+            name: 'add-task',
+            component: EditTask,
+            strict: false,
+            props: (route) => ({
+                params: { subject: route.params.subject }
+            })
+        }
+    ]
+});
 
 /**
  * Register new Vue component as a custom element.
@@ -236,8 +261,10 @@ function mountMarkButton(id, props) {
     app.mount(id);
 }
 
-function mountEditTask(id, props) {
-    const app = createApp(EditTask, props);
+async function mountEditTask(id) {
+    const app = createApp(EditTask);
+    app.use(router);
+    await router.isReady();
     app.mount(id);
 }
 

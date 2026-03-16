@@ -16,25 +16,14 @@ import { useReadableSvelteStore } from '../../utilities/useSvelteStoreInVue';
 import { User, Semester, FileEntry } from '../../utilities/SvelteStoreTypes';
 import AutoCompleteTaskPath from './AutoCompleteTaskPath.vue';
 import { fetch } from '../../api';
+import { useRouter, useRoute } from 'vue-router';
+
+const router = useRouter();
+const route = useRoute();
 
 const semester = useReadableSvelteStore<Semester>(semesterSvelte);
 const user = useReadableSvelteStore<User>(userSvelte);
 const openedFiles = useReadableSvelteStore<Record<string, FileEntry>>(openedFilesSvelte);
-
-interface EditParams {
-  id: number;
-  subject?: never;
-}
-
-interface AddParams {
-  subject: string;
-  id?: never;
-}
-
-//parameters are based on page role - create new / edit
-type RouteParams = EditParams | AddParams;
-
-const props = defineProps<{ params: RouteParams }>();
 
 interface Class {
   assigned: Date;
@@ -66,7 +55,6 @@ interface Task {
 
 let task = ref<Task | null>(null);
 let syncPathWithTitle = ref(false);
-let taskLink = ref('');
 let deleteModal = ref(false);
 
 const syncing = ref<boolean>(false);
@@ -93,39 +81,33 @@ const shownClasses = computed(() => {
   });
 });
 
-watch(task, (newTask) => {
-  if (newTask) {
-    const clazz = newTask.classes.find((clazz) => clazz.assignment_id >= 1);
-    if (clazz) {
-      taskLink.value = `/task/${clazz.assignment_id}/${user.value.username}/`;
-    } else {
-      taskLink.value = newTask.task_link;
-    }
-  }
-});
+const taskLink = computed(() => {
+  if (!task.value) return '';
 
-/**
- * Redirect user to given URL
- */
-function redirectToUrl(url: string): void {
-  window.location.href = url;
-}
+  const clazz = task.value.classes.find((c) => c.assignment_id >= 1);
+
+  if (clazz) {
+    return `/task/${clazz.assignment_id}/${user.value.username}/`;
+  }
+
+  return task.value.task_link;
+});
 
 /**
  * Used when we want to create new task
  */
 async function prepareCreatingTask(): Promise<void> {
-  const res = await fetch('/api/subject/' + props.params.subject);
+  const res = await fetch('/api/subject/' + route.params.subject);
   const json = await res.json();
 
-  const current_path = [props.params.subject, semester.value['abbr'], user.value.username].join(
+  const current_path = [route.params.subject, semester.value['abbr'], user.value.username].join(
     '/'
   );
 
   task.value = {
     classes: json['classes'],
     path: current_path,
-    subject_abbr: props.params.subject,
+    subject_abbr: route.params.subject as string,
     type: 'homework'
   };
 
@@ -145,15 +127,16 @@ async function loadTask(id: number, redirectTo: boolean = true): Promise<void> {
   fs.setRoot(task.value.files, task.value.files_uri);
   await fs.open('readme.md');
 
-  if (redirectTo) redirectToUrl('/task/edit/' + task.value.id);
+  if (redirectTo) await router.push('/task/edit/' + task.value.id);
 }
 
 onMounted(async () => {
-  if (props.params.id) {
-    await loadTask(props.params.id, false);
+  if (route.params.id) {
+    await loadTask(Number(route.params.id), false);
   } else {
     await prepareCreatingTask();
     syncPathWithTitle.value = true;
+    synchronizePathWithReadMeTitle();
   }
 });
 
@@ -161,7 +144,7 @@ function synchronizePathWithReadMeTitle(): void {
   const readme = openedFiles.value['/readme.md'];
 
   if (readme && task.value) {
-    let parts = [props.params.subject, semester.value['abbr'], user.value.username];
+    let parts = [route.params.subject, semester.value['abbr'], user.value.username];
 
     let classes = task.value['classes'].filter((c) => c.assigned);
     if (classes.length == 1) {
@@ -202,12 +185,6 @@ function synchronizePathWithReadMeTitle(): void {
   }
 }
 
-watch(syncPathWithTitle, (newSyncPathWithTitle) => {
-  if (newSyncPathWithTitle) {
-    synchronizePathWithReadMeTitle();
-  }
-});
-
 watch(openedFiles, () => {
   if (syncPathWithTitle.value) {
     synchronizePathWithReadMeTitle();
@@ -217,17 +194,17 @@ watch(openedFiles, () => {
 async function save(): Promise<void> {
   syncing.value = true;
 
-  console.log(task.value);
-
-  const res = await fetch('/api/tasks/' + (task.value.id ? task.value.id : ''), {
+  const res = await fetch('/api/tasks/' + (route.params.id ? route.params.id : ''), {
     method: 'POST',
     body: JSON.stringify(toRaw(task.value))
   });
 
   const json = await res.json();
   errors.value = json['errors'];
+
   if (errors.value.length == 0) {
     task.value['classes'] = json['classes'];
+    task.value['task_link'] = json['task_link'];
     savedPath.value = json['path'];
     task.value['can_delete'] = json['can_delete'];
     fs.setEndpointUrl(json.files_uri);
@@ -235,7 +212,7 @@ async function save(): Promise<void> {
     await openedFilesSvelte.save();
 
     if (!task.value.id) {
-      redirectToUrl('/task/edit/' + json.id);
+      await router.push('/task/edit/' + json.id);
     }
   }
   syncing.value = false;
@@ -298,19 +275,21 @@ function setRelativeDeadlineToAssigned(assigned: Date, deadline: Date): void {
 }
 
 async function duplicateTask(): Promise<void> {
+  await save();
+
   let res = await fetch(`/api/tasks/${task.value.id}/duplicate`, {
     method: 'POST'
   });
 
   let json = await res.json();
-  redirectToUrl('/task/edit/' + json.id);
+  await router.push('/task/edit/' + json.id);
   await loadTask(json.id);
 }
 
 async function deleteTask(proceed: boolean): Promise<void> {
   deleteModal.value = false;
   if (proceed) {
-    const res = await fetch(`/api/tasks/${task.value.id}`, {
+    const res = await fetch(`/api/tasks/${route.params.id}`, {
       method: 'DELETE'
     });
 
@@ -320,9 +299,11 @@ async function deleteTask(proceed: boolean): Promise<void> {
       errors.value = json['errors'];
     } else {
       errors.value = [];
-      redirectToUrl('/task/add/' + task.value.subject_abbr);
+      await router.push('/task/add/' + task.value.subject_abbr);
       fs.setRoot([], undefined);
       await prepareCreatingTask();
+      syncPathWithTitle.value = true;
+      synchronizePathWithReadMeTitle();
     }
   }
 }
@@ -464,10 +445,12 @@ async function deleteTask(proceed: boolean): Promise<void> {
                           step="1"
                           :disabled="!clazz.assigned"
                           placeholder="Max points"
-                          @input="(e) => {
-                            const target = e.target as HTMLInputElement;
-                            clazz.max_points = (target.value === '' ? null : Number(target.value))
-                          }"
+                          @input="
+                            (e) => {
+                              const target = e.target as HTMLInputElement;
+                              clazz.max_points = target.value === '' ? null : Number(target.value);
+                            }
+                          "
                         />
                         <button
                           class="btn btn-sm btn-secondary"
