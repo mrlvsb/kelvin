@@ -6,11 +6,24 @@
  */
 
 import CodeMirror, { EditorFromTextArea, type EditorConfiguration } from 'codemirror';
-import { markRaw, ref, watch, onUnmounted, onMounted } from 'vue';
+import { markRaw, ref, watch, onUnmounted } from 'vue';
 import { theme, ThemeValue } from '../utilities/theme';
 import { EditorExtension, ExtraKeys } from '../utilities/EditorUtils';
 import { getExtension } from '../utilities/EditorUtils';
 import { lintPipeline } from '../PipelineValidation.js';
+
+import 'codemirror/lib/codemirror.css';
+import 'codemirror/mode/clike/clike.js';
+import 'codemirror/mode/yaml/yaml.js';
+import 'codemirror/mode/python/python.js';
+import 'codemirror/mode/markdown/markdown.js';
+import 'codemirror/mode/htmlmixed/htmlmixed.js';
+import 'codemirror/addon/display/fullscreen.js';
+import 'codemirror/addon/display/fullscreen.css';
+import 'codemirror/addon/lint/lint.js';
+import 'codemirror/addon/lint/lint.css';
+import 'codemirror/addon/hint/show-hint.js';
+import 'codemirror/addon/hint/show-hint.css';
 
 const editorContent = defineModel<string>();
 
