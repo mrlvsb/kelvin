@@ -3,7 +3,7 @@
  * Component shows full edit task page, used for editing existing pages and creating new ones
  */
 
-import { ref, watch, onMounted, toRaw } from 'vue';
+import { ref, watch, onMounted, toRaw, computed } from 'vue';
 
 import { semester as semesterSvelte, user as userSvelte } from '../../global.js';
 import { fs, openedFiles as openedFilesSvelte } from '../../fs.js';
@@ -43,7 +43,7 @@ interface Class {
   deadline: Date;
   hard_deadline: boolean;
   id: number;
-  max_points: number;
+  max_points?: number;
   teacher: string;
   timeslot: string;
   week_offset: number;
@@ -75,22 +75,22 @@ let savedPath = ref('');
 
 let showAllClasses = ref<boolean>(false);
 
-let shownClasses = ref<Array<Class>>([]);
-
 function isClassVisible(cls: Class): boolean {
   return cls.teacher === user.value.username || cls.assignment_id > 0 || showAllClasses.value;
 }
 
-watch(task, (newTask) => {
-  if (newTask) {
-    shownClasses.value = newTask.classes.filter(isClassVisible).sort((a, b) => {
-      function key(cls: Class): boolean {
-        return cls.teacher === user.value.username || cls.assignment_id !== undefined;
-      }
+const shownClasses = computed(() => {
+  if (!task.value) return [];
 
-      return Number(key(b)) - Number(key(a));
-    });
-  }
+  const filtered = task.value.classes.filter(isClassVisible);
+
+  return filtered.sort((a, b) => {
+    function key(cls: Class): boolean {
+      return cls.teacher === user.value.username || cls.assignment_id !== undefined;
+    }
+
+    return Number(key(b)) - Number(key(a));
+  });
 });
 
 watch(task, (newTask) => {
@@ -251,44 +251,39 @@ onMounted(() => {
 });
 
 function setAssignedDateToVisible(assigned: Date): void {
-  task.value.classes = task.value.classes.map((cl) => {
+  task.value.classes.forEach((cl) => {
     if (isClassVisible(cl)) cl.assigned = assigned;
-    return cl;
   });
 }
 
 function setDeadlineToAssigned(deadline: Date): void {
-  task.value.classes = task.value.classes.map((cl) => {
+  task.value.classes.forEach((cl) => {
     if (cl.assigned) cl.deadline = deadline;
-    return cl;
   });
 }
 
 function assignPointsToAll(max_pts: number): void {
-  task.value.classes = task.value.classes.map((cl) => {
+  task.value.classes.forEach((cl) => {
     if (cl.assigned) {
       cl.max_points = max_pts;
     }
-    return cl;
   });
 }
 
 function assignHardDeadlineToAll(hard_deadline: boolean): void {
-  task.value.classes = task.value.classes.map((cl) => {
+  task.value.classes.forEach((cl) => {
     if (cl.assigned) cl.hard_deadline = hard_deadline;
-    return cl;
   });
 }
 
 function assignSameToAll(templateClass: Class): void {
-  task.value.classes = task.value.classes.map((cl) => {
+  task.value.classes.forEach((cl) => {
     if (isClassVisible(cl)) {
       cl.max_points = templateClass.max_points;
       cl.assigned = templateClass.assigned;
       cl.deadline = templateClass.deadline;
       cl.hard_deadline = templateClass.hard_deadline;
     }
-    return cl;
   });
 }
 
@@ -453,7 +448,7 @@ async function deleteTask(proceed: boolean): Promise<void> {
                         <button
                           class="btn btn-sm btn-secondary"
                           title="Copy hard deadline setting to all classes"
-                          @click.prevent="assignHardDeadlineToAll(clazz.hard_deadline)"
+                          @click.stop="assignHardDeadlineToAll(clazz.hard_deadline)"
                         >
                           <span class="iconify" data-icon="mdi:content-duplicate"></span>
                         </button>
@@ -462,19 +457,23 @@ async function deleteTask(proceed: boolean): Promise<void> {
                     <div class="col-2">
                       <div class="input-group">
                         <input
-                          v-model="clazz.max_points"
+                          :value="clazz.max_points"
                           class="form-control form-control-sm"
                           type="number"
                           min="0"
                           step="1"
                           :disabled="!clazz.assigned"
                           placeholder="Max points"
+                          @input="(e) => {
+                            const target = e.target as HTMLInputElement;
+                            clazz.max_points = (target.value === '' ? null : Number(target.value))
+                          }"
                         />
                         <button
                           class="btn btn-sm btn-secondary"
                           :disabled="!clazz.assigned"
                           title="Set points to all assigned classes"
-                          @click.prevent="assignPointsToAll(clazz.max_points)"
+                          @click.stop="assignPointsToAll(clazz.max_points)"
                         >
                           <span class="iconify" data-icon="mdi:content-duplicate"></span>
                         </button>

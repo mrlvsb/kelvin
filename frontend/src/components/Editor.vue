@@ -6,7 +6,7 @@
  */
 
 import CodeMirror, { EditorFromTextArea, type EditorConfiguration } from 'codemirror';
-import { markRaw, ref, watch, onUnmounted } from 'vue';
+import { markRaw, ref, watch, onUnmounted, onMounted } from 'vue';
 import { theme, ThemeValue } from '../utilities/theme';
 import { EditorExtension, ExtraKeys } from '../utilities/EditorUtils';
 import { getExtension } from '../utilities/EditorUtils';
@@ -163,7 +163,7 @@ function setUpOptions() {
 }
 
 //initialize editor
-const initializeEditor = () => {
+function initializeEditor() {
   //https://stackoverflow.com/questions/67686617/codemirror-on-vue3-has-a-problem-when-setvalue-is-kicked
   editor = markRaw(
     CodeMirror.fromTextArea(editorElement.value, {
@@ -177,6 +177,8 @@ const initializeEditor = () => {
     })
   );
 
+  if (editorContent.value) editor.setValue(editorContent.value);
+
   //call setup first time, because editor is initialized
   handleSetup(editor);
 
@@ -184,12 +186,8 @@ const initializeEditor = () => {
     editorContent.value = editor.getValue();
   });
 
-  if (editorContent.value) editor.setValue(editorContent.value);
-
   setUpOptions();
-};
-
-//onMounted(initializeEditor);
+}
 
 watch(editorElement, (newEditorTag) => {
   if (newEditorTag && !editor) {
