@@ -97,7 +97,7 @@ watch([fromDate, toDate], setDatePickers);
 </script>
 
 <template>
-  <div class="col">
+  <div class="col-md">
     <div class="input-group input-group-sm">
       <button
         class="btn btn-primary dropdown-toggle"
@@ -126,7 +126,7 @@ watch([fromDate, toDate], setDatePickers);
     </div>
   </div>
 
-  <div class="col">
+  <div class="col-md">
     <div class="input-group input-group-sm">
       <button
         class="btn btn-primary dropdown-toggle"
