@@ -1,4 +1,5 @@
 import datetime
+import ipaddress
 import logging
 import os
 import re
@@ -137,6 +138,17 @@ class Room(models.Model):
         return f"{self.code} - {self.capacity} seats"
 
 
+class RoomIpRange(models.Model):
+    ip_range_start = models.GenericIPAddressField()
+    ip_range_end = models.GenericIPAddressField()
+    room = models.ForeignKey(
+        Room, on_delete=models.SET_NULL, blank=True, null=True, related_name="ip_ranges"
+    )
+
+    def __str__(self):
+        return f"{self.ip_range_start} – {self.ip_range_end}"
+
+
 class Class(models.Model):
     class Day(models.TextChoices):
         MONDAY = "PO", "Monday"
@@ -236,15 +248,6 @@ class Class(models.Model):
         verbose_name_plural = "classes"
 
 
-class ClassroomIpRange(models.Model):
-    name = models.TextField()
-    ip_range_start = models.GenericIPAddressField()
-    ip_range_end = models.GenericIPAddressField()
-
-    def __str__(self):
-        return f"{self.name}: {self.ip_range_start} – {self.ip_range_end}"
-
-
 class AssignedTask(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
     clazz = models.ForeignKey(Class, on_delete=models.CASCADE)
@@ -253,7 +256,7 @@ class AssignedTask(models.Model):
     hard_deadline = models.BooleanField(default=False)
     max_points = models.IntegerField(null=True, blank=True)
     moss_url = models.URLField(null=True, blank=True, editable=False)
-    allowed_classrooms = models.ManyToManyField(ClassroomIpRange, related_name="assignments")
+    allowed_rooms = models.ManyToManyField(RoomIpRange, related_name="assignments")
 
     def is_visible(self):
         return timezone.now() >= self.assigned
@@ -270,16 +273,17 @@ class AssignedTask(models.Model):
     def is_allowed_from_ip(self, ip: str) -> bool:
         ip = ipaddress.ip_address(ip)
 
-        if not self.allowed_classrooms.all().exists():
+        if not self.allowed_rooms.all().exists():
             return True
 
         allowed = False
 
-        for classroom in self.allowed_classrooms.all():
-            start = ipaddress.ip_address(classroom.ip_range_start)
-            end = ipaddress.ip_address(classroom.ip_range_end)
+        for room in self.allowed_rooms.all():
+            for ip in room.ip_ranges.all():
+                start = ipaddress.ip_address(ip.ip_range_start)
+                end = ipaddress.ip_address(ip.ip_range_end)
 
-            allowed |= start <= ip <= end
+                allowed |= start <= ip <= end
 
         return allowed
 
