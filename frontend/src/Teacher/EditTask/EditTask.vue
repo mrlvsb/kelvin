@@ -12,6 +12,7 @@ import { task_types } from '../../taskTypes';
 import Manager from './FileManager.vue';
 import SyncLoader from '../../components/SyncLoader.vue';
 import TimeRange from './TimeRange.vue';
+import RoomsSelect from './RoomsSelect.vue';
 import { useReadableSvelteStore } from '../../utilities/useSvelteStoreInVue';
 import { User, Semester, FileEntry } from '../../utilities/SvelteStoreTypes';
 import AutoCompleteTaskPath from './AutoCompleteTaskPath.vue';
@@ -36,6 +37,7 @@ interface Class {
   teacher: string;
   timeslot: string;
   week_offset: number;
+  allowed_rooms?: number[];
 }
 
 interface Task {
@@ -253,6 +255,14 @@ function assignHardDeadlineToAll(hard_deadline: boolean): void {
   });
 }
 
+function assignRoomsToAll(classes: number[]) {
+  task.value.classes.forEach((cl) => {
+    if (cl.assigned) {
+      cl.allowed_rooms = [...classes];
+    }
+  });
+}
+
 function assignSameToAll(templateClass: Class): void {
   task.value.classes.forEach((cl) => {
     if (isClassVisible(cl)) {
@@ -260,6 +270,7 @@ function assignSameToAll(templateClass: Class): void {
       cl.assigned = templateClass.assigned;
       cl.deadline = templateClass.deadline;
       cl.hard_deadline = templateClass.hard_deadline;
+      cl.allowed_rooms = [...templateClass.allowed_rooms];
     }
   });
 }
@@ -461,6 +472,12 @@ async function deleteTask(proceed: boolean): Promise<void> {
                           <span class="iconify" data-icon="mdi:content-duplicate"></span>
                         </button>
                       </div>
+                    </div>
+                    <div v-if="task.type == 'exam'" class="col-2">
+                      <RoomsSelect
+                        v-model="clazz.allowed_rooms"
+                        :on-duplicate-click="assignRoomsToAll"
+                      />
                     </div>
                   </div>
                 </td>
