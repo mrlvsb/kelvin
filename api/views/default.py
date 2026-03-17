@@ -47,7 +47,7 @@ from common.models import (
     assignedtask_results,
     current_semester,
     submit_assignment_path,
-    ClassroomIpRange,
+    Room,
 )
 from common.submit import (
     SubmitRateLimited,
@@ -606,7 +606,7 @@ def add_student_to_class(request, class_id):
 
 
 def classrooms_list(request):
-    classrooms = ClassroomIpRange.objects.values("id", "name")
+    classrooms = Room.objects.values("id", "code")
 
     return JsonResponse(list(classrooms), safe=False)
 
@@ -719,7 +719,7 @@ def task_detail(request, task_id=None):
         else:
             return JsonResponse(
                 {
-                    "errors": [f'Invalid task type {data.get("type")}'],
+                    "errors": [f"Invalid task type {data.get('type')}"],
                 },
                 status=400,
             )
@@ -746,13 +746,13 @@ def task_detail(request, task_id=None):
                     },
                 )
 
-                if "allowed_classrooms" in cl:
-                    classes = []
-                    for class_id in cl["allowed_classrooms"]:
-                        class_object = ClassroomIpRange.objects.get(pk=class_id)
-                        classes.append(class_object)
+                if "allowed_rooms" in cl:
+                    allowed_rooms = []
+                    for class_id in cl["allowed_rooms"]:
+                        room_object = Room.objects.get(pk=class_id)
+                        allowed_rooms.append(room_object)
 
-                    assigned_task.allowed_classrooms.set(classes)
+                    assigned_task.allowed_rooms.set(allowed_rooms)
 
             else:
                 submits = Submit.objects.filter(
@@ -879,9 +879,7 @@ def task_detail(request, task_id=None):
             item["deadline"] = assigned.deadline
             item["max_points"] = assigned.max_points
             item["hard_deadline"] = assigned.hard_deadline
-            item["allowed_classrooms"] = list(
-                assigned.allowed_classrooms.values_list("id", flat=True)
-            )
+            item["allowed_rooms"] = list(assigned.allowed_rooms.values_list("id", flat=True))
 
         result["classes"].append(item)
 
