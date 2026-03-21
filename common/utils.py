@@ -10,17 +10,13 @@ from django.utils import timezone
 
 from .inbus import inbus
 import django.contrib.auth.models
-import re
 from functools import lru_cache
 from typing import NewType
 
-import django.contrib.auth.models
 import requests
 from django.conf import settings
-from django.http import HttpRequest
 from ipware import get_client_ip
 
-from .inbus import inbus
 
 IPAddressString = NewType("IPAddressString", str)
 
@@ -139,7 +135,7 @@ def ip_address_check(function):
         if assignment.deadline is not None and timezone.now() > assignment.deadline:
             return function(*args, **kwargs)
 
-        if assignment.allowed_classrooms:
+        if assignment.allowed_rooms:
             x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
             if x_forwarded_for:
                 ip = x_forwarded_for.split(",")[0].strip()
