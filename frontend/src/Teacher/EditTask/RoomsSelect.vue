@@ -1,26 +1,25 @@
 <script setup lang="ts">
-
-import {onMounted, ref, computed, type ComputedRef} from 'vue';
-import {fetch} from '../../api';
+import { onMounted, ref, computed, type ComputedRef } from 'vue';
+import { fetch } from '../../api';
 import { clickOutside } from '../../utilities/clickOutside';
-
 
 interface Room {
   id: number;
   code: string;
 }
 
-interface ViewRoom extends Room{
+interface ViewRoom extends Room {
   isSelected: boolean;
 }
 
-let {
-  onDuplicateClick
-} = defineProps<{
-  onDuplicateClick: (selected: number[]) => void
+let { onDuplicateClick, disabled = false } = defineProps<{
+  onDuplicateClick: (selected: number[]) => void;
+  disabled: boolean;
 }>();
 
-const selectedRooms = defineModel<number[]>();
+const selectedRooms = defineModel<number[]>({
+  required: false
+});
 
 let allRooms = ref<Room[]>(null);
 
@@ -29,15 +28,17 @@ const vClickOutside = clickOutside;
 onMounted(async () => {
   const req = await fetch('/api/classrooms-list/');
   allRooms.value = await req.json();
+
+  if (selectedRooms.value == undefined) selectedRooms.value = [];
 });
 
-const allRoomsList : ComputedRef<ViewRoom[]> = computed(() => {
+const allRoomsList: ComputedRef<ViewRoom[]> = computed(() => {
   if (!allRooms.value) return [];
 
-  return allRooms.value.map(room => {
+  return allRooms.value.map((room) => {
     return {
       ...room,
-      isSelected: selectedRooms.value.includes(room.id),
+      isSelected: selectedRooms.value.includes(room.id)
     };
   });
 });
@@ -58,57 +59,63 @@ function toggleItem(item: ViewRoom) {
   }
 }
 
-const sortedClassroomList : ComputedRef<ViewRoom[]> = computed(() => {
-  return allRoomsList.value.filter((i) => i.code.toLowerCase().includes(search.value.toLowerCase()))
+const sortedClassroomList: ComputedRef<ViewRoom[]> = computed(() => {
+  return allRoomsList.value
+    .filter((i) => i.code.toLowerCase().includes(search.value.toLowerCase()))
     .sort((a, b) => {
       if (a.isSelected && !b.isSelected) return -1;
       if (!a.isSelected && b.isSelected) return 1;
 
       return a.code.localeCompare(b.code);
     });
-})
+});
 
-const selectedCount : ComputedRef<number> = computed(() => allRoomsList.value.filter((i) => i.isSelected).length);
+const selectedCount: ComputedRef<number> = computed(
+  () => allRoomsList.value.filter((i) => i.isSelected).length
+);
 </script>
 
 <template>
-  <div v-click-outside="() => (showDropdown = false)" class="dropdown" style="position: relative;">
+  <div v-click-outside="() => (showDropdown = false)" class="dropdown" style="position: relative">
     <div class="input-group">
       <input
-          type="button"
-          :value="selectedCount > 0 ? `${selectedCount} classroom(s) selected` : 'Select classrooms'"
-      class="btn btn-sm btn-primary"
-      @click="showDropdown = !showDropdown" />
+        type="button"
+        :value="selectedCount > 0 ? `${selectedCount} classroom(s) selected` : 'Select classrooms'"
+        :disabled="disabled"
+        class="btn btn-sm btn-primary"
+        @click="showDropdown = !showDropdown"
+      />
       <button
-          class="btn btn-sm btn-secondary"
-          title="Set assigned classroom list to all visible classes"
-          @click.prevent="() => onDuplicateClick(selectedRooms)">
-      <span class="iconify" data-icon="mdi:content-duplicate"></span>
+        class="btn btn-sm btn-secondary"
+        title="Set assigned classroom list to all visible classes"
+        :disabled="disabled"
+        @click.prevent="() => onDuplicateClick(selectedRooms)"
+      >
+        <span class="iconify" data-icon="mdi:content-duplicate"></span>
       </button>
     </div>
 
     <div
-        v-if="showDropdown"
-        class="card p-3 mt-2"
-        style="position: absolute; z-index: 1000; width: 250px; max-height: 200px; overflow-y: auto;">
-      <input v-model="search" type="text" placeholder="Search..." class="form-control mb-2"/>
+      v-if="showDropdown"
+      class="card p-3 mt-2"
+      style="position: absolute; z-index: 1000; width: 250px; max-height: 200px; overflow-y: auto"
+    >
+      <input v-model="search" type="text" placeholder="Search..." class="form-control mb-2" />
 
-      <div
-          v-for="room in sortedClassroomList" :key="room.id"
-          class="form-check">
+      <div v-for="room in sortedClassroomList" :key="room.id" class="form-check">
         <input
-            :id="'classroom' + room.id"
-            :checked="room.isSelected"
-            type="checkbox"
-            class="form-check-input"
-            @change = "() => toggleItem(room)"/>
-        <label class="form-check-label" :for="'classroom' + room.id">{{room.code}}</label>
+          :id="'classroom' + room.id"
+          :checked="room.isSelected"
+          type="checkbox"
+          class="form-check-input"
+          @change="() => toggleItem(room)"
+        />
+        <label class="form-check-label" :for="'classroom' + room.id">{{ room.code }}</label>
       </div>
 
       <small v-if="selectedCount === 0" class="text-black">No classrooms found</small>
     </div>
   </div>
-
 </template>
 
 <style scoped>
