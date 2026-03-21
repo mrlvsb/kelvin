@@ -256,7 +256,7 @@ class AssignedTask(models.Model):
     hard_deadline = models.BooleanField(default=False)
     max_points = models.IntegerField(null=True, blank=True)
     moss_url = models.URLField(null=True, blank=True, editable=False)
-    allowed_rooms = models.ManyToManyField(RoomIpRange, related_name="assignments")
+    allowed_rooms = models.ManyToManyField(Room, related_name="assignments")
 
     def is_visible(self):
         return timezone.now() >= self.assigned
@@ -279,9 +279,9 @@ class AssignedTask(models.Model):
         allowed = False
 
         for room in self.allowed_rooms.all():
-            for ip in room.ip_ranges.all():
-                start = ipaddress.ip_address(ip.ip_range_start)
-                end = ipaddress.ip_address(ip.ip_range_end)
+            for room_range in room.ip_ranges.all():
+                start = ipaddress.ip_address(room_range.ip_range_start)
+                end = ipaddress.ip_address(room_range.ip_range_end)
 
                 allowed |= start <= ip <= end
 
