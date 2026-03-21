@@ -476,6 +476,7 @@ async function deleteTask(proceed: boolean): Promise<void> {
                     <div v-if="task.type == 'exam'" class="col-2">
                       <RoomsSelect
                         v-model="clazz.allowed_rooms"
+                        :disabled="!clazz.assigned"
                         :on-duplicate-click="assignRoomsToAll"
                       />
                     </div>
