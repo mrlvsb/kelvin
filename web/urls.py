@@ -1,4 +1,5 @@
 from django.urls import path
+from django.conf.urls.static import static
 
 from .views import common as common_view
 from .views import notification as notification_view
@@ -163,4 +164,4 @@ urlpatterns = [
     path("teacher/quiz/scoring/<int:enrolled_id>", teacher_view.quiz_scoring, name="quiz_scoring"),
     path("teacher/quizzes", teacher_view.quiz_list, name="quiz_list"),
     path("teacher/quiz/<int:quiz_id>/submits", teacher_view.quiz_submits, name="quiz_submits"),
-]
+] + static("/.well-known", document_root="web/static/.well-known")
