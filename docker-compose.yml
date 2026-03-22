@@ -31,6 +31,7 @@ services:
       - EVALUATION_LINK_BASEURL=${EVALUATION_LINK_BASEURL:-}
     volumes:
       - app_static:/app/static
+      - app_well_known:/app/web/static/.well-known
       - app_socket:/socket
       - ${KELVIN__LOCAL_SETTINGS_PATH}:/app/kelvin/local_settings.py:ro
       - ${UWSGI__CONFIG_PATH}:/app/uwsgi.ini:ro
@@ -77,6 +78,7 @@ services:
       - ${NGINX__CERTS_PATH}:/etc/nginx/certs:ro
       - ${NGINX__LOGS_PATH}:/var/log/nginx
       - app_static:/app/static:ro
+      - app_well_known:/app/.well-known:ro
       - app_socket:/socket
     networks:
       default:
@@ -220,6 +222,7 @@ services:
 
 volumes:
   app_static:
+  app_well_known:
   app_socket:
 
 networks:
