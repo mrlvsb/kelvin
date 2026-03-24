@@ -3,17 +3,29 @@
  * This component is used as Editor for editing file content.
  * It provides interface for adding Extensions, which
  * can for example add custom linting or hinting.
- * Currently it is nowhere available, since integration
- * would need to rewrite much more components.
  */
 
 import CodeMirror, { EditorFromTextArea, type EditorConfiguration } from 'codemirror';
-import { onMounted, ref, watch } from 'vue';
+import { markRaw, ref, watch, onUnmounted } from 'vue';
 import { theme, ThemeValue } from '../utilities/theme';
 import { EditorExtension, ExtraKeys } from '../utilities/EditorUtils';
 import { getExtension } from '../utilities/EditorUtils';
+import { lintPipeline } from '../PipelineValidation.js';
 
-const editorContent = defineModel<string>('value');
+import 'codemirror/lib/codemirror.css';
+import 'codemirror/mode/clike/clike.js';
+import 'codemirror/mode/yaml/yaml.js';
+import 'codemirror/mode/python/python.js';
+import 'codemirror/mode/markdown/markdown.js';
+import 'codemirror/mode/htmlmixed/htmlmixed.js';
+import 'codemirror/addon/display/fullscreen.js';
+import 'codemirror/addon/display/fullscreen.css';
+import 'codemirror/addon/lint/lint.js';
+import 'codemirror/addon/lint/lint.css';
+import 'codemirror/addon/hint/show-hint.js';
+import 'codemirror/addon/hint/show-hint.css';
+
+const editorContent = defineModel<string>();
 
 let {
   autofocus = false,
@@ -136,7 +148,6 @@ const handleSetup = (editor: CodeMirror.Editor) => {
 };
 
 const DEFAULT_KEY_MAP = {
-  'Ctrl-Space': handleHint,
   F11: function (cm) {
     cm.setOption('fullScreen', !cm.getOption('fullScreen'));
   },
@@ -150,25 +161,36 @@ const DEFAULT_KEY_MAP = {
   }
 } satisfies ExtraKeys<EditorConfiguration['extraKeys']>;
 
-//initialize editor
-const initializeEditor = () => {
-  editor = CodeMirror.fromTextArea(editorElement.value, {
-    mode: toMode(filename),
-    filename,
-    autofocus,
-    lint: lint ? handleLint : lint,
-    lineWrapping: wrap,
-    gutters: ['CodeMirror-lint-markers'],
-    spellcheck,
-    theme: getThemeName(theme.value),
-    inputStyle: 'contenteditable',
-    readOnly: disabled,
-    tabSize: 2,
-    extraKeys: {
+function setUpOptions() {
+  if (editor) {
+    editor.setOption('filename', filename);
+    editor.setOption('lint', filename == '/config.yml' ? lintPipeline : lint ? handleLint : false);
+    editor.setOption('mode', toMode(filename));
+    editor.setOption('readOnly', disabled);
+    editor.setOption('extraKeys', {
+      'Ctrl-Space': filename == '/config.yml' ? 'autocomplete' : handleHint,
       ...DEFAULT_KEY_MAP,
       ...extraKeys
-    }
-  });
+    });
+  }
+}
+
+//initialize editor
+function initializeEditor() {
+  //https://stackoverflow.com/questions/67686617/codemirror-on-vue3-has-a-problem-when-setvalue-is-kicked
+  editor = markRaw(
+    CodeMirror.fromTextArea(editorElement.value, {
+      autofocus,
+      lineWrapping: wrap,
+      gutters: ['CodeMirror-lint-markers'],
+      spellcheck,
+      theme: getThemeName(theme.value),
+      inputStyle: 'contenteditable',
+      tabSize: 2
+    })
+  );
+
+  if (editorContent.value) editor.setValue(editorContent.value);
 
   //call setup first time, because editor is initialized
   handleSetup(editor);
@@ -176,26 +198,23 @@ const initializeEditor = () => {
   editor.on('change', (editor) => {
     editorContent.value = editor.getValue();
   });
-};
 
-onMounted(initializeEditor);
+  setUpOptions();
+}
+
+watch(editorElement, (newEditorTag) => {
+  if (newEditorTag && !editor) {
+    initializeEditor();
+  }
+});
 
 //update editor based on value in model
 watch(editorContent, (value) => {
   if (value != editor.getValue()) {
     editor.setValue(value);
+    setUpOptions();
   }
 });
-
-//re-initialize editor on filename change
-watch(
-  () => filename,
-  () => {
-    //remove the wrapper element to avoid multiple editors
-    editor.getWrapperElement().remove();
-    initializeEditor();
-  }
-);
 
 //because props are not ref, we need to wrap them into getter functions to be reactive
 watch(
@@ -210,10 +229,20 @@ watch(
     });
   }
 );
+
+onUnmounted(() => {
+  if (editor) {
+    editor.toTextArea();
+    //editor = null;
+    editorElement.value = '';
+  }
+});
 </script>
 
 <template>
-  <textarea ref="editorElement" class="form-control" :value="editorContent"></textarea>
+  <div :class="{ disabled: disabled }">
+    <textarea ref="editorElement" class="form-control"></textarea>
+  </div>
 </template>
 
 <style global>
