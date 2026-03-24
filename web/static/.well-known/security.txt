@@ -1,1 +1,3 @@
-If you find a security vulnerability in Kelvin, please disclose it to kelvin@vsb.cz. Thank you!
+Contact: mailto:kelvin@vsb.cz
+Expires: 2036-01-01T00:00:00Z
+Preferred-Languages: en, cs
