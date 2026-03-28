@@ -1,0 +1,12 @@
+{% extends 'web/layout.html' %}
+{% load static %}
+
+{% block fullcontent %}
+    <div id="edit-task"></div>
+{% endblock %}
+
+{% block script %}
+    <script>
+        mountEditTask("#edit-task");
+    </script>
+{% endblock %}
