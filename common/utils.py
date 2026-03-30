@@ -147,7 +147,7 @@ def prohibit_during_test(function):
         if is_teacher(request.user):
             return function(*args, **kwargs)
 
-        active_exams = get_active_exams_at(request.user, datetime.now(), timedelta(0))
+        active_exams = get_active_exams_at(request.user, datetime.now(), timedelta(0.5))
 
         if not active_exams:
             return function(*args, **kwargs)
