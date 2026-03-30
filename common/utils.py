@@ -12,7 +12,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
 from ipware import get_client_ip
 
-from .exceptions.http_exceptions import HttpException404, HttpException403
+from .exceptions.http_exceptions import HttpException403
 from .inbus import inbus
 
 
@@ -140,7 +140,6 @@ def prohibit_during_test(function):
     """
 
     def wrapper(*args, **kwargs):
-        from .models import AssignedTask
         from .task import get_active_exams_at
 
         request = args[0]
@@ -155,19 +154,9 @@ def prohibit_during_test(function):
 
         assignment_id = kwargs.get("assignment_id")
 
-        try:
-            assignment = AssignedTask.objects.get(pk=assignment_id)
-        except AssignedTask.DoesNotExist:
-            raise HttpException404(f"AssignedTask with id {assignment_id} not found")
-
         # if task is any of ongoing exams allow it
         for exam in active_exams:
             if exam.pk == assignment_id:
-                return function(*args, **kwargs)
-
-        if assignment.has_hard_deadline() and assignment.deadline is not None:
-            # check if the deadline has expired before the start of all exams
-            if all(map(lambda e: assignment.deadline < e.assigned, active_exams)):
                 return function(*args, **kwargs)
 
         raise HttpException403("Access to this task is prohibited during exam")
