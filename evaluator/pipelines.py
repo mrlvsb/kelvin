@@ -37,6 +37,11 @@ IMAGE_LIMITS = {
         "memory": "256M",
         "fsize": "16M",
     },
+    "kelvin/pythonrun": {
+        "network": "bridge",
+        "memory": "256M",
+        "fsize": "16M",
+    },
 }
 
 
