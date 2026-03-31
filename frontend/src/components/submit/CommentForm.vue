@@ -33,7 +33,7 @@ const submit = () => {
 
 <template>
   <Editor
-    v-model:value="localComment"
+    v-model="localComment"
     filename="comment.md"
     :disabled="disabled"
     :wrap="true"
