@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Loader from './Loader.vue';
+import SyncLoader from '../components/SyncLoader.vue';
 
 defineProps<{
   childComponent: object;
@@ -11,7 +11,7 @@ defineProps<{
     <component :is="childComponent" v-bind="$attrs" />
     <template #fallback>
       <div class="d-flex justify-content-center loading-animation">
-        <Loader />
+        <SyncLoader />
       </div>
     </template>
   </Suspense>
