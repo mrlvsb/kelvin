@@ -795,7 +795,7 @@ onUnmounted(() => {
           >
             <div class="col-12">
               <Editor
-                v-model:value="currentQuestionYamlRef"
+                v-model="currentQuestionYamlRef"
                 filename="quiz.yaml"
                 :extensions="[extension]"
                 :lint="true"
