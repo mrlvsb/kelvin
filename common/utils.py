@@ -8,7 +8,6 @@ from typing import NewType
 import django.contrib.auth.models
 import requests
 from django.conf import settings
-from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
 from ipware import get_client_ip
 
@@ -142,23 +141,28 @@ def prohibit_during_test(function):
     def wrapper(*args, **kwargs):
         from .task import get_active_exams_at
 
-        request = args[0]
+        if "author" in kwargs:
+            author = kwargs.get("author")
+            assignment_id = None
+        else:
+            author = args[0].user
+            assignment_id = kwargs.get("assignment_id")
 
-        if is_teacher(request.user):
+        if is_teacher(author):
             return function(*args, **kwargs)
 
-        active_exams = get_active_exams_at(request.user, datetime.now(), timedelta(0.5))
+        active_exams = get_active_exams_at(author, datetime.now(), timedelta(0.5))
 
         if not active_exams:
             return function(*args, **kwargs)
 
-        assignment_id = kwargs.get("assignment_id")
+        if assignment_id is not None:
+            # if task is any of ongoing exams allow it
+            for exam in active_exams:
+                if exam.pk == assignment_id:
+                    return function(*args, **kwargs)
 
-        # if task is any of ongoing exams allow it
-        for exam in active_exams:
-            if exam.pk == assignment_id:
-                return function(*args, **kwargs)
-
-        raise HttpException403("Access to this task is prohibited during exam")
+            raise HttpException403("Access to this task is prohibited during exam")
+        raise HttpException403("Comments are disabled during exam")
 
     return wrapper
