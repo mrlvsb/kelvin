@@ -1,7 +1,8 @@
 import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from serde import serde
+
 from typing import List, Dict
 
 

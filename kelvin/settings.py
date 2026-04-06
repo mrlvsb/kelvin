@@ -33,7 +33,6 @@ PUBLIC_URL = f"https://{KELVIN_ROOT_HOST}"
 # real hostname resolve to nginx inside the Docker network.
 EVALUATION_LINK_BASEURL: str | None = os.getenv("EVALUATION_LINK_BASEURL", None)
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/dev/howto/deployment/checklist/
 
