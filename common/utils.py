@@ -14,7 +14,6 @@ from ipware import get_client_ip
 from .exceptions.http_exceptions import HttpException403
 from .inbus import inbus
 
-
 IPAddressString = NewType("IPAddressString", str)
 
 
@@ -131,11 +130,16 @@ def prohibit_during_test(function):
     """
     Decorator that restricts access to a page if the student has any ongoing exams.
 
-    The decorated function must accept the following parameters:
-        - request
-        - assignment_id
+    The decorated function must accept one of the following parameter sets:
+    - request and assignment_id, or
+    - author
 
-    During the ongoing test access is granted only for ongoing exams and tasks whose hard deadline ends before the exam starts.
+    Use the first option when access to specific test tasks should still be allowed.
+    Use the second option to disable all interactions during an ongoing exam.
+
+    Currently:
+    - The first option is used for the task page and its subpages.
+    - The second option is used to disable all comments.
     """
 
     def wrapper(*args, **kwargs):
@@ -148,6 +152,7 @@ def prohibit_during_test(function):
             author = args[0].user
             assignment_id = kwargs.get("assignment_id")
 
+        # Allways allow teacher access
         if is_teacher(author):
             return function(*args, **kwargs)
 
