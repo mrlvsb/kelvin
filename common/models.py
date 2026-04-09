@@ -13,7 +13,6 @@ from django.utils import timezone
 from jinja2 import Environment, FileSystemLoader
 
 from kelvin.settings import BASE_DIR
-from .ai_review.dto import LlmReviewPromptDTO
 from .event_log import UserEventModel  # noqa
 from .emails.models import Email  # noqa
 from .utils import is_teacher
@@ -381,17 +380,6 @@ class LlmReviewPrompt(models.Model):
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     default = models.BooleanField(default=False)
-
-    def to_dto(self) -> LlmReviewPromptDTO:
-        return LlmReviewPromptDTO(
-            id=self.id,
-            name=self.name,
-            description=self.description if self.description is not None else "",
-            version=self.version,
-            text=self.text,
-            created_at=self.created_at,
-            default=self.default,
-        )
 
 
 class SuggestedComment(models.Model):
