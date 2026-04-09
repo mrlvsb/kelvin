@@ -11,7 +11,8 @@ export type Comment = {
         review?: {
             id: number;
             state: 'PENDING' | 'ACCEPTED' | 'REJECTED';
-            rating?: number;
+            quality_rating?: number;
+            relevance_rating?: number;
         };
         url?: string;
     };

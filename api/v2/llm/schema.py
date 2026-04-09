@@ -8,7 +8,8 @@ class ModifySuggestionSchema(Schema):
 
 
 class RateSuggestionSchema(Schema):
-    rating: int
+    quality_rating: int
+    relevance_rating: int
 
 
 class OpenAIServerSchema(Schema):

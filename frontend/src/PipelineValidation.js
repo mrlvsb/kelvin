@@ -656,13 +656,13 @@ const rules = new DictRule({
                 new EnumRule(ISO6391.getAllCodes()),
                 'Language code for the generated summary and suggestions.'
             ],
-            server_id: [
+            server: [
                 new DynamicEnumRule(() => openaiServers.map((s) => s.id)),
                 'OpenAI server ID as defined in <strong>data/openai_servers.json</strong>. Defaults to first configured server.'
             ],
             model: [
                 new DynamicEnumRule((data) => {
-                    const serverId = data?.async?.llm?.server_id;
+                    const serverId = data?.async?.llm?.server;
                     const server = serverId
                         ? openaiServers.find((s) => s.id === serverId)
                         : openaiServers[0];
@@ -670,9 +670,13 @@ const rules = new DictRule({
                 }),
                 'OpenAI model used for summary and suggestions generation. Defaults to first model of the selected server.'
             ],
-            prompt_name: [
+            prompt: [
                 new DynamicEnumRule(() => openaiPrompts.map((p) => p.name)),
-                'ID of the custom prompt stored in the system.'
+                'LLM prompt ID for model reasoning when evaluating.'
+            ],
+            review_mode: [
+                new EnumRule(['zero-shot', 'chain_of_thoughts', 'thinking']),
+                'Review mode used to retrieve llm response. Thinking is allowed only for models that allows it'
             ]
         })
     })

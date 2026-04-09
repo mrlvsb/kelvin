@@ -381,7 +381,14 @@ class LlmReviewPrompt(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     default = models.BooleanField(default=False)
 
+    class Meta:
+        unique_together = ("name", "version")
+        constraints = [
+            models.UniqueConstraint(fields=["name", "version"], name="unique_prompt_name_version")
+        ]
 
+
+# TODO: Create overall table for submit reviews, so model, server, prompt, review_mode is not required there
 class SuggestedComment(models.Model):
     class State(models.TextChoices):
         ACCEPTED = "accepted"
@@ -394,6 +401,11 @@ class SuggestedComment(models.Model):
         MEDIUM = "medium"
         LOW = "low"
 
+    class ReviewMode(models.TextChoices):
+        CHAIN_OF_THOUGHT = "chain_of_thought"
+        ZERO_SHOT = "zero_shot"
+        THINKING = "thinking"
+
     submit = models.ForeignKey(Submit, on_delete=models.CASCADE)
     source = models.CharField(max_length=255, null=True, blank=True)
     line = models.IntegerField(null=True, blank=True)
@@ -402,8 +414,13 @@ class SuggestedComment(models.Model):
         max_length=10, choices=SeverityLevel.choices, default=SeverityLevel.MEDIUM
     )
     model = models.CharField(max_length=50)
+    server = models.CharField(max_length=50)
     prompt = models.ForeignKey(LlmReviewPrompt, on_delete=models.SET_NULL, null=True, blank=True)
-    rating = models.IntegerField(null=True, blank=True)
+    quality_rating = models.IntegerField(null=True, blank=True)
+    relevance_rating = models.IntegerField(null=True, blank=True)
+    review_mode = models.CharField(
+        max_length=32, choices=ReviewMode.choices, default=ReviewMode.CHAIN_OF_THOUGHT
+    )
     state = models.CharField(max_length=10, choices=State.choices, default=State.PENDING)
     comment = models.ForeignKey(Comment, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
