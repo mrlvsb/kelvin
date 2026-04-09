@@ -3,6 +3,181 @@ title: LLM Review
 sidebar_position: 1
 ---
 
+`LLM` is an asynchronous task that runs **after** a submit has been evaluated by the pipeline and produces an automatic code review using a Large Language
+Model. The review is attached to the submit as a **summary** plus a list of **inline suggestions** with severity, and is presented to the teacher next to
+the regular test results.
+
+The review is executed outside of the main evaluation pipeline so it never blocks grading — if the LLM server is slow or unreachable, the submit is still
+evaluated normally.
+
+## Enabling the review
+
+The feature is configured from the task's `config.yml` under the `async.llm`section:
+
+```yaml title="config.yml"
+async:
+  llm:
+    enabled: true                     # Turn the review on/off
+    review_mode: chain_of_thought     # Review strategy (see below)
+    language: en                      # ISO-639-1 language code for the output
+    server: localhost                 # OpenAI-compatible server id
+    model: qwen3-coder                # Model to use on that server
+    prompt: strict_code_review        # Name of a stored review prompt
+```
+
+All fields are optional except `enabled` — sensible defaults are used when a field is omitted:
+
+| Field         | Default                     | Description                                                          |
+|---------------|-----------------------------|----------------------------------------------------------------------|
+| `enabled`     | `false`                     | Master switch for the review. When `false`, no job is ever enqueued. |
+| `review_mode` | `chain_of_thought`          | Review strategy — see [Review modes](#review-modes).                 |
+| `language`    | *(model default, english)*  | ISO-639-1 code of the language in which the review text is produced. |
+| `server`      | first entry in config       | Which OpenAI-compatible server to talk to.                           |
+| `model`       | first model of the server   | Which model to ask for the review.                                   |
+| `prompt`      | `default`                   | Name of the review prompt stored in the database.                    |
+
+:::tip
+Use **Ctrl+Space** in the Kelvin task editor for field autocompletion. Server
+and model names are pulled live from the current Kelvin configuration.
+:::
+
+```yaml title="Example configuration"
+...
+
+async:
+  llm:
+    enabled: true
+    review_mode: chain_of_thought
+    model: qwen3-coder:30b
+    language: cs
+```
+
+## OpenAI-compatible servers
+
+Kelvin uses the standard **OpenAI Chat Completions** protocol, so any backend exposing that API can be plugged in — OpenAI itself, Azure OpenAI,
+[vLLM](https://github.com/vllm-project/vllm), [Ollama](https://ollama.com/), [llama.cpp](https://github.com/ggerganov/llama.cpp),
+[LiteLLM](https://github.com/BerriAI/litellm), and so on.
+
+Servers are declared in `openai_config.json` (path configurable via the `OPENAI__CONFIG_PATH` environment variable). Each entry defines one provider
+and the list of models that should be selectable from `config.yml`:
+
+```json title="openai_config.json"
+[
+  {
+    "id": "localhost",
+    "label": "Local Ollama",
+    "base_url": "http://localhost:11434/v1",
+    "api_key": "",
+    "models": [
+      "qwen3-coder:30b", "qwen3:latest", "deepseek-coder:33b",
+      "codellama:34b", "codegemma:7b", "deepcoder:14b"
+    ]
+  },
+  {
+    "id": "geminy",
+    "label": "Google Geminy",
+    "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
+    "api_key": "AIza...",
+    "models": [
+      "gemini-2.5-flash", "gemini-2.5-pro", "gemini-3-flash-preview",
+      "gemini-3.1-pro-preview"
+    ]
+  }
+]
+```
+
+:::info
+The file is automatically created with a `localhost` placeholder on first start. The `id` from this file is what you reference as `server_id` in
+`config.yml`, and `model_id` must be one of the strings listed in that server's `models` array.
+:::
+
+## Prompts
+
+A prompt is a free-form text that describes *how* the model should review the code — the tone, the categories of issues to look for, the rubric, the
+severity scale, and so on. Prompts are **not** stored in the task configuration, they live in the Kelvin database and are referenced by name via `prompt_id`.
+Current hard-coded prompts can be vied at [GitHub](https://github.com/mrlvsb/kelvin/tree/master/common/ai_review/type/prompt.py).
+
+This decoupling has two practical benefits:
+
+1. A single well-tuned prompt can be reused by hundreds of tasks.
+2. Teachers can iterate on a prompt (new version) without touching any task configuration — every submit reviewed afterwards automatically picks up
+the new text.
+
+If `prompt_id` is omitted the prompt marked as **default** in the database is used. Kelvin augments every prompt with a shared
+[`JUSTIFICATION_PROMPT`](https://github.com/mrlvsb/kelvin/tree/master/common/ai_review/type/prompt.py) that
+enforces the JSON output schema, the severity rubric, and the formatting rules (variable names in backticks, one issue = one first-affected line,
+etc.), so prompts can focus on *what* to look for and leave the *how* to Kelvin.
+
+```md title="Example prompt"
+You are a strict code reviewer for C/C++ student assignments.
+
+**Find only concrete, deterministic bugs in these categories:**
+
+1. **Undefined behavior** — out-of-bounds, use-after-free, double-free, null/dangling pointers, data races
+2. **Memory errors** — leaks (including early-return paths), mismatched new/delete, lost ownership
+3. **Provable performance bugs** — quadratic loops, repeated sort/rebuild in loops, O(n²) string concat
+4. **Logic errors** — off-by-one, wrong loop bounds, broken algorithm invariants, wrong comparisons
+
+**Do NOT report:** style, naming, best practices, missing error handling (unless it causes UB).
+```
+
+:::note
+Prompts are currently configured directly using Django Administrator dashboard. Therefore, to manage these prompts,
+you need to access user that has **Administrator** group.
+:::
+
+## Review modes
+
+The `mode` field selects the strategy Kelvin uses to drive the model. All modes return the exact same `ReviewResult` structure — a high-level `summary`
+of the whole codebase plus a list of `issues`.
+
+They only differ in **how** that result is produced, and therefore in **cost, latency and accuracy**.
+
+### `zero_shot`
+
+Single request to the model. The system prompt, the scoring rubric and the whole source tree are sent in one shot, and the model is asked to return the
+final `ReviewResult` immediately.
+
+- **Pros**: cheapest and fastest — one request, one response.
+- **Cons**: no self-correction; weaker models tend to hallucinate issues or miss subtle bugs.
+- **Use when**: the model is strong, the task is small, or you simply want
+quick feedback in a demo/classroom setting.
+
+### `chain_of_thought` *(default)*
+
+Three sequential calls that together implement a draft -> critique -> verify pipeline:
+
+1. **Draft** — the model explores the code and emits a `DraftResult` containing a reasoning trace, observations, and a list of *candidate*
+issues with per-issue evidence, confidence, and a `false_positive_risk` field.
+2. **Critique** — a second call, framed as a skeptical peer reviewer, is asked to challenge every candidate: confirmed items are kept, uncertain
+ones get a `critique_note`, false positives are dropped.
+3. **Verify** — a final strict verifier pass keeps only deterministically real issues, merges duplicates, downgrades harmless ones, and produces the
+final `ReviewResult`.
+
+- **Pros**: strong noise reduction; works well even with mid-sized open-weight models (qwen3-coder, deepseek, llama-3.1). This is the default
+because it gives the most reliable output across providers.
+- **Cons**: 3× the tokens and 3× the latency of `zero_shot`.
+- **Use when**: the review quality matters more than cost — homework grading, final projects, semester assignments.
+
 :::warning
-Under construction, to be written in short time
+Using chain of thought on cloud providers can lead to **large** token usage and increased latency since it computes 3x.
+:::
+
+### `thinking`
+
+Single request to a **reasoning-capable** model, with the provider's native thinking / reasoning mode turned on.
+
+Instead of Kelvin orchestrating draft/critique/verify passes manually, the reasoning is delegated to the model itself. The model "thinks" internally
+and then emits the final `ReviewResult` in a single response.
+
+- **Pros**: usually the highest-quality output available, with only one request — the long reasoning trace is accounted for on the server side and
+is *not* re-sent as input on each call like in `chain_of_thought`.
+- **Cons**: requires a reasoning-capable model; latency can still be high because the model generates a large hidden reasoning trace; OpenAI cloud
+reasoning models are billed for reasoning tokens.
+- **Use when**: you have access to a reasoning model and want the best single-call quality.
+
+:::warning
+Thinking mode is **only available for models that natively support it**. For example: `gemini-3.1-pro-preview`, `gpt-oss:120b` or
+`claude-sonnet-4-6` has thinking but `claude-haiku-4-5` [does not](https://platform.claude.com/docs/en/about-claude/models/overview).
+Attempting to use `thinking` mode with a non-reasoning model will result in an error.
 :::
