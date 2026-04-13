@@ -1,6 +1,8 @@
+import re
 from datetime import datetime
 
 from ninja import Schema
+from pydantic import field_validator
 
 
 class ModifySuggestionSchema(Schema):
@@ -32,8 +34,19 @@ class PromptCreateRequest(Schema):
     description: str = ""
     text: str
 
+    @field_validator("name")
+    @classmethod
+    def name_must_be_snake_case(cls, v: str) -> str:
+        if not re.fullmatch(r"[a-z][a-z0-9_]*", v):
+            raise ValueError(
+                "Prompt name must be snake_case (lowercase letters, digits, and underscores, starting with a letter)."
+            )
+        return v
+
 
 class PromptUpdateRequest(Schema):
-    name: str | None = None
-    description: str | None = None
     text: str | None = None
+
+
+class PromptDescriptionUpdateRequest(Schema):
+    description: str

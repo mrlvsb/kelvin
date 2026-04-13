@@ -8,7 +8,12 @@ from serde import to_dict
 from api.auth import require_auth_token
 from common.models import LlmReviewPrompt
 from common.utils import is_teacher
-from .schema import PromptResponse, PromptCreateRequest, PromptUpdateRequest
+from .schema import (
+    PromptResponse,
+    PromptCreateRequest,
+    PromptUpdateRequest,
+    PromptDescriptionUpdateRequest,
+)
 
 router = Router()
 
@@ -132,23 +137,18 @@ def create_prompt(request, payload: PromptCreateRequest):
     )
 
     prompt = LlmReviewPrompt.objects.select_related("author", "updated_by").get(id=prompt.id)
-    return 201, prompt_to_response(prompt)
+    return prompt_to_response(prompt)
 
 
 @router.put(
     "/{prompt_name}",
-    description="Update a prompt by creating a new version. Targets the latest version by name.",
+    description="Update a prompt's text by creating a new version. Name is immutable.",
 )
 @user_passes_test(is_teacher)
 @transaction.atomic
 def update_prompt(request, prompt_name: str, payload: PromptUpdateRequest):
     prompt = get_latest_prompt(prompt_name)
     check_prompt_permission(request.user, prompt)
-
-    new_name = payload.name if payload.name is not None else prompt.name
-    if new_name.lower() != prompt.name.lower():
-        if LlmReviewPrompt.objects.filter(name__iexact=new_name).exists():
-            raise HttpError(400, f"A prompt with name '{new_name}' already exists.")
 
     latest_version = (
         LlmReviewPrompt.objects.filter(name=prompt.name).aggregate(max_version=Max("version"))[
@@ -158,8 +158,8 @@ def update_prompt(request, prompt_name: str, payload: PromptUpdateRequest):
     )
 
     new_prompt = LlmReviewPrompt.objects.create(
-        name=new_name,
-        description=payload.description if payload.description is not None else prompt.description,
+        name=prompt.name,
+        description=prompt.description,
         text=payload.text if payload.text is not None else prompt.text,
         default=prompt.default,
         version=latest_version + 1,
@@ -171,7 +171,21 @@ def update_prompt(request, prompt_name: str, payload: PromptUpdateRequest):
     new_prompt = LlmReviewPrompt.objects.select_related("author", "updated_by").get(
         id=new_prompt.id
     )
-    return 201, prompt_to_response(new_prompt)
+    return prompt_to_response(new_prompt)
+
+
+@router.patch(
+    "/{prompt_name}",
+    description="Update the description of the latest prompt version without creating a new version.",
+)
+@user_passes_test(is_teacher)
+def update_prompt_description(request, prompt_name: str, payload: PromptDescriptionUpdateRequest):
+    prompt = get_latest_prompt(prompt_name)
+    check_prompt_permission(request.user, prompt)
+
+    LlmReviewPrompt.objects.filter(id=prompt.id).update(description=payload.description)
+    prompt.refresh_from_db()
+    return prompt_to_response(prompt)
 
 
 @router.delete(

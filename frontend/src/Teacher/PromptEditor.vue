@@ -36,6 +36,7 @@ const selectedVersionId = ref<number | null>(null);
 const showDeleted = ref(false);
 const loading = ref(false);
 const saving = ref(false);
+const saveAttempted = ref(false);
 
 const editName = ref('');
 const editDescription = ref('');
@@ -66,6 +67,23 @@ const canEdit = computed(() => {
   if (!selectedPrompt.value) return false;
   if (!isOwner.value) return false;
   return isLatestVersion.value;
+});
+
+const canEditName = computed(() => isCreating.value);
+
+const descriptionChanged = computed(
+  () => !!selectedPrompt.value && editDescription.value !== selectedPrompt.value.description
+);
+
+const textChanged = computed(
+  () => !!selectedPrompt.value && editText.value !== selectedPrompt.value.text
+);
+
+const saveLabel = computed(() => {
+  if (isCreating.value) return 'Create Prompt';
+  if (textChanged.value) return 'Save as New Version';
+  if (descriptionChanged.value) return 'Update Description';
+  return 'Save';
 });
 
 const canDelete = computed(() => {
@@ -124,6 +142,7 @@ function selectPrompt(prompt: Prompt) {
   versionsForName.value = null;
   selectedPrompt.value = prompt;
   isCreating.value = false;
+  saveAttempted.value = false;
   editName.value = prompt.name;
   editDescription.value = prompt.description;
   editText.value = prompt.text;
@@ -148,6 +167,7 @@ function startCreate() {
   selectedVersionId.value = null;
   versions.value = [];
   versionsForName.value = null;
+  saveAttempted.value = false;
   editName.value = '';
   editDescription.value = '';
   editText.value = '';
@@ -164,8 +184,9 @@ function clonePrompt(prompt: Prompt) {
   editText.value = prompt.text;
 }
 
-async function savePrompt() {
+async function save() {
   saving.value = true;
+  saveAttempted.value = true;
 
   if (!editName.value.trim()) {
     toastApi.warning('Name is required.');
@@ -173,8 +194,15 @@ async function savePrompt() {
     return;
   }
 
+  if (isCreating.value && !/^[a-z][a-z0-9_]*$/.test(editName.value.trim())) {
+    toastApi.warning(
+      'Name must be snake_case (lowercase letters, digits, and underscores, starting with a letter).'
+    );
+    saving.value = false;
+    return;
+  }
+
   if (!editText.value.trim()) {
-    toastApi.warning('Prompt text is required.');
     saving.value = false;
     return;
   }
@@ -200,23 +228,46 @@ async function savePrompt() {
       toastApi.error('Failed to create prompt. A prompt with this name may already exist.');
     }
   } else if (selectedPrompt.value) {
-    const result = await getDataWithCSRF<Prompt>(
-      `${API}/${encodeURIComponent(selectedPrompt.value.name)}`,
-      'PUT',
-      {
-        name: editName.value.trim(),
-        description: editDescription.value,
-        text: editText.value
-      },
-      { 'Content-Type': 'application/json' }
-    );
+    if (textChanged.value) {
+      // If description also changed, persist it first so the new version inherits it.
+      if (descriptionChanged.value) {
+        await getDataWithCSRF<Prompt>(
+          `${API}/${encodeURIComponent(selectedPrompt.value.name)}`,
+          'PATCH',
+          { description: editDescription.value },
+          { 'Content-Type': 'application/json' }
+        );
+      }
 
-    if (result) {
-      toastApi.success(`Prompt saved as version ${result.version}.`);
-      await loadPrompts();
-      selectPrompt(result);
-    } else {
-      toastApi.error('Failed to update prompt.');
+      const result = await getDataWithCSRF<Prompt>(
+        `${API}/${encodeURIComponent(selectedPrompt.value.name)}`,
+        'PUT',
+        { text: editText.value },
+        { 'Content-Type': 'application/json' }
+      );
+
+      if (result) {
+        toastApi.success(`Prompt saved as version ${result.version}.`);
+        await loadPrompts();
+        selectPrompt(result);
+      } else {
+        toastApi.error('Failed to update prompt.');
+      }
+    } else if (descriptionChanged.value) {
+      const result = await getDataWithCSRF<Prompt>(
+        `${API}/${encodeURIComponent(selectedPrompt.value.name)}`,
+        'PATCH',
+        { description: editDescription.value },
+        { 'Content-Type': 'application/json' }
+      );
+
+      if (result) {
+        toastApi.success('Description updated.');
+        selectedPrompt.value = { ...selectedPrompt.value, description: result.description };
+        await loadPrompts();
+      } else {
+        toastApi.error('Failed to update description.');
+      }
     }
   }
 
@@ -515,9 +566,22 @@ onMounted(() => {
                 v-model="editName"
                 type="text"
                 class="form-control"
-                :disabled="!canEdit"
-                placeholder="Prompt name"
+                :class="{
+                  'is-invalid': isCreating && editName && !/^[a-z][a-z0-9_]*$/.test(editName)
+                }"
+                :disabled="!canEditName"
+                placeholder="my_prompt_name"
               />
+              <div v-if="isCreating" class="form-text text-muted">
+                snake_case only: lowercase letters, digits, and underscores (e.g.
+                <code>my_prompt</code>)
+              </div>
+              <div
+                v-if="isCreating && editName && !/^[a-z][a-z0-9_]*$/.test(editName)"
+                class="invalid-feedback"
+              >
+                Must be snake_case and start with a lowercase letter.
+              </div>
             </div>
 
             <div class="mb-3">
@@ -535,13 +599,18 @@ onMounted(() => {
             <div class="mb-3 prompt-text-wrapper">
               <label class="form-label">Prompt Text</label>
 
-              <Editor v-model="editText" filename="prompt.md" :disabled="!canEdit" :wrap="true" />
+              <div :class="{ 'border border-danger rounded': saveAttempted && !editText.trim() }">
+                <Editor v-model="editText" filename="prompt.md" :disabled="!canEdit" :wrap="true" />
+              </div>
+              <div v-if="saveAttempted && !editText.trim()" class="text-danger small mt-1">
+                Prompt text is required.
+              </div>
             </div>
 
             <div class="d-flex gap-2">
-              <button class="btn btn-primary" :disabled="!canEdit || saving" @click="savePrompt">
+              <button class="btn btn-primary" :disabled="!canEdit || saving" @click="save">
                 <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
-                {{ isCreating ? 'Create Prompt' : 'Save as New Version' }}
+                {{ saveLabel }}
               </button>
 
               <button
