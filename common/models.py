@@ -268,7 +268,7 @@ class AssignedTask(models.Model):
             and datetime.datetime.now(datetime.timezone.utc) > self.deadline
         )
 
-    def assignment_ip_check(self, ip: str) -> bool:
+    def is_allowed_from_ip(self, ip: str) -> bool:
         print(self.allowed_rooms.exists())
         if not self.allowed_rooms.exists():
             return True
