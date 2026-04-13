@@ -381,6 +381,21 @@ class LlmReviewPrompt(models.Model):
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     default = models.BooleanField(default=False)
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="authored_prompts",
+    )
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="updated_prompts",
+    )
+    is_deleted = models.BooleanField(default=False)
 
     def to_dto(self) -> LlmReviewPromptDTO:
         return LlmReviewPromptDTO(

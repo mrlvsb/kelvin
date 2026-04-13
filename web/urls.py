@@ -174,4 +174,5 @@ urlpatterns = [
     path("teacher/quiz/scoring/<int:enrolled_id>", teacher_view.quiz_scoring, name="quiz_scoring"),
     path("teacher/quizzes", teacher_view.quiz_list, name="quiz_list"),
     path("teacher/quiz/<int:quiz_id>/submits", teacher_view.quiz_submits, name="quiz_submits"),
+    path("teacher/prompts", teacher_view.prompt_editor, name="prompt_editor"),
 ] + static("/.well-known", document_root="web/static/.well-known")
