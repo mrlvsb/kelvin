@@ -150,7 +150,7 @@ class RoomIpRangeAdminForm(forms.ModelForm):
 
     ip_range_start = forms.GenericIPAddressField(required=False)
     ip_range_end = forms.GenericIPAddressField(required=False)
-    cidr = forms.CharField(required=False, label="CIDR address (10.0.0.1/24")
+    cidr = forms.CharField(required=False, label="CIDR address (10.0.0.1/24)")
 
     class Meta:
         model = models.RoomIpRange
@@ -176,10 +176,14 @@ class RoomIpRangeAdminForm(forms.ModelForm):
             if not cidr_value:
                 raise forms.ValidationError("Cannot read CIDR field value")
 
-            network = ipaddress.ip_network(cidr_value, strict=False)
+            try:
+                network = ipaddress.ip_network(cidr_value, strict=False)
 
-            cleaned_data["ip_range_start"] = network.network_address
-            cleaned_data["ip_range_end"] = network.broadcast_address
+                cleaned_data["ip_range_start"] = network.network_address
+                cleaned_data["ip_range_end"] = network.broadcast_address
+            except ValueError:
+                raise forms.ValidationError("Invalid CIDR address")
+
         else:
             if not cleaned_data.get("ip_range_start") or not cleaned_data.get("ip_range_end"):
                 raise forms.ValidationError("You didn't enter IP range")

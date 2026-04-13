@@ -141,9 +141,7 @@ class Room(models.Model):
 class RoomIpRange(models.Model):
     ip_range_start = models.GenericIPAddressField()
     ip_range_end = models.GenericIPAddressField()
-    room = models.ForeignKey(
-        Room, on_delete=models.SET_NULL, blank=True, null=True, related_name="ip_ranges"
-    )
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, null=False, related_name="ip_ranges")
 
     def __str__(self):
         return f"{self.ip_range_start} – {self.ip_range_end}"
@@ -270,22 +268,27 @@ class AssignedTask(models.Model):
             and datetime.datetime.now(datetime.timezone.utc) > self.deadline
         )
 
-    def is_allowed_from_ip(self, ip: str) -> bool:
+    def assignment_ip_check(self, ip: str) -> bool:
+        print(self.allowed_rooms.exists())
+        if not self.allowed_rooms.exists():
+            return True
+
         ip = ipaddress.ip_address(ip)
+
+        allowed_rooms_list = self.allowed_rooms.prefetch_related("ip_ranges")
 
         if not self.allowed_rooms.all().exists():
             return True
 
-        allowed = False
-
-        for room in self.allowed_rooms.all():
+        for room in allowed_rooms_list:
             for room_range in room.ip_ranges.all():
                 start = ipaddress.ip_address(room_range.ip_range_start)
                 end = ipaddress.ip_address(room_range.ip_range_end)
 
-                allowed |= start <= ip <= end
+                if start <= ip <= end:
+                    return True
 
-        return allowed
+        return False
 
     def __str__(self):
         return f"{self.task.name} {self.clazz}"
