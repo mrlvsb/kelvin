@@ -1,7 +1,7 @@
 import io
 import re
 import tarfile
-from datetime import timedelta
+from datetime import timedelta, datetime
 from functools import lru_cache
 from typing import NewType
 
@@ -11,6 +11,7 @@ from django.conf import settings
 from django.http import HttpRequest
 from ipware import get_client_ip
 
+from .exceptions.http_exceptions import HttpException403
 from .inbus import inbus
 
 IPAddressString = NewType("IPAddressString", str)
@@ -123,3 +124,50 @@ def build_evaluation_download_uri(request, location):
     if settings.EVALUATION_LINK_BASEURL:
         return settings.EVALUATION_LINK_BASEURL + location
     return request.build_absolute_uri(location)
+
+
+def prohibit_during_test(function):
+    """
+    Decorator that restricts access to a page if the student has any ongoing exams.
+
+    The decorated function must accept one of the following parameter sets:
+    - request and assignment_id, or
+    - author
+
+    Use the first option when access to specific test tasks should still be allowed.
+    Use the second option to disable all interactions during an ongoing exam.
+
+    Currently:
+    - The first option is used for the task page and its subpages.
+    - The second option is used to disable all comments.
+    """
+
+    def wrapper(*args, **kwargs):
+        from .task import get_active_exams_at
+
+        if "author" in kwargs:
+            author = kwargs.get("author")
+            assignment_id = None
+        else:
+            author = args[0].user
+            assignment_id = kwargs.get("assignment_id")
+
+        # Allways allow teacher access
+        if is_teacher(author):
+            return function(*args, **kwargs)
+
+        active_exams = get_active_exams_at(author, datetime.now(), timedelta(0.5))
+
+        if not active_exams:
+            return function(*args, **kwargs)
+
+        if assignment_id is not None:
+            # if task is any of ongoing exams allow it
+            for exam in active_exams:
+                if exam.pk == assignment_id:
+                    return function(*args, **kwargs)
+
+            raise HttpException403("Access to this task is prohibited during exam")
+        raise HttpException403("Comments are disabled during exam")
+
+    return wrapper
