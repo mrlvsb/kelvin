@@ -101,11 +101,10 @@ def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     if client_ip:
         s.ip_address = client_ip
 
-    if assignment.allowed_classrooms:
-        if not assignment.is_allowed_from_ip(client_ip):
-            raise SubmitFromUnauthorizedIPError(
-                "It is forbidden to upload solutions from this IP address"
-            )
+    if not assignment.assignment_ip_check(client_ip):
+        raise SubmitFromUnauthorizedIPError(
+            "It is forbidden to upload solutions from this IP address"
+        )
 
     solutions = request.FILES.getlist("solution")
     tmp = request.POST.get("paths", None)

@@ -796,6 +796,7 @@ def raw_result_content(
     raise HttpException404()
 
 
+@ip_address_check
 def submit_download(
     request: HttpRequest, assignment_id: int, login: str, submit_num: int
 ) -> HttpResponse:
@@ -826,7 +827,6 @@ def submit_download(
 
 
 @login_required
-@ip_address_check
 def ui(request: HttpRequest) -> HttpResponse:
     return render(request, "web/ui.html")
 

@@ -112,7 +112,7 @@ def ip_address_check(function):
         - user is accessing from an allowed IP address
 
     IP address check is performed using:
-        models.AssignedTask.is_allowed_from_ip(str)
+        models.AssignedTask.assignment_ip_check(str)
     """
 
     def wrapper(*args, **kwargs):
@@ -136,16 +136,13 @@ def ip_address_check(function):
             return function(*args, **kwargs)
 
         if assignment.allowed_rooms:
-            x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-            if x_forwarded_for:
-                ip = x_forwarded_for.split(",")[0].strip()
-            else:
-                ip = request.META.get("REMOTE_ADDR")
-
-            if assignment.is_allowed_from_ip(ip):
+            ip = get_client_ip_address(request)
+            if assignment.assignment_ip_check(ip):
                 return function(*args, **kwargs)
             else:
                 raise PermissionDenied("Access from this IP is not allowed")
+        else:
+            return function(*args, **kwargs)
 
     return wrapper
 
