@@ -273,7 +273,15 @@ class AssignedTask(models.Model):
         if not self.allowed_rooms.exists():
             return True
 
-        ip = ipaddress.ip_address(ip)
+        try:
+            ip = ipaddress.ip_address(ip)
+        except ValueError:
+            logging.warning(
+                "Invalid IP address: {} while attempting to access AssignedTask {}".format(
+                    ip, self.task.name
+                )
+            )
+            return True
 
         allowed_rooms_list = self.allowed_rooms.prefetch_related("ip_ranges")
 
