@@ -9,7 +9,7 @@ import { clickOutside } from '../../utilities/clickOutside';
 import { User } from '../../utilities/SvelteStoreTypes';
 import { useReadableSvelteStore } from '../../utilities/useSvelteStoreInVue';
 import { defineModel, onMounted, computed, ref, watch, defineEmits } from 'vue';
-import CopyToClipboard from './CopyToClipboard.vue';
+import CopyToClipboard from '../../components/CopyToClipboard.vue';
 
 /**
  * @prop {string}                     subject  - subject code used to get autocomplete hints
