@@ -18,6 +18,7 @@ import { User, Semester, FileEntry } from '../../utilities/SvelteStoreTypes';
 import AutoCompleteTaskPath from './AutoCompleteTaskPath.vue';
 import { fetch } from '../../api';
 import { useRouter, useRoute } from 'vue-router';
+import { Room } from './RoomInterface';
 
 const router = useRouter();
 const route = useRoute();
@@ -64,6 +65,7 @@ let errors = ref<Array<string>>([]);
 let savedPath = ref('');
 
 let showAllClasses = ref<boolean>(false);
+let allRoomsList = ref<Room[]>(null);
 
 function isClassVisible(cls: Class): boolean {
   return cls.teacher === user.value.username || cls.assignment_id > 0 || showAllClasses.value;
@@ -140,6 +142,11 @@ onMounted(async () => {
     syncPathWithTitle.value = true;
     synchronizePathWithReadMeTitle();
   }
+});
+
+onMounted(async () => {
+  const req = await fetch('/api/classrooms-list/');
+  allRoomsList.value = await req.json();
 });
 
 function synchronizePathWithReadMeTitle(): void {
@@ -476,6 +483,7 @@ async function deleteTask(proceed: boolean): Promise<void> {
                     <div v-if="task.type == 'exam'" class="col-2">
                       <RoomsSelect
                         v-model="clazz.allowed_rooms"
+                        :all-rooms="allRoomsList"
                         :disabled="!clazz.assigned"
                         :on-duplicate-click="assignRoomsToAll"
                       />

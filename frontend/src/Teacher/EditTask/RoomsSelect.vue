@@ -1,41 +1,30 @@
 <script setup lang="ts">
-import { onMounted, ref, computed, type ComputedRef } from 'vue';
-import { fetch } from '../../api';
+import { ref, computed, type ComputedRef } from 'vue';
 import { clickOutside } from '../../utilities/clickOutside';
-
-interface Room {
-  id: number;
-  code: string;
-}
+import { Room } from './RoomInterface';
 
 interface ViewRoom extends Room {
   isSelected: boolean;
 }
 
-let { onDuplicateClick, disabled = false } = defineProps<{
+let {
+  allRooms,
+  onDuplicateClick,
+  disabled = false
+} = defineProps<{
+  allRooms: Room[];
   onDuplicateClick: (selected: number[]) => void;
   disabled: boolean;
 }>();
 
-const selectedRooms = defineModel<number[]>({
-  required: false
-});
-
-let allRooms = ref<Room[]>(null);
+const selectedRooms = defineModel<number[]>({ default: () => [] });
 
 const vClickOutside = clickOutside;
 
-onMounted(async () => {
-  const req = await fetch('/api/classrooms-list/');
-  allRooms.value = await req.json();
-
-  if (selectedRooms.value == undefined) selectedRooms.value = [];
-});
-
 const allRoomsList: ComputedRef<ViewRoom[]> = computed(() => {
-  if (!allRooms.value) return [];
+  if (!allRooms) return [];
 
-  return allRooms.value.map((room) => {
+  return allRooms.map((room) => {
     return {
       ...room,
       isSelected: selectedRooms.value.includes(room.id)
@@ -113,7 +102,7 @@ const selectedCount: ComputedRef<number> = computed(
         <label class="form-check-label" :for="'classroom' + room.id">{{ room.code }}</label>
       </div>
 
-      <small v-if="selectedCount === 0" class="text-black">No classrooms found</small>
+      <small v-if="sortedClassroomList.length === 0" class="text-black">No classrooms found</small>
     </div>
   </div>
 </template>
