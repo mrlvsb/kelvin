@@ -53,7 +53,7 @@ from common.models import (
 from common.plagcheck.moss import PlagiarismMatch, moss_result
 from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline, is_file_small
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
-from common.utils import is_teacher, ip_address_check
+from common.utils import is_teacher, assignment_ip_check
 from evaluator.results import EvaluationResult
 from evaluator.evaluation import EvaluationContext
 from kelvin.settings import BASE_DIR, MAX_INLINE_CONTENT_BYTES
@@ -291,7 +291,7 @@ def build_plagiarism_entries(login: str, matches: List[PlagiarismMatch]) -> List
 
 
 @login_required()
-@ip_address_check
+@assignment_ip_check
 def task_detail(
     request: HttpRequest,
     assignment_id: int,
@@ -526,7 +526,7 @@ def submit_source(request: HttpRequest, submit_id: int, path: str) -> HttpRespon
 
 
 @login_required
-@ip_address_check
+@assignment_ip_check
 def submit_diff(
     request: HttpRequest, login: str, assignment_id: int, submit_a: int, submit_b: int
 ) -> HttpResponse:
@@ -796,7 +796,7 @@ def raw_result_content(
     raise HttpException404()
 
 
-@ip_address_check
+@assignment_ip_check
 def submit_download(
     request: HttpRequest, assignment_id: int, login: str, submit_num: int
 ) -> HttpResponse:
@@ -832,7 +832,7 @@ def ui(request: HttpRequest) -> HttpResponse:
 
 
 @csrf_exempt
-@ip_address_check
+@assignment_ip_check
 def upload_results(
     request: HttpRequest, assignment_id: int, submit_num: int, login: str
 ) -> HttpResponse:
@@ -865,7 +865,7 @@ def upload_results(
 
 
 @login_required()
-@ip_address_check
+@assignment_ip_check
 def mark_solution_as_final(
     request: HttpRequest, assignment_id: int, login: str, submit_num: int
 ) -> HttpResponse:

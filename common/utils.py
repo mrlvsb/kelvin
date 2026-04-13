@@ -97,7 +97,7 @@ def get_client_ip_address(request: HttpRequest) -> IPAddressString | None:
         return IPAddressString(client_ip)
 
 
-def ip_address_check(function):
+def assignment_ip_check(function):
     """
     Decorator that restricts access to specific IP addresses.
 
@@ -112,7 +112,7 @@ def ip_address_check(function):
         - user is accessing from an allowed IP address
 
     IP address check is performed using:
-        models.AssignedTask.assignment_ip_check(str)
+        models.AssignedTask.is_allowed_from_ip(str)
     """
 
     def wrapper(*args, **kwargs):
@@ -137,7 +137,7 @@ def ip_address_check(function):
 
         if assignment.allowed_rooms:
             ip = get_client_ip_address(request)
-            if assignment.assignment_ip_check(ip):
+            if assignment.is_allowed_from_ip(ip):
                 return function(*args, **kwargs)
             else:
                 raise PermissionDenied("Access from this IP is not allowed")
