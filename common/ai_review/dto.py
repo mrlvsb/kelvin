@@ -1,11 +1,9 @@
 import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Dict
+from typing import List
 
 from serde import serde
-
-import kelvin.settings
 
 
 class Severity(Enum):
@@ -15,6 +13,21 @@ class Severity(Enum):
     LOW = "low"
 
 
+class ReviewMode(Enum):
+    CHAIN_OF_THOUGHT = "chain_of_thought"
+    ZERO_SHOT = "zero_shot"
+    THINKING = "thinking"
+
+
+@serde
+@dataclass
+class EmbeddedFile:
+    path: str
+    language: str
+    content: str
+    total_lines: int = 0
+
+
 class SuggestionState(Enum):
     ACCEPTED = "accepted"
     REJECTED = "rejected"
@@ -22,29 +35,119 @@ class SuggestionState(Enum):
     DISMISSED = "dismissed"
 
 
+# ---------------------------------------------------------------------------
+# Draft pass
+# ---------------------------------------------------------------------------
+
+
 @serde
 @dataclass
-class SubmitSummary:
-    id: int
-    text: str
-    rating: int | None
+class EvidenceItem:
+    line: int
+    snippet: str
+    relevance: str
+
+
+@serde
+@dataclass
+class CandidateIssue:
+    source: str
+    category: str
+    severity: str
+    line: int
+    title: str
+    reasoning: str
+    evidence: List[EvidenceItem]
+    why_it_matters: str
+    suggested_fix: str
+    confidence: str
+    false_positive_risk: str
+    critique_note: str = field(default="")
+
+
+@serde
+@dataclass
+class DraftObservation:
+    source: str
+    note: str
+
+
+@serde
+@dataclass
+class DraftStatistics:
+    sources: int
+    total_lines: int
+    candidate_issue_count: int
+
+
+@serde
+@dataclass
+class DraftResult:
+    stats: DraftStatistics
+    reasoning_trace: str
+    observations: List[DraftObservation]
+    candidate_issues: List[CandidateIssue]
+
+
+# ---------------------------------------------------------------------------
+# Review pass
+# ---------------------------------------------------------------------------
+
+
+@serde
+@dataclass
+class ReviewIssue:
+    source: str
+    severity: Severity
+    explanation: str
+    line: int
+
+    def location(self) -> str:
+        return f"({self.source}:{self.line})"
+
+
+@serde
+@dataclass
+class AIReviewRequest:
+    review_mode: ReviewMode
+    prompt_name: str
+    server_id: str
     model: str
-    prompt_id: int
-    state: SuggestionState
+
+
+@serde
+@dataclass
+class AIReviewResult:
+    summary: str
+    issues: List[ReviewIssue]
+
+
+# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 
 
 @serde
 @dataclass
 class SuggestedCommentDTO:
     id: int
-    source: str
-    line: int
+    source: str | None
+    line: int | None
     text: str
-    rating: int | None
-    model: str
-    prompt_id: int
+    quality_rating: int | None
+    relevance_rating: int | None
     severity: Severity
     state: SuggestionState
+
+
+@serde
+@dataclass
+class SubmitReviewResultDTO:
+    summary: SuggestedCommentDTO
+    suggestions: List[SuggestedCommentDTO]
+    review_mode: ReviewMode
+    prompt_name: str
+    server_id: str
+    model: str
 
 
 @serde
@@ -61,38 +164,20 @@ class LlmReviewPromptDTO:
 
 @serde
 @dataclass
-class AIReviewResult:
-    summary: SubmitSummary
-    suggestions: List[SuggestedCommentDTO]
-    prompt_id: int
-    model: str
-
-
-@serde
-@dataclass
-class EmbeddedFile:
-    path: str
-    language: str
-    content: str
-    total_lines: int = 0
+class OpenAIServerDTO:
+    id: str
+    label: str
+    base_url: str
+    api_key: str
+    models: list[str]
 
 
 @serde
 @dataclass
 class LlmConfig:
     enabled: bool
-    language: str
-    model: str
-    prompt_name: str | None
-
-    @staticmethod
-    def from_dict(submit_config: Dict) -> "LlmConfig":
-        async_section = submit_config.get("async", {})
-        llm_section = async_section.get("llm", {})
-
-        return LlmConfig(
-            enabled=llm_section.get("enabled", False),
-            language=llm_section.get("language", "en"),
-            model=llm_section.get("model", kelvin.settings.OPENAI_MODEL),
-            prompt_name=llm_section.get("prompt_name", None),
-        )
+    mode: ReviewMode
+    language: str | None
+    model: str | None
+    prompt: str | None
+    server: str | None

@@ -10,7 +10,7 @@ from django.urls import reverse
 from notifications.models import Notification
 from notifications.signals import notify
 
-from common.ai_review.dto import AIReviewResult, SubmitSummary, SuggestionState
+from common.ai_review.dto import SubmitReviewResultDTO, SuggestionState, SuggestedCommentDTO
 from common.ai_review.processor import AI_REVIEW_COMMENT_AUTHOR, AI_REVIEW_COMMENT_TYPE
 from common.dto import SubmitSources, ImageSource, VideoSource, TextSource, CommentDTO
 from common.evaluate import evaluate_submit
@@ -243,7 +243,7 @@ def process_submit_evaluation_result(result: EvaluationResult, sources: SubmitSo
 
 def process_submit_review_result(
     requester: DjangoUser,
-    result: AIReviewResult,
+    result: SubmitReviewResultDTO,
     sources: SubmitSources,
     summary_comments: list[CommentDTO],
 ):
@@ -252,7 +252,7 @@ def process_submit_review_result(
     while inline suggestions attach to specific lines when visible to teachers with permissions.
     """
 
-    summary: SubmitSummary = result.summary
+    summary: SuggestedCommentDTO = result.summary
 
     # Teachers must explicitly have permission and suggestion must be pending
     def can_view_suggestion(state: SuggestionState, user) -> bool:
@@ -278,7 +278,8 @@ def process_submit_review_result(
                         "review": {
                             "id": summary.id,
                             "state": summary.state.name,
-                            "rating": summary.rating,
+                            "quality_rating": summary.quality_rating,
+                            "relevance_rating": summary.relevance_rating,
                         }
                     },
                 )
@@ -304,7 +305,8 @@ def process_submit_review_result(
                         "review": {
                             "id": suggestion.id,
                             "state": suggestion.state.name,
-                            "rating": suggestion.rating,
+                            "quality_rating": suggestion.quality_rating,
+                            "relevance_rating": suggestion.relevance_rating,
                         }
                     },
                 )

@@ -18,7 +18,8 @@ const emit = defineEmits(['resolveSuggestion']);
 
 const editing = ref(false);
 const sending = ref(false);
-const committedRating = ref(props.meta.review.rating ?? 0);
+const committedQualityRating = ref(props.meta.review.quality_rating ?? 0);
+const committedRelevanceRating = ref(props.meta.review.relevance_rating ?? 0);
 
 const currentUser = useSvelteStore(user, null);
 const hideCommentsValue = useSvelteStore(hideComments, HideCommentsState.NONE);
@@ -46,17 +47,12 @@ const resolveSuggestion = async <T,>(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
-
-      return {
-        error: errorData?.detail || 'Unexpected error occurred. Please try again.'
-      };
+      return { error: errorData?.detail || 'Unexpected error occurred. Please try again.' };
     }
 
     const data = (await response.json().catch(() => null)) as T | null;
     if (data === null) {
-      return {
-        error: 'Unexpected error occurred. Please try again.'
-      };
+      return { error: 'Unexpected error occurred. Please try again.' };
     }
 
     return { data };
@@ -76,12 +72,7 @@ const handleAccept = async () => {
 
   const { data, error } = await resolveSuggestion<Comment>(
     `/api/v2/llm/suggestions/${suggestionId}`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    },
+    { method: 'POST', headers: { 'Content-Type': 'application/json' } },
     () => {
       sending.value = false;
     }
@@ -93,11 +84,7 @@ const handleAccept = async () => {
   }
 
   if (data) {
-    emit('resolveSuggestion', {
-      id: suggestionId,
-      comment: data
-    });
-
+    emit('resolveSuggestion', { id: suggestionId, comment: data });
     toastApi.success('Suggestion accepted successfully.');
   } else {
     toastApi.error('Unexpected error occurred. Please try again later.');
@@ -110,12 +97,7 @@ const handleReject = async () => {
 
   const { error } = await resolveSuggestion<{ status: string }>(
     `/api/v2/llm/suggestions/${suggestionId}`,
-    {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    },
+    { method: 'DELETE', headers: { 'Content-Type': 'application/json' } },
     () => {
       sending.value = false;
     }
@@ -126,11 +108,7 @@ const handleReject = async () => {
     return;
   }
 
-  emit('resolveSuggestion', {
-    id: suggestionId,
-    comment: null
-  });
-
+  emit('resolveSuggestion', { id: suggestionId, comment: null });
   toastApi.success('Suggestion rejected successfully.');
 };
 
@@ -146,12 +124,8 @@ const handleSave = async (text: string) => {
     `/api/v2/llm/suggestions/${suggestionId}`,
     {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        modified_text: text
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ modified_text: text })
     },
     () => {
       sending.value = false;
@@ -165,34 +139,33 @@ const handleSave = async (text: string) => {
   }
 
   if (data) {
-    emit('resolveSuggestion', {
-      id: suggestionId,
-      comment: data
-    });
-
+    emit('resolveSuggestion', { id: suggestionId, comment: data });
     toastApi.success('Suggestion accepted successfully.');
   } else {
     toastApi.error('Unexpected error occurred. Please try again later.');
   }
 };
 
-const handleRating = async (rating: number) => {
+type RatingField = 'quality_rating' | 'relevance_rating';
+
+const handleRating = async (field: RatingField, rating: number) => {
   sending.value = true;
   const suggestionId = props.meta.review.id;
 
-  const previousRating = committedRating.value;
-  committedRating.value = rating;
+  const previousQuality = committedQualityRating.value;
+  const previousRelevance = committedRelevanceRating.value;
+
+  if (field === 'quality_rating') committedQualityRating.value = rating;
+  else committedRelevanceRating.value = rating;
 
   const { error } = await resolveSuggestion<{ status: string }>(
     `/api/v2/llm/suggestions/${suggestionId}/rate`,
     {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        commentId: suggestionId,
-        rating
+        quality_rating: committedQualityRating.value,
+        relevance_rating: committedRelevanceRating.value
       })
     },
     () => {
@@ -202,11 +175,11 @@ const handleRating = async (rating: number) => {
 
   if (error) {
     toastApi.error(error);
-    committedRating.value = previousRating;
-    return;
+    committedQualityRating.value = previousQuality;
+    committedRelevanceRating.value = previousRelevance;
+  } else {
+    toastApi.success('Rating submitted successfully.');
   }
-
-  toastApi.success('Rating submitted successfully.');
 };
 </script>
 
@@ -256,11 +229,27 @@ const handleRating = async (rating: number) => {
             </button>
           </template>
 
-          <StarRating
-            :committed-rating="committedRating"
-            :disabled="sending"
-            @rate="handleRating"
-          />
+          <div class="ratings">
+            <div class="rating-box">
+              <span class="rating-label">Quality</span>
+
+              <StarRating
+                :committed-rating="committedQualityRating"
+                :disabled="sending"
+                @rate="(rating) => handleRating('quality_rating', rating)"
+              />
+            </div>
+
+            <div class="rating-box">
+              <span class="rating-label">Relevance</span>
+
+              <StarRating
+                :committed-rating="committedRelevanceRating"
+                :disabled="sending"
+                @rate="(rating) => handleRating('relevance_rating', rating)"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -275,12 +264,39 @@ const handleRating = async (rating: number) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 0.5rem;
 }
 
 .comment-actions {
   display: flex;
   align-items: center;
   gap: 0.4rem;
+}
+
+.ratings {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+}
+
+.rating-box {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: #0000001a;
+}
+
+.rating-label {
+  font-size: 0.7rem;
+  line-height: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #fff;
 }
 
 .icon-button {

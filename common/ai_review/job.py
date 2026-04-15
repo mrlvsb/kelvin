@@ -9,8 +9,19 @@ from django.conf import settings
 from serde import from_dict
 from serde.json import to_json
 
-from common.ai_review.dto import EmbeddedFile, AIReviewResult, LlmReviewPromptDTO, LlmConfig
+from common.ai_review.dto import (
+    EmbeddedFile,
+    LlmReviewPromptDTO,
+    LlmConfig,
+    AIReviewResult,
+    SubmitReviewResultDTO,
+    SuggestedCommentDTO,
+    Severity,
+    SuggestionState,
+    AIReviewRequest,
+)
 from common.ai_review.llm_reviewer import AISubmitReview
+from common.ai_review.openai_config import get_openai_server
 from common.utils import download_source_to_path
 
 # Available file extensions and their corresponding programming languages
@@ -31,8 +42,9 @@ def detect_language(filename: str) -> Optional[str]:
     return EXTENSION_LANGUAGE_MAP.get(ext.lower())
 
 
-def upload_result(submit_url: str, result: AIReviewResult) -> None:
+def upload_result(submit_url: str, request: AIReviewRequest, result: AIReviewResult) -> None:
     session = requests.Session()
+
     # Disable SSL verification in DEBUG mode (local Docker development environment).
     #
     # EXPLANATION:
@@ -45,7 +57,37 @@ def upload_result(submit_url: str, result: AIReviewResult) -> None:
     if settings.DEBUG:
         session.verify = False
 
-    json_body = to_json(result, indent=2)
+    result_dto: SubmitReviewResultDTO = SubmitReviewResultDTO(
+        summary=SuggestedCommentDTO(
+            id=-1,
+            source=None,
+            line=None,
+            text=result.summary,
+            quality_rating=None,
+            relevance_rating=None,
+            severity=Severity.MEDIUM,
+            state=SuggestionState.PENDING,
+        ),
+        suggestions=[
+            SuggestedCommentDTO(
+                id=-1,
+                source=issue.source,
+                line=issue.line,
+                text=issue.explanation,
+                quality_rating=None,
+                relevance_rating=None,
+                severity=issue.severity,
+                state=SuggestionState.PENDING,
+            )
+            for issue in result.issues
+        ],
+        review_mode=request.review_mode,
+        prompt_name=request.prompt_name,
+        server_id=request.server_id,
+        model=request.model,
+    )
+
+    json_body = to_json(result_dto, indent=2)
     logging.debug("Result JSON body: \n%s", json_body)
 
     logging.info(f"Uploading result to {submit_url}...")
@@ -102,6 +144,7 @@ def review_job(
 ) -> None:
     logging.info(f"Summarizing {submit_url}")
 
+    # Download files and embed them
     with tempfile.TemporaryDirectory() as workdir:
         download_source_to_path(f"{submit_url}download?token={token}", workdir)
         embedded_files = embed_source_files(workdir)
@@ -111,15 +154,34 @@ def review_job(
     prompt_json.raise_for_status()
     prompt: LlmReviewPromptDTO = from_dict(LlmReviewPromptDTO, prompt_json.json())
 
+    # Resolve the OpenAI configuration
+    server = get_openai_server(llm_config.server)
+    model = llm_config.model or server.models[0]
+
+    # Check if model is available on the server
+    if server.models and model not in server.models:
+        logging.error(
+            f"Model '{model}' is not available on server '{server.id}'. "
+            f"Available models: {server.models}"
+        )
+        raise ValueError(f"Model '{model}' is not available on server '{server.id}'")
+
     summarizer: AISubmitReview = AISubmitReview(
+        mode=llm_config.mode,
         files=embedded_files,
-        model=llm_config.model,
+        model=model,
         prompt=prompt,
+        server=server,
         language=llm_config.language,
     )
 
-    logging.info(f"Calling OpenAI model for review with total {len(embedded_files)} files...")
-    result: AIReviewResult = summarizer.process()
+    logging.info(
+        f"Calling OpenAI model for review with total {len(embedded_files)} files "
+        f"(server={server.id}, model={model}, mode={llm_config.mode}, prompt={prompt.name})..."
+    )
 
-    upload_result(f"{upload_url}?token={token}", result)
+    result: AIReviewResult = summarizer.process()
+    request: AIReviewRequest = summarizer.get_request()
+
+    upload_result(f"{upload_url}?token={token}", request, result)
     logging.info(f"Completed summarization for {submit_url}")
