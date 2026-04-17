@@ -269,8 +269,9 @@ class AssignedTask(models.Model):
         )
 
     def is_allowed_from_ip(self, ip: str) -> bool:
-        print(self.allowed_rooms.exists())
-        if not self.allowed_rooms.exists():
+        allowed_rooms_list = self.allowed_rooms.prefetch_related("ip_ranges").all()
+
+        if not allowed_rooms_list:
             return True
 
         try:
@@ -281,11 +282,6 @@ class AssignedTask(models.Model):
                     ip, self.task.name
                 )
             )
-            return True
-
-        allowed_rooms_list = self.allowed_rooms.prefetch_related("ip_ranges")
-
-        if not self.allowed_rooms.all().exists():
             return True
 
         for room in allowed_rooms_list:
