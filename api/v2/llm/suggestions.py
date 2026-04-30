@@ -23,13 +23,14 @@ router = Router()
 def rate_submit_suggestion(request, suggestion_id: int, body: RateSuggestionSchema):
     suggestion = get_object_or_404(SuggestedComment, id=suggestion_id)
 
-    if not (0 <= body.rating <= 10):
+    if not (0 <= body.quality_rating <= 10):
         raise HttpError(400, "Rating must be between 0 and 10")
 
     if suggestion.submit.assignment.clazz.teacher != request.user:
         raise HttpError(403, "Only the teacher of the class can rate suggestions")
 
-    suggestion.rating = body.rating
+    suggestion.quality_rating = body.quality_rating
+    suggestion.relevance_rating = body.relevance_rating
     suggestion.save()
 
     return {"status": "success"}

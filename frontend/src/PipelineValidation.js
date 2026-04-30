@@ -2,6 +2,35 @@ import yaml from 'js-yaml';
 import ISO6391 from 'iso-639-1';
 import CodeMirror from 'codemirror';
 
+// Dynamically fetched openAI data
+let openaiServers = [];
+let openaiPrompts = [];
+
+async function loadOpenAIServers() {
+    try {
+        const res = await fetch('/api/v2/llm/servers');
+        if (res.ok) {
+            openaiServers = await res.json();
+        }
+    } catch (e) {
+        console.warn('Failed to load OpenAI servers for autocomplete:', e);
+    }
+}
+
+async function loadOpenAIPrompts() {
+    try {
+        const res = await fetch('/api/v2/llm/prompts');
+        if (res.ok) {
+            openaiPrompts = await res.json();
+        }
+    } catch (e) {
+        console.warn('Failed to load OpenAI prompts for autocomplete:', e);
+    }
+}
+
+loadOpenAIServers().then();
+loadOpenAIPrompts().then();
+
 CodeMirror.registerHelper('hint', 'yaml', function (cm) {
     if (cm.options['filename'] != '/config.yml') {
         return null;
@@ -244,6 +273,34 @@ class EnumRule {
 
     hint() {
         return this.choices;
+    }
+}
+
+class DynamicEnumRule {
+    constructor(getChoices) {
+        this.getChoices = getChoices;
+    }
+
+    validate(prefix, data, sourceMap) {
+        if (data === null) {
+            return [err(sourceMap[prefix].value, 'Missing value')];
+        }
+
+        const choices = this.getChoices(null);
+        if (choices.length && choices.indexOf(data.toString()) < 0) {
+            return [
+                err(
+                    sourceMap[prefix].value,
+                    `Invalid value. Expected one of: ${choices.join(', ')}`
+                )
+            ];
+        }
+
+        return [];
+    }
+
+    hint(path, depth, data) {
+        return this.getChoices(data);
     }
 }
 
@@ -599,8 +656,28 @@ const rules = new DictRule({
                 new EnumRule(ISO6391.getAllCodes()),
                 'Language code for the generated summary and suggestions.'
             ],
-            model: [new ValueRule(), 'OpenAI model used for summary and suggestions generation.'],
-            prompt_name: [new ValueRule(), 'ID of the custom prompt stored in the system.']
+            server: [
+                new DynamicEnumRule(() => openaiServers.map((s) => s.id)),
+                'OpenAI server ID as defined in <strong>data/openai_servers.json</strong>. Defaults to first configured server.'
+            ],
+            model: [
+                new DynamicEnumRule((data) => {
+                    const serverId = data?.async?.llm?.server;
+                    const server = serverId
+                        ? openaiServers.find((s) => s.id === serverId)
+                        : openaiServers[0];
+                    return server ? server.models : [];
+                }),
+                'OpenAI model used for summary and suggestions generation. Defaults to first model of the selected server.'
+            ],
+            prompt: [
+                new DynamicEnumRule(() => openaiPrompts.map((p) => p.name)),
+                'LLM prompt ID for model reasoning when evaluating.'
+            ],
+            review_mode: [
+                new EnumRule(['zero-shot', 'chain_of_thoughts', 'thinking']),
+                'Review mode used to retrieve llm response. Thinking is allowed only for models that allows it'
+            ]
         })
     })
 });
