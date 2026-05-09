@@ -57,7 +57,7 @@ def normalize_date(date: datetime.datetime) -> datetime.datetime:
     Move the datetime to local time zone and then forcefully treat it as UTC (remove timezone
     information) to make Bokeh render it correctly.
     """
-    return timezone.localtime(date).replace(tzinfo=timezone.utc)
+    return timezone.localtime(date).replace(tzinfo=datetime.timezone.utc)
 
 
 def create_submit_chart_html(submits: List[Submit], assignments: List[AssignedTask]) -> str:

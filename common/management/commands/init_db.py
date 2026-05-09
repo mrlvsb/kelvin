@@ -206,7 +206,7 @@ class Command(BaseCommand):
             ]
         ]
 
-        date = datetime.datetime.now(tz=timezone.utc)
+        date = datetime.datetime.now(tz=datetime.timezone.utc)
         semester = create_semester(date)
         subjects = [create_subject(name, abbr) for (name, abbr) in self.SUBJECTS]
         task_files = create_task_files()

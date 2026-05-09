@@ -71,7 +71,13 @@
                 <kelvin-notifications></kelvin-notifications>
 
                 <kelvin-color-theme></kelvin-color-theme>
-                <li class="nav-item"><a class="nav-link text-primary-emphasis" href="/accounts/logout/?next=/">Logout</a></li>
+                <li class="nav-item">
+                  <form method="post" action="/accounts/logout/" style="display:inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="/">
+                    <button type="submit" class="nav-link text-primary-emphasis btn btn-link">Logout</button>
+                  </form>
+                </li>
               {% endif %}
               </ul>
             </div>

@@ -6,7 +6,7 @@ from django.http import HttpResponse
 class TokenAuthenticationMiddleware(MiddlewareMixin):
     def process_request(self, request):
         if not hasattr(request, "user") or request.user.is_anonymous:
-            header = request.META.get("HTTP_AUTHORIZATION", "")
+            header = request.headers.get("Authorization", "")
             if header.startswith("Bearer"):
                 _, token = header.split(None, 2)
                 user = authenticate(request=request, token=token)
