@@ -96,8 +96,8 @@ def create_submit_chart_html(submits: List[Submit], assignments: List[AssignedTa
     source = ColumnDataSource(data=frame)
 
     plot = figure(
-        plot_width=1200,
-        plot_height=400,
+        width=1200,
+        height=400,
         x_axis_type="datetime",
         tools="pan,wheel_zoom,box_zoom,save,reset,tap",
     )
@@ -133,7 +133,7 @@ def create_submit_chart_html(submits: List[Submit], assignments: List[AssignedTa
 def create_point_chart_html(student_points):
     points = sorted(student_points.values())
 
-    plot = figure(plot_width=1200, plot_height=400)
+    plot = figure(width=1200, height=400)
 
     plot.yaxis.axis_label = "# students"
 
