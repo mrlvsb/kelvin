@@ -706,7 +706,7 @@ def task_detail(request, task_id=None):
         else:
             return JsonResponse(
                 {
-                    "errors": [f'Invalid task type {data.get("type")}'],
+                    "errors": [f"Invalid task type {data.get('type')}"],
                 },
                 status=400,
             )

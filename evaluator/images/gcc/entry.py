@@ -53,7 +53,7 @@ def compile(makeflags: str, cmakeflags: str, html_output: io.StringIO):
         "CXXFLAGS": flags,
         "LDFLAGS": ldflags,
         "CLICOLOR_FORCE": "1",
-        "PATH": f'/wrapper:{os.getenv("PATH")}',
+        "PATH": f"/wrapper:{os.getenv('PATH')}",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
     }
 

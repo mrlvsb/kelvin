@@ -17,7 +17,7 @@ questions:
 
   - name: best_ide
     question: vis jaky je nejlepsi editor?
-    type: radio 
+    type: radio
     choices:
       vim: vim
       nano: nano

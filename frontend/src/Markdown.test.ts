@@ -9,7 +9,7 @@ describe('Markdown', () => {
     });
     it('Should render example markdown', () => {
         const wrapper = render(Markdown, {
-            content: `# Title 
+            content: `# Title
 ## Subtitle
 ### Subsubtitle
 
