@@ -6,30 +6,32 @@ import { safeMarkdown } from '../../markdown';
 import { hideComments, HideCommentsState } from '../../stores';
 import { useSvelteStore } from '../../utilities/useSvelteStore';
 
+/* eslint-disable vue/prop-name-casing */
 const props = withDefaults(
   defineProps<{
     author?: string;
-    authorId?: number | null;
+    author_id?: number | null;
     text?: string;
     type?: string;
     id?: number | null;
-    canEdit?: boolean;
+    can_edit?: boolean;
     unread?: boolean | null;
-    notificationId?: number | null;
+    notification_id?: number | null;
     meta?: { url?: string; review?: { id: number } } | null;
   }>(),
   {
     author: '',
-    authorId: null,
+    author_id: null,
     text: '',
     type: '',
     id: null,
-    canEdit: false,
+    can_edit: false,
     unread: null,
-    notificationId: null,
+    notification_id: null,
     meta: null
   }
 );
+/* eslint-enable vue/prop-name-casing */
 
 const emit = defineEmits(['saveComment', 'setNotification']);
 
@@ -72,7 +74,7 @@ const handleNotification = () => {
     <div
       class="comment"
       :class="[`comment-${unread ? 'unread' : 'read'}`, type]"
-      @dblclick="editing = canEdit"
+      @dblclick="editing = can_edit"
     >
       <strong>{{ author }}: </strong>
 
@@ -86,7 +88,7 @@ const handleNotification = () => {
 
         <template v-else-if="currentUser">
           <button
-            v-if="unread && authorId !== currentUser.id"
+            v-if="unread && author_id !== currentUser.id"
             class="btn p-0 float-end"
             style="line-height: normal"
             @click.prevent="handleNotification"
