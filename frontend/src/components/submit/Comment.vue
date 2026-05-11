@@ -5,31 +5,11 @@ import { user } from '../../global';
 import { safeMarkdown } from '../../markdown';
 import { hideComments, HideCommentsState } from '../../stores';
 import { useSvelteStore } from '../../utilities/useSvelteStore';
+import { Comment } from '../../types/TaskDetail';
 
-const props = withDefaults(
-  defineProps<{
-    author?: string;
-    authorId?: number | null;
-    text?: string;
-    type?: string;
-    id?: number | null;
-    canEdit?: boolean;
-    unread?: boolean | null;
-    notificationId?: number | null;
-    meta?: { url?: string; review?: { id: number } } | null;
-  }>(),
-  {
-    author: '',
-    authorId: null,
-    text: '',
-    type: '',
-    id: null,
-    canEdit: false,
-    unread: null,
-    notificationId: null,
-    meta: null
-  }
-);
+const props = defineProps<{
+  comment: Comment;
+}>();
 
 const emit = defineEmits(['saveComment', 'setNotification']);
 
@@ -42,7 +22,10 @@ const currentHideComments = useSvelteStore(hideComments, HideCommentsState.NONE)
 const showComment = computed(() => {
   return (
     currentHideComments.value !== HideCommentsState.ALL &&
-    !(currentHideComments.value === HideCommentsState.AUTOMATED && props.type === 'automated')
+    !(
+      currentHideComments.value === HideCommentsState.AUTOMATED &&
+      props.comment.type === 'automated'
+    )
   );
 });
 
@@ -50,7 +33,7 @@ const updateComment = (text: string) => {
   sending.value = true;
 
   emit('saveComment', {
-    id: props.id,
+    id: props.comment.id,
     text,
     success: () => {
       editing.value = false;
@@ -61,8 +44,8 @@ const updateComment = (text: string) => {
 
 const handleNotification = () => {
   emit('setNotification', {
-    comment_id: props.id,
-    unread: !props.unread
+    comment_id: props.comment.id,
+    unread: !props.comment.unread
   });
 };
 </script>
@@ -71,22 +54,22 @@ const handleNotification = () => {
   <div v-if="showComment" style="display: flex; flex-direction: row">
     <div
       class="comment"
-      :class="[`comment-${unread ? 'unread' : 'read'}`, type]"
-      @dblclick="editing = canEdit"
+      :class="[`comment-${comment.unread ? 'unread' : 'read'}`, comment.type]"
+      @dblclick="editing = comment.can_edit"
     >
-      <strong>{{ author }}: </strong>
+      <strong>{{ comment.author }}: </strong>
 
       <template v-if="!editing">
-        <template v-if="type === 'automated'">
-          {{ text }}
-          <a v-if="meta && meta.url" :href="meta.url">
+        <template v-if="comment.type === 'automated'">
+          {{ comment.text }}
+          <a v-if="comment.meta && comment.meta.url" :href="comment.meta.url">
             <span class="iconify" data-icon="entypo:help"></span>
           </a>
         </template>
 
         <template v-else-if="currentUser">
           <button
-            v-if="unread && authorId !== currentUser.id"
+            v-if="comment.unread && comment.author_id !== currentUser.id"
             class="btn p-0 float-end"
             style="line-height: normal"
             @click.prevent="handleNotification"
@@ -95,12 +78,12 @@ const handleNotification = () => {
           </button>
 
           <!-- eslint-disable vue/no-v-html -->
-          <span v-html="safeMarkdown(text)" />
+          <span v-html="safeMarkdown(comment.text || '')" />
           <!-- eslint-enable -->
         </template>
       </template>
 
-      <CommentForm v-else :comment="text" :disabled="sending" @save="updateComment" />
+      <CommentForm v-else :comment="comment.text || ''" :disabled="sending" @save="updateComment" />
     </div>
   </div>
 </template>
