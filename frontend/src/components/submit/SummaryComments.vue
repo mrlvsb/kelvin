@@ -32,14 +32,14 @@ const addComment = (text: string) => {
   <template v-for="comment in summaryComments" :key="comment.id">
     <SuggestedComment
       v-if="comment.type === 'ai-review'"
-      v-bind="comment"
+      :comment="comment"
       :summary="true"
       @resolve-suggestion="emit('resolveSuggestion', $event)"
     />
 
     <Comment
       v-else
-      v-bind="comment"
+      :comment="comment"
       @save-comment="emit('saveComment', $event)"
       @set-notification="emit('setNotification', $event)"
     />
