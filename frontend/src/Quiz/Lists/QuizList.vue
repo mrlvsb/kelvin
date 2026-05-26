@@ -265,8 +265,12 @@ const filterChanged = () => {
           <div class="col-12 mb-1">
             <label for="subject-select" class="form-label">Subject</label>
             <select id="subject-select" v-model="selectedSubjectAbbr" class="form-control">
-              <option v-for="subject in subjects" :key="subject.abbr" :value="subject.abbr">
-                {{ subject.name }}
+              <option
+                v-for="subjectItem in subjects"
+                :key="subjectItem.abbr"
+                :value="subjectItem.abbr"
+              >
+                {{ subjectItem.name }}
               </option>
             </select>
           </div>

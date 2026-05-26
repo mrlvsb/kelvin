@@ -21,7 +21,7 @@ declare global {
 const props = withDefaults(
   defineProps<{
     submits?: Submit[];
-    current_submit: number;
+    currentSubmit: number;
     deadline: number | string | Date;
   }>(),
   {
@@ -30,7 +30,7 @@ const props = withDefaults(
 );
 
 const a = ref(1);
-const b = ref(props.current_submit);
+const b = ref(props.currentSubmit);
 const diffHtmlOutput = ref('');
 
 const formatInfo = (submit: Submit) => {
@@ -52,7 +52,7 @@ const formatInfo = (submit: Submit) => {
 };
 
 watch(
-  () => props.current_submit,
+  () => props.currentSubmit,
   (value) => {
     if (value != null) {
       a.value = Math.max(value - 1, 1);
@@ -113,7 +113,9 @@ watch(
       </span>
     </li>
 
-    <div class="code-diff" v-html="diffHtmlOutput"></div>
+    <!-- eslint-disable vue/no-v-html -->
+    <div class="code-diff" v-html="diffHtmlOutput" />
+    <!-- eslint-enable -->
   </ul>
 </template>
 

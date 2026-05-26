@@ -12,8 +12,8 @@ import { getFromAPI } from '../../utilities/api';
 
 DataTable.use(DataTablesCore);
 
-const { quiz_id } = defineProps<{
-  quiz_id: number;
+const { quizId } = defineProps<{
+  quizId: number;
 }>();
 
 type Submit = {
@@ -63,7 +63,7 @@ const getSubmits = async (
   const data = await getFromAPI<{
     submits: Submit[];
     count: number;
-  }>(`/api/quiz/${quiz_id}/submits${classPath}?${params.toString()}`);
+  }>(`/api/quiz/${quizId}/submits${classPath}?${params.toString()}`);
 
   if (data) {
     return [
@@ -94,7 +94,7 @@ const classes = ref(Array<Class>());
 const getClasses = async () => {
   const data = await getFromAPI<{
     classes: Class[];
-  }>(`/api/quiz/${quiz_id}/classes`);
+  }>(`/api/quiz/${quizId}/classes`);
 
   if (data) {
     classes.value = data.classes;

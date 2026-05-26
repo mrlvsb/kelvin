@@ -9,7 +9,7 @@ import { clickOutside } from '../../utilities/clickOutside';
 import { User } from '../../utilities/SvelteStoreTypes';
 import { useReadableSvelteStore } from '../../utilities/useSvelteStoreInVue';
 import { defineModel, onMounted, computed, ref, watch, defineEmits } from 'vue';
-import CopyToClipboard from './CopyToClipboard.vue';
+import CopyToClipboard from '../../components/CopyToClipboard.vue';
 
 /**
  * @prop {string}                     subject  - subject code used to get autocomplete hints
@@ -119,6 +119,7 @@ watch(selectedId, () => {
     </div>
 
     <ul v-if="filtered.length && focused">
+      <!-- eslint-disable vue/no-v-html -->
       <li
         v-for="(item, i) in filtered"
         :key="i"
@@ -132,7 +133,8 @@ watch(selectedId, () => {
         v-html="
           item.path.replace(new RegExp('(' + escapeRegExp(path) + ')', 'gi'), '<strong>$1</strong>')
         "
-      ></li>
+      />
+      <!-- eslint-enable -->
     </ul>
   </div>
 </template>

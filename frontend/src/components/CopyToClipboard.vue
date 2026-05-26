@@ -11,14 +11,18 @@ const props = withDefaults(
   }
 );
 
-// TODO: Rework this tooltip to use global modal system instead of local implementation
 const tooltip = ref(null);
 
-// This method originally is not working on development environment (Without HTTPS).
-// More can be found here: https://stackoverflow.com/a/71876238
 const copy = (event: MouseEvent) => {
   const resolved = typeof props.content === 'function' ? props.content() : props.content;
-  navigator.clipboard.writeText(resolved ?? '');
+
+  try {
+    // This method originally is not working on development environment (Without HTTPS).
+    // More can be found here: https://stackoverflow.com/a/71876238
+    navigator.clipboard.writeText(resolved ?? '');
+  } catch (e) {
+    console.error('Failed to copy to clipboard', e);
+  }
 
   const container = (event.currentTarget as HTMLElement | null)?.closest(
     '.tooltip-container'
@@ -32,7 +36,7 @@ const copy = (event: MouseEvent) => {
 
     setTimeout(() => {
       tooltip.value = null;
-    }, 500);
+    }, 1000);
   }
 };
 </script>
@@ -48,7 +52,7 @@ const copy = (event: MouseEvent) => {
         v-if="tooltip"
         class="tooltip bs-tooltip-right show d-flex align-items-center"
         role="tooltip"
-        :style="`left: ${tooltip.left}px; top: ${tooltip.top}px`"
+        :style="{ position: 'absolute', left: tooltip.left + 'px', top: tooltip.top + 'px' }"
       >
         <div class="popover-arrow"></div>
         <div class="tooltip-inner">Copied!</div>
@@ -60,5 +64,27 @@ const copy = (event: MouseEvent) => {
 <style scoped>
 span {
   cursor: pointer;
+}
+
+.tooltip-inner {
+  margin-top: 0.75rem;
+}
+
+.fade-enter-active {
+  transition: opacity 0.5s ease;
+}
+
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.fade-enter-to,
+.fade-leave-from {
+  opacity: 1;
 }
 </style>

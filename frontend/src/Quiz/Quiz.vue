@@ -357,7 +357,9 @@ onUnmounted(() => {
                   ></textarea>
                 </template>
                 <h6 class="mt-2"><strong>Question:</strong></h6>
-                <div v-html="question.htmlContent"></div>
+                <!-- eslint-disable vue/no-v-html -->
+                <div v-html="question.htmlContent" />
+                <!-- eslint-enable -->
                 <h6 v-if="question.type === 'open' || question.type === 'abcd'" class="mt-2">
                   <strong>Answer:</strong>
                 </h6>
@@ -391,7 +393,9 @@ onUnmounted(() => {
                     :key="answer.id"
                     class="row border rounded mt-2 p-2"
                   >
-                    <div class="col-11" v-html="answer.htmlContent"></div>
+                    <!-- eslint-disable vue/no-v-html -->
+                    <div class="col-11" v-html="answer.htmlContent" />
+                    <!-- eslint-enable -->
                     <div class="col-1 text-center align-self-center">
                       <input
                         v-if="!isScoring"

@@ -648,7 +648,7 @@ onUnmounted(() => {
     <div class="col-12 mb-2">
       <quizAssign
         v-model="isDeletableRef"
-        :quiz_id="props.quizEditData.id"
+        :quiz-id="props.quizEditData.id"
         :assignments="props.quizEditData.assignments"
         :teacher="props.quizEditData.teacher"
       ></quizAssign>
@@ -812,11 +812,9 @@ onUnmounted(() => {
             aria-labelledby="preview-tab"
           >
             <div class="col-12">
-              <div
-                id="preview-block-content"
-                ref="previewBlockContent"
-                v-html="previewHtmlRef"
-              ></div>
+              <!-- eslint-disable vue/no-v-html -->
+              <div id="preview-block-content" ref="previewBlockContent" v-html="previewHtmlRef" />
+              <!-- eslint-enable -->
             </div>
           </div>
         </div>

@@ -14,7 +14,7 @@ import { Comment, SelectedRows, Source, Submit } from '../types/TaskDetail';
 
 const props = defineProps<{
   url: string;
-  comment_url: string;
+  commentUrl: string;
 }>();
 
 const files = ref<SourceFile[] | null>(null);
@@ -178,7 +178,7 @@ type CommentSavePayload = {
 const addNewComment = async (comment: CommentSavePayload) => {
   const { success, ...payload } = comment;
 
-  const res = await fetch(props.comment_url, {
+  const res = await fetch(props.commentUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -218,7 +218,7 @@ const addNewComment = async (comment: CommentSavePayload) => {
 };
 
 const updateComment = async (id: number, text: string) => {
-  await fetch(`${props.comment_url}/${id}`, {
+  await fetch(`${props.commentUrl}/${id}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json'
@@ -663,7 +663,7 @@ onUnmounted(() => {
     <SubmitsDiff
       v-if="showDiff"
       :submits="submits"
-      :current_submit="current_submit"
+      :current-submit="current_submit"
       :deadline="deadline"
     />
 

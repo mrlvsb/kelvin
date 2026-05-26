@@ -254,8 +254,8 @@ load();
 
         <div class="btn-group" role="group" aria-label="Basic example">
           <input
-            type="text"
             v-model="new_test_io_file[name]"
+            type="text"
             class="form-control form-control-sm"
             placeholder="Filename"
           />

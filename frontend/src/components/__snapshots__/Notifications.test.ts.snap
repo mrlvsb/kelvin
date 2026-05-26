@@ -38,7 +38,7 @@ exports[`Notifications > Read notification 1`] = `
         </div>
       </li>
       <li class="list-group-item p-1 d-flex align-items-center justify-content-between text-body-secondary">
-        <div><strong>some-actor2&nbsp;</strong>
+        <div><strong>some-actor2&nbsp;</strong><!-- eslint-disable vue/no-v-html -->
           <div>some-custom-text2</div><span>&nbsp;(<time datetime="1999-12-31T23:00:00.000Z" title="1. 1. 2000 0:00:00"><!--v-if-->25 years ago<!--v-if--></time>) </span>
         </div>
         <div><button type="button" hidden="" class="btn-close" aria-label="Close"></button></div>
@@ -65,13 +65,13 @@ exports[`Notifications > Wait for notification 1`] = `
         </div>
       </li>
       <li class="list-group-item p-1 d-flex align-items-center justify-content-between text-body-secondary">
-        <div><strong>some-actor1&nbsp;</strong>
+        <div><strong>some-actor1&nbsp;</strong><!-- eslint-disable vue/no-v-html -->
           <div>some-custom-text</div><span>&nbsp;(<time datetime="1999-12-31T23:00:00.000Z" title="1. 1. 2000 0:00:00"><!--v-if-->25 years ago<!--v-if--></time>) </span>
         </div>
         <div><button type="button" hidden="" class="btn-close" aria-label="Close"></button></div>
       </li>
       <li class="list-group-item p-1 d-flex align-items-center justify-content-between text-body-secondary">
-        <div><strong>some-actor2&nbsp;</strong>
+        <div><strong>some-actor2&nbsp;</strong><!-- eslint-disable vue/no-v-html -->
           <div>some-custom-text2</div><span>&nbsp;(<time datetime="1999-12-31T23:00:00.000Z" title="1. 1. 2000 0:00:00"><!--v-if-->25 years ago<!--v-if--></time>) </span>
         </div>
         <div><button type="button" hidden="" class="btn-close" aria-label="Close"></button></div>

@@ -3,6 +3,7 @@ from django.urls import reverse, resolve, Resolver404
 from enum import Enum
 from kelvin.settings import DEBUG
 from quiz.quiz_utils import quiz_running_for_user
+
 if DEBUG:
     try:
         from debug_toolbar.toolbar import DebugToolbar

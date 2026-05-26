@@ -10,9 +10,9 @@ import '@vuepic/vue-datepicker/dist/main.css';
 import 'vue3-toastify/dist/index.css';
 import { getDataWithCSRF } from '../utilities/api';
 
-const { assignments, quiz_id, teacher } = defineProps<{
+const { assignments, quizId, teacher } = defineProps<{
   assignments: string;
-  quiz_id: number;
+  quizId: number;
   teacher: string;
 }>();
 
@@ -67,7 +67,7 @@ const saveAssignments = async () => {
     message: string;
     quiz_deletable: boolean;
     assignments: AssignmentClass[];
-  }>(`/api/quiz/${quiz_id}/assignments`, 'POST', { assignments: assignmentsData.value });
+  }>(`/api/quiz/${quizId}/assignments`, 'POST', { assignments: assignmentsData.value });
 
   if (data) {
     toast.success(data.message);

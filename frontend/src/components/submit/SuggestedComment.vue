@@ -10,15 +10,21 @@ import { fetch as apiFetch } from '../../api.js';
 import { Comment } from '../../types/TaskDetail';
 import { toastApi } from '../../utilities/toast';
 
-const props = withDefaults(defineProps<Comment & { summary?: boolean }>(), {
-  summary: false
-});
+const props = withDefaults(
+  defineProps<{
+    comment: Comment;
+    summary?: boolean;
+  }>(),
+  {
+    summary: false
+  }
+);
 
 const emit = defineEmits(['resolveSuggestion']);
 
 const editing = ref(false);
 const sending = ref(false);
-const committedRating = ref(props.meta.review.rating ?? 0);
+const committedRating = ref(props.comment.meta?.review?.rating ?? 0);
 
 const currentUser = useSvelteStore(user, null);
 const hideCommentsValue = useSvelteStore(hideComments, HideCommentsState.NONE);
@@ -72,7 +78,7 @@ const resolveSuggestion = async <T,>(
 
 const handleAccept = async () => {
   sending.value = true;
-  const suggestionId = props.meta.review.id;
+  const suggestionId = props.comment.meta?.review?.id;
 
   const { data, error } = await resolveSuggestion<Comment>(
     `/api/v2/llm/suggestions/${suggestionId}`,
@@ -106,7 +112,7 @@ const handleAccept = async () => {
 
 const handleReject = async () => {
   sending.value = true;
-  const suggestionId = props.meta.review.id;
+  const suggestionId = props.comment.meta?.review?.id;
 
   const { error } = await resolveSuggestion<{ status: string }>(
     `/api/v2/llm/suggestions/${suggestionId}`,
@@ -140,7 +146,7 @@ const handleEdit = () => {
 
 const handleSave = async (text: string) => {
   sending.value = true;
-  const suggestionId = props.meta.review.id;
+  const suggestionId = props.comment.meta?.review?.id;
 
   const { data, error } = await resolveSuggestion<Comment>(
     `/api/v2/llm/suggestions/${suggestionId}`,
@@ -178,7 +184,7 @@ const handleSave = async (text: string) => {
 
 const handleRating = async (rating: number) => {
   sending.value = true;
-  const suggestionId = props.meta.review.id;
+  const suggestionId = props.comment.meta?.review?.id;
 
   const previousRating = committedRating.value;
   committedRating.value = rating;
@@ -214,7 +220,7 @@ const handleRating = async (rating: number) => {
   <div class="suggested-comment" v-bind="$attrs">
     <div v-if="showComment && currentUser?.teacher" class="comment ai-review">
       <div class="comment-header">
-        <strong>{{ author }}</strong>
+        <strong>{{ comment.author }}</strong>
 
         <div v-if="currentUser?.teacher && !editing" class="comment-actions">
           <button
@@ -264,8 +270,10 @@ const handleRating = async (rating: number) => {
         </div>
       </div>
 
-      <div v-if="!editing" class="comment-text" v-html="safeMarkdown(text)"></div>
-      <CommentForm v-else :comment="text" :disabled="sending" @save="handleSave" />
+      <!-- eslint-disable vue/no-v-html -->
+      <div v-if="!editing" class="comment-text" v-html="safeMarkdown(comment.text || '')" />
+      <!-- eslint-enable -->
+      <CommentForm v-else :comment="comment.text || ''" :disabled="sending" @save="handleSave" />
     </div>
   </div>
 </template>

@@ -284,8 +284,8 @@ function closeTab(path: string) {
 
   <div
     v-if="ctxMenu && ctxMenu.selected != '/readme.md'"
-    class="dropdown-menu show"
     v-click-outside="() => (ctxMenu = null)"
+    class="dropdown-menu show"
     :style="{ position: 'fixed', top: ctxMenu.top + 'px', left: ctxMenu.left + 'px' }"
   >
     <button

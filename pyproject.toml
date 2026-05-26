@@ -66,6 +66,7 @@ include = [
     "common/**/*.py",
     "evaluator/**/*.py",
     "kelvin/**/*.py",
+    "quiz/**/*.py",
     "survey/**/*.py",
     "web/**/*.py"
 ]

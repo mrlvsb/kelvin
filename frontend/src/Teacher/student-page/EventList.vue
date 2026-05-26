@@ -235,13 +235,13 @@ watch(ipFilter, () => {
     </div>
 
     <DataTable ref="dt" class="table table-striped" :columns="columns" :options="options">
-      <template #column-link="props">
-        <div v-if="props.rowData.metadata && props.rowData.metadata.link">
-          <a :href="props.rowData.metadata.link" target="_blank">
-            {{ props.rowData.metadata.task_name }}
+      <template #column-link="columnLinkProps">
+        <div v-if="columnLinkProps.rowData.metadata && columnLinkProps.rowData.metadata.link">
+          <a :href="columnLinkProps.rowData.metadata.link" target="_blank">
+            {{ columnLinkProps.rowData.metadata.task_name }}
             {{
-              props.rowData.metadata.submit_num != undefined
-                ? '#' + props.rowData.metadata.submit_num
+              columnLinkProps.rowData.metadata.submit_num != undefined
+                ? '#' + columnLinkProps.rowData.metadata.submit_num
                 : ''
             }}
           </a>
