@@ -81,7 +81,7 @@ let editorElement = ref();
 let editor: EditorFromTextArea;
 
 function getThemeName(value: ThemeValue) {
-  return value == 'dark' ? 'dracula' : 'default';
+  return value == 'dark' ? 'dracula' : 'eclipse';
 }
 
 function toMode(filename: string) {
