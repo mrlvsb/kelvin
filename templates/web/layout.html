@@ -72,7 +72,7 @@
 
                 <kelvin-color-theme></kelvin-color-theme>
                 <li class="nav-item">
-                  <form method="post" action="/accounts/logout/" style="display:inline">
+                  <form method="post" action="{% url 'cas_ng_logout' %}" class="d-inline">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="/">
                     <button type="submit" class="nav-link text-primary-emphasis btn btn-link">Logout</button>

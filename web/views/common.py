@@ -36,7 +36,7 @@ def import_inbus(request):
 @login_required()
 def api_token(request):
     data = {
-        "base_url": f"{request.scheme}://{request.headers.get('Host', 'localhost:8000')}",
+        "base_url": request.build_absolute_uri("/").rstrip("/"),
         "doc_token": "YOUR_TOKEN",
     }
     if request.method == "POST":
