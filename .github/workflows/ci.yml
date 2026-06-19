@@ -17,7 +17,19 @@ env:
 jobs:
   test-backend:
     runs-on: ubuntu-latest
-
+    env:
+      DATABASE__USERNAME: postgres
+      DATABASE__PASSWORD: testpass
+      DATABASE__DB: postgres
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
