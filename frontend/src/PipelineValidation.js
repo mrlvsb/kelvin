@@ -2,7 +2,7 @@ import yaml from 'js-yaml';
 import ISO6391 from 'iso-639-1';
 import CodeMirror from 'codemirror';
 
-CodeMirror.registerHelper('hint', 'yaml', function(cm) {
+CodeMirror.registerHelper('hint', 'yaml', function (cm) {
     if (cm.options['filename'] != '/config.yml') {
         return null;
     }
