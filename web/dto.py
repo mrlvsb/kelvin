@@ -7,7 +7,6 @@ from common.models import Submit
 from evaluator.results import EvaluationResult
 
 
-@serde
 @dataclass
 class SubmitData:
     submit: Submit
