@@ -165,7 +165,7 @@ def email(email: models.Email) -> str:
 @admin.register(models.Email)
 class EmailAdmin(admin.ModelAdmin):
     list_display = [email]
-    ordering = (F("sent_at").desc(nulls_last=False), "-created_at")
+    ordering = (F("sent_at").desc(nulls_first=True), "-created_at")
 
 
 admin.site.register(models.Task, TaskAdmin)
