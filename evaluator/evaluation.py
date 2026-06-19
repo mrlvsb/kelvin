@@ -152,14 +152,16 @@ class EvaluationContext:
         self.meta = meta if meta else {}
         self.warnings = []
 
+        config_path = os.path.join(task_path, "config.yml")
         try:
-            config_path = os.path.join(task_path, "config.yml")
             with open(config_path) as f:
                 config_content = f.read()
             config_result = WorkflowConfig.parse(config_content)
             self.config = config_result.config
             for key in config_result.unknown_keys:
                 self.add_warning(f"Unknown config.yml key `{key}`")
+        except FileNotFoundError:
+            pass
         except WorkflowValidationError as e:
             self.config = WorkflowConfig(tests=[], jobs=[])
             self.add_warning(e)
