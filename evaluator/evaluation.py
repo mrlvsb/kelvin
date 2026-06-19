@@ -363,15 +363,6 @@ def parse_config_jobs(value: list[Any]) -> list[WorflowJob]:
                 pipe.type = pipe_type
                 pipe.title = item.get("title", item["type"])
                 pipe.fail_on_error = item.get("fail_on_error", True)
-
-                if not getattr(pipe, "enabled", None):
-                    pipe.enabled = True
-                if "enabled" in item:
-                    if item["enabled"] == "announce":
-                        pipe.enabled = "announce"
-                    else:
-                        pipe.enabled = parse_bool(item["enabled"])
-
                 pipe.id = f"{counter:03}_{item['type']}"
                 counter += 1
 
@@ -379,14 +370,6 @@ def parse_config_jobs(value: list[Any]) -> list[WorflowJob]:
             except Exception as e:
                 raise WorkflowValidationError(f"pipe {item['type']}: {e}\n{traceback.format_exc()}")
         return jobs
-
-
-def parse_bool(value):
-    if value in [True, 1, "yes", "on", "enable", "enabled"]:
-        return True
-    if value in [False, 0, "no", "off", "disable", "disabled"]:
-        return False
-    raise ValueError(f"Could not convert {value} to bool")
 
 
 @dataclasses.dataclass()

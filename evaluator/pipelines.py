@@ -449,7 +449,6 @@ class AutoGraderPipe:
         self.propose = propose
         self.after_deadline_multiplier = max(0, min(1.0, after_deadline_multiplier))
         self.overwrite = overwrite
-        self.enabled = "always"
 
     def run(self, evaluation):
         total = 0

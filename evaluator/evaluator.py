@@ -28,13 +28,7 @@ class Evaluation:
         self.result = EvaluationResult(self.result_path)
         failed = False
         for pipe in self.tests.pipeline:
-            if not failed or pipe.enabled == "always":
-                if not pipe.enabled or (
-                    self.meta["before_announce"] and not pipe.enabled == "announce"
-                ):
-                    logger.info(f"skipping {pipe.id}")
-                    continue
-
+            if not failed:
                 logger.info(f"executing {pipe.id}")
                 res = pipe.run(self)
                 if res:
