@@ -9,8 +9,10 @@ from common.dto import CommentDTO
 from django.contrib.auth.models import User as DjangoUser
 from common.exceptions.http_exceptions import HttpException403
 from common.models import Submit, Comment
+from common.utils import prohibit_during_test
 
 
+@prohibit_during_test
 def create_submit_comment(
     submit: Submit,
     author: DjangoUser,
@@ -40,6 +42,7 @@ def create_submit_comment(
     return comment
 
 
+@prohibit_during_test
 def update_submit_comment(
     submit: Submit,
     comment_id: int,
@@ -85,6 +88,7 @@ def update_submit_comment(
     return comment
 
 
+@prohibit_during_test
 def delete_submit_comment(comment_id: int, author: DjangoUser):
     """
     Deletes a comment if authored by the requester and removes related notifications.
