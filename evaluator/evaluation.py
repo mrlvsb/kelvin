@@ -153,6 +153,7 @@ class EvaluationContext:
         self.warnings = []
 
         config_path = os.path.join(task_path, "config.yml")
+        self.config = WorkflowConfig()
         try:
             with open(config_path) as f:
                 config_content = f.read()
@@ -163,7 +164,6 @@ class EvaluationContext:
         except FileNotFoundError:
             pass
         except WorkflowValidationError as e:
-            self.config = WorkflowConfig(tests=[], jobs=[])
             self.add_warning(e)
 
         # First, load statically known tests
@@ -253,15 +253,16 @@ class WorkflowConfig:
     It configures various options for evaluating a submit.
     """
 
-    tests: list[TestDefinition]
-    jobs: list[WorflowJob]
+    tests: list[TestDefinition] = dataclasses.field(default_factory=list)
+    jobs: list[WorflowJob] = dataclasses.field(default_factory=list)
     queue: str = "evaluator"
     timeout: int = 180
 
     @staticmethod
     def parse(config: str) -> "WorkflowConfigParseResult":
-        queue = "evaluator"
-        timeout = 180
+        default_config = WorkflowConfig()
+        queue = default_config.queue
+        timeout = default_config.timeout
         tests = []
         jobs = []
         unknown_keys: list[str] = []
