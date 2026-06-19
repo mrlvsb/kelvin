@@ -86,6 +86,10 @@
                                                title="Go to latest submit">
                                                <span class="iconify" data-icon="bx:bx-check"></span>
                                             </a>
+                                        {% elif task.submits %}
+                                            <a href="{% url 'task_detail' login=task.student assignment_id=task.id submit_num=task.submits %}"
+                                               title="Go to latest submit">
+                                            <span class="iconify text-danger" data-icon="bx:bx-check"></span>
                                         {% else %}
                                             <span class="iconify" data-icon="bi:dash"></span>
                                         {%  endif  %}
