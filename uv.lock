@@ -635,8 +635,8 @@ dev = [
     { name = "django-debug-toolbar", specifier = ">=6.0.0" },
     { name = "prek", specifier = ">=0.3.2" },
     { name = "pyrefly", specifier = "==0.18.0" },
-    { name = "pytest", specifier = ">=8.0.0" },
-    { name = "pytest-django", specifier = ">=4.12.0" },
+    { name = "pytest", specifier = "~=9.1.0" },
+    { name = "pytest-django", specifier = "~=4.12.0" },
     { name = "ruff", specifier = "==0.6.3" },
 ]
 
