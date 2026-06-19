@@ -153,7 +153,10 @@ class EvaluationContext:
         self.warnings = []
 
         try:
-            config_result = WorkflowConfig.parse(os.path.join(task_path, "config.yml"))
+            config_path = os.path.join(task_path, "config.yml")
+            with open(config_path) as f:
+                config_content = f.read()
+            config_result = WorkflowConfig.parse(config_content)
             self.config = config_result.config
             for key in config_result.unknown_keys:
                 self.add_warning(f"Unknown config.yml key `{key}`")
@@ -254,38 +257,34 @@ class WorkflowConfig:
     timeout: int = 180
 
     @staticmethod
-    def parse(config_path: str) -> "WorkflowConfigParseResult":
+    def parse(config: str) -> "WorkflowConfigParseResult":
         queue = "evaluator"
         timeout = 180
-        tests = {}
+        tests = []
         jobs = []
         unknown_keys: list[str] = []
         ignored_keys = {"async"}
 
         try:
-            with open(config_path) as f:
-                try:
-                    conf = yaml.load(f.read(), Loader=yaml.SafeLoader)
-                except BaseException as e:
-                    raise InvalidWorkflowYaml(f"Invalid config.yml file: {e}")
-                if conf and isinstance(conf, dict):
-                    for key, value in conf.items():
-                        if key == "queue":
-                            queue = value
-                        elif key == "timeout":
-                            timeout = value
-                        elif key == "tests":
-                            tests = parse_config_tests(value)
-                        elif key == "pipeline":
-                            jobs = parse_config_jobs(value)
-                        elif key not in ignored_keys:
-                            unknown_keys.append(key)
-                else:
-                    raise InvalidWorkflowYaml(
-                        f"Invalid config.yml file. Expected a dictionary, found {type(conf)}"
-                    )
-        except FileNotFoundError:
-            pass
+            conf = yaml.load(config, Loader=yaml.SafeLoader)
+        except BaseException as e:
+            raise InvalidWorkflowYaml(f"Invalid config.yml file: {e}")
+        if conf and isinstance(conf, dict):
+            for key, value in conf.items():
+                if key == "queue":
+                    queue = value
+                elif key == "timeout":
+                    timeout = value
+                elif key == "tests":
+                    tests = parse_config_tests(value)
+                elif key == "pipeline":
+                    jobs = parse_config_jobs(value)
+                elif key not in ignored_keys:
+                    unknown_keys.append(key)
+        else:
+            raise InvalidWorkflowYaml(
+                f"Invalid config.yml file. Expected a dictionary, found {type(conf)}"
+            )
         return WorkflowConfigParseResult(
             config=WorkflowConfig(queue=queue, timeout=timeout, tests=tests, jobs=jobs),
             unknown_keys=unknown_keys,

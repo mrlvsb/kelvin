@@ -40,7 +40,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --frozen
+          uv sync --frozen --dev
+
+      - name: Test Python code
+        run: uv run pytest
 
       - name: Check migrations
         run: uv run manage.py makemigrations api common web survey quiz --check
