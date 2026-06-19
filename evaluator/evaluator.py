@@ -20,27 +20,27 @@ class Evaluation:
         os.makedirs(result_path)
 
     def run(self):
-        job = get_current_job()
-        job.meta["actions"] = len(self.tests.pipeline)
-        job.meta["current_action"] = 0
-        job.save_meta()
+        rq_job = get_current_job()
+        rq_job.meta["actions"] = len(self.tests.pipeline)
+        rq_job.meta["current_action"] = 0
+        rq_job.save_meta()
 
         self.result = EvaluationResult(self.result_path)
         failed = False
-        for pipe in self.tests.pipeline:
+        for job in self.tests.pipeline:
             if not failed:
-                logger.info(f"executing {pipe.id}")
-                res = pipe.run(self)
+                logger.info(f"executing {job.id}")
+                res = job.job.run(self)
                 if res:
-                    res["id"] = pipe.id
-                    res["title"] = pipe.title
+                    res["id"] = job.id
+                    res["title"] = job.title
                     self.result.pipelines.append(res)
 
-                    if pipe.fail_on_error and "failed" in res and res["failed"]:
+                    if job.fail_on_error and "failed" in res and res["failed"]:
                         failed = True
 
-            job.meta["current_action"] += 1
-            job.save_meta()
+            rq_job.meta["current_action"] += 1
+            rq_job.save_meta()
 
         self.result.save(os.path.join(self.result_path, "result.json"))
         return self.result
