@@ -421,16 +421,6 @@ class TestsPipe:
         }
 
 
-class SleepPipe:
-    def __init__(self, seconds=1):
-        self.seconds = seconds
-
-    def run(self, evaluation):
-        import time
-
-        time.sleep(self.seconds)
-
-
 class AutoGraderPipe:
     def __init__(self, propose=False, after_deadline_multiplier=0, overwrite=False):
         self.propose = propose
