@@ -232,16 +232,6 @@
         <div class="tab-content">
             <div class="tab-pane active" id="tab_assignment">
                 {{ text|safe }}
-                {% if inputs.required_files %}
-                <h2>Required files</h2>
-
-                <ul>
-                {% for file in inputs.required_files %}
-                  <li>{{ file }}</li>
-
-                {% endfor %}
-                </ul>
-                {% endif %}
             </div>
             <div class="tab-pane" id="tab_tests">
                 <a href="{% url 'tar_test_data' task.code %}{% if submit %}?student={{submit.student}}{%endif%}" class="float-end">Download all tests</a>

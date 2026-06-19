@@ -200,14 +200,6 @@ class EvaluationContext:
     def timeout(self) -> int:
         return self.config.timeout
 
-    @property
-    def required_files(self):
-        files = []
-        for pipe in self.pipeline:
-            if pipe.type == "required_files":
-                files += pipe.files
-        return files
-
     def create_test(self, name: str) -> Test:
         """
         Get or create an existing test.
