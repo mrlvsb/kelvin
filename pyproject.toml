@@ -54,6 +54,7 @@ dev = [
     "pyrefly==0.18.0",
     "django-debug-toolbar>=6.0.0",
     "prek>=0.3.2",
+    "pytest>=8.0.0",
 ]
 
 [tool.ruff]
@@ -73,6 +74,12 @@ include = [
 extend-exclude = [
     "**/migrations/**"
 ]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "evaluator"
+]
+
 [tool.pyrefly]
 project_includes = ["**/*"]
 project_excludes = [
