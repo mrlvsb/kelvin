@@ -22,7 +22,7 @@ def test_parse_defaults():
 
 
 def test_parse_queue_and_timeout():
-    config = """\
+    config = """
 pipeline: []
 queue: cuda
 timeout: 60
@@ -33,7 +33,7 @@ timeout: 60
 
 
 def test_parse_tests():
-    config = """\
+    config = """
 pipeline: []
 tests:
   - name: '00'
@@ -54,7 +54,7 @@ tests:
 
 
 def test_parse_unknown_keys():
-    config = """\
+    config = """
 pipeline: []
 foo: bar
 baz: 1
@@ -64,9 +64,25 @@ baz: 1
 
 
 def test_parse_async_key_ignored():
-    config = """\
+    config = """
 pipeline: []
 async: true
 """
     result = WorkflowConfig.parse(config)
     assert result.unknown_keys == []
+
+
+def test_parse_job_options():
+    config = """
+pipeline:
+    - type: gcc
+      foo: bar
+      title: BAZ
+      fail_on_error: false
+"""
+    config = WorkflowConfig.parse(config).config
+    assert len(config.jobs) == 1
+
+    job = config.jobs[0]
+    assert job.title == "BAZ"
+    assert not job.fail_on_error

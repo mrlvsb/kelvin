@@ -11,7 +11,7 @@ import serde
 import yaml
 
 from kelvin.settings import BASE_DIR
-from web.markdown_utils import load_readme
+from web.markdown_utils import ProcessedMarkdown, load_readme
 from .script import Script
 
 logger = logging.getLogger(__name__)
@@ -169,7 +169,7 @@ class EvaluationContext:
         # First, load statically known tests
         test_config = TestConfig.parse(os.path.join(task_path, "tests.yml"))
         self.tests_dict = load_tests(self.config, test_config)
-        self.pipeline = self.config.jobs
+        self.pipeline: list[WorkflowJob] = self.config.jobs
 
         self.script = None
         if os.path.exists(os.path.join(self.task_path, "script.py")):
@@ -200,14 +200,6 @@ class EvaluationContext:
     def timeout(self) -> int:
         return self.config.timeout
 
-    @property
-    def required_files(self):
-        files = []
-        for pipe in self.pipeline:
-            if pipe.type == "required_files":
-                files += pipe.files
-        return files
-
     def create_test(self, name: str) -> Test:
         """
         Get or create an existing test.
@@ -223,7 +215,7 @@ class EvaluationContext:
     def add_warning(self, message):
         self.warnings.append(message)
 
-    def load_readme(self):
+    def load_readme(self) -> ProcessedMarkdown | None:
         try:
             task_relpath = os.path.relpath(self.task_path, os.path.join(BASE_DIR, "tasks"))
             vars = {}
@@ -242,8 +234,12 @@ class TestDefinition:
     args: list[str]
 
 
-# TODO: make this into something better :)
-WorflowJob = Any
+@dataclasses.dataclass()
+class WorkflowJob:
+    id: str
+    title: str
+    fail_on_error: bool
+    job: Any  # Pipeline class
 
 
 @dataclasses.dataclass()
@@ -254,7 +250,7 @@ class WorkflowConfig:
     """
 
     tests: list[TestDefinition] = dataclasses.field(default_factory=list)
-    jobs: list[WorflowJob] = dataclasses.field(default_factory=list)
+    jobs: list[WorkflowJob] = dataclasses.field(default_factory=list)
     queue: str = "evaluator"
     timeout: int = 180
 
@@ -337,56 +333,49 @@ class InvalidWorkflowYaml(WorkflowValidationError):
     pass
 
 
-def parse_config_jobs(value: list[Any]) -> list[WorflowJob]:
+def parse_config_jobs(value: list[Any]) -> list[WorkflowJob]:
     if not isinstance(value, list):
         raise WorkflowValidationError("Pipeline has to be a list of jobs")
-    else:
-        from . import pipelines
 
-        jobs = []
+    from . import pipelines
 
-        counter = 1
-        for item in value:
-            try:
-                pipe_type = item["type"]
-                class_name = "".join([p.title() for p in re.split("_|-", item["type"])])
-                pipecls = getattr(pipelines, f"{class_name}Pipe", None)
+    @serde.serde()
+    class JobOptionsYaml:
+        type: str
+        title: Optional[str] = None
+        fail_on_error: bool = True
+        args: dict[str, Any] = serde.field(flatten=True, default_factory=dict)
 
-                args = {
-                    k: v for k, v in item.items() if k not in ["type", "title", "fail_on_error"]
-                }
-                if pipecls:
-                    pipe = pipecls(**args)
-                else:
-                    pipe = pipelines.DockerPipe(f"kelvin/{pipe_type}", **args)
+    jobs = []
 
-                pipe.type = pipe_type
-                pipe.title = item.get("title", item["type"])
-                pipe.fail_on_error = item.get("fail_on_error", True)
+    counter = 1
+    for item in value:
+        try:
+            parsed_job: JobOptionsYaml = serde.from_dict(JobOptionsYaml, item)
+            job_type = parsed_job.type
+            class_name = "".join([p.title() for p in re.split("_|-", job_type)])
+            pipecls = getattr(pipelines, f"{class_name}Pipe", None)
 
-                if not getattr(pipe, "enabled", None):
-                    pipe.enabled = True
-                if "enabled" in item:
-                    if item["enabled"] == "announce":
-                        pipe.enabled = "announce"
-                    else:
-                        pipe.enabled = parse_bool(item["enabled"])
+            args = parsed_job.args
+            if pipecls:
+                pipeline = pipecls(**args)
+            else:
+                pipeline = pipelines.DockerPipe(f"kelvin/{job_type}", **args)
 
-                pipe.id = f"{counter:03}_{item['type']}"
-                counter += 1
+            id = f"{counter:03}_{item['type']}"
+            pipeline.id = id  # TODO: get rid of this
+            job = WorkflowJob(
+                job=pipeline,
+                title=parsed_job.title if parsed_job.title is not None else job_type,
+                fail_on_error=parsed_job.fail_on_error,
+                id=id,
+            )
+            counter += 1
 
-                jobs.append(pipe)
-            except Exception as e:
-                raise WorkflowValidationError(f"pipe {item['type']}: {e}\n{traceback.format_exc()}")
-        return jobs
-
-
-def parse_bool(value):
-    if value in [True, 1, "yes", "on", "enable", "enabled"]:
-        return True
-    if value in [False, 0, "no", "off", "disable", "disabled"]:
-        return False
-    raise ValueError(f"Could not convert {value} to bool")
+            jobs.append(job)
+        except Exception as e:
+            raise WorkflowValidationError(f"pipe {item['type']}: {e}\n{traceback.format_exc()}")
+    return jobs
 
 
 @dataclasses.dataclass()

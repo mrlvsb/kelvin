@@ -199,19 +199,6 @@ class DockerPipe:
         return result
 
 
-class RequiredFilesPipe:
-    def __init__(self, files):
-        self.files = files
-
-    def run(self, evaluation):
-        result = []
-        for f in self.files:
-            exists = os.path.exists(os.path.join(evaluation.submit_path, f))
-            result.append(f"<li class='text-{'success' if exists else 'danger'}'>{f}</li>")
-
-        return {"html": f"<ul>{''.join(result)}</ul>"}
-
-
 # A hack which enables us to display a message if one of the files contains
 # a newline at eof whilst the other does not
 # This behaviour is accomplished by manually modifying the diff
@@ -434,22 +421,11 @@ class TestsPipe:
         }
 
 
-class SleepPipe:
-    def __init__(self, seconds=1):
-        self.seconds = seconds
-
-    def run(self, evaluation):
-        import time
-
-        time.sleep(self.seconds)
-
-
 class AutoGraderPipe:
     def __init__(self, propose=False, after_deadline_multiplier=0, overwrite=False):
         self.propose = propose
         self.after_deadline_multiplier = max(0, min(1.0, after_deadline_multiplier))
         self.overwrite = overwrite
-        self.enabled = "always"
 
     def run(self, evaluation):
         total = 0

@@ -617,7 +617,7 @@ requires-dist = [
     { name = "pycountry", specifier = "~=24.6.1" },
     { name = "pygraphviz", specifier = "==1.7" },
     { name = "pymdown-extensions", specifier = "==10.10.1" },
-    { name = "pyserde", specifier = "==0.25.1" },
+    { name = "pyserde", specifier = "~=0.29.0" },
     { name = "python-dotenv", specifier = "==1.0.1" },
     { name = "python-magic", specifier = "==0.4.27" },
     { name = "pyyaml", specifier = "==6.0.1" },
@@ -1025,7 +1025,7 @@ wheels = [
 
 [[package]]
 name = "pyserde"
-version = "0.25.1"
+version = "0.29.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beartype" },
@@ -1035,9 +1035,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "typing-inspect" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6e/1a/fa708c550e6e36eb9e6f29524ea77f956e5cc89ba891bec1b89a9666d9b9/pyserde-0.25.1.tar.gz", hash = "sha256:302a534e91d548a74722bfe1577f497ed3fd87790ac9bd4503985279622e0cd0", size = 40192, upload-time = "2025-09-10T10:42:49.653Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/33/6b/d213c178a014522421d89e12e983afac0d2fd5ec048e72a0c2a4b18f8ed0/pyserde-0.29.1.tar.gz", hash = "sha256:a1595f25cceab34d40da5bf414ce17a4d729f5079cc38eee894c394e638f702f", size = 490947, upload-time = "2026-01-25T17:04:05.527Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/73/4c/5c38bbd1da35df7c37d82508c5e60beb706176261c7779a35a78d4e2862e/pyserde-0.25.1-py3-none-any.whl", hash = "sha256:7bbb4321b76662a9c2eceee88f8beb40d6fdd905aef3ae04780e06f4f3cb6f4d", size = 43965, upload-time = "2025-09-10T10:42:48.217Z" },
+    { url = "https://files.pythonhosted.org/packages/e3/50/76475ad7e1042cd86215e5d4adf33d030c04dc276436459c5c947ce540dd/pyserde-0.29.1-py3-none-any.whl", hash = "sha256:75eb2deb4ce5a72369e072487f2daa02a13117b991e2b9c08f5d882a65d27df3", size = 48347, upload-time = "2026-01-25T17:04:04.034Z" },
 ]
 
 [[package]]

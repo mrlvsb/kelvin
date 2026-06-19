@@ -93,6 +93,7 @@ function valueInfo(lineNumber, line, value) {
 }
 
 let prev = '';
+
 function findNewPaths(paths, lines, value, path, lineNumber) {
     if (value === undefined) return;
     const fullPath = path.join('.');
@@ -225,6 +226,7 @@ class EnumRule {
     constructor(choices) {
         this.choices = choices;
     }
+
     validate(prefix, data, sourceMap) {
         if (data === null) {
             return [err(sourceMap[prefix].value, 'Missing value')];
@@ -383,6 +385,7 @@ class ArrayRule {
         }
         return errors;
     }
+
     hint(path, depth, data) {
         return this.child.hint(path, depth + 1, data);
     }
@@ -392,7 +395,6 @@ class PipeRule extends DictRule {
     constructor(keys) {
         super({
             ...keys,
-            enabled: new EnumRule(['true', 'false', 'always', 'announce']),
             fail_on_error: [
                 new EnumRule(['true', 'false']),
                 'Stop execution of successive actions if this action fails'
@@ -438,6 +440,7 @@ function err(info, msg) {
         to: CodeMirror.Pos(info.to.line, info.to.ch)
     };
 }
+
 export function lintPipeline(content) {
     try {
         const config = yaml.load(content);

@@ -1,52 +1,41 @@
-import os
 import logging
+import os
 
-from . import evaluation
+from .evaluation import EvaluationContext
 from .results import EvaluationResult
-
-from rq import get_current_job
 
 logger = logging.getLogger("evaluator")
 
 
-class Evaluation:
-    def __init__(self, task_path: str, submit_path: str, result_path: str, meta=None):
+class Evaluator:
+    def __init__(
+        self, task_path: str, submit_path: str, result_path: str, eval_ctx: EvaluationContext
+    ):
         self.task_path = task_path
         self.submit_path = submit_path
         self.result_path = result_path
         self.result = None
-        self.meta = meta
-        self.tests = evaluation.EvaluationContext(task_path, meta)
-        os.makedirs(result_path)
+        self.tests = eval_ctx
 
-    def run(self):
-        job = get_current_job()
-        job.meta["actions"] = len(self.tests.pipeline)
-        job.meta["current_action"] = 0
-        job.save_meta()
+    def iterate_job_execution(self):
+        """
+        Execute jobs one by one, yielding after every job.
+        """
+        os.makedirs(self.result_path)
 
         self.result = EvaluationResult(self.result_path)
         failed = False
-        for pipe in self.tests.pipeline:
-            if not failed or pipe.enabled == "always":
-                if not pipe.enabled or (
-                    self.meta["before_announce"] and not pipe.enabled == "announce"
-                ):
-                    logger.info(f"skipping {pipe.id}")
-                    continue
-
-                logger.info(f"executing {pipe.id}")
-                res = pipe.run(self)
+        for job in self.tests.pipeline:
+            if not failed:
+                logger.info(f"executing {job.id}")
+                res = job.job.run(self)
                 if res:
-                    res["id"] = pipe.id
-                    res["title"] = pipe.title
+                    res["id"] = job.id
+                    res["title"] = job.title
                     self.result.pipelines.append(res)
 
-                    if pipe.fail_on_error and "failed" in res and res["failed"]:
+                    if job.fail_on_error and "failed" in res and res["failed"]:
                         failed = True
-
-            job.meta["current_action"] += 1
-            job.save_meta()
+            yield
 
         self.result.save(os.path.join(self.result_path, "result.json"))
-        return self.result
