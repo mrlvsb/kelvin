@@ -260,7 +260,7 @@ class WorkflowConfig:
     def parse(config: str) -> "WorkflowConfigParseResult":
         queue = "evaluator"
         timeout = 180
-        tests = {}
+        tests = []
         jobs = []
         unknown_keys: list[str] = []
         ignored_keys = {"async"}
