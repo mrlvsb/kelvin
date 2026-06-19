@@ -1,4 +1,5 @@
 import datetime
+import ipaddress
 import logging
 import os
 import re
@@ -137,6 +138,15 @@ class Room(models.Model):
         return f"{self.code} - {self.capacity} seats"
 
 
+class RoomIpRange(models.Model):
+    ip_range_start = models.GenericIPAddressField()
+    ip_range_end = models.GenericIPAddressField()
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, null=False, related_name="ip_ranges")
+
+    def __str__(self):
+        return f"{self.ip_range_start} – {self.ip_range_end}"
+
+
 class Class(models.Model):
     class Day(models.TextChoices):
         MONDAY = "PO", "Monday"
@@ -244,6 +254,7 @@ class AssignedTask(models.Model):
     hard_deadline = models.BooleanField(default=False)
     max_points = models.IntegerField(null=True, blank=True)
     moss_url = models.URLField(null=True, blank=True, editable=False)
+    allowed_rooms = models.ManyToManyField(Room, related_name="assignments")
 
     def is_visible(self):
         return timezone.now() >= self.assigned
@@ -256,6 +267,32 @@ class AssignedTask(models.Model):
             self.deadline is not None
             and datetime.datetime.now(datetime.timezone.utc) > self.deadline
         )
+
+    def is_allowed_from_ip(self, ip: str) -> bool:
+        allowed_rooms_list = self.allowed_rooms.prefetch_related("ip_ranges").all()
+
+        if not allowed_rooms_list:
+            return True
+
+        try:
+            ip = ipaddress.ip_address(ip)
+        except ValueError:
+            logging.warning(
+                "Invalid IP address: {} while attempting to access AssignedTask {}".format(
+                    ip, self.task.name
+                )
+            )
+            return True
+
+        for room in allowed_rooms_list:
+            for room_range in room.ip_ranges.all():
+                start = ipaddress.ip_address(room_range.ip_range_start)
+                end = ipaddress.ip_address(room_range.ip_range_end)
+
+                if start <= ip <= end:
+                    return True
+
+        return False
 
     def __str__(self):
         return f"{self.task.name} {self.clazz}"
