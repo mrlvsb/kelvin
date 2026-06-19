@@ -11,7 +11,7 @@ import serde
 import yaml
 
 from kelvin.settings import BASE_DIR
-from web.markdown_utils import load_readme
+from web.markdown_utils import ProcessedMarkdown, load_readme
 from .script import Script
 
 logger = logging.getLogger(__name__)
@@ -215,7 +215,7 @@ class EvaluationContext:
     def add_warning(self, message):
         self.warnings.append(message)
 
-    def load_readme(self):
+    def load_readme(self) -> ProcessedMarkdown | None:
         try:
             task_relpath = os.path.relpath(self.task_path, os.path.join(BASE_DIR, "tasks"))
             vars = {}

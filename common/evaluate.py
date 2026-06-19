@@ -3,7 +3,7 @@ import logging
 import os
 import tarfile
 import tempfile
-from typing import Optional
+from typing import Any, Optional
 
 import django_rq
 import requests
@@ -12,10 +12,11 @@ from django.conf import settings
 from django.core import signing
 from django.urls import reverse
 from django.utils import timezone
+from rq import get_current_job
 
 from common.ai_review.processor import enqueue_llm_review_job
 from common.utils import is_teacher, build_evaluation_download_uri
-from evaluator.evaluator import Evaluation
+from evaluator.evaluator import Evaluator
 from evaluator.evaluation import EvaluationContext
 from kelvin.settings import BASE_DIR
 
@@ -99,7 +100,7 @@ def get_meta(login):
 
 
 @django_rq.job
-def evaluate_job(submit_url, task_url, token, meta):
+def evaluate_job(submit_url, task_url, token, meta: dict[Any, Any]):
     logging.basicConfig(level=logging.DEBUG)
     s = requests.Session()
 
@@ -132,16 +133,34 @@ def evaluate_job(submit_url, task_url, token, meta):
 
         base = os.getcwd()
 
-        Evaluation(
-            os.path.join(base, "task"),
-            os.path.join(base, "submit"),
-            os.path.join(base, "result"),
-            meta,
-        ).run()
+        task_dir = os.path.join(base, "task")
+        submit_dir = os.path.join(base, "submit")
+        result_dir = os.path.join(base, "result")
+
+        eval_ctx = EvaluationContext(task_dir, meta)
+
+        # Store how many jobs we want to execute
+        rq_job = get_current_job()
+        assert rq_job is not None
+
+        rq_job.meta["actions"] = len(eval_ctx.pipeline)
+        rq_job.meta["current_action"] = 0
+        rq_job.save_meta()
+
+        evaluator = Evaluator(
+            task_dir,
+            submit_dir,
+            result_dir,
+            eval_ctx,
+        )
+        # Update job state incrementally
+        for _ in evaluator.iterate_job_execution():
+            rq_job.meta["current_action"] += 1
+            rq_job.save_meta()
 
         f = io.BytesIO()
         with tarfile.open(fileobj=f, mode="w") as tar:
-            tar.add(os.path.join(base, "result"), "")
+            tar.add(result_dir, "")
 
         f.seek(0, io.SEEK_SET)
         res = s.put(

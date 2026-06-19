@@ -1,29 +1,27 @@
-import os
 import logging
+import os
 
-from . import evaluation
+from .evaluation import EvaluationContext
 from .results import EvaluationResult
-
-from rq import get_current_job
 
 logger = logging.getLogger("evaluator")
 
 
-class Evaluation:
-    def __init__(self, task_path: str, submit_path: str, result_path: str, meta=None):
+class Evaluator:
+    def __init__(
+        self, task_path: str, submit_path: str, result_path: str, eval_ctx: EvaluationContext
+    ):
         self.task_path = task_path
         self.submit_path = submit_path
         self.result_path = result_path
         self.result = None
-        self.meta = meta
-        self.tests = evaluation.EvaluationContext(task_path, meta)
-        os.makedirs(result_path)
+        self.tests = eval_ctx
 
-    def run(self):
-        rq_job = get_current_job()
-        rq_job.meta["actions"] = len(self.tests.pipeline)
-        rq_job.meta["current_action"] = 0
-        rq_job.save_meta()
+    def iterate_job_execution(self):
+        """
+        Execute jobs one by one, yielding after every job.
+        """
+        os.makedirs(self.result_path)
 
         self.result = EvaluationResult(self.result_path)
         failed = False
@@ -38,9 +36,6 @@ class Evaluation:
 
                     if job.fail_on_error and "failed" in res and res["failed"]:
                         failed = True
-
-            rq_job.meta["current_action"] += 1
-            rq_job.save_meta()
+            yield
 
         self.result.save(os.path.join(self.result_path, "result.json"))
-        return self.result
