@@ -1,11 +1,8 @@
 import datetime
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Dict
-
 from serde import serde
-
-import kelvin.settings
+from typing import List, Dict
 
 
 class Severity(Enum):
@@ -79,11 +76,22 @@ class EmbeddedFile:
 
 @serde
 @dataclass
+class OpenAIServerDTO:
+    id: str
+    label: str
+    base_url: str
+    api_key: str
+    models: list[str]
+
+
+@serde
+@dataclass
 class LlmConfig:
     enabled: bool
     language: str
     model: str
     prompt_name: str | None
+    server_id: str | None
 
     @staticmethod
     def from_dict(submit_config: Dict) -> "LlmConfig":
@@ -93,6 +101,7 @@ class LlmConfig:
         return LlmConfig(
             enabled=llm_section.get("enabled", False),
             language=llm_section.get("language", "en"),
-            model=llm_section.get("model", kelvin.settings.OPENAI_MODEL),
+            model=llm_section.get("model", "default"),
             prompt_name=llm_section.get("prompt_name", None),
+            server_id=llm_section.get("server_id", None),
         )

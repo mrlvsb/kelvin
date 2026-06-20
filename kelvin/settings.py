@@ -284,9 +284,7 @@ MAX_INLINE_LINES = 2000
 SENTRY_URL = None
 
 # OpenAI
-OPENAI_API_KEY = os.getenv("OPENAI__API_KEY", "")
-OPENAI_API_URL = os.getenv("OPENAI__API_URL", "http://localhost:8080/v1")
-OPENAI_MODEL = os.getenv("OPENAI__MODEL", "openai/gpt-oss-120b")
+OPENAI_CONFIG_PATH = os.path.join(BASE_DIR, os.getenv("OPENAI__CONFIG_PATH", "openai_config.json"))
 
 # Placeholder to ensure Kelvin runs locally without any configuration
 # Prefer configuring Inbus credentials in local_settings.py imported at
