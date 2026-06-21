@@ -42,8 +42,11 @@ async function addStudents() {
     let res = await req.json();
     if (res) {
       if (res['not_found'].length) {
-        addStudentError = 'Not found users left in textarea.';
-        textarea = res['not_found'].join('\n');
+        addStudentError =
+          'Not found users left in textarea. Already assigned students are separated by a newline';
+        textarea = res['not_found'].filter((x) => !res['already_assigned'].includes(x)).join('\n');
+        textarea += '\n\n';
+        textarea += res['already_assigned'].join('\n');
         dispatch('update');
       } else if (res['success'] === true) {
         textarea = '';
