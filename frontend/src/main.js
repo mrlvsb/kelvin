@@ -163,6 +163,7 @@ import MarkButton from './components/MarkButton.vue';
 import TaskDetail from './Student/TaskDetail.vue';
 import SyncLoader from './components/SyncLoader.vue';
 import EditTask from './Teacher/EditTask/EditTask.vue';
+import PromptEditor from './Teacher/PromptEditor.vue';
 
 const router = createRouter({
     history: createWebHistory(),
@@ -261,6 +262,14 @@ function mountMarkButton(id, props) {
     app.mount(id);
 }
 
+function mountPromptEditor(id, props) {
+    const app = createApp(PromptEditor, {
+        isSuperAdmin: props.is_superuser,
+        username: props.username
+    });
+    app.mount(id);
+}
+
 async function mountEditTask(id) {
     const app = createApp(EditTask);
     app.use(router);
@@ -273,3 +282,4 @@ window.mountQuiz = mountQuiz;
 window.mountQuizEdit = mountQuizEdit;
 window.mountMarkButton = mountMarkButton;
 window.mountEditTask = mountEditTask;
+window.mountPromptEditor = mountPromptEditor;
