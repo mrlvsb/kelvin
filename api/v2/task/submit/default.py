@@ -109,6 +109,7 @@ def api_get_submit_details(
     notifications: Dict[int, Notification] = {
         c.action_object.id: c
         for c in Notification.objects.filter(
+            recipient=request.user,
             target_object_id=submit.id,
             target_content_type=ContentType.objects.get_for_model(Submit),
         )

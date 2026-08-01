@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.signals import user_logged_in
 from django.dispatch import receiver
 import django.db.models.signals
-from notifications.models import Notification
+from notifications.models import Notification, notify_handler
 from webpush import send_user_notification
 from pywebpush import WebPushException
 
@@ -55,3 +55,22 @@ def send_webpush_notification(sender, instance, created, **kwargs):
 @receiver(user_logged_in, sender=User)
 def login_success(sender, request, user, **kwargs):
     record_login_event(request=request, user=user)
+
+
+def custom_notify_handler(verb, **kwargs):
+    """
+    Custom wrapper around the default django-notifications `notify_handler`.
+
+    Why this is needed:
+    The default `notify_handler` uses `bulk_create` to insert notifications into the database.
+    However, `bulk_create` does NOT trigger Django's `post_save` signals. Since we rely on
+    `post_save` to trigger Web Push notifications via `django-webpush`, we wrap the default
+    handler to intercept the newly created notifications and manually trigger the web push
+    signal for each one.
+    """
+    created_notifications = notify_handler(verb, **kwargs)
+
+    for notification in created_notifications:
+        send_webpush_notification(sender=Notification, instance=notification, created=True)
+
+    return created_notifications
