@@ -154,6 +154,7 @@ class EvaluationContext:
 
         config_path = os.path.join(task_path, "config.yml")
         self.config = WorkflowConfig()
+        self.tests_dict = {}
         try:
             with open(config_path) as f:
                 config_content = f.read()
@@ -166,9 +167,13 @@ class EvaluationContext:
         except WorkflowValidationError as e:
             self.add_warning(e)
 
-        # First, load statically known tests
-        test_config = TestConfig.parse(os.path.join(task_path, "tests.yml"))
-        self.tests_dict = load_tests(self.config, test_config)
+        try:
+            # Load statically known tests
+            test_config = TestConfig.parse(os.path.join(task_path, "tests.yml"))
+            self.tests_dict = load_tests(self.config, test_config)
+        except WorkflowValidationError as e:
+            self.add_warning(e)
+
         self.pipeline: list[WorkflowJob] = self.config.jobs
 
         self.script = None
@@ -303,25 +308,28 @@ def parse_config_tests(value: list[Any]) -> list[TestDefinition]:
 
     @serde.serde(deny_unknown_fields=True)
     class TestDefinitionYaml:
-        name: Optional[str] = None
+        name: Optional[str | int] = None
         title: Optional[str] = None
         exit_code: int = 0
         args: list[Any] = dataclasses.field(default_factory=list)
 
     tests = []
-    for test in value:
-        test = serde.from_dict(TestDefinitionYaml, test)
-        name = test.name if test.name is not None else len(tests)
-        title = test.title if test.title is not None else name
-        args = [str(arg) for arg in test.args]
-        tests.append(
-            TestDefinition(
-                name=name,
-                title=title,
-                exit_code=test.exit_code,
-                args=args,
+    try:
+        for test in value:
+            test = serde.from_dict(TestDefinitionYaml, test)
+            name = test.name if test.name is not None else len(tests)
+            title = test.title if test.title is not None else name
+            args = [str(arg) for arg in test.args]
+            tests.append(
+                TestDefinition(
+                    name=str(name),
+                    title=str(title),
+                    exit_code=test.exit_code,
+                    args=args,
+                )
             )
-        )
+    except BaseException as e:
+        raise WorkflowValidationError(f"Invalid test configuration: {e}")
     return tests
 
 
@@ -373,7 +381,7 @@ def parse_config_jobs(value: list[Any]) -> list[WorkflowJob]:
             counter += 1
 
             jobs.append(job)
-        except Exception as e:
+        except BaseException as e:
             raise WorkflowValidationError(f"pipe {item['type']}: {e}\n{traceback.format_exc()}")
     return jobs
 
