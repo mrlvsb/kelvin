@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from django.core.management.base import BaseCommand
-from common.cron_creator import create_repeatable_task
+from common.task_creator import create_repeatable_task
 
 
 class Command(BaseCommand):
@@ -13,6 +13,6 @@ class Command(BaseCommand):
         create_repeatable_task(
             "email-send",
             "common.emails.try_send_email_from_queue",
-            queue="default",
             interval=timedelta(seconds=30),
+            queue="default",
         )
