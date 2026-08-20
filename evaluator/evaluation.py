@@ -5,6 +5,7 @@ import os
 import re
 import shlex
 import traceback
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 import serde
@@ -139,7 +140,7 @@ class EvaluationContext:
     - readme.md: task README which can be enhanced by script.py
     """
 
-    def __init__(self, task_path: str, meta: Optional[Dict[str, Any]] = None):
+    def __init__(self, task_path: Path, meta: Optional[Dict[str, Any]] = None):
         """
         - `task_path` is a task directory
         - `meta` contains additional metadata which is passed to script.py when evaluating dynamic
@@ -229,6 +230,24 @@ class EvaluationContext:
             return load_readme(task_relpath, vars)
         except Exception as e:
             self.add_warning(f"script.py: {e}\n{traceback.format_exc()}")
+
+
+@dataclasses.dataclass
+class EvaluationPaths:
+    """
+    Paths required for executing evaluation jobs.
+    """
+
+    task_dir: Path
+    submit_dir: Path
+    result_dir: Path
+
+    @staticmethod
+    def from_dir(dir: Path) -> "EvaluationPaths":
+        task_dir = Path(os.path.join(dir, "task"))
+        submit_dir = Path(os.path.join(dir, "submit"))
+        result_dir = Path(os.path.join(dir, "result"))
+        return EvaluationPaths(task_dir=task_dir, submit_dir=submit_dir, result_dir=result_dir)
 
 
 @dataclasses.dataclass()
@@ -436,7 +455,7 @@ def load_tests(config: WorkflowConfig, test_config: TestConfig) -> Dict[str, Tes
     return tests
 
 
-def record_test_files(tests: Dict[str, Test], task_path: str):
+def record_test_files(tests: Dict[str, Test], task_path: Path):
     try:
         files = os.listdir(task_path)
     except FileNotFoundError:

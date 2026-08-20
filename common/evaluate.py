@@ -3,6 +3,7 @@ import logging
 import os
 import tarfile
 import tempfile
+from pathlib import Path
 from typing import Any, Optional
 
 import django_rq
@@ -17,7 +18,7 @@ from rq import get_current_job
 from common.ai_review.processor import enqueue_llm_review_job
 from common.utils import is_teacher, build_evaluation_download_uri
 from evaluator.evaluator import Evaluator
-from evaluator.evaluation import EvaluationContext
+from evaluator.evaluation import EvaluationContext, EvaluationPaths
 from kelvin.settings import BASE_DIR
 
 
@@ -80,7 +81,7 @@ def evaluate_submit(request, submit, meta=None):
         **(meta if meta else {}),
     }
 
-    task_dir = os.path.join(BASE_DIR, "tasks", submit.assignment.task.code)
+    task_dir = Path(os.path.join(BASE_DIR, "tasks", submit.assignment.task.code))
     eval_ctx = EvaluationContext(task_dir, meta)
 
     # Async configuration section
@@ -131,13 +132,11 @@ def evaluate_job(submit_url, task_url, token, meta: dict[Any, Any]):
         untar(f"{submit_url}download?token={token}", "submit")
         untar(f"{task_url}?token={token}", "task")
 
-        base = os.getcwd()
+        base = Path(os.getcwd())
 
-        task_dir = os.path.join(base, "task")
-        submit_dir = os.path.join(base, "submit")
-        result_dir = os.path.join(base, "result")
+        paths = EvaluationPaths.from_dir(base)
 
-        eval_ctx = EvaluationContext(task_dir, meta)
+        eval_ctx = EvaluationContext(paths.task_dir, meta)
 
         # Store how many jobs we want to execute
         rq_job = get_current_job()
@@ -148,9 +147,7 @@ def evaluate_job(submit_url, task_url, token, meta: dict[Any, Any]):
         rq_job.save_meta()
 
         evaluator = Evaluator(
-            task_dir,
-            submit_dir,
-            result_dir,
+            paths,
             eval_ctx,
         )
         # Update job state incrementally
@@ -160,7 +157,7 @@ def evaluate_job(submit_url, task_url, token, meta: dict[Any, Any]):
 
         f = io.BytesIO()
         with tarfile.open(fileobj=f, mode="w") as tar:
-            tar.add(result_dir, "")
+            tar.add(str(paths.result_dir), "")
 
         f.seek(0, io.SEEK_SET)
         res = s.put(

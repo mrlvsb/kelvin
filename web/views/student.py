@@ -618,7 +618,7 @@ def load_eval_ctx(
     if meta is not None:
         meta_dict.update(meta)
     task_dir = os.path.join(BASE_DIR, "tasks", task.code)
-    return EvaluationContext(task_dir, meta_dict)
+    return EvaluationContext(Path(task_dir), meta_dict)
 
 
 def check_is_task_accessible(request: HttpRequest, task: Task):

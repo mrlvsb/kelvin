@@ -1,29 +1,30 @@
 import logging
 import os
 
-from .evaluation import EvaluationContext
+from .evaluation import EvaluationContext, EvaluationPaths
 from .results import EvaluationResult
 
 logger = logging.getLogger("evaluator")
 
 
 class Evaluator:
-    def __init__(
-        self, task_path: str, submit_path: str, result_path: str, eval_ctx: EvaluationContext
-    ):
-        self.task_path = task_path
-        self.submit_path = submit_path
-        self.result_path = result_path
+    def __init__(self, paths: EvaluationPaths, eval_ctx: EvaluationContext):
+        self.paths = paths
         self.result = None
         self.tests = eval_ctx
+
+        # Temporary backcompat
+        self.task_path = str(paths.task_dir)
+        self.submit_path = str(paths.submit_dir)
+        self.result_path = str(paths.result_dir)
 
     def iterate_job_execution(self):
         """
         Execute jobs one by one, yielding after every job.
         """
-        os.makedirs(self.result_path)
+        os.makedirs(self.paths.result_dir)
 
-        self.result = EvaluationResult(self.result_path)
+        self.result = EvaluationResult(self.paths.result_dir)
         failed = False
         for job in self.tests.pipeline:
             if not failed:
@@ -38,4 +39,4 @@ class Evaluator:
                         failed = True
             yield
 
-        self.result.save(os.path.join(self.result_path, "result.json"))
+        self.result.save(os.path.join(self.paths.result_dir, "result.json"))
