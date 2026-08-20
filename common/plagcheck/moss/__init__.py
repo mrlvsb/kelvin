@@ -290,7 +290,6 @@ def do_periodic_moss_check():
         enqueue_plagiarism_check(task.id, notify=True)
 
 
-# TODO: setup in code instead of UI (Django scheduler management command)
 @django_rq.job("default", timeout=60 * 15)
 def periodic_moss_check():
     do_periodic_moss_check()

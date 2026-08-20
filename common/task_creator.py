@@ -1,9 +1,9 @@
 import datetime
 from datetime import timedelta
 
-from scheduler.models import RepeatableTask
-from scheduler.models.scheduled_task import CronTask
+from scheduler.models.task import Task
 from scheduler.models.args import TaskArg
+from scheduler.tools import TaskType
 from django.contrib.contenttypes.models import ContentType
 from typing import List, Tuple
 
@@ -14,9 +14,9 @@ def create_crontask(
     cron_string: str,
     queue: str,
     args: List[Tuple[str, str]] | None = None,
-    enabled=True,
 ):
-    """Create a CronTask with the given parameters. If a task with the same name exists, it will be deleted first.
+    """
+    Create a CronTask with the given parameters. If a task with the same name exists, it will be deleted first.
 
     Keyword arguments:
     name -- The name of the cron task.
@@ -24,19 +24,19 @@ def create_crontask(
     cron_string -- The cron schedule string.
     queue -- The queue in which the task will be executed.
     args -- A list of tuples representing the arguments for the task.
-    enabled -- Whether the cron task is enabled.
     """
-    existing_job = CronTask.objects.filter(name=name).first()
+    existing_job = Task.objects.filter(name=name).first()
     if existing_job:
         existing_job.delete()
-    job = CronTask.objects.create(
+    job = Task.objects.create(
         name=name,
+        task_type=TaskType.CRON,
         callable=callable,
-        enabled=enabled,
+        enabled=True,
         queue=queue,
         cron_string=cron_string,
     )
-    content_type = ContentType.objects.get_for_model(CronTask)
+    content_type = ContentType.objects.get_for_model(Task)
     for arg in args or []:
         TaskArg.objects.create(
             object_id=job.id,
@@ -52,19 +52,21 @@ def create_repeatable_task(
     interval: timedelta,
     queue: str,
 ):
-    """Create a RepeatableTask (from django-tasks-scheduler) with the given `interval`.
+    """
+    Create a repeatable Task (from django-tasks-scheduler) with the given `interval`.
     If a task with the same name exists, it will be deleted first.
     """
-    existing_job = RepeatableTask.objects.filter(name=name).first()
+    existing_job = Task.objects.filter(name=name).first()
     if existing_job:
         existing_job.delete()
-    RepeatableTask.objects.create(
+    Task.objects.create(
         name=name,
+        task_type=TaskType.REPEATABLE,
         callable=callable,
         enabled=True,
         queue=queue,
         interval=int(interval.total_seconds()),
-        interval_unit=RepeatableTask.TimeUnits.SECONDS,
+        interval_unit=Task.TimeUnits.SECONDS,
         scheduled_time=datetime.datetime.now(datetime.UTC),
         # Run forever
         repeat=None,
