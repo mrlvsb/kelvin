@@ -1,0 +1,16 @@
+{% extends 'web/layout.html' %}
+
+{% block title %}Prompt Editor - Kelvin{% endblock %}
+
+{% block content %}
+    <div id="prompt-editor"></div>
+{% endblock %}
+
+{% block script %}
+{{ data|json_script:"prompt-editor-data" }}
+
+<script type="text/javascript">
+    const promptEditorData = JSON.parse(document.getElementById("prompt-editor-data").textContent);
+    mountPromptEditor("#prompt-editor", promptEditorData);
+</script>
+{% endblock %}

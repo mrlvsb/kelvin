@@ -408,6 +408,18 @@ def quiz_list(request: HttpRequest) -> HttpResponse:
 
 
 @user_passes_test(is_teacher)
+def prompt_editor(request: HttpRequest) -> HttpResponse:
+    """
+    Page that renders a Vue component for LLM prompt editing.
+    """
+    data = dict(
+        is_superuser=request.user.is_superuser,
+        username=request.user.username,
+    )
+    return render(request, "web/prompt_editor.html", dict(data=data))
+
+
+@user_passes_test(is_teacher)
 def quiz_submits(request: HttpRequest, quiz_id: int) -> HttpResponse:
     """
     Function that renders page with submits for quiz and its assigned classes.
