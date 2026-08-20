@@ -3,6 +3,7 @@ import json
 import shutil
 import re
 import io
+from pathlib import Path
 
 from .evaluation import File, TestFile
 from .utils import copyfile
@@ -180,7 +181,7 @@ class PipeResult:
 
 
 class EvaluationResult:
-    def __init__(self, result_dir):
+    def __init__(self, result_dir: Path):
         self.result_dir = result_dir
         self.pipelines = []
 

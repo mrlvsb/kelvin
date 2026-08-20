@@ -5,6 +5,7 @@ import os
 import re
 import shlex
 import traceback
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 import serde
@@ -12,6 +13,7 @@ import yaml
 
 from kelvin.settings import BASE_DIR
 from web.markdown_utils import ProcessedMarkdown, load_readme
+from .jobs import Job
 from .script import Script
 
 logger = logging.getLogger(__name__)
@@ -39,7 +41,7 @@ class File:
 
 
 class Test:
-    def __init__(self, name):
+    def __init__(self, name: str):
         self.name = name
         self.args = []
         self.exit_code = 0
@@ -139,7 +141,7 @@ class EvaluationContext:
     - readme.md: task README which can be enhanced by script.py
     """
 
-    def __init__(self, task_path: str, meta: Optional[Dict[str, Any]] = None):
+    def __init__(self, task_path: Path, meta: Optional[Dict[str, Any]] = None):
         """
         - `task_path` is a task directory
         - `meta` contains additional metadata which is passed to script.py when evaluating dynamic
@@ -231,6 +233,27 @@ class EvaluationContext:
             self.add_warning(f"script.py: {e}\n{traceback.format_exc()}")
 
 
+@dataclasses.dataclass
+class EvaluationPaths:
+    """
+    Paths required for executing evaluation jobs.
+    """
+
+    task_dir: Path
+    submit_dir: Path
+    result_dir: Path
+
+    @staticmethod
+    def from_dir(dir: Path) -> "EvaluationPaths":
+        task_dir = Path(os.path.join(dir, "task"))
+        submit_dir = Path(os.path.join(dir, "submit"))
+        result_dir = Path(os.path.join(dir, "result"))
+        return EvaluationPaths(task_dir=task_dir, submit_dir=submit_dir, result_dir=result_dir)
+
+    def with_result_dir(self, result_dir: Path) -> "EvaluationPaths":
+        return dataclasses.replace(self, result_dir=result_dir)
+
+
 @dataclasses.dataclass()
 class TestDefinition:
     name: str
@@ -244,7 +267,7 @@ class WorkflowJob:
     id: str
     title: str
     fail_on_error: bool
-    job: Any  # Pipeline class
+    job: Any | Job  # Pipeline or Job class
 
 
 @dataclasses.dataclass()
@@ -346,6 +369,7 @@ def parse_config_jobs(value: list[Any]) -> list[WorkflowJob]:
         raise WorkflowValidationError("Pipeline has to be a list of jobs")
 
     from . import pipelines
+    from .jobs.tests import TestsJob
 
     @serde.serde()
     class JobOptionsYaml:
@@ -364,14 +388,17 @@ def parse_config_jobs(value: list[Any]) -> list[WorkflowJob]:
             class_name = "".join([p.title() for p in re.split("_|-", job_type)])
             pipecls = getattr(pipelines, f"{class_name}Pipe", None)
 
+            id = f"{counter:03}_{item['type']}"
             args = parsed_job.args
-            if pipecls:
+            if job_type == "tests":
+                pipeline = TestsJob(**args)
+            elif pipecls:
                 pipeline = pipecls(**args)
+                pipeline.id = id  # TODO: get rid of this
             else:
                 pipeline = pipelines.DockerPipe(f"kelvin/{job_type}", **args)
+                pipeline.id = id  # TODO: get rid of this
 
-            id = f"{counter:03}_{item['type']}"
-            pipeline.id = id  # TODO: get rid of this
             job = WorkflowJob(
                 job=pipeline,
                 title=parsed_job.title if parsed_job.title is not None else job_type,
@@ -436,7 +463,7 @@ def load_tests(config: WorkflowConfig, test_config: TestConfig) -> Dict[str, Tes
     return tests
 
 
-def record_test_files(tests: Dict[str, Test], task_path: str):
+def record_test_files(tests: Dict[str, Test], task_path: Path):
     try:
         files = os.listdir(task_path)
     except FileNotFoundError:

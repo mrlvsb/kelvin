@@ -4,11 +4,12 @@ import traceback
 import os
 import sys
 import io
+from pathlib import Path
 from typing import Any, Dict
 
 
 @contextlib.contextmanager
-def change_cwd(new_cwd):
+def change_cwd(new_cwd: Path):
     current = os.getcwd()
     os.chdir(new_cwd)
     try:
@@ -18,7 +19,7 @@ def change_cwd(new_cwd):
 
 
 class Script:
-    def __init__(self, task_path: str, meta: Dict[str, Any], output_fn, filename="script.py"):
+    def __init__(self, task_path: Path, meta: Dict[str, Any], output_fn, filename="script.py"):
         self.task_path = task_path
         self.meta = meta
         self.output_fn = output_fn

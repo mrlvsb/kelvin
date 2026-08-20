@@ -7,6 +7,7 @@ import shutil
 import tarfile
 import tempfile
 from collections import OrderedDict
+from pathlib import Path
 
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import user_passes_test
@@ -43,7 +44,7 @@ def teacher_task(request: HttpRequest, task_id: int) -> HttpResponse:
     task = get_object_or_404(Task, pk=task_id)
     task_dir = os.path.join(BASE_DIR, "tasks", task.code)
 
-    eval_ctx = EvaluationContext(task_dir, get_meta(request.user.username))
+    eval_ctx = EvaluationContext(Path(task_dir), get_meta(request.user.username))
 
     return render(
         request,
