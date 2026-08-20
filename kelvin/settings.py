@@ -56,11 +56,7 @@ CSRF_TRUSTED_ORIGINS = [
 # Application definition
 
 INSTALLED_APPS = [
-    "web.apps.WebConfig",
-    "api.apps.ApiConfig",
-    "survey.apps.SurveyConfig",
-    "common.apps.CommonConfig",
-    "quiz.apps.QuizConfig",
+    # Django Core
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -68,6 +64,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.forms",
+    # Third Party
     "django_rq",
     # Used for configuring cron-like jobs
     # from django-tasks-scheduler
@@ -75,6 +72,12 @@ INSTALLED_APPS = [
     "django_cas_ng",
     "notifications",
     "webpush",
+    # Local Apps
+    "web.apps.WebConfig",
+    "api.apps.ApiConfig",
+    "survey.apps.SurveyConfig",
+    "common.apps.CommonConfig",
+    "quiz.apps.QuizConfig",
 ]
 
 MIDDLEWARE = [

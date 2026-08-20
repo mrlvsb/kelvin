@@ -195,7 +195,7 @@ def submit_assign_points(request: HttpRequest, submit_id: int) -> HttpResponseRe
         verb="submitted",
     ).update(unread=False)
 
-    return redirect(request.META.get("HTTP_REFERER", "/"))
+    return redirect(request.headers.get("Referer", "/"))
 
 
 def build_score_csv(assignments: list[AssignedTask], filename: str) -> HttpResponse:
@@ -331,7 +331,7 @@ def reevaluate(request: HttpRequest, submit_id: int) -> HttpResponseRedirect:
     submit.points = submit.max_points = None
     submit.jobid = evaluate_submit(request, submit).id
     submit.save()
-    return redirect(request.META.get("HTTP_REFERER", reverse("submits")) + "#result")
+    return redirect(request.headers.get("Referer", reverse("submits")) + "#result")
 
 
 @user_passes_test(is_teacher)
