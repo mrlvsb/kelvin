@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     docker: Docker
     debug: bool = False
     log_level: str = "INFO"
+    health_check_timeout: int = 90
 
     model_config = SettingsConfigDict(
         extra="ignore",
