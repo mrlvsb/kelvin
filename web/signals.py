@@ -1,7 +1,6 @@
 from django.contrib.auth.models import User
 from django.contrib.auth.signals import user_logged_in
 from django.dispatch import receiver
-import django.db.models.signals
 from notifications.models import Notification, notify_handler
 from webpush import send_user_notification
 from pywebpush import WebPushException
@@ -11,12 +10,10 @@ from common.models import Comment
 import logging
 
 
-@receiver(django.db.models.signals.post_save, sender=Notification)
-def send_webpush_notification(sender, instance, created, **kwargs):
-    if not created:
-        return
-
-    notification = instance
+def send_webpush_notification(
+    notification: Notification,
+):
+    """Send a webpush message after a notification has been created in the DB."""
 
     def fmt(obj):
         if obj:
@@ -71,6 +68,6 @@ def custom_notify_handler(verb, **kwargs):
     created_notifications = notify_handler(verb, **kwargs)
 
     for notification in created_notifications:
-        send_webpush_notification(sender=Notification, instance=notification, created=True)
+        send_webpush_notification(notification)
 
     return created_notifications
