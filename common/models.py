@@ -3,6 +3,7 @@ import ipaddress
 import logging
 import os
 import re
+from pathlib import Path
 from typing import List, Optional
 
 from django.conf import settings
@@ -220,7 +221,7 @@ class Class(models.Model):
                     meta = {"login": login}
                     variables = None
                     if os.path.exists(os.path.join(BASE_DIR, path, "summary.py")):
-                        s = Script(os.path.join(BASE_DIR, path), meta, p, "summary.py")
+                        s = Script(Path(os.path.join(BASE_DIR, path)), meta, p, "summary.py")
                         variables = s.call("readme_vars")
 
                     if not variables:

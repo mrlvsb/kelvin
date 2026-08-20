@@ -2,6 +2,7 @@ import logging
 import os
 
 from .evaluation import EvaluationContext, EvaluationPaths
+from .jobs import Job
 from .results import EvaluationResult
 
 logger = logging.getLogger("evaluator")
@@ -28,8 +29,13 @@ class Evaluator:
         failed = False
         for job in self.tests.pipeline:
             if not failed:
-                logger.info(f"executing {job.id}")
-                res = job.job.run(self)
+                logger.info(f"Executing job {type(job)} {job.id}")
+                if isinstance(job.job, Job):
+                    paths = self.paths.with_result_dir(self.paths.result_dir / job.id)
+                    res = job.job.run(paths, self.tests)
+                else:
+                    # Legacy <Foo>Pipe job
+                    res = job.job.run(self)
                 if res:
                     res["id"] = job.id
                     res["title"] = job.title

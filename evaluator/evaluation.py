@@ -13,6 +13,7 @@ import yaml
 
 from kelvin.settings import BASE_DIR
 from web.markdown_utils import ProcessedMarkdown, load_readme
+from .jobs import Job
 from .script import Script
 
 logger = logging.getLogger(__name__)
@@ -40,7 +41,7 @@ class File:
 
 
 class Test:
-    def __init__(self, name):
+    def __init__(self, name: str):
         self.name = name
         self.args = []
         self.exit_code = 0
@@ -249,6 +250,9 @@ class EvaluationPaths:
         result_dir = Path(os.path.join(dir, "result"))
         return EvaluationPaths(task_dir=task_dir, submit_dir=submit_dir, result_dir=result_dir)
 
+    def with_result_dir(self, result_dir: Path) -> "EvaluationPaths":
+        return dataclasses.replace(self, result_dir=result_dir)
+
 
 @dataclasses.dataclass()
 class TestDefinition:
@@ -263,7 +267,7 @@ class WorkflowJob:
     id: str
     title: str
     fail_on_error: bool
-    job: Any  # Pipeline class
+    job: Any | Job  # Pipeline or Job class
 
 
 @dataclasses.dataclass()
@@ -365,6 +369,7 @@ def parse_config_jobs(value: list[Any]) -> list[WorkflowJob]:
         raise WorkflowValidationError("Pipeline has to be a list of jobs")
 
     from . import pipelines
+    from .jobs.tests import TestsJob
 
     @serde.serde()
     class JobOptionsYaml:
@@ -383,14 +388,17 @@ def parse_config_jobs(value: list[Any]) -> list[WorkflowJob]:
             class_name = "".join([p.title() for p in re.split("_|-", job_type)])
             pipecls = getattr(pipelines, f"{class_name}Pipe", None)
 
+            id = f"{counter:03}_{item['type']}"
             args = parsed_job.args
-            if pipecls:
+            if job_type == "tests":
+                pipeline = TestsJob(**args)
+            elif pipecls:
                 pipeline = pipecls(**args)
+                pipeline.id = id  # TODO: get rid of this
             else:
                 pipeline = pipelines.DockerPipe(f"kelvin/{job_type}", **args)
+                pipeline.id = id  # TODO: get rid of this
 
-            id = f"{counter:03}_{item['type']}"
-            pipeline.id = id  # TODO: get rid of this
             job = WorkflowJob(
                 job=pipeline,
                 title=parsed_job.title if parsed_job.title is not None else job_type,
