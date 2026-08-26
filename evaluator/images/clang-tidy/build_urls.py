@@ -12,15 +12,14 @@ from typing import Tuple, Optional
 logging.basicConfig(level=logging.DEBUG)
 
 
-def get(url: str) -> str:
+def get(url: str) -> str | None:
     logging.info("Downloading %s", url)
     try:
         with urllib.request.urlopen(url) as f:
-            html = f.read().decode("utf-8")
+            return f.read().decode("utf-8")
     except urllib.error.HTTPError as e:
-        logging.exception(e)
-        html = ""
-    return html
+        logging.error(str(e))
+        return None
 
 
 def process(check: str) -> Tuple[str, Optional[str]]:
@@ -37,7 +36,7 @@ def process(check: str) -> Tuple[str, Optional[str]]:
     url = f"{baseurl}{short_check}.html"
     page = get(url)
 
-    if page:
+    if page is not None:
         m = re.search(r'<meta content="\d+;URL=([^"]+)', page)
         if m:
             url = urllib.parse.urljoin(
@@ -59,7 +58,8 @@ with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
 
     for future in concurrent.futures.as_completed(jobs):
         check, url = future.result()
-        result[check] = url
+        if url is not None:
+            result[check] = url
 
 with open("urls.json", "w") as f:
     json.dump(result, f, indent=2)
