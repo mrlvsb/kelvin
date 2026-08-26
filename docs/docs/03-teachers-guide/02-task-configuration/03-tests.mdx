@@ -15,6 +15,14 @@ pipeline:
   - type: tests
 ```
 
+You can optionally specify a custom Docker image to run the tests in:
+
+```yaml
+pipeline:
+  - type: tests
+    image: kelvin/custom-image
+```
+
 :::
 
 Static tests can be defined by files in the task directory.
@@ -26,7 +34,7 @@ It is recommended to prepend the test number to each test because tests are orde
 
 This test will execute the student program and checks if it prints `2020` in the standard output.
 
-```
+```plaintext
 # 01_year.out
 2020
 ```
@@ -35,12 +43,12 @@ This test will execute the student program and checks if it prints `2020` in the
 
 The standard input is passed to the program and then the student's result on the output is compared to the expected stdout result.
 
-```
+```plaintext
 # 02_sum.in
 1 2 3 4
 ```
 
-```
+```plaintext
 # 02_sum.out
 10
 ```
@@ -49,7 +57,7 @@ The standard input is passed to the program and then the student's result on the
 
 Checks if the student's program created file `result.txt` with the expected content.
 
-```
+```plaintext
 # 03_nums.file_out.result.txt
 1 2 3 4 5 6 7 8 9 10
 ```
@@ -59,7 +67,7 @@ Checks if the student's program created file `result.txt` with the expected cont
 Provides the input file `data.txt` to student's program.
 It can be combined with stdout or file comparing.
 
-```
+```plaintext
 # 04_nums.file_in.data.txt
 1 2 3 4 5 6 7 8 9 10
 ```
