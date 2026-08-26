@@ -2,7 +2,7 @@ import yaml from 'js-yaml';
 import ISO6391 from 'iso-639-1';
 import CodeMirror from 'codemirror';
 
-CodeMirror.registerHelper('hint', 'yaml', function (cm) {
+CodeMirror.registerHelper('hint', 'yaml', function(cm) {
     if (cm.options['filename'] != '/config.yml') {
         return null;
     }
@@ -570,7 +570,11 @@ const rules = new DictRule({
         ],
         tests: [
             new DockerPipeRule({
-                executable: new UnionRule(new ValueRule(), new ArrayRule())
+                executable: new UnionRule(new ValueRule(), new ArrayRule()),
+                timeout: [
+                    new ValueRule(),
+                    'Maximal execution time of each test in seconds.'
+                ]
             }),
             'Run input/output/files tests on compiled program.'
         ],

@@ -90,7 +90,12 @@ def evaluate_submit(request, submit, meta=None):
 
     # Enqueue the evaluation job
     return django_rq.get_queue(eval_ctx.queue).enqueue(
-        evaluate_job, submit_url, task_url, token, meta, job_timeout=eval_ctx.timeout
+        evaluate_job,
+        submit_url,
+        task_url,
+        token,
+        meta,
+        job_timeout=eval_ctx.timeout.total_seconds(),
     )
 
 

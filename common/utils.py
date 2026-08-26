@@ -11,7 +11,7 @@ from django.utils import timezone
 from .inbus import inbus
 import django.contrib.auth.models
 from functools import lru_cache
-from typing import NewType
+from typing import Any, NewType
 
 import requests
 from django.conf import settings
@@ -33,19 +33,23 @@ def points_to_color(points, max_points):
     return f"#{red:02X}{green:02X}00"
 
 
-def parse_time_interval(text):
+def parse_time_interval(text: Any) -> timedelta:
     patterns = [
+        r"(?P<seconds>\d+)\s*(s|second|seconds)",
         r"(?P<days>\d+)\s*(d|day|days)",
         r"(?P<minutes>\d+)\s*(m|min|minute|minutes)",
         r"(?P<hours>\d+)\s*(h|hour|hours)",
         r"(?P<weeks>\d+)\s*(w|week|weeks)",
     ]
 
+    text = str(text)
     parsed = {}
     for pattern in patterns:
         match = re.search(pattern, text)
         if match:
             parsed = {**parsed, **{k: int(v) for k, v in match.groupdict().items()}}
+    if len(parsed) == 0:
+        return timedelta(seconds=int(text))
     return timedelta(**parsed)
 
 

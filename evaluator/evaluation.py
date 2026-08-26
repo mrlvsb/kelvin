@@ -1,4 +1,5 @@
 import dataclasses
+import datetime
 import io
 import logging
 import os
@@ -11,6 +12,7 @@ from typing import Any, Dict, Optional
 import serde
 import yaml
 
+from common.utils import parse_time_interval
 from kelvin.settings import BASE_DIR
 from web.markdown_utils import ProcessedMarkdown, load_readme
 from .docker import ExecutionLimitsUpdate, NetworkMode
@@ -205,7 +207,7 @@ class EvaluationContext:
         return self.config.queue
 
     @property
-    def timeout(self) -> int:
+    def timeout(self) -> datetime.timedelta:
         return self.config.timeout
 
     def create_test(self, name: str) -> Test:
@@ -281,7 +283,7 @@ class WorkflowConfig:
     tests: list[TestDefinition] = dataclasses.field(default_factory=list)
     jobs: list[WorkflowJob] = dataclasses.field(default_factory=list)
     queue: str = "evaluator"
-    timeout: int = 180
+    timeout: datetime.timedelta = datetime.timedelta(seconds=180)
 
     @staticmethod
     def parse(config: str) -> "WorkflowConfigParseResult":
@@ -302,7 +304,7 @@ class WorkflowConfig:
                 if key == "queue":
                     queue = value
                 elif key == "timeout":
-                    timeout = value
+                    timeout = parse_timeout(value)
                 elif key == "tests":
                     tests = parse_config_tests(value)
                 elif key == "pipeline":
@@ -398,6 +400,10 @@ def parse_human_size(txt: Any) -> int:
     return int(num * mult)
 
 
+def parse_timeout(timeout: Any) -> datetime.timedelta:
+    return parse_time_interval(timeout)
+
+
 def parse_config_jobs(value: list[Any]) -> list[WorkflowJob]:
     if not isinstance(value, list):
         raise WorkflowValidationError("Pipeline has to be a list of jobs")
@@ -426,8 +432,11 @@ def parse_config_jobs(value: list[Any]) -> list[WorkflowJob]:
             args = parsed_job.args
             limits_args = args.pop("limits", {})
             if job_type == "tests":
+                per_test_timeout = args.pop("timeout", None)
+                if per_test_timeout is not None:
+                    per_test_timeout = parse_timeout(per_test_timeout)
                 limits = parse_execution_limits(**limits_args)
-                pipeline = TestsJob(limits=limits, **args)
+                pipeline = TestsJob(limits=limits, per_test_timeout=per_test_timeout, **args)
             elif pipecls:
                 pipeline = pipecls(**args)
                 pipeline.id = id  # TODO: get rid of this
