@@ -13,6 +13,7 @@ import yaml
 
 from kelvin.settings import BASE_DIR
 from web.markdown_utils import ProcessedMarkdown, load_readme
+from .docker import ExecutionLimitsUpdate, NetworkMode
 from .jobs import Job
 from .script import Script
 
@@ -364,6 +365,39 @@ class InvalidWorkflowYaml(WorkflowValidationError):
     pass
 
 
+def parse_execution_limits(
+    memory=None, fsize=None, network=None, **kwargs
+) -> ExecutionLimitsUpdate:
+    if memory is not None:
+        memory = parse_human_size(memory)
+    if fsize is not None:
+        fsize = parse_human_size(fsize)
+    if network is not None:
+        match network:
+            case "bridge":
+                network = NetworkMode.Bridge
+            case "none":
+                network = NetworkMode.Isolated
+            case _:
+                raise WorkflowValidationError(f"Invalid network mode {network}")
+    return ExecutionLimitsUpdate(memory=memory, fsize=fsize, network=network)
+
+
+def parse_human_size(txt: Any) -> int:
+    m = re.match(r"^([0-9]+(\.[0-9]+)?)\s*(K|M|G|T)?B?$", str(txt).strip())
+    if not m:
+        raise WorkflowValidationError(f"Invalid size: {txt}")
+
+    num = float(m.group(1))
+    multipliers = ["K", "M", "G", "T"]
+
+    mult = 1
+    if m.group(3):
+        mult = 2 ** (10 * (1 + multipliers.index(m.group(3))))
+
+    return int(num * mult)
+
+
 def parse_config_jobs(value: list[Any]) -> list[WorkflowJob]:
     if not isinstance(value, list):
         raise WorkflowValidationError("Pipeline has to be a list of jobs")
@@ -390,8 +424,10 @@ def parse_config_jobs(value: list[Any]) -> list[WorkflowJob]:
 
             id = f"{counter:03}_{item['type']}"
             args = parsed_job.args
+            limits_args = args.pop("limits", {})
             if job_type == "tests":
-                pipeline = TestsJob(**args)
+                limits = parse_execution_limits(**limits_args)
+                pipeline = TestsJob(limits=limits, **args)
             elif pipecls:
                 pipeline = pipecls(**args)
                 pipeline.id = id  # TODO: get rid of this

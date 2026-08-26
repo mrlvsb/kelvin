@@ -29,7 +29,7 @@ class Evaluator:
         failed = False
         for job in self.tests.pipeline:
             if not failed:
-                logger.info(f"Executing job {type(job)} {job.id}")
+                logger.info(f"Executing job {type(job.job)} {job.id}")
                 if isinstance(job.job, Job):
                     paths = self.paths.with_result_dir(self.paths.result_dir / job.id)
                     res = job.job.run(paths, self.tests)

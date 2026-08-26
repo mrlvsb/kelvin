@@ -7,10 +7,10 @@ import tempfile
 from typing import Any
 
 from . import Job
-from ..docker import DEFAULT_LIMITS, create_docker_cmd, prepare_docker_image
+from ..docker import ExecutionLimits, ExecutionLimitsUpdate, create_docker_cmd, prepare_docker_image
 from ..evaluation import EvaluationContext, EvaluationPaths, File, TestFile
 from ..results import TestResult
-from ..utils import copyfile, parse_human_size
+from ..utils import copyfile
 
 logger = logging.getLogger(__name__)
 
@@ -19,15 +19,16 @@ class TestsJob(Job):
     def __init__(
         self,
         executable: str | list[str] = "./main",
-        limits: dict[str, Any] | None = None,
         timeout: int = 5,
         before: list[str] | None = None,
+        limits: ExecutionLimitsUpdate | None = None,
     ):
         """
         `timeout` is the timeout of each individual test.
         """
+        self.image_name = "kelvin/run"
         self.executable = [executable] if isinstance(executable, str) else executable
-        self.limits = limits
+        self.limits = limits if limits is not None else ExecutionLimitsUpdate()
         self.timeout = timeout
         self.before = [] if not before else before
 
@@ -35,7 +36,7 @@ class TestsJob(Job):
         results = []
         os.mkdir(paths.result_dir)
 
-        image = prepare_docker_image("kelvin/run", self.before)
+        image = prepare_docker_image(self.image_name, self.before)
 
         container = (
             subprocess.check_output(
@@ -45,7 +46,7 @@ class TestsJob(Job):
                     additional_args=["-d"],
                     # Limit to ensure that the container won't run for more than 5 minutes
                     cmd=["sleep", 300],
-                    limits=self.limits,
+                    custom_limits=self.limits,
                 )
             )
             .decode("utf-8")
@@ -78,6 +79,12 @@ class TestsJob(Job):
                     ] + cmd
                     logger.debug(f"executing in isolation: `{shlex.join(docker_cmd)}`")
 
+                    fsize = (
+                        self.limits.fsize
+                        if self.limits.fsize is not None
+                        else ExecutionLimits.default().fsize
+                    )
+
                     def preexec_fn():
                         """
                         Ensure that we apply the limit to the whole process, so that it is applied also
@@ -85,7 +92,6 @@ class TestsJob(Job):
                         """
                         import resource
 
-                        fsize = parse_human_size(DEFAULT_LIMITS["fsize"])
                         resource.setrlimit(resource.RLIMIT_FSIZE, (fsize, fsize))
 
                     args = {}
