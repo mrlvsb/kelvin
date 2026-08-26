@@ -436,7 +436,16 @@ def parse_config_jobs(value: list[Any]) -> list[WorkflowJob]:
                 if per_test_timeout is not None:
                     per_test_timeout = parse_timeout(per_test_timeout)
                 limits = parse_execution_limits(**limits_args)
-                pipeline = TestsJob(limits=limits, per_test_timeout=per_test_timeout, **args)
+                image = args.pop("image", None)
+                before = args.pop("before", None)
+                executable = args.pop("executable", None)
+                pipeline = TestsJob(
+                    executable=executable,
+                    per_test_timeout=per_test_timeout,
+                    before=before,
+                    limits=limits,
+                    image_name=image,
+                )
             elif pipecls:
                 pipeline = pipecls(**args)
                 pipeline.id = id  # TODO: get rid of this

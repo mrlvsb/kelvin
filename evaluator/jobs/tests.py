@@ -26,14 +26,15 @@ class TestsJob(Job):
         per_test_timeout: timedelta | None = None,
         before: list[str] | None = None,
         limits: ExecutionLimitsUpdate | None = None,
+        image_name: str = "kelvin/run",
     ):
-        self.image_name = "kelvin/run"
         self.executable = [executable] if isinstance(executable, str) else executable
-        self.limits = limits if limits is not None else ExecutionLimitsUpdate()
         self.per_test_timeout = (
             per_test_timeout if per_test_timeout is not None else DEFAULT_PER_TEST_TIMEOUT
         )
         self.before = [] if not before else before
+        self.limits = limits if limits is not None else ExecutionLimitsUpdate()
+        self.image_name = image_name
 
     def run(self, paths: EvaluationPaths, ctx: EvaluationContext) -> Any:
         results = []
