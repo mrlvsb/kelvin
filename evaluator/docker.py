@@ -1,13 +1,14 @@
+import enum
 import hashlib
 import json
 import logging
 import os
 import subprocess
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
-from .evaluation import EvaluationPaths
-from .utils import parse_human_size
+if TYPE_CHECKING:
+    from .evaluation import EvaluationPaths
 
 
 @dataclass
@@ -52,43 +53,78 @@ def prepare_docker_image(name: str, before: list[str] | None = None) -> DockerIm
     return target_image
 
 
-DEFAULT_LIMITS = {"fsize": "16M", "memory": "128M", "network": "none"}
+Bytes = int
+
+
+class NetworkMode(enum.Enum):
+    # No internet access, corresponds to `network=none`
+    Isolated = 0
+    # Bridged internet access
+    Bridge = 1
+
+
+@dataclass
+class ExecutionLimits:
+    # How much memory can the container use?
+    memory: Bytes
+    # How much disk space can the container use?
+    # In bytes.
+    fsize: Bytes
+    # Networking mode
+    network: NetworkMode
+
+    @staticmethod
+    def default() -> "ExecutionLimits":
+        return ExecutionLimits(
+            memory=mib(128),
+            fsize=mib(128),
+            network=NetworkMode.Isolated,
+        )
+
+    def update(self, update: "ExecutionLimitsUpdate") -> "ExecutionLimits":
+        memory = update.memory if update.memory is not None else self.memory
+        fsize = update.fsize if update.fsize is not None else self.fsize
+        network = update.network if update.network is not None else self.network
+        return ExecutionLimits(memory=memory, fsize=fsize, network=network)
+
+
+@dataclass
+class ExecutionLimitsUpdate:
+    memory: Bytes | None = None
+    fsize: Bytes | None = None
+    network: NetworkMode | None = None
+
+
+def mib(mib: Bytes) -> Bytes:
+    """
+    Convert MiBibytes to bytes.
+    """
+    return mib * (1024 * 1024)
+
 
 IMAGE_LIMITS = {
-    "kelvin/dotnet": {
-        "network": "bridge",
-        "memory": "512M",
-        "fsize": "128M",
-    },
-    "kelvin/cargo": {
-        "network": "bridge",
-        "memory": "512M",
-        "fsize": "128M",
-    },
-    "kelvin/java": {
-        "network": "bridge",
-        "memory": "512M",
-        "fsize": "128M",
-    },
-    "kelvin/run": {
-        "network": "bridge",
-        "memory": "256M",
-        "fsize": "16M",
-    },
-    "kelvin/pythonrun": {
-        "network": "bridge",
-        "memory": "256M",
-        "fsize": "16M",
-    },
+    "kelvin/dotnet": ExecutionLimitsUpdate(
+        network=NetworkMode.Bridge, memory=mib(512), fsize=mib(128)
+    ),
+    "kelvin/cargo": ExecutionLimitsUpdate(
+        network=NetworkMode.Bridge, memory=mib(512), fsize=mib(128)
+    ),
+    "kelvin/java": ExecutionLimitsUpdate(
+        network=NetworkMode.Bridge, memory=mib(512), fsize=mib(128)
+    ),
+    "kelvin/run": ExecutionLimitsUpdate(network=NetworkMode.Bridge, memory=mib(256), fsize=mib(16)),
+    "kelvin/pythonrun": ExecutionLimitsUpdate(
+        network=NetworkMode.Bridge, memory=mib(256), fsize=mib(16)
+    ),
 }
 
 
 def create_docker_cmd(
-    paths: EvaluationPaths,
+    paths: "EvaluationPaths",
     image: DockerImage,
     additional_args: list[str] | None = None,
     cmd: list[Any] | None = None,
-    limits: dict[str, Any] | None = None,
+    custom_limits: ExecutionLimitsUpdate | None = None,
     env: dict[str, Any] | None = None,
 ):
     """
@@ -96,12 +132,10 @@ def create_docker_cmd(
 
     - `additional_args` can contain additional arguments for the `docker run` command itself.
     """
-    if not limits:
-        limits = {}
-    limits = {**DEFAULT_LIMITS, **IMAGE_LIMITS.get(image.name, {}), **limits}
-    for k, v in limits.items():
-        if k in ("fsize", "memory"):
-            limits[k] = parse_human_size(v)
+    limits = ExecutionLimits.default()
+    limits = limits.update(IMAGE_LIMITS.get(image.name, ExecutionLimitsUpdate()))
+    if custom_limits is not None:
+        limits = limits.update(custom_limits)
 
     if not cmd:
         cmd = []
@@ -126,10 +160,14 @@ def create_docker_cmd(
         additional_args.append("-v")
         additional_args.append(f"{template_path}:/template:ro")
 
-    network = limits["network"]
-    # Forcefully disable using --network=host
-    if network == "host":
-        network = "bridge"
+    match limits.network:
+        case NetworkMode.Bridge:
+            network = "bridge"
+        case _:
+            network = "none"
+    fsize = limits.fsize
+    memory = limits.memory
+
     return [
         "docker",
         "run",
@@ -141,13 +179,13 @@ def create_docker_cmd(
         "-v",
         f"{paths.submit_dir}:/work",
         "--ulimit",
-        f'fsize={limits["fsize"]}:{limits["fsize"]}',
+        f"fsize={fsize}:{fsize}",
         "-m",
-        str(limits["memory"]),
+        f"{memory}",
         "--memory-swap",
-        str(limits["memory"]),
+        f"{memory}",
         "--user",
-        str(os.getuid()),
+        f"{os.getuid()}",
         "-i",
         *additional_args,
         *env,

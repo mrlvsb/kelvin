@@ -16,7 +16,7 @@ def test_parse_non_dict():
 def test_parse_defaults():
     result = WorkflowConfig.parse("pipeline: []")
     assert result.config.queue == "evaluator"
-    assert result.config.timeout == 180
+    assert result.config.timeout.total_seconds() == 180
     assert result.config.tests == []
     assert result.config.jobs == []
 
@@ -29,7 +29,7 @@ timeout: 60
 """
     result = WorkflowConfig.parse(config)
     assert result.config.queue == "cuda"
-    assert result.config.timeout == 60
+    assert result.config.timeout.total_seconds() == 60
 
 
 def test_parse_tests():

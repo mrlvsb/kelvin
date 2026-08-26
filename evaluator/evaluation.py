@@ -1,4 +1,5 @@
 import dataclasses
+import datetime
 import io
 import logging
 import os
@@ -11,8 +12,10 @@ from typing import Any, Dict, Optional
 import serde
 import yaml
 
+from common.utils import parse_time_interval
 from kelvin.settings import BASE_DIR
 from web.markdown_utils import ProcessedMarkdown, load_readme
+from .docker import ExecutionLimitsUpdate, NetworkMode
 from .jobs import Job
 from .script import Script
 
@@ -204,7 +207,7 @@ class EvaluationContext:
         return self.config.queue
 
     @property
-    def timeout(self) -> int:
+    def timeout(self) -> datetime.timedelta:
         return self.config.timeout
 
     def create_test(self, name: str) -> Test:
@@ -280,7 +283,7 @@ class WorkflowConfig:
     tests: list[TestDefinition] = dataclasses.field(default_factory=list)
     jobs: list[WorkflowJob] = dataclasses.field(default_factory=list)
     queue: str = "evaluator"
-    timeout: int = 180
+    timeout: datetime.timedelta = datetime.timedelta(seconds=180)
 
     @staticmethod
     def parse(config: str) -> "WorkflowConfigParseResult":
@@ -301,7 +304,7 @@ class WorkflowConfig:
                 if key == "queue":
                     queue = value
                 elif key == "timeout":
-                    timeout = value
+                    timeout = parse_timeout(value)
                 elif key == "tests":
                     tests = parse_config_tests(value)
                 elif key == "pipeline":
@@ -364,6 +367,43 @@ class InvalidWorkflowYaml(WorkflowValidationError):
     pass
 
 
+def parse_execution_limits(
+    memory=None, fsize=None, network=None, **kwargs
+) -> ExecutionLimitsUpdate:
+    if memory is not None:
+        memory = parse_human_size(memory)
+    if fsize is not None:
+        fsize = parse_human_size(fsize)
+    if network is not None:
+        match network:
+            case "bridge":
+                network = NetworkMode.Bridge
+            case "none":
+                network = NetworkMode.Isolated
+            case _:
+                raise WorkflowValidationError(f"Invalid network mode {network}")
+    return ExecutionLimitsUpdate(memory=memory, fsize=fsize, network=network)
+
+
+def parse_human_size(txt: Any) -> int:
+    m = re.match(r"^([0-9]+(\.[0-9]+)?)\s*(K|M|G|T)?B?$", str(txt).strip())
+    if not m:
+        raise WorkflowValidationError(f"Invalid size: {txt}")
+
+    num = float(m.group(1))
+    multipliers = ["K", "M", "G", "T"]
+
+    mult = 1
+    if m.group(3):
+        mult = 2 ** (10 * (1 + multipliers.index(m.group(3))))
+
+    return int(num * mult)
+
+
+def parse_timeout(timeout: Any) -> datetime.timedelta:
+    return parse_time_interval(timeout)
+
+
 def parse_config_jobs(value: list[Any]) -> list[WorkflowJob]:
     if not isinstance(value, list):
         raise WorkflowValidationError("Pipeline has to be a list of jobs")
@@ -390,8 +430,22 @@ def parse_config_jobs(value: list[Any]) -> list[WorkflowJob]:
 
             id = f"{counter:03}_{item['type']}"
             args = parsed_job.args
+            limits_args = args.pop("limits", {})
             if job_type == "tests":
-                pipeline = TestsJob(**args)
+                per_test_timeout = args.pop("timeout", None)
+                if per_test_timeout is not None:
+                    per_test_timeout = parse_timeout(per_test_timeout)
+                limits = parse_execution_limits(**limits_args)
+                image = args.pop("image", None)
+                before = args.pop("before", None)
+                executable = args.pop("executable", None)
+                pipeline = TestsJob(
+                    executable=executable,
+                    per_test_timeout=per_test_timeout,
+                    before=before,
+                    limits=limits,
+                    image_name=image,
+                )
             elif pipecls:
                 pipeline = pipecls(**args)
                 pipeline.id = id  # TODO: get rid of this

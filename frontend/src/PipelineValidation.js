@@ -570,7 +570,15 @@ const rules = new DictRule({
         ],
         tests: [
             new DockerPipeRule({
-                executable: new UnionRule(new ValueRule(), new ArrayRule())
+                executable: [
+                    new UnionRule(new ValueRule(), new ArrayRule()),
+                    'Executable to test. Defaults to <strong>./main</strong>.'
+                ],
+                timeout: [new ValueRule(), 'Maximal execution time of each test in seconds.'],
+                image: [
+                    new ValueRule(),
+                    'Name of the Docker image in which the tests should be executed. Defaults to <strong>kelvin/run</strong>.'
+                ]
             }),
             'Run input/output/files tests on compiled program.'
         ],

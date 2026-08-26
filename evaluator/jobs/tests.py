@@ -4,38 +4,43 @@ import os
 import shlex
 import subprocess
 import tempfile
+from datetime import timedelta
 from typing import Any
 
 from . import Job
-from ..docker import DEFAULT_LIMITS, create_docker_cmd, prepare_docker_image
+from ..docker import ExecutionLimits, ExecutionLimitsUpdate, create_docker_cmd, prepare_docker_image
 from ..evaluation import EvaluationContext, EvaluationPaths, File, TestFile
 from ..results import TestResult
-from ..utils import copyfile, parse_human_size
+from ..utils import copyfile
 
 logger = logging.getLogger(__name__)
+
+
+DEFAULT_PER_TEST_TIMEOUT = timedelta(seconds=5)
 
 
 class TestsJob(Job):
     def __init__(
         self,
         executable: str | list[str] = "./main",
-        limits: dict[str, Any] | None = None,
-        timeout: int = 5,
+        per_test_timeout: timedelta | None = None,
         before: list[str] | None = None,
+        limits: ExecutionLimitsUpdate | None = None,
+        image_name: str = "kelvin/run",
     ):
-        """
-        `timeout` is the timeout of each individual test.
-        """
         self.executable = [executable] if isinstance(executable, str) else executable
-        self.limits = limits
-        self.timeout = timeout
+        self.per_test_timeout = (
+            per_test_timeout if per_test_timeout is not None else DEFAULT_PER_TEST_TIMEOUT
+        )
         self.before = [] if not before else before
+        self.limits = limits if limits is not None else ExecutionLimitsUpdate()
+        self.image_name = image_name
 
     def run(self, paths: EvaluationPaths, ctx: EvaluationContext) -> Any:
         results = []
         os.mkdir(paths.result_dir)
 
-        image = prepare_docker_image("kelvin/run", self.before)
+        image = prepare_docker_image(self.image_name, self.before)
 
         container = (
             subprocess.check_output(
@@ -43,9 +48,9 @@ class TestsJob(Job):
                     paths,
                     image,
                     additional_args=["-d"],
-                    # Limit to ensure that the container won't run for more than 5 minutes
-                    cmd=["sleep", 300],
-                    limits=self.limits,
+                    # Limit to ensure that the container won't run too long
+                    cmd=["sleep", str(ctx.config.timeout.total_seconds())],
+                    custom_limits=self.limits,
                 )
             )
             .decode("utf-8")
@@ -74,9 +79,15 @@ class TestsJob(Job):
                         "-i",
                         container,
                         "timeout",
-                        str(self.timeout),
+                        str(self.per_test_timeout.total_seconds()),
                     ] + cmd
                     logger.debug(f"executing in isolation: `{shlex.join(docker_cmd)}`")
+
+                    fsize = (
+                        self.limits.fsize
+                        if self.limits.fsize is not None
+                        else ExecutionLimits.default().fsize
+                    )
 
                     def preexec_fn():
                         """
@@ -85,7 +96,6 @@ class TestsJob(Job):
                         """
                         import resource
 
-                        fsize = parse_human_size(DEFAULT_LIMITS["fsize"])
                         resource.setrlimit(resource.RLIMIT_FSIZE, (fsize, fsize))
 
                     args = {}
@@ -128,7 +138,7 @@ class TestsJob(Job):
                                 expected=expected,
                             )
 
-                # do a comparsion
+                # do a comparison
                 for name, opts in result.files.items():
                     if "expected" not in opts:
                         continue
@@ -164,7 +174,7 @@ class TestsJob(Job):
                 if timeouted:
                     result.add_result(
                         success=False,
-                        message=f"<strong>The test has timeouted after {self.timeout}s</strong>. Make sure that you do not use e.g. `sleep` in your program.",
+                        message=f"<strong>The test has timeouted after {self.per_test_timeout.total_seconds()}s</strong>. Make sure that you do not use e.g. `sleep` in your program.",
                     )
                 elif test.exit_code is not None:
                     result.add_result(

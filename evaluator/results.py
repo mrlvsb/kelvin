@@ -94,7 +94,7 @@ class TestResult:
                     with open(dest, "w" if isinstance(actual, io.StringIO) else "wb") as f:
                         f.write(actual.getvalue())
                 elif os.stat(actual).st_size > 0 or expected:
-                    # Note: here we might be copying a file out of a direcetory that is shared with
+                    # Note: here we might be copying a file out of a directory that is shared with
                     # the Docker sandbox. If the file is a symlink, that symlink would be evaluated
                     # on the **host**, and its contents then presented to the user. That is a
                     # security issue.
