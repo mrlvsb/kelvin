@@ -2,8 +2,7 @@ FROM kelvin/base
 
 ENV DOTNET_EnableWriteXorExecute=0
 
-RUN export DEBIAN_FRONTEND=noninteractive && \
-    apt-get update && \
+RUN apt-get update && \
     apt-get install -y \
     -o APT::Install-Recommends=false \
     -o APT::Install-Suggests=false \

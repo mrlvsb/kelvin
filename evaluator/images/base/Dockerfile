@@ -4,8 +4,11 @@ ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 
-RUN export DEBIAN_FRONTEND=noninteractive && \
-    apt-get update && \
+# If someone uses `apt get install <package>` in the `before` section of a job,
+# ensure that they don't have to also provide `-y`.
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
     apt-get install -y \
     -o APT::Install-Recommends=false \
     -o APT::Install-Suggests=false \
