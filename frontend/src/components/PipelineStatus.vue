@@ -7,7 +7,10 @@ const props = defineProps<{
   submitid: string | number;
 }>();
 
-const jobStatus = ref('');
+// null until the first poll resolves, so we don't flash the "being processed"
+// panel before knowing the real state (the job may already be finished, in
+// which case update() reloads the page).
+const jobStatus = ref<string | null>(null);
 const message = ref('');
 let timer: ReturnType<typeof setTimeout> | undefined;
 
@@ -48,9 +51,11 @@ onUnmounted(() => clearTimeout(timer));
     <pre>{{ message }}</pre>
   </template>
   <div v-else class="main">
-    Your submit is being processed, please wait.<br />
-    Your submit has been uploaded to Kelvin, it won't be lost if you close the browser.<br />
-    {{ jobStatus }}
+    <template v-if="jobStatus !== null">
+      Your submit is being processed, please wait.<br />
+      Your submit has been uploaded to Kelvin, it won't be lost if you close the browser.<br />
+      {{ jobStatus }}
+    </template>
     <div class="d-flex justify-content-center">
       <SyncLoader />
     </div>
