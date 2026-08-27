@@ -410,6 +410,7 @@ def parse_config_jobs(value: list[Any]) -> list[WorkflowJob]:
 
     from . import pipelines
     from .jobs.tests import TestsJob
+    from .jobs.autograder import AutoGraderJob
 
     @serde.serde()
     class JobOptionsYaml:
@@ -425,8 +426,6 @@ def parse_config_jobs(value: list[Any]) -> list[WorkflowJob]:
         try:
             parsed_job: JobOptionsYaml = serde.from_dict(JobOptionsYaml, item)
             job_type = parsed_job.type
-            class_name = "".join([p.title() for p in re.split("_|-", job_type)])
-            pipecls = getattr(pipelines, f"{class_name}Pipe", None)
 
             id = f"{counter:03}_{item['type']}"
             args = parsed_job.args
@@ -446,9 +445,8 @@ def parse_config_jobs(value: list[Any]) -> list[WorkflowJob]:
                     limits=limits,
                     image_name=image,
                 )
-            elif pipecls:
-                pipeline = pipecls(**args)
-                pipeline.id = id  # TODO: get rid of this
+            elif job_type == "auto_grader":
+                pipeline = AutoGraderJob(**args)
             else:
                 pipeline = pipelines.DockerPipe(f"kelvin/{job_type}", **args)
                 pipeline.id = id  # TODO: get rid of this

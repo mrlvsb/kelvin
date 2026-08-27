@@ -17,7 +17,7 @@ def get(url: str) -> str | None:
     try:
         with urllib.request.urlopen(url) as f:
             return f.read().decode("utf-8")
-    except urllib.error.HTTPError as e:
+    except BaseException as e:
         logging.error(str(e))
         return None
 

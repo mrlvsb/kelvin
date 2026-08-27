@@ -10,7 +10,7 @@ from typing import Any
 from . import Job
 from ..docker import ExecutionLimits, ExecutionLimitsUpdate, create_docker_cmd, prepare_docker_image
 from ..evaluation import EvaluationContext, EvaluationPaths, File, TestFile
-from ..results import TestResult
+from ..results import EvaluationResult, TestResult
 from ..utils import copyfile
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class TestsJob(Job):
         self.limits = limits if limits is not None else ExecutionLimitsUpdate()
         self.image_name = image_name
 
-    def run(self, paths: EvaluationPaths, ctx: EvaluationContext) -> Any:
+    def run(self, paths: EvaluationPaths, ctx: EvaluationContext, result: EvaluationResult) -> Any:
         results = []
         os.mkdir(paths.result_dir)
 
