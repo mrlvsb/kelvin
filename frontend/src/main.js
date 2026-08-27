@@ -164,6 +164,7 @@ import TaskDetail from './Student/TaskDetail.vue';
 import SyncLoader from './components/SyncLoader.vue';
 import EditTask from './Teacher/EditTask/EditTask.vue';
 import ClassList from './Teacher/ClassList.vue';
+import { loadInfo } from './utilities/global';
 
 const router = createRouter({
     history: createWebHistory(),
@@ -229,7 +230,7 @@ registerSuspendedVueComponent('student-transfer', StudentTransfer);
 registerSuspendedVueComponent('inbus-import', InbusImport);
 registerVueComponent('notifications', NotificationsNew);
 registerVueComponent('toast', Toast);
-registerVueComponent('submit-sources', TaskDetail);
+registerSuspendedVueComponent('submit-sources', TaskDetail);
 registerVueComponent('upload-solution', UploadSolution);
 registerVueComponent('quiz', Quiz);
 registerVueComponent('quiz-edit', QuizEdit);
@@ -266,7 +267,8 @@ function mountMarkButton(id, props) {
 }
 
 async function mountEditTask(id) {
-    const app = createApp(EditTask);
+    const { user, semester } = await loadInfo();
+    const app = createApp(EditTask, { user, semester });
     app.use(router);
     await router.isReady();
     app.mount(id);

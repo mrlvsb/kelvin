@@ -3,10 +3,10 @@ import { computed, ref } from 'vue';
 import CommentForm from './CommentForm.vue';
 import StarRating from '../StarRating.vue';
 import { safeMarkdown } from '../../markdown.js';
-import { user } from '../../global.js';
 import { hideComments, HideCommentsState } from '../../stores';
 import { useSvelteStore } from '../../utilities/useSvelteStore';
 import { getFromAPI } from '../../utilities/api';
+import type { User } from '../../utilities/global';
 import { Comment } from '../../types/TaskDetail';
 import { toastApi } from '../../utilities/toast';
 
@@ -14,6 +14,7 @@ const props = withDefaults(
   defineProps<{
     comment: Comment;
     summary?: boolean;
+    currentUser: User;
   }>(),
   {
     summary: false
@@ -26,7 +27,6 @@ const editing = ref(false);
 const sending = ref(false);
 const committedRating = ref(props.comment.meta?.review?.rating ?? 0);
 
-const currentUser = useSvelteStore(user, null);
 const hideCommentsValue = useSvelteStore(hideComments, HideCommentsState.NONE);
 
 const showComment = computed(() => {

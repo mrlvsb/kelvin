@@ -6,7 +6,7 @@ import SubmitsDiff from '../components/submit/SubmitsDiff.vue';
 import TaskDetailSidebar from './TaskDetailSidebar.vue';
 import TaskDetailContent from './TaskDetailContent.vue';
 import { getFromAPI } from '../utilities/api';
-import { user } from '../global';
+import { loadInfo, type User } from '../utilities/global';
 import { markRead } from '../utilities/notifications';
 import { hideComments, viewMode, HideCommentsState, ViewModeState } from '../stores';
 import { useSvelteStore } from '../utilities/useSvelteStore';
@@ -27,7 +27,11 @@ const selectedRows = ref<SelectedRows | null>(null);
 const selectedFilePath = ref<string | null>(null);
 const sidebarRef = ref<InstanceType<typeof TaskDetailSidebar> | null>(null);
 
-const currentUser = useSvelteStore(user, null);
+// Fetched once here (the root of the submit-page component tree) and passed down
+// as a prop to the descendants that need it, instead of each of them hitting
+// /api/info. Awaited before render (this component is registered as suspended),
+// so it is always set.
+const currentUser: User = (await loadInfo()).user;
 const hideCommentsValue = useSvelteStore(hideComments, HideCommentsState.NONE);
 const viewModeValue = useSvelteStore(viewMode, ViewModeState.LIST);
 
@@ -153,12 +157,7 @@ const updateCommentProps = (id: number, newProps: Partial<Comment> | null) => {
 };
 
 const markCommentAsRead = async (comment: Comment) => {
-  if (
-    comment.unread &&
-    currentUser.value &&
-    comment.author_id !== currentUser.value.id &&
-    comment.notification_id
-  ) {
+  if (comment.unread && comment.author_id !== currentUser.id && comment.notification_id) {
     await markRead(comment.notification_id);
     comment.unread = false;
   }
@@ -234,12 +233,7 @@ const setNotification = async (evt: { comment_id: number; unread: boolean }) => 
   const walk = async (comments: Comment[]) => {
     if (comments.filter((comment) => comment.id === evt.comment_id).length) {
       for (const comment of comments) {
-        if (
-          comment.unread &&
-          currentUser.value &&
-          comment.author_id !== currentUser.value.id &&
-          comment.notification_id
-        ) {
+        if (comment.unread && comment.author_id !== currentUser.id && comment.notification_id) {
           await markRead(comment.notification_id);
           updateCommentProps(comment.id, { unread: evt.unread });
         }
@@ -664,6 +658,7 @@ onUnmounted(() => {
 
     <SummaryComments
       :summary-comments="summaryComments"
+      :current-user="currentUser"
       @save-comment="saveComment"
       @set-notification="setNotification"
       @resolve-suggestion="resolveSuggestion"
@@ -689,6 +684,7 @@ onUnmounted(() => {
         :comment-counts-by-path="commentCountsByPath"
         :selected-rows="selectedRows"
         :collapsable="viewModeValue === ViewModeState.LIST"
+        :current-user="currentUser"
         @set-notification="setNotification"
         @save-comment="saveComment"
         @resolve-suggestion="resolveSuggestion"

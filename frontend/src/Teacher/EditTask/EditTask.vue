@@ -5,7 +5,6 @@
 
 import { ref, watch, onMounted, toRaw, computed } from 'vue';
 
-import { semester as semesterSvelte, user as userSvelte } from '../../global.js';
 import { fs, openedFiles as openedFilesSvelte } from '../../fs.js';
 import VueModal from '../../components/VueModal.vue';
 import { task_types } from '../../taskTypes';
@@ -14,17 +13,19 @@ import SyncLoader from '../../components/SyncLoader.vue';
 import TimeRange from './TimeRange.vue';
 import RoomsSelect from './RoomsSelect.vue';
 import { useReadableSvelteStore } from '../../utilities/useSvelteStoreInVue';
-import { User, Semester, FileEntry } from '../../utilities/SvelteStoreTypes';
+import { FileEntry } from '../../utilities/SvelteStoreTypes';
+import type { User, Semester } from '../../utilities/global';
 import AutoCompleteTaskPath from './AutoCompleteTaskPath.vue';
 import { getDataWithCSRF, getFromAPI } from '../../utilities/api';
 import { useRouter, useRoute } from 'vue-router';
 import { Room } from './RoomInterface';
 
+// /api/info is fetched once by mountEditTask (the root) and handed in here.
+const { user, semester } = defineProps<{ user: User; semester: Semester }>();
+
 const router = useRouter();
 const route = useRoute();
 
-const semester = useReadableSvelteStore<Semester>(semesterSvelte);
-const user = useReadableSvelteStore<User>(userSvelte);
 const openedFiles = useReadableSvelteStore<Record<string, FileEntry>>(openedFilesSvelte);
 
 interface Class {
@@ -68,7 +69,7 @@ let showAllClasses = ref<boolean>(false);
 let allRoomsList = ref<Room[]>(null);
 
 function isClassVisible(cls: Class): boolean {
-  return cls.teacher === user.value.username || cls.assignment_id > 0 || showAllClasses.value;
+  return cls.teacher === user.username || cls.assignment_id > 0 || showAllClasses.value;
 }
 
 const shownClasses = computed(() => {
@@ -78,7 +79,7 @@ const shownClasses = computed(() => {
 
   return filtered.sort((a, b) => {
     function key(cls: Class): boolean {
-      return cls.teacher === user.value.username || cls.assignment_id !== undefined;
+      return cls.teacher === user.username || cls.assignment_id !== undefined;
     }
 
     return Number(key(b)) - Number(key(a));
@@ -91,7 +92,7 @@ const taskLink = computed(() => {
   const clazz = task.value.classes.find((c) => c.assignment_id >= 1);
 
   if (clazz) {
-    return `/task/${clazz.assignment_id}/${user.value.username}/`;
+    return `/task/${clazz.assignment_id}/${user.username}/`;
   }
 
   return task.value.task_link;
@@ -104,9 +105,7 @@ async function prepareCreatingTask(): Promise<void> {
   const json = await getFromAPI<{ classes: Class[] }>('/api/subject/' + route.params.subject);
   if (!json) return;
 
-  const current_path = [route.params.subject, semester.value['abbr'], user.value.username].join(
-    '/'
-  );
+  const current_path = [route.params.subject, semester.abbr, user.username].join('/');
 
   task.value = {
     classes: json['classes'],
@@ -153,7 +152,7 @@ function synchronizePathWithReadMeTitle(): void {
   const readme = openedFiles.value['/readme.md'];
 
   if (readme && task.value) {
-    let parts = [route.params.subject, semester.value['abbr'], user.value.username];
+    let parts = [route.params.subject, semester.abbr, user.username];
 
     let classes = task.value['classes'].filter((c) => c.assigned);
     if (classes.length == 1) {
@@ -355,6 +354,7 @@ async function deleteTask(proceed: boolean): Promise<void> {
           <AutoCompleteTaskPath
             v-model="task.path"
             :subject="task.subject_abbr"
+            :user="user"
             :on-change="loadTask"
             @click="syncPathWithTitle = false"
           />
@@ -437,7 +437,7 @@ async function deleteTask(proceed: boolean): Promise<void> {
                       :on-to-relative-click="setRelativeDeadlineToAssigned"
                       :on-to-duplicate-click="setDeadlineToAssigned"
                       :on-from-duplicate-click="setAssignedDateToVisible"
-                      :semester-begin-date="semester.begin"
+                      :semester-begin-date="new Date(semester.begin)"
                       :time-offset-in-week="clazz.week_offset"
                     />
                     <div
