@@ -9,7 +9,6 @@ import { getFromAPI } from '../utilities/api';
 import { loadInfo, type User } from '../utilities/global';
 import { markRead } from '../utilities/notifications';
 import { hideComments, viewMode, HideCommentsState, ViewModeState } from '../stores';
-import { useSvelteStore } from '../utilities/useSvelteStore';
 import { Comment, SelectedRows, Source, Submit } from '../types/TaskDetail';
 
 const props = defineProps<{
@@ -32,8 +31,8 @@ const sidebarRef = ref<InstanceType<typeof TaskDetailSidebar> | null>(null);
 // /api/info. Awaited before render (this component is registered as suspended),
 // so it is always set.
 const currentUser: User = (await loadInfo()).user;
-const hideCommentsValue = useSvelteStore(hideComments, HideCommentsState.NONE);
-const viewModeValue = useSvelteStore(viewMode, ViewModeState.LIST);
+const hideCommentsValue = hideComments;
+const viewModeValue = viewMode;
 
 const commentsButton = {
   [HideCommentsState.NONE]: {
@@ -106,7 +105,7 @@ const changeCommentState = () => {
       break;
   }
 
-  hideComments.set(nextState);
+  hideComments.value = nextState;
 };
 
 const changeViewMode = () => {
@@ -121,7 +120,7 @@ const changeViewMode = () => {
       break;
   }
 
-  viewMode.set(nextMode);
+  viewMode.value = nextMode;
 };
 
 const updateCommentProps = (id: number, newProps: Partial<Comment> | null) => {
@@ -567,9 +566,9 @@ const load = async () => {
 
   // If only one file, switch to list view
   if (files.value.length <= 1 || isViewOnMobile.value) {
-    viewMode.set(ViewModeState.LIST);
+    viewMode.value = ViewModeState.LIST;
   } else {
-    viewMode.set(ViewModeState.TREE);
+    viewMode.value = ViewModeState.TREE;
   }
 
   const selectedFile = updateSelectedFileAndRows();

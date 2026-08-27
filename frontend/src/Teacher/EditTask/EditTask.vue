@@ -5,15 +5,14 @@
 
 import { ref, watch, onMounted, toRaw, computed } from 'vue';
 
-import { fs, openedFiles as openedFilesSvelte } from '../../fs.js';
+import { fs, openedFiles, saveOpenedFiles } from '../../fs.js';
 import VueModal from '../../components/VueModal.vue';
 import { task_types } from '../../taskTypes';
 import Manager from './FileManager.vue';
 import SyncLoader from '../../components/SyncLoader.vue';
 import TimeRange from './TimeRange.vue';
 import RoomsSelect from './RoomsSelect.vue';
-import { useReadableSvelteStore } from '../../utilities/useSvelteStoreInVue';
-import { FileEntry } from '../../utilities/SvelteStoreTypes';
+import { FileEntry } from '../../utilities/store-types';
 import type { User, Semester } from '../../utilities/global';
 import AutoCompleteTaskPath from './AutoCompleteTaskPath.vue';
 import { getDataWithCSRF, getFromAPI } from '../../utilities/api';
@@ -25,8 +24,6 @@ const { user, semester } = defineProps<{ user: User; semester: Semester }>();
 
 const router = useRouter();
 const route = useRoute();
-
-const openedFiles = useReadableSvelteStore<Record<string, FileEntry>>(openedFilesSvelte);
 
 interface Class {
   assigned: Date;
@@ -193,11 +190,15 @@ function synchronizePathWithReadMeTitle(): void {
   }
 }
 
-watch(openedFiles, () => {
-  if (syncPathWithTitle.value) {
-    synchronizePathWithReadMeTitle();
-  }
-});
+watch(
+  openedFiles,
+  () => {
+    if (syncPathWithTitle.value) {
+      synchronizePathWithReadMeTitle();
+    }
+  },
+  { deep: true }
+);
 
 async function save(): Promise<void> {
   syncing.value = true;
@@ -226,7 +227,7 @@ async function save(): Promise<void> {
     task.value['can_delete'] = json['can_delete'];
     fs.setEndpointUrl(json.files_uri);
 
-    await openedFilesSvelte.save();
+    await saveOpenedFiles();
 
     if (!task.value.id) {
       await router.push('/task/edit/' + json.id);
