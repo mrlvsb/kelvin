@@ -28,13 +28,6 @@ def index(request):
     return student_index(request)
 
 
-@login_required()
-def index_vue(request):
-    if is_teacher(request.user):
-        return ui_vue(request)
-    return student_index(request)
-
-
 @login_required
 def ui_vue(request):
     return render(request, "web/ui_vue.html")

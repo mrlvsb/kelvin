@@ -34,13 +34,13 @@ hljs.highlightAll();
 
 import * as Diff2Html from 'diff2html';
 import 'diff2html/bundles/css/diff2html.min.css';
+
 window.Diff2Html = Diff2Html;
 
 // Import iconify icons used in UI, don't remove this line (almost forgot to put it back)
 import '@iconify/iconify';
 import AnsiUp from 'ansi_up';
 import App from './App.svelte';
-import ColorTheme from './ColorTheme.svelte';
 import { safeMarkdown } from './markdown.js';
 
 class ReplaceHtmlElement extends HTMLElement {
@@ -57,6 +57,7 @@ class ReplaceHtmlElement extends HTMLElement {
             { once: true }
         );
     }
+
     connectedCallback() {
         this.style.display = 'none';
     }
@@ -108,16 +109,7 @@ function createElement(name, component) {
     );
 }
 
-const getCookies = () => {
-    return Object.fromEntries(document.cookie.split('; ').map((cookie) => cookie.split('=')));
-};
-
-const cookies = getCookies();
-const enableNewUI = Object.keys(cookies).includes('newUI') && cookies['newUI'] != 0;
-
 createElement('app', App);
-
-if (!enableNewUI) createElement('color-theme', ColorTheme);
 
 function focusTab() {
     const hash = document.location.hash.replace('#', '').split('-')[0].split(';')[0];
@@ -236,7 +228,7 @@ registerVueComponent('quiz', Quiz);
 registerVueComponent('quiz-edit', QuizEdit);
 registerSuspendedVueComponent('quiz-list', QuizList);
 registerSuspendedVueComponent('quiz-submit-list', QuizSubmitList);
-if (enableNewUI) registerVueComponent('color-theme', ColorThemeNew);
+registerVueComponent('color-theme', ColorThemeNew);
 registerSuspendedVueComponent('vue-app', ClassList, (app) => {
     app.use(router);
 });
