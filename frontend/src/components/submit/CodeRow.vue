@@ -2,9 +2,8 @@
 import { computed, ref } from 'vue';
 import CommentForm from './CommentForm.vue';
 import Comment from './Comment.vue';
-import { user } from '../../global';
 import SuggestedComment from './SuggestedComment.vue';
-import { useSvelteStore } from '../../utilities/useSvelteStore';
+import type { User } from '../../utilities/global';
 import type { Comment as TaskComment } from '../../types/TaskDetail';
 
 const props = withDefaults(
@@ -15,6 +14,7 @@ const props = withDefaults(
     showAddingForm?: boolean;
     selected?: boolean;
     scroll?: boolean;
+    currentUser: User;
   }>(),
   {
     line: '',
@@ -33,9 +33,8 @@ const emit = defineEmits([
 ]);
 
 const addingInProgress = ref(false);
-const currentUser = useSvelteStore(user, null);
 
-const commentRole = computed(() => (currentUser.value?.teacher ? 'teacher' : 'student'));
+const commentRole = computed(() => (props.currentUser.teacher ? 'teacher' : 'student'));
 
 const addNewComment = (text: string) => {
   if (text === '') {
@@ -76,12 +75,14 @@ const addNewComment = (text: string) => {
         <SuggestedComment
           v-if="comment.type === 'ai-review'"
           :comment="comment"
+          :current-user="currentUser"
           @resolve-suggestion="emit('resolveSuggestion', $event)"
         />
 
         <Comment
           v-else
           :comment="comment"
+          :current-user="currentUser"
           @save-comment="emit('saveComment', $event)"
           @set-notification="emit('setNotification', $event)"
         />

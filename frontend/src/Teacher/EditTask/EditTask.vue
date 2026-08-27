@@ -5,27 +5,25 @@
 
 import { ref, watch, onMounted, toRaw, computed } from 'vue';
 
-import { semester as semesterSvelte, user as userSvelte } from '../../global.js';
-import { fs, openedFiles as openedFilesSvelte } from '../../fs.js';
+import { fs, openedFiles, saveOpenedFiles } from '../../fs.js';
 import VueModal from '../../components/VueModal.vue';
 import { task_types } from '../../taskTypes';
 import Manager from './FileManager.vue';
 import SyncLoader from '../../components/SyncLoader.vue';
 import TimeRange from './TimeRange.vue';
 import RoomsSelect from './RoomsSelect.vue';
-import { useReadableSvelteStore } from '../../utilities/useSvelteStoreInVue';
-import { User, Semester, FileEntry } from '../../utilities/SvelteStoreTypes';
+import { FileEntry } from '../../utilities/store-types';
+import type { User, Semester } from '../../utilities/global';
 import AutoCompleteTaskPath from './AutoCompleteTaskPath.vue';
-import { fetch } from '../../api';
+import { getDataWithCSRF, getFromAPI } from '../../utilities/api';
 import { useRouter, useRoute } from 'vue-router';
 import { Room } from './RoomInterface';
 
+// /api/info is fetched once by mountEditTask (the root) and handed in here.
+const { user, semester } = defineProps<{ user: User; semester: Semester }>();
+
 const router = useRouter();
 const route = useRoute();
-
-const semester = useReadableSvelteStore<Semester>(semesterSvelte);
-const user = useReadableSvelteStore<User>(userSvelte);
-const openedFiles = useReadableSvelteStore<Record<string, FileEntry>>(openedFilesSvelte);
 
 interface Class {
   assigned: Date;
@@ -68,7 +66,7 @@ let showAllClasses = ref<boolean>(false);
 let allRoomsList = ref<Room[]>(null);
 
 function isClassVisible(cls: Class): boolean {
-  return cls.teacher === user.value.username || cls.assignment_id > 0 || showAllClasses.value;
+  return cls.teacher === user.username || cls.assignment_id > 0 || showAllClasses.value;
 }
 
 const shownClasses = computed(() => {
@@ -78,7 +76,7 @@ const shownClasses = computed(() => {
 
   return filtered.sort((a, b) => {
     function key(cls: Class): boolean {
-      return cls.teacher === user.value.username || cls.assignment_id !== undefined;
+      return cls.teacher === user.username || cls.assignment_id !== undefined;
     }
 
     return Number(key(b)) - Number(key(a));
@@ -91,7 +89,7 @@ const taskLink = computed(() => {
   const clazz = task.value.classes.find((c) => c.assignment_id >= 1);
 
   if (clazz) {
-    return `/task/${clazz.assignment_id}/${user.value.username}/`;
+    return `/task/${clazz.assignment_id}/${user.username}/`;
   }
 
   return task.value.task_link;
@@ -101,12 +99,10 @@ const taskLink = computed(() => {
  * Used when we want to create new task
  */
 async function prepareCreatingTask(): Promise<void> {
-  const res = await fetch('/api/subject/' + route.params.subject);
-  const json = await res.json();
+  const json = await getFromAPI<{ classes: Class[] }>('/api/subject/' + route.params.subject);
+  if (!json) return;
 
-  const current_path = [route.params.subject, semester.value['abbr'], user.value.username].join(
-    '/'
-  );
+  const current_path = [route.params.subject, semester.abbr, user.username].join('/');
 
   task.value = {
     classes: json['classes'],
@@ -125,8 +121,9 @@ async function prepareCreatingTask(): Promise<void> {
  * @param redirectTo we can load task from EditTask page, then we need to reload to reflect id in URL
  */
 async function loadTask(id: number, redirectTo: boolean = true): Promise<void> {
-  const req = await fetch('/api/tasks/' + id);
-  task.value = await req.json();
+  const loaded = await getFromAPI<Task>('/api/tasks/' + id);
+  if (!loaded) return;
+  task.value = loaded;
   savedPath.value = task.value['path'];
   fs.setRoot(task.value.files, task.value.files_uri);
   await fs.open('readme.md');
@@ -145,15 +142,14 @@ onMounted(async () => {
 });
 
 onMounted(async () => {
-  const req = await fetch('/api/classrooms-list/');
-  allRoomsList.value = await req.json();
+  allRoomsList.value = (await getFromAPI<Room[]>('/api/classrooms-list/')) ?? [];
 });
 
 function synchronizePathWithReadMeTitle(): void {
   const readme = openedFiles.value['/readme.md'];
 
   if (readme && task.value) {
-    let parts = [route.params.subject, semester.value['abbr'], user.value.username];
+    let parts = [route.params.subject, semester.abbr, user.username];
 
     let classes = task.value['classes'].filter((c) => c.assigned);
     if (classes.length == 1) {
@@ -194,21 +190,34 @@ function synchronizePathWithReadMeTitle(): void {
   }
 }
 
-watch(openedFiles, () => {
-  if (syncPathWithTitle.value) {
-    synchronizePathWithReadMeTitle();
-  }
-});
+watch(
+  openedFiles,
+  () => {
+    if (syncPathWithTitle.value) {
+      synchronizePathWithReadMeTitle();
+    }
+  },
+  { deep: true }
+);
 
 async function save(): Promise<void> {
   syncing.value = true;
 
-  const res = await fetch('/api/tasks/' + (route.params.id ? route.params.id : ''), {
-    method: 'POST',
-    body: JSON.stringify(toRaw(task.value))
-  });
+  const json = await getDataWithCSRF<{
+    errors: string[];
+    classes: Class[];
+    task_link: string;
+    path: string;
+    can_delete: boolean;
+    files_uri: string;
+    id: number;
+  }>('/api/tasks/' + (route.params.id ? route.params.id : ''), 'POST', toRaw(task.value));
 
-  const json = await res.json();
+  if (!json) {
+    syncing.value = false;
+    return;
+  }
+
   errors.value = json['errors'];
 
   if (errors.value.length == 0) {
@@ -218,7 +227,7 @@ async function save(): Promise<void> {
     task.value['can_delete'] = json['can_delete'];
     fs.setEndpointUrl(json.files_uri);
 
-    await openedFilesSvelte.save();
+    await saveOpenedFiles();
 
     if (!task.value.id) {
       await router.push('/task/edit/' + json.id);
@@ -295,11 +304,12 @@ function setRelativeDeadlineToAssigned(assigned: Date, deadline: Date): void {
 async function duplicateTask(): Promise<void> {
   await save();
 
-  let res = await fetch(`/api/tasks/${task.value.id}/duplicate`, {
-    method: 'POST'
-  });
+  const json = await getDataWithCSRF<{ id: number }>(
+    `/api/tasks/${task.value.id}/duplicate`,
+    'POST'
+  );
+  if (!json) return;
 
-  let json = await res.json();
   await router.push('/task/edit/' + json.id);
   await loadTask(json.id);
 }
@@ -307,11 +317,12 @@ async function duplicateTask(): Promise<void> {
 async function deleteTask(proceed: boolean): Promise<void> {
   deleteModal.value = false;
   if (proceed) {
-    const res = await fetch(`/api/tasks/${route.params.id}`, {
-      method: 'DELETE'
-    });
+    const json = await getDataWithCSRF<{ errors?: string[] }>(
+      `/api/tasks/${route.params.id}`,
+      'DELETE'
+    );
 
-    const json = await res.json();
+    if (!json) return;
 
     if (json['errors']) {
       errors.value = json['errors'];
@@ -344,6 +355,7 @@ async function deleteTask(proceed: boolean): Promise<void> {
           <AutoCompleteTaskPath
             v-model="task.path"
             :subject="task.subject_abbr"
+            :user="user"
             :on-change="loadTask"
             @click="syncPathWithTitle = false"
           />
@@ -426,7 +438,7 @@ async function deleteTask(proceed: boolean): Promise<void> {
                       :on-to-relative-click="setRelativeDeadlineToAssigned"
                       :on-to-duplicate-click="setDeadlineToAssigned"
                       :on-from-duplicate-click="setAssignedDateToVisible"
-                      :semester-begin-date="semester.begin"
+                      :semester-begin-date="new Date(semester.begin)"
                       :time-offset-in-week="clazz.week_offset"
                     />
                     <div

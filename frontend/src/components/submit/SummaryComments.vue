@@ -3,11 +3,13 @@ import { ref } from 'vue';
 import CommentForm from './CommentForm.vue';
 import Comment from './Comment.vue';
 import SuggestedComment from './SuggestedComment.vue';
+import type { User } from '../../utilities/global';
 import type { Comment as TaskComment } from '../../types/TaskDetail';
 
 withDefaults(
   defineProps<{
     summaryComments?: TaskComment[];
+    currentUser: User;
   }>(),
   {
     summaryComments: () => []
@@ -34,12 +36,14 @@ const addComment = (text: string) => {
       v-if="comment.type === 'ai-review'"
       :comment="comment"
       :summary="true"
+      :current-user="currentUser"
       @resolve-suggestion="emit('resolveSuggestion', $event)"
     />
 
     <Comment
       v-else
       :comment="comment"
+      :current-user="currentUser"
       @save-comment="emit('saveComment', $event)"
       @set-notification="emit('setNotification', $event)"
     />

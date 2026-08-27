@@ -1,15 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { render } from '@testing-library/svelte';
-import Markdown from './Markdown.svelte';
+import { mount } from '@vue/test-utils';
+import Markdown from './Markdown.vue';
 
 describe('Markdown', () => {
     it('Should render empty markdown', () => {
-        const wrapper = render(Markdown, { content: '' });
-        expect(wrapper.container.innerHTML).toMatchSnapshot();
+        const wrapper = mount(Markdown, { props: { content: '' } });
+        expect(wrapper.html()).toMatchSnapshot();
     });
+
     it('Should render example markdown', () => {
-        const wrapper = render(Markdown, {
-            content: `# Title 
+        const wrapper = mount(Markdown, {
+            props: {
+                content: `# Title
 ## Subtitle
 ### Subsubtitle
 
@@ -40,7 +42,8 @@ Also we don't forget about tables:
 | Cell 3   | Cell 4   |
 which looks like, that we don't currently render :(.
 `
+            }
         });
-        expect(wrapper.container.innerHTML).toMatchSnapshot();
+        expect(wrapper.html()).toMatchSnapshot();
     });
 });

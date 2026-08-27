@@ -6,24 +6,10 @@
  */
 
 import { ref, watch, reactive } from 'vue';
-import { FileEntry } from '../../utilities/SvelteStoreTypes';
-import {
-  useReadableSvelteStore,
-  useWritableSvelteStore
-} from '../../utilities/useSvelteStoreInVue';
 import Editor from '../../components/Editor.vue';
 import SyncLoader from '../../components/SyncLoader.vue';
 import yaml from 'js-yaml';
-import {
-  currentOpenedFile as currentOpenedFileSvelte,
-  fs,
-  cwd as cwdSvelte,
-  openedFiles as openedFilesSvelte
-} from '../../fs.js';
-
-const cwd = useReadableSvelteStore<FileEntry[]>(cwdSvelte);
-const openedFiles = useWritableSvelteStore<Record<string, FileEntry>>(openedFilesSvelte);
-const currentOpenedFile = useWritableSvelteStore<string>(currentOpenedFileSvelte);
+import { currentOpenedFile, fs, cwd, openedFiles } from '../../fs.js';
 
 //indicates whether the tests have been loaded
 const loaded = ref<boolean>(false);

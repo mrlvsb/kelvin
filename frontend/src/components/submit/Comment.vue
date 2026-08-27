@@ -1,14 +1,14 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
 import CommentForm from './CommentForm.vue';
-import { user } from '../../global';
 import { safeMarkdown } from '../../markdown';
 import { hideComments, HideCommentsState } from '../../stores';
-import { useSvelteStore } from '../../utilities/useSvelteStore';
+import type { User } from '../../utilities/global';
 import { Comment } from '../../types/TaskDetail';
 
 const props = defineProps<{
   comment: Comment;
+  currentUser: User;
 }>();
 
 const emit = defineEmits(['saveComment', 'setNotification']);
@@ -16,8 +16,7 @@ const emit = defineEmits(['saveComment', 'setNotification']);
 const editing = ref(false);
 const sending = ref(false);
 
-const currentUser = useSvelteStore(user, null);
-const currentHideComments = useSvelteStore(hideComments, HideCommentsState.NONE);
+const currentHideComments = hideComments;
 
 const showComment = computed(() => {
   return (

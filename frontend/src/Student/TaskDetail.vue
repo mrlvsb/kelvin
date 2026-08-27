@@ -5,11 +5,10 @@ import SummaryComments from '../components/submit/SummaryComments.vue';
 import SubmitsDiff from '../components/submit/SubmitsDiff.vue';
 import TaskDetailSidebar from './TaskDetailSidebar.vue';
 import TaskDetailContent from './TaskDetailContent.vue';
-import { fetch } from '../api';
-import { user } from '../global';
+import { getFromAPI } from '../utilities/api';
+import { loadInfo, type User } from '../utilities/global';
 import { markRead } from '../utilities/notifications';
 import { hideComments, viewMode, HideCommentsState, ViewModeState } from '../stores';
-import { useSvelteStore } from '../utilities/useSvelteStore';
 import { Comment, SelectedRows, Source, Submit } from '../types/TaskDetail';
 
 const props = defineProps<{
@@ -27,9 +26,13 @@ const selectedRows = ref<SelectedRows | null>(null);
 const selectedFilePath = ref<string | null>(null);
 const sidebarRef = ref<InstanceType<typeof TaskDetailSidebar> | null>(null);
 
-const currentUser = useSvelteStore(user, null);
-const hideCommentsValue = useSvelteStore(hideComments, HideCommentsState.NONE);
-const viewModeValue = useSvelteStore(viewMode, ViewModeState.LIST);
+// Fetched once here (the root of the submit-page component tree) and passed down
+// as a prop to the descendants that need it, instead of each of them hitting
+// /api/info. Awaited before render (this component is registered as suspended),
+// so it is always set.
+const currentUser: User = (await loadInfo()).user;
+const hideCommentsValue = hideComments;
+const viewModeValue = viewMode;
 
 const commentsButton = {
   [HideCommentsState.NONE]: {
@@ -102,7 +105,7 @@ const changeCommentState = () => {
       break;
   }
 
-  hideComments.set(nextState);
+  hideComments.value = nextState;
 };
 
 const changeViewMode = () => {
@@ -117,7 +120,7 @@ const changeViewMode = () => {
       break;
   }
 
-  viewMode.set(nextMode);
+  viewMode.value = nextMode;
 };
 
 const updateCommentProps = (id: number, newProps: Partial<Comment> | null) => {
@@ -153,12 +156,7 @@ const updateCommentProps = (id: number, newProps: Partial<Comment> | null) => {
 };
 
 const markCommentAsRead = async (comment: Comment) => {
-  if (
-    comment.unread &&
-    currentUser.value &&
-    comment.author_id !== currentUser.value.id &&
-    comment.notification_id
-  ) {
+  if (comment.unread && comment.author_id !== currentUser.id && comment.notification_id) {
     await markRead(comment.notification_id);
     comment.unread = false;
   }
@@ -178,16 +176,11 @@ type CommentSavePayload = {
 const addNewComment = async (comment: CommentSavePayload) => {
   const { success, ...payload } = comment;
 
-  const res = await fetch(props.commentUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(payload)
-  });
-
-  const json = await res.json();
-  if (res.ok && success) {
+  const json = await getFromAPI<Comment>(props.commentUrl, 'POST', payload);
+  if (!json) {
+    return;
+  }
+  if (success) {
     success();
   }
 
@@ -218,15 +211,7 @@ const addNewComment = async (comment: CommentSavePayload) => {
 };
 
 const updateComment = async (id: number, text: string) => {
-  await fetch(`${props.commentUrl}/${id}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      text
-    })
-  });
+  await getFromAPI(`${props.commentUrl}/${id}`, 'PATCH', { text });
 
   updateCommentProps(id, text === '' ? null : { text });
 };
@@ -247,12 +232,7 @@ const setNotification = async (evt: { comment_id: number; unread: boolean }) => 
   const walk = async (comments: Comment[]) => {
     if (comments.filter((comment) => comment.id === evt.comment_id).length) {
       for (const comment of comments) {
-        if (
-          comment.unread &&
-          currentUser.value &&
-          comment.author_id !== currentUser.value.id &&
-          comment.notification_id
-        ) {
+        if (comment.unread && comment.author_id !== currentUser.id && comment.notification_id) {
           await markRead(comment.notification_id);
           updateCommentProps(comment.id, { unread: evt.unread });
         }
@@ -561,8 +541,16 @@ const findFirstFileIndex = () => {
 };
 
 const load = async () => {
-  const res = await fetch(props.url);
-  const json = await res.json();
+  const json = await getFromAPI<{
+    current_submit: number;
+    deadline: number | string | null;
+    submits: Submit[];
+    sources: Source[];
+    summary_comments: Comment[];
+  }>(props.url);
+  if (!json) {
+    return;
+  }
 
   current_submit.value = json.current_submit;
   deadline.value = json.deadline;
@@ -578,9 +566,9 @@ const load = async () => {
 
   // If only one file, switch to list view
   if (files.value.length <= 1 || isViewOnMobile.value) {
-    viewMode.set(ViewModeState.LIST);
+    viewMode.value = ViewModeState.LIST;
   } else {
-    viewMode.set(ViewModeState.TREE);
+    viewMode.value = ViewModeState.TREE;
   }
 
   const selectedFile = updateSelectedFileAndRows();
@@ -669,6 +657,7 @@ onUnmounted(() => {
 
     <SummaryComments
       :summary-comments="summaryComments"
+      :current-user="currentUser"
       @save-comment="saveComment"
       @set-notification="setNotification"
       @resolve-suggestion="resolveSuggestion"
@@ -694,6 +683,7 @@ onUnmounted(() => {
         :comment-counts-by-path="commentCountsByPath"
         :selected-rows="selectedRows"
         :collapsable="viewModeValue === ViewModeState.LIST"
+        :current-user="currentUser"
         @set-notification="setNotification"
         @save-comment="saveComment"
         @resolve-suggestion="resolveSuggestion"

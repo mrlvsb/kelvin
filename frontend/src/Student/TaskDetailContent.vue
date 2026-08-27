@@ -2,6 +2,7 @@
 import CopyToClipboard from '../components/CopyToClipboard.vue';
 import FullscreenImage from '../components/FullscreenImage.vue';
 import SubmitSource from '../components/submit/SubmitSource.vue';
+import type { User } from '../utilities/global';
 import { Comment, SourceFile, CommentCounts, SelectedRows } from '../types/TaskDetail';
 
 const props = defineProps<{
@@ -9,6 +10,7 @@ const props = defineProps<{
   commentCountsByPath: Record<string, CommentCounts>;
   selectedRows: SelectedRows | null;
   collapsable: boolean;
+  currentUser: User;
 }>();
 
 const emit = defineEmits<{
@@ -104,6 +106,7 @@ const handleSaveComment = (
             :path="file.source.path"
             :code="file.source.content"
             :comments="file.source.comments"
+            :current-user="props.currentUser"
             :selected-rows="
               props.selectedRows && props.selectedRows.path === file.source.path
                 ? props.selectedRows

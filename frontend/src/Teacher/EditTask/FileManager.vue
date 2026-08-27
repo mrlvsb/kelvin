@@ -14,22 +14,11 @@
  */
 
 import { ref, watch, triggerRef } from 'vue';
-import { fetch } from '../../api';
-import {
-  useReadableSvelteStore,
-  useWritableSvelteStore
-} from '../../utilities/useSvelteStoreInVue';
+import { getDataWithCSRF } from '../../utilities/api';
 import { clickOutside } from '../../utilities/clickOutside';
 import Editor from '../../components/Editor.vue';
-import { FileEntry } from '../../utilities/SvelteStoreTypes';
 import Tests from './Tests.vue';
-import {
-  currentOpenedFile as currentOpenedFileSvelte,
-  fs,
-  currentPath as currentPathSvelte,
-  cwd as cwdSvelte,
-  openedFiles as openedFilesSvelte
-} from '../../fs';
+import { currentOpenedFile, fs, currentPath, cwd, openedFiles, pathUp } from '../../fs';
 
 /**
  * @prop {Number} taskid - current task id, for reevaluate button in config.yml file
@@ -48,11 +37,6 @@ interface ContextMenu {
 }
 
 const vClickOutside = clickOutside;
-
-const currentPath = useReadableSvelteStore<string>(currentPathSvelte);
-const cwd = useReadableSvelteStore<FileEntry[]>(cwdSvelte);
-const currentOpenedFile = useWritableSvelteStore<string | null>(currentOpenedFileSvelte);
-const openedFiles = useWritableSvelteStore<Record<string, FileEntry>>(openedFilesSvelte);
 
 let renamingPath = ref<string | null>(null);
 let ctxMenu = ref<ContextMenu | null>(null);
@@ -148,7 +132,7 @@ pipeline:
 }
 
 async function reevaluate() {
-  await fetch(`/api/reevaluate_task/${taskid}`, { method: 'POST' });
+  await getDataWithCSRF(`/api/reevaluate_task/${taskid}`, 'POST');
 }
 
 /**
@@ -204,7 +188,7 @@ function closeTab(path: string) {
         </span>
       </div>
       <ul>
-        <li v-if="currentPath !== '/'" @click="currentPathSvelte.up()">
+        <li v-if="currentPath !== '/'" @click="pathUp()">
           <span class="iconify" data-icon="ic:baseline-folder"></span>
           ..
         </li>
