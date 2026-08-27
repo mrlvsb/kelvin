@@ -40,7 +40,6 @@ window.Diff2Html = Diff2Html;
 // Import iconify icons used in UI, don't remove this line (almost forgot to put it back)
 import '@iconify/iconify';
 import AnsiUp from 'ansi_up';
-import App from './App.svelte';
 import { safeMarkdown } from './markdown.js';
 
 class ReplaceHtmlElement extends HTMLElement {
@@ -84,33 +83,6 @@ customElements.define(
     }
 );
 
-function createElement(name, component) {
-    customElements.define(
-        'kelvin-' + name,
-        class extends HTMLElement {
-            connectedCallback() {
-                let attrs = {};
-                for (let i = 0; i < this.attributes.length; i++) {
-                    let attr = this.attributes[i];
-                    let name = attr.name.replace('-', '_');
-                    if (attr.value[0] == '{' || attr.value[0] == '[') {
-                        attrs[name] = JSON.parse(attr.value);
-                    } else {
-                        attrs[name] = attr.value;
-                    }
-                }
-
-                new component({
-                    target: this,
-                    props: attrs
-                });
-            }
-        }
-    );
-}
-
-createElement('app', App);
-
 function focusTab() {
     const hash = document.location.hash.replace('#', '').split('-')[0].split(';')[0];
     const link = document.querySelector(`[data-toggle="tab"][href="#${hash}"]`);
@@ -151,7 +123,6 @@ import QuizList from './Quiz/Lists/QuizList.vue';
 import QuizSubmitList from './Quiz/Lists/QuizSubmitList.vue';
 import MarkButton from './components/MarkButton.vue';
 import TaskDetail from './Student/TaskDetail.vue';
-import SyncLoader from './components/SyncLoader.vue';
 import EditTask from './Teacher/EditTask/EditTask.vue';
 import ClassList from './Teacher/ClassList.vue';
 import PipelineStatus from './components/PipelineStatus.vue';
@@ -229,12 +200,9 @@ registerVueComponent('quiz-edit', QuizEdit);
 registerSuspendedVueComponent('quiz-list', QuizList);
 registerSuspendedVueComponent('quiz-submit-list', QuizSubmitList);
 registerVueComponent('color-theme', ColorThemeNew);
-registerSuspendedVueComponent('vue-app', ClassList, (app) => {
+registerSuspendedVueComponent('app', ClassList, (app) => {
     app.use(router);
 });
-
-// TODO: Remove when all Svelte is converted. This will then not needed as custom components.
-registerVueComponent('sync-loader', SyncLoader);
 
 // Function that can be used outside the compiled JavaScript
 // to mount the student page with the passed props.

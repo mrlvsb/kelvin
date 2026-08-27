@@ -24,13 +24,13 @@ def render_custom_error_page(request: HttpRequest, exception):
 @login_required()
 def index(request):
     if is_teacher(request.user):
-        return ui_vue(request)
+        return ui(request)
     return student_index(request)
 
 
 @login_required
-def ui_vue(request):
-    return render(request, "web/ui_vue.html")
+def ui(request):
+    return render(request, "web/ui.html")
 
 
 @user_passes_test(is_teacher)
