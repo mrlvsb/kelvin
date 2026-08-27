@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineProps } from 'vue';
+import { computed } from 'vue';
 import { safeMarkdown } from '../markdown.js';
 
 const props = defineProps({ content: { type: String, default: '' } });

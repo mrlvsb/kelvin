@@ -28,11 +28,6 @@ def index(request):
     return student_index(request)
 
 
-@login_required
-def ui(request):
-    return render(request, "web/ui.html")
-
-
 @user_passes_test(is_teacher)
 def import_inbus(request):
     return render(request, "web/inbusimport.html", {})
