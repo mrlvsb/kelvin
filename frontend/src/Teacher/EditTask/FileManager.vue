@@ -14,7 +14,7 @@
  */
 
 import { ref, watch, triggerRef } from 'vue';
-import { fetch } from '../../api';
+import { getDataWithCSRF } from '../../utilities/api';
 import {
   useReadableSvelteStore,
   useWritableSvelteStore
@@ -148,7 +148,7 @@ pipeline:
 }
 
 async function reevaluate() {
-  await fetch(`/api/reevaluate_task/${taskid}`, { method: 'POST' });
+  await getDataWithCSRF(`/api/reevaluate_task/${taskid}`, 'POST');
 }
 
 /**

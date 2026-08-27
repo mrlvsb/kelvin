@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { csrfToken } from '../utilities/api';
+import { sendFormWithCSRF } from '../utilities/api';
 
 interface Props {
   submits: number;
@@ -57,11 +57,7 @@ async function save() {
   const form = new FormData();
   form.append('assigned_points', String(value.value));
 
-  await fetch(`/submit/${props.submit_id}/points`, {
-    method: 'POST',
-    headers: { 'X-CSRFToken': csrfToken() },
-    body: form
-  });
+  await sendFormWithCSRF(`/submit/${props.submit_id}/points`, form);
 
   displayPoints.value = value.value;
   saving.value = false;

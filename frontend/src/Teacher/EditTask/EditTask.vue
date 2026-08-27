@@ -16,7 +16,7 @@ import RoomsSelect from './RoomsSelect.vue';
 import { useReadableSvelteStore } from '../../utilities/useSvelteStoreInVue';
 import { User, Semester, FileEntry } from '../../utilities/SvelteStoreTypes';
 import AutoCompleteTaskPath from './AutoCompleteTaskPath.vue';
-import { fetch } from '../../api';
+import { getDataWithCSRF, getFromAPI } from '../../utilities/api';
 import { useRouter, useRoute } from 'vue-router';
 import { Room } from './RoomInterface';
 
@@ -101,8 +101,8 @@ const taskLink = computed(() => {
  * Used when we want to create new task
  */
 async function prepareCreatingTask(): Promise<void> {
-  const res = await fetch('/api/subject/' + route.params.subject);
-  const json = await res.json();
+  const json = await getFromAPI<{ classes: Class[] }>('/api/subject/' + route.params.subject);
+  if (!json) return;
 
   const current_path = [route.params.subject, semester.value['abbr'], user.value.username].join(
     '/'
@@ -125,8 +125,9 @@ async function prepareCreatingTask(): Promise<void> {
  * @param redirectTo we can load task from EditTask page, then we need to reload to reflect id in URL
  */
 async function loadTask(id: number, redirectTo: boolean = true): Promise<void> {
-  const req = await fetch('/api/tasks/' + id);
-  task.value = await req.json();
+  const loaded = await getFromAPI<Task>('/api/tasks/' + id);
+  if (!loaded) return;
+  task.value = loaded;
   savedPath.value = task.value['path'];
   fs.setRoot(task.value.files, task.value.files_uri);
   await fs.open('readme.md');
@@ -145,8 +146,7 @@ onMounted(async () => {
 });
 
 onMounted(async () => {
-  const req = await fetch('/api/classrooms-list/');
-  allRoomsList.value = await req.json();
+  allRoomsList.value = (await getFromAPI<Room[]>('/api/classrooms-list/')) ?? [];
 });
 
 function synchronizePathWithReadMeTitle(): void {
@@ -203,12 +203,21 @@ watch(openedFiles, () => {
 async function save(): Promise<void> {
   syncing.value = true;
 
-  const res = await fetch('/api/tasks/' + (route.params.id ? route.params.id : ''), {
-    method: 'POST',
-    body: JSON.stringify(toRaw(task.value))
-  });
+  const json = await getDataWithCSRF<{
+    errors: string[];
+    classes: Class[];
+    task_link: string;
+    path: string;
+    can_delete: boolean;
+    files_uri: string;
+    id: number;
+  }>('/api/tasks/' + (route.params.id ? route.params.id : ''), 'POST', toRaw(task.value));
 
-  const json = await res.json();
+  if (!json) {
+    syncing.value = false;
+    return;
+  }
+
   errors.value = json['errors'];
 
   if (errors.value.length == 0) {
@@ -295,11 +304,12 @@ function setRelativeDeadlineToAssigned(assigned: Date, deadline: Date): void {
 async function duplicateTask(): Promise<void> {
   await save();
 
-  let res = await fetch(`/api/tasks/${task.value.id}/duplicate`, {
-    method: 'POST'
-  });
+  const json = await getDataWithCSRF<{ id: number }>(
+    `/api/tasks/${task.value.id}/duplicate`,
+    'POST'
+  );
+  if (!json) return;
 
-  let json = await res.json();
   await router.push('/task/edit/' + json.id);
   await loadTask(json.id);
 }
@@ -307,11 +317,12 @@ async function duplicateTask(): Promise<void> {
 async function deleteTask(proceed: boolean): Promise<void> {
   deleteModal.value = false;
   if (proceed) {
-    const res = await fetch(`/api/tasks/${route.params.id}`, {
-      method: 'DELETE'
-    });
+    const json = await getDataWithCSRF<{ errors?: string[] }>(
+      `/api/tasks/${route.params.id}`,
+      'DELETE'
+    );
 
-    const json = await res.json();
+    if (!json) return;
 
     if (json['errors']) {
       errors.value = json['errors'];

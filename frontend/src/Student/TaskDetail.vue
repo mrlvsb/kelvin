@@ -5,7 +5,7 @@ import SummaryComments from '../components/submit/SummaryComments.vue';
 import SubmitsDiff from '../components/submit/SubmitsDiff.vue';
 import TaskDetailSidebar from './TaskDetailSidebar.vue';
 import TaskDetailContent from './TaskDetailContent.vue';
-import { fetch } from '../api';
+import { getFromAPI } from '../utilities/api';
 import { user } from '../global';
 import { markRead } from '../utilities/notifications';
 import { hideComments, viewMode, HideCommentsState, ViewModeState } from '../stores';
@@ -178,16 +178,11 @@ type CommentSavePayload = {
 const addNewComment = async (comment: CommentSavePayload) => {
   const { success, ...payload } = comment;
 
-  const res = await fetch(props.commentUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(payload)
-  });
-
-  const json = await res.json();
-  if (res.ok && success) {
+  const json = await getFromAPI<Comment>(props.commentUrl, 'POST', payload);
+  if (!json) {
+    return;
+  }
+  if (success) {
     success();
   }
 
@@ -218,15 +213,7 @@ const addNewComment = async (comment: CommentSavePayload) => {
 };
 
 const updateComment = async (id: number, text: string) => {
-  await fetch(`${props.commentUrl}/${id}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      text
-    })
-  });
+  await getFromAPI(`${props.commentUrl}/${id}`, 'PATCH', { text });
 
   updateCommentProps(id, text === '' ? null : { text });
 };
@@ -561,8 +548,16 @@ const findFirstFileIndex = () => {
 };
 
 const load = async () => {
-  const res = await fetch(props.url);
-  const json = await res.json();
+  const json = await getFromAPI<{
+    current_submit: number;
+    deadline: number | string | null;
+    submits: Submit[];
+    sources: Source[];
+    summary_comments: Comment[];
+  }>(props.url);
+  if (!json) {
+    return;
+  }
 
   current_submit.value = json.current_submit;
   deadline.value = json.deadline;
