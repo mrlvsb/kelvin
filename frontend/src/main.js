@@ -42,7 +42,6 @@ import AnsiUp from 'ansi_up';
 import App from './App.svelte';
 import ColorTheme from './ColorTheme.svelte';
 import { safeMarkdown } from './markdown.js';
-import PipelineStatus from './PipelineStatus.svelte';
 
 class ReplaceHtmlElement extends HTMLElement {
     constructor() {
@@ -117,7 +116,6 @@ const cookies = getCookies();
 const enableNewUI = Object.keys(cookies).includes('newUI') && cookies['newUI'] != 0;
 
 createElement('app', App);
-createElement('pipeline-status', PipelineStatus);
 
 if (!enableNewUI) createElement('color-theme', ColorTheme);
 
@@ -164,6 +162,7 @@ import TaskDetail from './Student/TaskDetail.vue';
 import SyncLoader from './components/SyncLoader.vue';
 import EditTask from './Teacher/EditTask/EditTask.vue';
 import ClassList from './Teacher/ClassList.vue';
+import PipelineStatus from './components/PipelineStatus.vue';
 import { loadInfo } from './utilities/global';
 
 const router = createRouter({
@@ -230,6 +229,7 @@ registerSuspendedVueComponent('student-transfer', StudentTransfer);
 registerSuspendedVueComponent('inbus-import', InbusImport);
 registerVueComponent('notifications', NotificationsNew);
 registerVueComponent('toast', Toast);
+registerVueComponent('pipeline-status', PipelineStatus);
 registerSuspendedVueComponent('submit-sources', TaskDetail);
 registerVueComponent('upload-solution', UploadSolution);
 registerVueComponent('quiz', Quiz);
