@@ -439,12 +439,21 @@ def parse_config_jobs(value: list[Any]) -> list[WorkflowJob]:
                 image = args.pop("image", None)
                 before = args.pop("before", None)
                 executable = args.pop("executable", None)
+
+                # We construct the kwargs manually to keep the default argument values in TestsJob
+                kwargs = {}
+                if image is not None:
+                    kwargs["image_name"] = image
+                if before is not None:
+                    kwargs["before"] = before
+                if executable is not None:
+                    kwargs["executable"] = executable
+                if per_test_timeout is not None:
+                    kwargs["per_test_timeout"] = per_test_timeout
+
                 pipeline = TestsJob(
-                    executable=executable,
-                    per_test_timeout=per_test_timeout,
-                    before=before,
                     limits=limits,
-                    image_name=image,
+                    **kwargs,
                 )
             elif pipecls:
                 pipeline = pipecls(**args)
