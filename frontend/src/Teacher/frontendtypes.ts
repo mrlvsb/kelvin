@@ -10,7 +10,8 @@ export interface Assignment {
     assigned: string | Date; // datetime
     deadline: string | Date; // datetime
     max_points: number;
-    students: AssignmentStudent[];
+    task_type: string | null;
+    students: Record<string, AssignmentStudent>;
 }
 
 export interface StudentIdentity {
@@ -25,13 +26,37 @@ export interface AssignmentStudent {
     submits_with_assigned_pts: number;
     first_submit_date: string; // datetime
     last_submit_date: string; // datetime
-    points: null | unknown;
-    max_points: null | unknown;
-    assigned_points: number;
+    points: null | number;
+    max_points: null | number;
+    assigned_points: number | null;
     accepted_submit_num: number;
     accepted_submit_id: number;
+    has_final_submit?: boolean;
     color: string;
     link: string; // URL
+}
+
+export interface Quiz {
+    quiz_id: number;
+    quiz_link: string; // URL
+    quiz_edit_link: string; // URL
+    assigned_id: number;
+    name: string;
+    name_lower: string;
+    assigned: string | Date; // datetime
+    deadline: string | Date; // datetime
+    max_points: number;
+    students: Record<string, QuizStudent>;
+}
+
+export interface QuizStudent {
+    student: string; // login
+    score: number | null;
+    scoring_link?: string; // URL
+    max_points: number;
+    color?: string;
+    submitted: boolean;
+    submitted_at: string | null;
 }
 
 export interface Class {
@@ -40,8 +65,10 @@ export interface Class {
     timeslot: string;
     code: string;
     subject_abbr: string;
+    room: string | null;
     csv_link: string; // URL
     assignments: Assignment[];
+    quizzes: Quiz[];
     summary: string;
     students: StudentIdentity[];
 }

@@ -4,16 +4,18 @@ import AddStudentsToClass from './AddStudentsToClass.vue';
 import Markdown from '../components/Markdown.vue';
 import AssignmentPoints from './AssignmentPoints.vue';
 import { type Class, type StudentIdentity } from './frontendtypes';
+import { type User } from '../utilities/global';
+import { localStorageStore } from '../utilities/storage';
 
-const { clazz } = defineProps<{
+const { clazz, user } = defineProps<{
   clazz: Class;
+  user: User;
 }>();
 
 const showStudentsList = ref(clazz.students.length < 50);
 const showAddStudents = ref(clazz.students.length === 0);
-const showFullTaskNames = ref(false);
+const showFullTaskNames = localStorageStore<boolean>('classDetail/showFullNames', false);
 const showSummary = ref(false);
-const user = ref({ is_staff: true }); // FIXME: Get user from /api/info
 const emit = defineEmits<{ (e: 'update'): void }>();
 
 async function handleUpdate() {
@@ -25,61 +27,17 @@ const totalMaxPoints = computed(() =>
   clazz.assignments.reduce((sum, task) => sum + task.max_points, 0)
 );
 
+const isNumeric = (v: number | null | undefined) =>
+  v !== null && v !== undefined && !isNaN(Number(v));
+
 const studentPoints = (student: StudentIdentity) => {
   return clazz.assignments
     .map((i) => i.students[student.username])
-    .filter(
-      (result) => result && result.submits !== 0 && !isNaN(parseFloat(result.assigned_points))
-    )
-    .map((result) => parseFloat(result.assigned_points))
+    .filter((result) => result && result.submits !== 0 && isNumeric(result.assigned_points))
+    .map((result) => Number(result.assigned_points))
     .reduce((acc, val) => acc + val, 0)
     .toFixed(2);
 };
-
-/*
-export default {
-  name: 'ClassDetail',
-  components: {AssignmentPoints}, //{ AddStudentsToClass, Markdown },
-  props: {
-    clazz: {
-      type: Object as PropType<typeof Class>,
-      required: true
-    }
-  },
-  setup(props) {
-    const showStudentsList = ref(props.clazz.students.length < 50);
-    const showAddStudents = ref(props.clazz.students.length === 0);
-    const showFullTaskNames = ref(false);
-    const showSummary = ref(false);
-    const user = ref({ is_staff: true });
-
-    const totalMaxPoints = computed(() =>
-      props.clazz.assignments.reduce((sum, task) => sum + task.max_points, 0)
-    );
-
-    const studentPoints = (student: typeof Student) => {
-      return props.clazz.assignments
-        .map((i) => i.students[student.username])
-        .filter(
-          (result) => result && result.submits !== 0 && !isNaN(parseFloat(result.assigned_points))
-        )
-        .map((result) => parseFloat(result.assigned_points))
-        .reduce((acc, val) => acc + val, 0)
-        .toFixed(2);
-    };
-
-    return {
-      showStudentsList,
-      showAddStudents,
-      showFullTaskNames,
-      showSummary,
-      user,
-      studentPoints,
-      totalMaxPoints
-    };
-  }
-};
-*/
 </script>
 
 <template>
@@ -116,7 +74,9 @@ export default {
         </a>
       </div>
       <button class="btn" @click="showStudentsList = !showStudentsList">
-        {{ clazz.subject_abbr }} {{ clazz.timeslot }} {{ clazz.code }} {{ clazz.teacher_username }}
+        {{ clazz.subject_abbr }}
+        <template v-if="clazz.room">{{ clazz.room }}</template>
+        {{ clazz.timeslot }} {{ clazz.code }} {{ clazz.teacher_username }}
         <span class="text-muted d-none d-md-inline">({{ clazz.students.length }} students)</span>
       </button>
     </div>
@@ -180,7 +140,7 @@ export default {
   </div>
 </template>
 
-<style>
+<style scoped>
 td,
 th {
   white-space: nowrap;

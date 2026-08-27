@@ -1,5 +1,4 @@
 import { getFromAPI } from './api';
-import { localStorageStore } from './storage';
 
 export interface Semester {
     begin: string | Date;
@@ -23,19 +22,21 @@ export interface APIInfoResponse {
     user: User;
 }
 
-// TODO: cache data with expiry time
-export const loadInfo = async (forceDataRefresh = false) => {
-    const user = localStorageStore<User | undefined>('user', undefined);
-    const semester = localStorageStore<Semester | undefined>('semester', undefined);
-
-    if (!user.value || !semester.value || forceDataRefresh) {
-        const data = await getFromAPI<APIInfoResponse>('/api/info');
-        data['semester']['begin'] = new Date(data['semester']['begin']);
-        data['semester']['begin'].setHours(0);
-
-        user.value = data['user'];
-        semester.value = data['semester'];
+/**
+ * Fetch the current user and semester from /api/info.
+ *
+ * Not cached: call this once at the root of a page's component tree and pass the
+ * result down via props.
+ */
+export const loadInfo = async (): Promise<APIInfoResponse> => {
+    const data = await getFromAPI<APIInfoResponse>('/api/info');
+    if (!data) {
+        throw new Error('Failed to load /api/info');
     }
 
-    return [user, semester] as const;
+    const begin = new Date(data.semester.begin);
+    begin.setHours(0);
+    data.semester.begin = begin;
+
+    return data;
 };

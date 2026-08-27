@@ -2,8 +2,10 @@
 import { ref, watch, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { getFromAPI } from '../utilities/api';
-import { loadInfo } from '../utilities/global';
+import { type User } from '../utilities/global';
 import { type ClassesByTeacher } from './frontendtypes';
+
+const { user } = defineProps<{ user: User }>();
 
 const router = useRouter();
 const route = useRoute();
@@ -29,8 +31,6 @@ const clazz = ref('');
 
 const isLoading = ref(true);
 
-const [user] = await loadInfo(true);
-
 async function load() {
   const res = await getFromAPI<{ semesters: ClassesByTeacher }>('/api/classes/all');
   semesters.value = res.semesters;
@@ -55,7 +55,7 @@ async function load() {
   semester.value =
     (route.query.semester as string) || sem_sorted.value[sem_sorted.value.length - 1] || '';
   subject.value = (route.query.subject as string) || '';
-  teacher.value = (route.query.teacher as string) || user.value.username;
+  teacher.value = (route.query.teacher as string) || user.username;
   clazz.value = (route.query.class as string) || '';
 
   isLoading.value = false;
@@ -68,9 +68,9 @@ function resetClass() {
 function fillTeacher() {
   if (
     subject.value &&
-    semesters.value[semester.value]?.[subject.value]?.hasOwnProperty(user.value.username)
+    semesters.value[semester.value]?.[subject.value]?.hasOwnProperty(user.username)
   ) {
-    teacher.value = user.value.username;
+    teacher.value = user.username;
   }
   resetClass();
 }

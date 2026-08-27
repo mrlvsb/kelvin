@@ -1,22 +1,36 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { getFromAPI } from '../utilities/api';
+import { computed, ref } from 'vue';
+import { csrfToken } from '../utilities/api';
 
 interface Props {
   submits: number;
   link: string;
   color: string;
-  assigned_points: string;
+  assigned_points?: number | null;
   login: string;
   task: string;
   submit_id: number;
+  has_final_submit?: boolean;
 }
 
 const props = defineProps<Props>();
 
 const show = ref(false);
 const saving = ref(false);
-const value = ref(props.assigned_points);
+const value = ref<number | string>(props.assigned_points ?? '');
+// Locally reflects the assigned points after a successful save, mirroring the
+// Svelte component which mutated its own prop copy.
+const displayPoints = ref<number | string | null | undefined>(props.assigned_points);
+
+// Text shown in the cell: the points if numeric, otherwise "F" for a final
+// submit without points, or "?" for an ungraded submit.
+const pointsText = computed(() => {
+  const p = displayPoints.value;
+  if (p === null || p === undefined || p === '' || isNaN(Number(p))) {
+    return props.has_final_submit ? 'F' : '?';
+  }
+  return String(p);
+});
 
 // Event handlers
 function hide() {
@@ -41,14 +55,15 @@ async function save() {
   saving.value = true;
 
   const form = new FormData();
-  form.append('assigned_points', value.value);
+  form.append('assigned_points', String(value.value));
 
-  await getFromAPI(`/submit/${props.submit_id}/points`, 'POST', form);
+  await fetch(`/submit/${props.submit_id}/points`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': csrfToken() },
+    body: form
+  });
 
-  // FIXME: Update prop (normally you’d emit this change instead of modifying props directly)
-  // props.assigned_points = value.value; ❌ not allowed
-  // You might need to emit the change if parent cares
-
+  displayPoints.value = value.value;
   saving.value = false;
   show.value = false;
 }
@@ -56,8 +71,13 @@ async function save() {
 
 <template>
   <div ref="container" @contextmenu.prevent="ctxMenu" @keydown.esc="hide" @click="click">
-    <a v-if="submits !== 0" :href="link" :style="{ color: color }">
-      {{ isNaN(parseFloat(assigned_points)) ? '?' : assigned_points }}
+    <a
+      v-if="submits !== 0"
+      :href="link"
+      :style="{ color: color }"
+      :title="pointsText === 'F' ? 'Final' : undefined"
+    >
+      {{ pointsText }}
     </a>
 
     <div v-if="show" class="overlay">
