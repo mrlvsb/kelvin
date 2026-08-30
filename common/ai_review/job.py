@@ -11,6 +11,7 @@ from serde.json import to_json
 
 from common.ai_review.dto import EmbeddedFile, AIReviewResult, LlmReviewPromptDTO, LlmConfig
 from common.ai_review.llm_reviewer import AISubmitReview
+from common.ai_review.openai_config import get_openai_server
 from common.utils import download_source_to_path
 
 # Available file extensions and their corresponding programming languages
@@ -33,6 +34,7 @@ def detect_language(filename: str) -> Optional[str]:
 
 def upload_result(submit_url: str, result: AIReviewResult) -> None:
     session = requests.Session()
+
     # Disable SSL verification in DEBUG mode (local Docker development environment).
     #
     # EXPLANATION:
@@ -102,6 +104,7 @@ def review_job(
 ) -> None:
     logging.info(f"Summarizing {submit_url}")
 
+    # Download files and embed them
     with tempfile.TemporaryDirectory() as workdir:
         download_source_to_path(f"{submit_url}download?token={token}", workdir)
         embedded_files = embed_source_files(workdir)
@@ -111,14 +114,30 @@ def review_job(
     prompt_json.raise_for_status()
     prompt: LlmReviewPromptDTO = from_dict(LlmReviewPromptDTO, prompt_json.json())
 
+    # Resolve the OpenAI configuration
+    server = get_openai_server(llm_config.server_id)
+    model = llm_config.model_id or server.models[0]
+
+    # Check if model is available on the server
+    if server.models and model not in server.models:
+        logging.error(
+            f"Model '{model}' is not available on server '{server.id}'. "
+            f"Available models: {server.models}"
+        )
+        raise ValueError(f"Model '{model}' is not available on server '{server.id}'")
+
     summarizer: AISubmitReview = AISubmitReview(
         files=embedded_files,
         model=llm_config.model,
         prompt=prompt,
+        server=server,
         language=llm_config.language,
     )
 
-    logging.info(f"Calling OpenAI model for review with total {len(embedded_files)} files...")
+    logging.info(
+        f"Calling OpenAI model for review with total {len(embedded_files)} files "
+        f"(server={server.id}, model={model})..."
+    )
     result: AIReviewResult = summarizer.process()
 
     upload_result(f"{upload_url}?token={token}", result)
