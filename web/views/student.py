@@ -716,7 +716,10 @@ def task_asset(request: HttpRequest, task_name: str, path: str) -> HttpResponse:
             return HttpResponse(status=204)
         elif request.method == "DELETE":
             try:
-                os.unlink(system_path)
+                if os.path.isdir(system_path):
+                    shutil.rmtree(system_path, ignore_errors=True)
+                else:
+                    os.unlink(system_path)
             except FileNotFoundError:
                 pass
             return HttpResponse(status=204)
