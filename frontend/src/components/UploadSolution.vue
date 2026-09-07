@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import uppie from 'uppie';
-import { csrfToken } from '../api';
+import { csrfToken } from '../utilities/api';
 import VueModal from './VueModal.vue';
 import { toastApi } from '../utilities/toast';
 

@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import CodeRow from './CodeRow.vue';
 import hljs from 'highlight.js/lib/core';
+import type { User } from '../../utilities/global';
 import type { Comment } from '../../types/TaskDetail';
 
 const props = withDefaults(
@@ -10,6 +11,7 @@ const props = withDefaults(
     comments?: Record<string, Comment[]>;
     selectedRows?: { from: number; to: number } | null;
     path: string;
+    currentUser: User;
   }>(),
   {
     comments: () => ({}),
@@ -109,6 +111,7 @@ const mouseover = (event: MouseEvent) => {
       :line="line"
       :line-number="index + 1"
       :comments="commentsByLine[index]"
+      :current-user="props.currentUser"
       :show-adding-form="addingCommentToLine === index + 1"
       :selected="selectedRows && index + 1 >= selectedRows.from && index + 1 <= selectedRows.to"
       :scroll="selectedRows && !userSelected && index + 1 === selectedRows.from"

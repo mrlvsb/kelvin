@@ -34,15 +34,13 @@ hljs.highlightAll();
 
 import * as Diff2Html from 'diff2html';
 import 'diff2html/bundles/css/diff2html.min.css';
+
 window.Diff2Html = Diff2Html;
 
 // Import iconify icons used in UI, don't remove this line (almost forgot to put it back)
 import '@iconify/iconify';
 import AnsiUp from 'ansi_up';
-import App from './App.svelte';
-import ColorTheme from './ColorTheme.svelte';
 import { safeMarkdown } from './markdown.js';
-import PipelineStatus from './PipelineStatus.svelte';
 
 class ReplaceHtmlElement extends HTMLElement {
     constructor() {
@@ -58,6 +56,7 @@ class ReplaceHtmlElement extends HTMLElement {
             { once: true }
         );
     }
+
     connectedCallback() {
         this.style.display = 'none';
     }
@@ -83,43 +82,6 @@ customElements.define(
         }
     }
 );
-
-function createElement(name, component) {
-    customElements.define(
-        'kelvin-' + name,
-        class extends HTMLElement {
-            connectedCallback() {
-                let attrs = {};
-                for (let i = 0; i < this.attributes.length; i++) {
-                    let attr = this.attributes[i];
-                    let name = attr.name.replace('-', '_');
-                    if (attr.value[0] == '{' || attr.value[0] == '[') {
-                        attrs[name] = JSON.parse(attr.value);
-                    } else {
-                        attrs[name] = attr.value;
-                    }
-                }
-
-                new component({
-                    target: this,
-                    props: attrs
-                });
-            }
-        }
-    );
-}
-
-const getCookies = () => {
-    return Object.fromEntries(document.cookie.split('; ').map((cookie) => cookie.split('=')));
-};
-
-const cookies = getCookies();
-const enableNewUI = Object.keys(cookies).includes('newUI') && cookies['newUI'] != 0;
-
-createElement('app', App);
-createElement('pipeline-status', PipelineStatus);
-
-if (!enableNewUI) createElement('color-theme', ColorTheme);
 
 function focusTab() {
     const hash = document.location.hash.replace('#', '').split('-')[0].split(';')[0];
@@ -161,8 +123,10 @@ import QuizList from './Quiz/Lists/QuizList.vue';
 import QuizSubmitList from './Quiz/Lists/QuizSubmitList.vue';
 import MarkButton from './components/MarkButton.vue';
 import TaskDetail from './Student/TaskDetail.vue';
-import SyncLoader from './components/SyncLoader.vue';
 import EditTask from './Teacher/EditTask/EditTask.vue';
+import ClassList from './Teacher/ClassList.vue';
+import PipelineStatus from './components/PipelineStatus.vue';
+import { loadInfo } from './utilities/global';
 
 const router = createRouter({
     history: createWebHistory(),
@@ -228,16 +192,17 @@ registerSuspendedVueComponent('student-transfer', StudentTransfer);
 registerSuspendedVueComponent('inbus-import', InbusImport);
 registerVueComponent('notifications', NotificationsNew);
 registerVueComponent('toast', Toast);
-registerVueComponent('submit-sources', TaskDetail);
+registerVueComponent('pipeline-status', PipelineStatus);
+registerSuspendedVueComponent('submit-sources', TaskDetail);
 registerVueComponent('upload-solution', UploadSolution);
 registerVueComponent('quiz', Quiz);
 registerVueComponent('quiz-edit', QuizEdit);
 registerSuspendedVueComponent('quiz-list', QuizList);
 registerSuspendedVueComponent('quiz-submit-list', QuizSubmitList);
-if (enableNewUI) registerVueComponent('color-theme', ColorThemeNew);
-
-// TODO: Remove when all Svelte is converted. This will then not needed as custom components.
-registerVueComponent('sync-loader', SyncLoader);
+registerVueComponent('color-theme', ColorThemeNew);
+registerSuspendedVueComponent('app', ClassList, (app) => {
+    app.use(router);
+});
 
 // Function that can be used outside the compiled JavaScript
 // to mount the student page with the passed props.
@@ -262,7 +227,8 @@ function mountMarkButton(id, props) {
 }
 
 async function mountEditTask(id) {
-    const app = createApp(EditTask);
+    const { user, semester } = await loadInfo();
+    const app = createApp(EditTask, { user, semester });
     app.use(router);
     await router.isReady();
     app.mount(id);

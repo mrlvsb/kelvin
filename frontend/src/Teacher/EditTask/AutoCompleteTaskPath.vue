@@ -4,19 +4,19 @@
  * It also allows user to copy entered path in SSH/RSYNC format to clipboard.
  */
 
-import { user as userSvelte } from '../../global.js';
 import { clickOutside } from '../../utilities/clickOutside';
-import { User } from '../../utilities/SvelteStoreTypes';
-import { useReadableSvelteStore } from '../../utilities/useSvelteStoreInVue';
+import type { User } from '../../utilities/global';
 import { defineModel, onMounted, computed, ref, watch, defineEmits } from 'vue';
 import CopyToClipboard from '../../components/CopyToClipboard.vue';
 
 /**
  * @prop {string}                     subject  - subject code used to get autocomplete hints
+ * @prop {User}                       user     - the logged-in user (from /api/info, via EditTask)
  * @prop {(task_id: number) => void}  onChange - function called once user select item from list
  */
-let { subject, onChange } = defineProps<{
+let { subject, user, onChange } = defineProps<{
   subject: string;
+  user: User;
   onChange: (task_id: number) => void;
 }>();
 
@@ -41,8 +41,6 @@ interface TaskList {
   date: Date;
   link: string;
 }
-
-const user = useReadableSvelteStore<User>(userSvelte);
 
 const items = ref<TaskList[]>([]);
 const selectedId = ref<number | null>(null);

@@ -1,4 +1,3 @@
-import { svelte } from '@sveltejs/vite-plugin-svelte';
 import vue from '@vitejs/plugin-vue';
 import autoprefixer from 'autoprefixer';
 import { defineConfig } from 'vite';
@@ -13,10 +12,7 @@ export default defineConfig((env) => {
             __VUE_PROD_DEVTOOLS__: false
         },
         plugins: [
-            vue(),
-            svelte({
-                emitCss: true
-            })
+            vue()
         ],
         build: {
             lib: {

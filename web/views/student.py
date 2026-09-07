@@ -420,12 +420,17 @@ def task_detail(
 
         job_status = get_submit_job_status(current_submit.jobid)
 
-        if not job_status.finished:
+        if job_status.status == "failed":
+            # A failed job is terminal: the pipeline-status component shows the
+            # failure message and stops polling, so the tab icon must not spin.
+            data["job_status"] = True
+            result_icon = "akar-icons:cross"
+        elif not job_status.finished:
             data["job_status"] = True
             result_icon = "line-md:loading-loop"
         else:
             data["job_status"] = False
-            if job_status.status == "failed" or has_failure:
+            if has_failure:
                 result_icon = "akar-icons:cross"
             else:
                 result_icon = "mdi:success-circle-outline"

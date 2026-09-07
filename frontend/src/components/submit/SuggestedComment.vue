@@ -3,10 +3,9 @@ import { computed, ref } from 'vue';
 import CommentForm from './CommentForm.vue';
 import StarRating from '../StarRating.vue';
 import { safeMarkdown } from '../../markdown.js';
-import { user } from '../../global.js';
 import { hideComments, HideCommentsState } from '../../stores';
-import { useSvelteStore } from '../../utilities/useSvelteStore';
-import { fetch as apiFetch } from '../../api.js';
+import { getFromAPI } from '../../utilities/api';
+import type { User } from '../../utilities/global';
 import { Comment } from '../../types/TaskDetail';
 import { toastApi } from '../../utilities/toast';
 
@@ -14,6 +13,7 @@ const props = withDefaults(
   defineProps<{
     comment: Comment;
     summary?: boolean;
+    currentUser: User;
   }>(),
   {
     summary: false
@@ -26,8 +26,7 @@ const editing = ref(false);
 const sending = ref(false);
 const committedRating = ref(props.comment.meta?.review?.rating ?? 0);
 
-const currentUser = useSvelteStore(user, null);
-const hideCommentsValue = useSvelteStore(hideComments, HideCommentsState.NONE);
+const hideCommentsValue = hideComments;
 
 const showComment = computed(() => {
   return !(
@@ -38,8 +37,7 @@ const showComment = computed(() => {
 
 type SuggestionRequestOptions = {
   method: 'POST' | 'DELETE' | 'PATCH';
-  headers: Record<string, string>;
-  body?: string;
+  body?: unknown;
 };
 
 const resolveSuggestion = async <T,>(
@@ -48,21 +46,10 @@ const resolveSuggestion = async <T,>(
   onFinish: (() => void) | null = null
 ): Promise<{ data?: T; error?: string }> => {
   try {
-    const response = await apiFetch(url, options);
+    const data = await getFromAPI<T>(url, options.method, options.body);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-
-      return {
-        error: errorData?.detail || 'Unexpected error occurred. Please try again.'
-      };
-    }
-
-    const data = (await response.json().catch(() => null)) as T | null;
-    if (data === null) {
-      return {
-        error: 'Unexpected error occurred. Please try again.'
-      };
+    if (data === undefined) {
+      return { error: 'Unexpected error occurred. Please try again.' };
     }
 
     return { data };
@@ -83,10 +70,7 @@ const handleAccept = async () => {
   const { data, error } = await resolveSuggestion<Comment>(
     `/api/v2/llm/suggestions/${suggestionId}`,
     {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      method: 'POST'
     },
     () => {
       sending.value = false;
@@ -117,10 +101,7 @@ const handleReject = async () => {
   const { error } = await resolveSuggestion<{ status: string }>(
     `/api/v2/llm/suggestions/${suggestionId}`,
     {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      method: 'DELETE'
     },
     () => {
       sending.value = false;
@@ -152,12 +133,9 @@ const handleSave = async (text: string) => {
     `/api/v2/llm/suggestions/${suggestionId}`,
     {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
+      body: {
         modified_text: text
-      })
+      }
     },
     () => {
       sending.value = false;
@@ -193,13 +171,10 @@ const handleRating = async (rating: number) => {
     `/api/v2/llm/suggestions/${suggestionId}/rate`,
     {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
+      body: {
         commentId: suggestionId,
         rating
-      })
+      }
     },
     () => {
       sending.value = false;
