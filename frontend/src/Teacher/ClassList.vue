@@ -82,14 +82,18 @@ function reloadClasses() {
   loadClasses();
 }
 
-// Watch route query changes
+// Watch route query changes (e.g. browser back/forward). Query params are omitted
+// from the URL when empty (see ClassFilter), so a missing param here means the
+// filter was explicitly cleared, not that the default should be reapplied -
+// otherwise clearing e.g. the teacher filter would silently snap back to the
+// current user after the route update.
 watch(
   () => route.query,
   (newQuery) => {
     filter.value = {
       semester: (newQuery.semester as string) || semester.abbr,
       subject: (newQuery.subject as string) || null,
-      teacher: (newQuery.teacher as string) || user.username,
+      teacher: (newQuery.teacher as string) || '',
       class: (newQuery.class as string) || null
     };
     loadClasses();
