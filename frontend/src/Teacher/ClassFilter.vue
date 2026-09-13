@@ -130,28 +130,40 @@ watch([semester, subject, teacher], () => {
     return;
   }
 
-  // Reset teacher if it doesn't exist for selected subject
-  if (subject.value && teacher.value && !sem[subject.value]?.hasOwnProperty(teacher.value)) {
+  // Subjects to consider: just the selected one, or all subjects in the semester
+  // when no subject is selected (so the semester alone still scopes the options).
+  const subjectsInSem = subject.value ? [subject.value] : Object.keys(sem);
+
+  // Available teachers across the considered subject(s)
+  const teacherSet = new Set<string>();
+  for (const subj of subjectsInSem) {
+    for (const t in sem[subj]) {
+      teacherSet.add(t);
+    }
+  }
+  teachers.value = sorted([...teacherSet]);
+
+  // Reset teacher if it doesn't exist for the considered subject(s)
+  if (teacher.value && !teacherSet.has(teacher.value)) {
     teacher.value = '';
   }
 
-  // Update available teachers and classes based on selection
-  if (semester.value && subject.value && sem?.[subject.value]) {
-    teachers.value = sorted(Object.keys(sem[subject.value]));
-
-    if (teacher.value && sem[subject.value][teacher.value]) {
-      classes.value = sem[subject.value][teacher.value];
-    } else {
-      const merged: string[] = [];
-      for (const t in sem[subject.value]) {
-        merged.push(...sem[subject.value][t]);
+  // Available classes across the considered subject(s), narrowed by teacher when set
+  const classSet = new Set<string>();
+  for (const subj of subjectsInSem) {
+    if (teacher.value) {
+      for (const c of sem[subj][teacher.value] ?? []) {
+        classSet.add(c);
       }
-      classes.value = merged;
+    } else {
+      for (const t in sem[subj]) {
+        for (const c of sem[subj][t]) {
+          classSet.add(c);
+        }
+      }
     }
-  } else {
-    teachers.value = allTeachers.value;
-    classes.value = allClasses.value;
   }
+  classes.value = sorted([...classSet]);
 });
 
 onMounted(load);
