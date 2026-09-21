@@ -17,8 +17,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get install -y \
     -o APT::Install-Recommends=false \
     -o APT::Install-Suggests=false \
-    dotnet-sdk-9.0 \
-    aspnetcore-runtime-9.0 && \
+    dotnet-sdk-10.0 \
+    aspnetcore-runtime-10.0 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
