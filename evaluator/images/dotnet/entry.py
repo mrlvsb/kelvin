@@ -84,10 +84,13 @@ def get_executable_project_names(directory: Path) -> List[str]:
     return names
 
 
+SOLUTION_SUFFIXES = (".sln", ".slnx")
+
+
 def find_nested_sln(path):
     for i in os.scandir(path):
         if i.is_file():
-            if Path(i.path).suffix == ".sln":
+            if Path(i.path).suffix in SOLUTION_SUFFIXES:
                 return i.path
         elif i.is_dir():
             tmp = find_nested_sln(i.path)
@@ -99,16 +102,18 @@ def find_nested_sln(path):
 def build_dotnet_project(run_tests: bool) -> BuildResult:
     output_dir = "output"
     paths = os.listdir(os.getcwd())
-    sln = [p for p in paths if Path(p).suffix == ".sln"]
+    sln = [p for p in paths if Path(p).suffix in SOLUTION_SUFFIXES]
     csproj = [p for p in paths if Path(p).suffix == ".csproj"]
     nested_sln_path = None
 
     if not sln and not csproj:
         nested_sln_path = find_nested_sln(os.getcwd())
         if nested_sln_path is None:
-            return BuildResult.fail("No .sln or .csproj file was found in the root directory.")
+            return BuildResult.fail(
+                "No .sln, .slnx or .csproj file was found in the root directory."
+            )
     if len(sln) > 1:
-        return BuildResult.fail("Multiple .sln files were found")
+        return BuildResult.fail("Multiple .sln or .slnx files were found")
     if len(csproj) > 1:
         return BuildResult.fail("Multiple .csproj files were found")
 
