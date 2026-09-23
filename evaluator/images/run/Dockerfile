@@ -7,7 +7,8 @@ RUN apt-get update && \
     asciinema \
     imagemagick \
     webp \
-    python3-magic && \
+    python3-magic \
+    openjdk-25-jdk && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 

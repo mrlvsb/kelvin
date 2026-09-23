@@ -4,7 +4,7 @@ RUN apt-get update && \
     apt-get install -y \
     -o APT::Install-Recommends=false \
     -o APT::Install-Suggests=false \
-    openjdk-21-jdk \
+    openjdk-25-jdk \
     wget && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -18,7 +18,7 @@ RUN ln -s /opt/apache-maven-3.9.12/ /opt/maven
 # To find out exact folder path, run the docker image and enter
 # `update-alternatives --config java` or `dirname $(dirname $(readlink -f $(which java)))` command
 # We support only amd64 architecture, so the path is hardcoded to java-21-openjdk-amd64, but it can be changed if needed
-ENV JAVA_HOME="/usr/lib/jvm/java-21-openjdk-amd64"
+ENV JAVA_HOME="/usr/lib/jvm/java-25-openjdk-amd64"
 ENV M2_HOME="/opt/maven"
 ENV MAVEN_HOME="/opt/maven"
 ENV PATH="$M2_HOME/bin:$PATH"
