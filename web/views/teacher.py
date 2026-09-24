@@ -16,6 +16,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_http_methods
 from notifications.models import Notification
 from notifications.signals import notify
 
@@ -163,6 +164,7 @@ def show_task_submits(request: HttpRequest, task_id: int) -> HttpResponse:
     )
 
 
+@require_http_methods(["POST"])
 @user_passes_test(is_teacher)
 def submit_assign_points(request: HttpRequest, submit_id: int) -> HttpResponseRedirect:
     submit = get_object_or_404(Submit, pk=submit_id)
