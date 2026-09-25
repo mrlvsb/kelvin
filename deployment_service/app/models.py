@@ -49,15 +49,22 @@ class DeploymentRequest(BaseModel):
     healthcheck_url: Annotated[
         AnyHttpUrl | None,
         Field(
-            default="https://kelvin.cs.vsb.cz/api/v2/health",
-            description="The URL to check the health of the service.",
+            default=None,
+            description="The URL to check the health of the service. If not provided, the container's internal health status is checked.",
             examples=["https://kelvin.cs.vsb.cz/api/v2/health"],
         ),
     ]
+    health_check_timeout: int | None = Field(
+        default=None,
+        description="Optional timeout for the health check in seconds. Defaults to global setting if not provided.",
+        examples=[120],
+    )
 
     @field_validator("healthcheck_url", mode="after")
     @classmethod
-    def validate_healthcheck_url(cls, value: AnyHttpUrl) -> AnyHttpUrl:
+    def validate_healthcheck_url(cls, value: AnyHttpUrl | None) -> AnyHttpUrl | None:
+        if value is None:
+            return value
         host = value.host
         if host not in get_settings().security.allowed_hosts:
             raise ValueError(
