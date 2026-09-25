@@ -286,7 +286,7 @@ function assignSameToAll(templateClass: Class): void {
       cl.assigned = templateClass.assigned;
       cl.deadline = templateClass.deadline;
       cl.hard_deadline = templateClass.hard_deadline;
-      cl.allowed_rooms = [...templateClass.allowed_rooms];
+      cl.allowed_rooms = [...(templateClass.allowed_rooms ?? [])];
     }
   });
 }
