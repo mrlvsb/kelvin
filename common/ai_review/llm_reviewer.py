@@ -1,12 +1,11 @@
 import json
 import logging
 import re
-from typing import List
-
 from openai import OpenAI
 from openai.types.chat import ChatCompletionUserMessageParam, ChatCompletionSystemMessageParam
 from openai.types.shared_params import ResponseFormatJSONObject
 from pycountry import languages
+from typing import List
 
 from common.ai_review.dto import (
     EmbeddedFile,
@@ -15,9 +14,9 @@ from common.ai_review.dto import (
     SubmitSummary,
     SuggestedCommentDTO,
     SuggestionState,
+    OpenAIServerDTO,
 )
 from common.ai_review.dto import LlmReviewPromptDTO
-from kelvin import settings
 
 
 def enumerate_file_lines(content: str) -> str:
@@ -36,12 +35,17 @@ class AISubmitReview:
         files: List[EmbeddedFile],
         model: str,
         prompt: LlmReviewPromptDTO,
+        server: OpenAIServerDTO,
         language: str = "cs",
     ):
         self.files = files
         self.model = model
         self.prompt = prompt
         self.language = language
+        self.client = OpenAI(
+            api_key=server.api_key,
+            base_url=server.base_url,
+        )
 
     def build_user_content(self) -> str:
         lines: List[str] = []
@@ -67,11 +71,6 @@ class AISubmitReview:
         """
 
     def process(self) -> AIReviewResult:
-        client = OpenAI(
-            api_key=settings.OPENAI_API_KEY,
-            base_url=settings.OPENAI_API_URL,
-        )
-
         messages = [
             ChatCompletionSystemMessageParam(content=self.prompt.text, role="system"),
             ChatCompletionUserMessageParam(content=self.build_user_content(), role="user"),
@@ -84,7 +83,7 @@ class AISubmitReview:
             )
             messages.append(translate_prompt)
 
-        response = client.chat.completions.create(
+        response = self.client.chat.completions.create(
             model=self.model,
             messages=messages,
             temperature=0.2,
