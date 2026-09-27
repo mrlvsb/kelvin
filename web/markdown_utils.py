@@ -5,6 +5,7 @@ import hashlib
 import lxml.html as html
 import lxml
 import markdown
+from markdown.extensions.toc import slugify_unicode
 
 from django.urls import reverse
 from django.core.cache import caches
@@ -53,12 +54,16 @@ def markdown_to_html(input: str) -> str:
             # Better list handling
             # Allows nested indents to be just 2 spaces
             "mdx_truly_sane_lists",
+            # Generate ids for headings, so that #id links work
+            "toc",
         ],
         extension_configs={
             "pymdownx.superfences": {
                 # Only allow ``` for code blocks
                 "disable_indented_code_blocks": True
-            }
+            },
+            # Keep diacritics in heading ids
+            "toc": {"slugify": slugify_unicode},
         },
     )
 
