@@ -429,8 +429,8 @@ def parse_config_jobs(value: list[Any]) -> list[WorkflowJob]:
 
             id = f"{counter:03}_{item['type']}"
             args = parsed_job.args
-            limits_args = args.pop("limits", {})
             if job_type == "tests":
+                limits_args = args.pop("limits", {})
                 per_test_timeout = args.pop("timeout", None)
                 if per_test_timeout is not None:
                     per_test_timeout = parse_timeout(per_test_timeout)
