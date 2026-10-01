@@ -133,7 +133,10 @@ tr.linecode td:last-of-type {
   word-break: break-word;
   border: 2px solid var(--bs-body-color);
   border-radius: 5px;
-  max-width: 980px;
+  /* Long source lines can make the code table wider than the visible area,
+  so limit comments to the visible width of the source container
+  (minus space for the line number column). */
+  max-width: min(980px, calc(100cqi - 3em));
   margin-bottom: 1px;
   filter: opacity(0.8);
 }
