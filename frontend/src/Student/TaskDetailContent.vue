@@ -140,6 +140,8 @@ const handleSaveComment = (
   min-width: 0;
   overflow: auto;
   width: 100%;
+  /* Allows comments to be sized relative to the visible width (see CodeRow.vue) */
+  container-type: inline-size;
 }
 
 .file-header-clickable {
