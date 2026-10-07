@@ -1,4 +1,4 @@
-FROM rust:1.90.0
+FROM rust:1.99.0
 
 RUN apt-get update && \
     apt-get install -y \
