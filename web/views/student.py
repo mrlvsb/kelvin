@@ -328,7 +328,7 @@ def task_detail(
     hard_deadline = assignment.hard_deadline and not user_is_teacher
 
     data = {
-        # TODO: task and deadline can be combined into assignment ad deal with it in template
+        # TODO: task and deadline can be combined into assignment and deal with it in template
         "task": assignment.task,
         "teacher": assignment.clazz.teacher.username,
         "assigned": assignment.assigned if is_announce else None,
@@ -437,6 +437,14 @@ def task_detail(
         data["pipeline_result_icon"] = result_icon
 
     if request.method == "POST":
+        if is_announce:
+            return JsonResponse(
+                {
+                    "error": "Cannot upload submits before the task starts.",
+                },
+                status=400,
+            )
+
         try:
             submit = store_submit(request, assignment)
         except TooManyFilesError:
