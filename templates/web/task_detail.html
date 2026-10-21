@@ -305,7 +305,8 @@
     });
 
     window.addEventListener('keydown', e => {
-        if (e.target.tagName === 'INPUT' || e.target.isContentEditable) return;
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+        if (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return;
 
         if (e.code in keyTabMap) {
             window.location.href = keyTabMap[e.code];
