@@ -10,7 +10,14 @@ import { toastApi } from '../utilities/toast';
 import { loadInfo, type User } from '../utilities/global';
 import { markRead } from '../utilities/notifications';
 import { hideComments, viewMode, HideCommentsState, ViewModeState } from '../stores';
-import { Comment, SelectedRows, Source, Submit } from '../types/TaskDetail';
+import {
+  Comment,
+  CommentModel,
+  CommentSavePayload,
+  SelectedRows,
+  Source,
+  Submit
+} from '../types/TaskDetail';
 
 const props = defineProps<{
   url: string;
@@ -165,26 +172,12 @@ const markCommentAsRead = async (comment: Comment) => {
   return comment;
 };
 
-type CommentSavePayload = {
-  id?: number;
-  text: string;
-  success?: () => void;
-  // Called when the comment could not be saved, so that the form can be re-enabled
-  error?: () => void;
-  line?: number;
-  source?: string;
-  type?: string;
-};
-
 /**
  * Creates a new comment.
  * Returns false if the comment was not created.
  */
-const addNewComment = async (comment: CommentSavePayload): Promise<boolean> => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { success, error, ...payload } = comment;
-
-  const result = await requestAPI<Comment>(props.commentUrl, 'POST', payload);
+const addNewComment = async (comment: CommentModel): Promise<boolean> => {
+  const result = await requestAPI<Comment>(props.commentUrl, 'POST', comment);
   if (result.error !== undefined) {
     toastApi.error(result.error, { title: 'Comment was not created' });
     return false;
@@ -239,15 +232,15 @@ const updateComment = async (id: number, text: string): Promise<boolean> => {
   return true;
 };
 
-const saveComment = async (comment: CommentSavePayload) => {
+const saveComment = async ({ comment, success, error }: CommentSavePayload) => {
   const saved = comment.id
     ? await updateComment(comment.id, comment.text)
     : await addNewComment(comment);
 
   if (saved) {
-    comment.success?.();
+    success?.();
   } else {
-    comment.error?.();
+    error?.();
   }
 };
 

@@ -4,7 +4,7 @@ import CommentForm from './CommentForm.vue';
 import Comment from './Comment.vue';
 import SuggestedComment from './SuggestedComment.vue';
 import type { User } from '../../utilities/global';
-import type { Comment as TaskComment } from '../../types/TaskDetail';
+import type { Comment as TaskComment, CommentSavePayload } from '../../types/TaskDetail';
 
 withDefaults(
   defineProps<{
@@ -21,12 +21,13 @@ const emit = defineEmits(['saveComment', 'setNotification', 'resolveSuggestion']
 const showForm = ref(false);
 
 const addComment = (text: string) => {
-  emit('saveComment', {
-    text,
+  const payload: CommentSavePayload = {
+    comment: { text },
     success: () => {
       showForm.value = false;
     }
-  });
+  };
+  emit('saveComment', payload);
 };
 </script>
 

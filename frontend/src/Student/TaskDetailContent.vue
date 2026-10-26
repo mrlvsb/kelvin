@@ -3,7 +3,13 @@ import CopyToClipboard from '../components/CopyToClipboard.vue';
 import FullscreenImage from '../components/FullscreenImage.vue';
 import SubmitSource from '../components/submit/SubmitSource.vue';
 import type { User } from '../utilities/global';
-import { Comment, SourceFile, CommentCounts, SelectedRows } from '../types/TaskDetail';
+import {
+  Comment,
+  CommentSavePayload,
+  SourceFile,
+  CommentCounts,
+  SelectedRows
+} from '../types/TaskDetail';
 
 const props = defineProps<{
   files: SourceFile[];
@@ -15,16 +21,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'set-notification': [payload: { comment_id: number; unread: boolean }];
-  'save-comment': [
-    payload: {
-      id?: number;
-      text: string;
-      success?: () => void;
-      line?: number;
-      source?: string;
-      type?: string;
-    }
-  ];
+  'save-comment': [payload: CommentSavePayload];
   'resolve-suggestion': [payload: { id: number; comment: Comment }];
 }>();
 
@@ -34,17 +31,8 @@ const collapseFile = (file: SourceFile) => {
   }
 };
 
-const handleSaveComment = (
-  source: string,
-  payload: {
-    id?: number;
-    text: string;
-    success?: () => void;
-    line?: number;
-    type?: string;
-  }
-) => {
-  emit('save-comment', { ...payload, source });
+const handleSaveComment = (source: string, payload: CommentSavePayload) => {
+  emit('save-comment', { ...payload, comment: { ...payload.comment, source } });
 };
 </script>
 
