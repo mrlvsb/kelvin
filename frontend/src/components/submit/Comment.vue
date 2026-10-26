@@ -37,6 +37,10 @@ const updateComment = (text: string) => {
     success: () => {
       editing.value = false;
       sending.value = false;
+    },
+    // Keep the editor open with the text, so that the user does not lose it
+    error: () => {
+      sending.value = false;
     }
   });
 };

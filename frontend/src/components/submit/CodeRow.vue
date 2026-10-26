@@ -50,6 +50,10 @@ const addNewComment = (text: string) => {
     success: () => {
       emit('showCommentForm', -1);
       addingInProgress.value = false;
+    },
+    // Keep the form open with the text, so that the user does not lose it
+    error: () => {
+      addingInProgress.value = false;
     }
   });
 };

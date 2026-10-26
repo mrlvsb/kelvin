@@ -5,7 +5,8 @@ import SummaryComments from '../components/submit/SummaryComments.vue';
 import SubmitsDiff from '../components/submit/SubmitsDiff.vue';
 import TaskDetailSidebar from './TaskDetailSidebar.vue';
 import TaskDetailContent from './TaskDetailContent.vue';
-import { getFromAPI } from '../utilities/api';
+import { getFromAPI, requestAPI } from '../utilities/api';
+import { toastApi } from '../utilities/toast';
 import { loadInfo, type User } from '../utilities/global';
 import { markRead } from '../utilities/notifications';
 import { hideComments, viewMode, HideCommentsState, ViewModeState } from '../stores';
@@ -168,20 +169,30 @@ type CommentSavePayload = {
   id?: number;
   text: string;
   success?: () => void;
+  // Called when the comment could not be saved, so that the form can be re-enabled
+  error?: () => void;
   line?: number;
   source?: string;
   type?: string;
 };
 
-const addNewComment = async (comment: CommentSavePayload) => {
-  const { success, ...payload } = comment;
+/**
+ * Creates a new comment.
+ * Returns false if the comment was not created.
+ */
+const addNewComment = async (comment: CommentSavePayload): Promise<boolean> => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { success, error, ...payload } = comment;
 
-  const json = await getFromAPI<Comment>(props.commentUrl, 'POST', payload);
-  if (!json) {
-    return;
+  const result = await requestAPI<Comment>(props.commentUrl, 'POST', payload);
+  if (result.error !== undefined) {
+    toastApi.error(result.error, { title: 'Comment was not created' });
+    return false;
   }
-  if (success) {
-    success();
+  const json = result.data;
+  if (!json) {
+    toastApi.error('Unexpected response from the server.', { title: 'Comment was not created' });
+    return false;
   }
 
   if (!comment.source) {
@@ -208,23 +219,35 @@ const addNewComment = async (comment: CommentSavePayload) => {
       })
     );
   }
+  return true;
 };
 
-const updateComment = async (id: number, text: string) => {
-  await getFromAPI(`${props.commentUrl}/${id}`, 'PATCH', { text });
+/**
+ * Updates (or deletes, if the text is empty) an existing comment.
+ * Returns false if the comment was not updated.
+ */
+const updateComment = async (id: number, text: string): Promise<boolean> => {
+  const result = await requestAPI(`${props.commentUrl}/${id}`, 'PATCH', { text });
+  if (result.error !== undefined) {
+    toastApi.error(result.error, {
+      title: text === '' ? 'Comment was not deleted' : 'Comment was not updated'
+    });
+    return false;
+  }
 
   updateCommentProps(id, text === '' ? null : { text });
+  return true;
 };
 
 const saveComment = async (comment: CommentSavePayload) => {
-  if (comment.id) {
-    await updateComment(comment.id, comment.text);
-  } else {
-    await addNewComment(comment);
-  }
+  const saved = comment.id
+    ? await updateComment(comment.id, comment.text)
+    : await addNewComment(comment);
 
-  if (comment.success) {
-    comment.success();
+  if (saved) {
+    comment.success?.();
+  } else {
+    comment.error?.();
   }
 };
 
