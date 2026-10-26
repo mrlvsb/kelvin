@@ -251,9 +251,20 @@ function setAssignedDateToVisible(assigned: Date): void {
   });
 }
 
+/**
+ * Sets the deadline of a class.
+ * When a deadline is newly set, it is a hard deadline by default.
+ */
+function setDeadline(cl: Class, deadline: Date | null): void {
+  if (!cl.deadline && deadline) {
+    cl.hard_deadline = true;
+  }
+  cl.deadline = deadline;
+}
+
 function setDeadlineToAssigned(deadline: Date): void {
   task.value.classes.forEach((cl) => {
-    if (cl.assigned) cl.deadline = deadline;
+    if (cl.assigned) setDeadline(cl, deadline);
   });
 }
 
@@ -295,7 +306,7 @@ function setRelativeDeadlineToAssigned(assigned: Date, deadline: Date): void {
   const diff = Number(new Date(deadline)) - Number(new Date(assigned));
   task.value.classes = task.value.classes.map((cl) => {
     if (cl.assigned) {
-      cl.deadline = new Date(new Date(cl.assigned).getTime() + diff);
+      setDeadline(cl, new Date(new Date(cl.assigned).getTime() + diff));
     }
     return cl;
   });
@@ -434,12 +445,13 @@ async function deleteTask(proceed: boolean): Promise<void> {
                   <div class="row">
                     <TimeRange
                       v-model:from-date="clazz.assigned"
-                      v-model:to-date="clazz.deadline"
+                      :to-date="clazz.deadline"
                       :on-to-relative-click="setRelativeDeadlineToAssigned"
                       :on-to-duplicate-click="setDeadlineToAssigned"
                       :on-from-duplicate-click="setAssignedDateToVisible"
                       :semester-begin-date="new Date(semester.begin)"
                       :time-offset-in-week="clazz.week_offset"
+                      @update:to-date="(date: Date) => setDeadline(clazz, date)"
                     />
                     <div
                       v-if="clazz.deadline"
