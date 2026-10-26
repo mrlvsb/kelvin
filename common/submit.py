@@ -70,6 +70,9 @@ def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     ):
         raise SubmitPastHardDeadline("Submit was submitted after deadline")
 
+    if not assignment.clazz.semester.active:
+        raise SubmitPastHardDeadline("Submit was submitted after the semester has ended")
+
     # Get existing submits of the student
     submits = list(
         Submit.objects.filter(assignment__pk=assignment.id, student__pk=request.user.id).order_by(
