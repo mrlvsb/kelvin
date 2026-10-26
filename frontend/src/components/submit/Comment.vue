@@ -4,7 +4,7 @@ import CommentForm from './CommentForm.vue';
 import { safeMarkdown } from '../../markdown';
 import { hideComments, HideCommentsState } from '../../stores';
 import type { User } from '../../utilities/global';
-import { Comment } from '../../types/TaskDetail';
+import { Comment, CommentSavePayload } from '../../types/TaskDetail';
 
 const props = defineProps<{
   comment: Comment;
@@ -31,14 +31,18 @@ const showComment = computed(() => {
 const updateComment = (text: string) => {
   sending.value = true;
 
-  emit('saveComment', {
-    id: props.comment.id,
-    text,
+  const payload: CommentSavePayload = {
+    comment: { id: props.comment.id, text },
     success: () => {
       editing.value = false;
       sending.value = false;
+    },
+    // Keep the editor open with the text, so that the user does not lose it
+    error: () => {
+      sending.value = false;
     }
-  });
+  };
+  emit('saveComment', payload);
 };
 
 const handleNotification = () => {

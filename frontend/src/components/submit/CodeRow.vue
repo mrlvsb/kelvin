@@ -4,7 +4,7 @@ import CommentForm from './CommentForm.vue';
 import Comment from './Comment.vue';
 import SuggestedComment from './SuggestedComment.vue';
 import type { User } from '../../utilities/global';
-import type { Comment as TaskComment } from '../../types/TaskDetail';
+import type { Comment as TaskComment, CommentSavePayload } from '../../types/TaskDetail';
 
 const props = withDefaults(
   defineProps<{
@@ -44,14 +44,18 @@ const addNewComment = (text: string) => {
 
   addingInProgress.value = true;
 
-  emit('saveComment', {
-    line: props.lineNumber,
-    text,
+  const payload: CommentSavePayload = {
+    comment: { line: props.lineNumber, text },
     success: () => {
       emit('showCommentForm', -1);
       addingInProgress.value = false;
+    },
+    // Keep the form open with the text, so that the user does not lose it
+    error: () => {
+      addingInProgress.value = false;
     }
-  });
+  };
+  emit('saveComment', payload);
 };
 </script>
 
