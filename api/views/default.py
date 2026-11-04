@@ -443,6 +443,12 @@ def event_list(request: HttpRequest, login: str):
     task_ids = find_task_ids_from_events(events)
     tasks = {task.pk: task for task in AssignedTask.objects.filter(id__in=task_ids)}
 
+    def get_task_name(id: int) -> str | None:
+        task = tasks.get(id, None)
+        if task is None:
+            return "(unknown)"
+        return task.task.name
+
     result = []
     for event in events:
         action = None
@@ -461,7 +467,7 @@ def event_list(request: HttpRequest, login: str):
                     ),
                 )
                 metadata["submit_num"] = event.submit_num
-                metadata["task_name"] = tasks[event.assigned_task_id].task.name
+                metadata["task_name"] = get_task_name(event.assigned_task_id)
             case UserEventTaskDisplayed():
                 action = "task-view"
                 metadata["link"] = reverse(
@@ -471,7 +477,7 @@ def event_list(request: HttpRequest, login: str):
                         login=user.username,
                     ),
                 )
-                metadata["task_name"] = tasks[event.assigned_task_id].task.name
+                metadata["task_name"] = get_task_name(event.assigned_task_id)
             case UserEventMarkSubmitAsFinal():
                 action = "mark-submit"
                 metadata["link"] = reverse(
@@ -483,7 +489,7 @@ def event_list(request: HttpRequest, login: str):
                     ),
                 )
                 metadata["submit_num"] = event.submit_num
-                metadata["task_name"] = tasks[event.assigned_task_id].task.name
+                metadata["task_name"] = get_task_name(event.assigned_task_id)
         data = dict(
             action=action,
             metadata=metadata,
