@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { computed, onUnmounted, ref, watch, defineExpose } from 'vue';
+import CommentBadges from '../components/submit/CommentBadges.vue';
 import type { SourceFile, CommentCounts } from '../types/TaskDetail';
 
 type FileTreeEntry = {
@@ -146,6 +147,24 @@ const fileTreeEntries = computed<FileTreeEntry[]>(() => {
       }
     });
   }
+
+  const computeFolderCommentCounts = (node: FileTreeNode): CommentCounts => {
+    if (node.isFile) {
+      return node.commentCounts ?? { user: 0, automated: 0 };
+    }
+
+    const total: CommentCounts = { user: 0, automated: 0 };
+    for (const child of node.children.values()) {
+      const childCounts = computeFolderCommentCounts(child);
+      total.user += childCounts.user;
+      total.automated += childCounts.automated;
+    }
+
+    node.commentCounts = total;
+    return total;
+  };
+
+  computeFolderCommentCounts(root);
 
   const entries: FileTreeEntry[] = [];
 
@@ -378,26 +397,7 @@ defineExpose({
 
           <span class="file-tree__label" :title="entry.name">{{ entry.name }}</span>
 
-          <span
-            v-if="entry.commentCounts?.user || entry.commentCounts?.automated"
-            class="comment-badges"
-          >
-            <span
-              v-if="entry.commentCounts?.user"
-              class="badge bg-secondary"
-              title="Student/teacher comments"
-            >
-              {{ entry.commentCounts.user }}
-            </span>
-
-            <span
-              v-if="entry.commentCounts?.automated"
-              class="badge bg-primary"
-              title="Automation comments"
-            >
-              {{ entry.commentCounts.automated }}
-            </span>
-          </span>
+          <CommentBadges :counts="entry.commentCounts" />
         </button>
 
         <button
@@ -417,6 +417,8 @@ defineExpose({
           </span>
 
           <span class="file-tree__label" :title="entry.name">{{ entry.name }}</span>
+
+          <CommentBadges v-if="entry.isCollapsed" :counts="entry.commentCounts" />
         </button>
       </li>
     </ul>
@@ -476,19 +478,6 @@ defineExpose({
 
 .file-tree__icon {
   overflow: clip;
-}
-
-.comment-badges {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: 6px;
-}
-
-.comment-badges .badge {
-  font-size: 0.6em;
-  padding: 4px 6px;
-  line-height: 1;
 }
 
 .file-tree__item {
