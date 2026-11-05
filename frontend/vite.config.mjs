@@ -2,6 +2,9 @@ import vue from '@vitejs/plugin-vue';
 import autoprefixer from 'autoprefixer';
 import { defineConfig } from 'vite';
 
+// Pin timezone for test snapshots
+process.env.TZ = 'Europe/Prague';
+
 export default defineConfig((env) => {
     const production = env.mode === 'production';
 
