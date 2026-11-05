@@ -689,7 +689,7 @@ requires-dist = [
     { name = "pandas", specifier = "~=3.0" },
     { name = "psycopg", extras = ["binary"], specifier = "~=3.2" },
     { name = "pycountry", specifier = "~=24.6" },
-    { name = "pygraphviz", specifier = "~=1.7" },
+    { name = "pygraphviz", specifier = "~=2.0" },
     { name = "pymdown-extensions", specifier = "~=10.21" },
     { name = "pyserde", specifier = "~=0.29.0" },
     { name = "python-dotenv", specifier = "~=1.0" },
@@ -1158,9 +1158,16 @@ wheels = [
 
 [[package]]
 name = "pygraphviz"
-version = "1.14"
+version = "2.0.4"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/66/ca/823d5c74a73d6b8b08e1f5aea12468ef334f0732c65cbb18df2a7f285c87/pygraphviz-1.14.tar.gz", hash = "sha256:c10df02377f4e39b00ae17c862f4ee7e5767317f1c6b2dfd04cea6acc7fc2bea", size = 106003, upload-time = "2024-09-29T18:31:12.471Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f5/56/92b970deefddb2c31f92a9c8c794db89e4d6562a8a11af93269107cf30d2/pygraphviz-2.0.4.tar.gz", hash = "sha256:510164db9abc5b7ffd79007ed94638958c0190c8206853b07dda05fa1050b829", size = 82048, upload-time = "2026-10-15T19:50:53.517Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7b/a8/6918aa92e4c5745e95f4ee3dfadf5aa82153c8e9341dfb7a17fcb5c55ea9/pygraphviz-2.0.4-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:6454122030c33b73b10722f335bb1ffce6bbe50e74643739ea92b3b0e860be90", size = 1439293, upload-time = "2026-10-15T19:50:45.288Z" },
+    { url = "https://files.pythonhosted.org/packages/75/00/c6c0f783be59820f2896d7c29b0074e8018e78c3802e7ff25dc31abf1457/pygraphviz-2.0.4-cp310-abi3-macosx_11_0_x86_64.whl", hash = "sha256:613556c622ed6d1527a2959012c80db8e2c50e2988fec5ec257027cc2f7d350a", size = 1610632, upload-time = "2026-10-15T19:50:46.897Z" },
+    { url = "https://files.pythonhosted.org/packages/ee/f4/7b4bed465c1cbb88fa6f3175499704b18ec57f98eb7b5905047ea456e4c2/pygraphviz-2.0.4-cp310-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:b699f002b0290196ff3255805855c5561029777c68dfc0451853ae113e8afee2", size = 5123877, upload-time = "2026-10-15T19:50:48.406Z" },
+    { url = "https://files.pythonhosted.org/packages/14/8e/458b0d7283bd81b21262ac10cc4bea2d069f7111afa6099b532eb03e75df/pygraphviz-2.0.4-cp310-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:bb324ad5012a7a844e190be831260240113a1847cff901c4096bbef812f7e470", size = 5473639, upload-time = "2026-10-15T19:50:50.136Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/32/c4480b6110ab3e9f7c6f3c57524438e78033605a31dc80ccdd18b37d22c6/pygraphviz-2.0.4-cp310-abi3-win_amd64.whl", hash = "sha256:60d066faedb10fc4aa775a6ff9fbf09533320a9f93630491c40d08aa8eaf1b6c", size = 6971616, upload-time = "2026-10-15T19:50:51.869Z" },
+]
 
 [[package]]
 name = "pymdown-extensions"
