@@ -2,6 +2,7 @@
 import CopyToClipboard from '../components/CopyToClipboard.vue';
 import FullscreenImage from '../components/FullscreenImage.vue';
 import SubmitSource from '../components/submit/SubmitSource.vue';
+import CommentBadges from '../components/submit/CommentBadges.vue';
 import type { User } from '../utilities/global';
 import {
   Comment,
@@ -47,21 +48,7 @@ const handleSaveComment = (source: string, payload: CommentSavePayload) => {
         >
           <span>{{ file.source.path }}</span>
 
-          <template v-if="file.source.comments && Object.keys(file.source.comments).length">
-            <span class="comment-badges">
-              <template v-if="props.commentCountsByPath[file.source.path]?.user > 0">
-                <span class="badge bg-secondary" title="Student/teacher comments">
-                  {{ props.commentCountsByPath[file.source.path].user }}
-                </span>
-              </template>
-
-              <template v-if="props.commentCountsByPath[file.source.path]?.automated > 0">
-                <span class="badge bg-primary" title="Automation comments">
-                  {{ props.commentCountsByPath[file.source.path].automated }}
-                </span>
-              </template>
-            </span>
-          </template>
+          <CommentBadges :counts="props.commentCountsByPath[file.source.path]" size="md" />
         </span>
 
         <CopyToClipboard
@@ -138,22 +125,5 @@ const handleSaveComment = (source: string, payload: CommentSavePayload) => {
 
 .file-header-clickable:hover {
   text-decoration: underline;
-}
-
-.file-header span .badge:hover {
-  text-decoration: none;
-}
-
-.comment-badges {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: 6px;
-}
-
-.comment-badges .badge {
-  font-size: 0.6em;
-  padding: 5px 10px;
-  line-height: 1;
 }
 </style>
