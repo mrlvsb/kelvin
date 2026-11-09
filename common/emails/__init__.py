@@ -1,4 +1,5 @@
 import datetime
+import functools
 import logging
 import traceback
 from typing import Callable, TYPE_CHECKING
@@ -100,6 +101,25 @@ def with_email_to_send(handle_email: Callable[[Email], None]):
             email.save()
 
 
+def suppress_failure(func):
+    """
+    If the passed function fails, do not throw, and only log the error.
+    """
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # noinspection broad-exception
+        try:
+            return func(*args, **kwargs)
+        except BaseException:
+            logger.exception(f"Repeatable task {func.__qualname__} failed")
+
+    return wrapper
+
+
+# If this job fails, and Django then fails to send an error e-mail about it, the job would get
+# descheduled. Instead, just log the error.
+@suppress_failure
 def try_send_email_from_queue():
     """
     Tries to pop a single (not yet sent) e-mail from the DB and send it.
