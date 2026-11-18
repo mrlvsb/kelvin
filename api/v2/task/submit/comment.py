@@ -1,16 +1,19 @@
+import datetime
+
 from ninja import Router, Path, Body
 from ninja import Schema
 from ninja.errors import HttpError
 from serde import to_dict
 
 from api.auth import get_submit_write_access
+from common.task import get_active_tasks_at
 from common.comment import (
     comment_to_dto,
     create_submit_comment,
     update_submit_comment,
     delete_submit_comment,
 )
-from common.models import Comment, Submit
+from common.models import Comment, Submit, Task
 from common.utils import is_teacher
 
 router = Router()
@@ -33,7 +36,15 @@ def ensure_can_comment(request, submit: Submit):
     if is_teacher(request.user):
         return
     if not submit.assignment.clazz.semester.active:
-        raise HttpError(403, "You cannot comment on tasks from an inactive semester.")
+        raise HttpError(403, "You cannot modify comments from an inactive semester.")
+    active_labs = get_active_tasks_at(
+        request.user,
+        datetime.datetime.now(),
+        datetime.timedelta(minutes=30),
+        Task.TaskType.LABORATORY,
+    )
+    if len(active_labs) > 0:
+        raise HttpError(403, "You cannot modify comments during a laboratory.")
 
 
 @router.post("", url_name="create_submit_comment")
@@ -92,6 +103,7 @@ def api_delete_submit_comment(
     comment_id: int = Path(...),
 ):
     # Ensure the user has write access to the submission
-    get_submit_write_access(request, assignment_id, login, submit_num)
+    submit = get_submit_write_access(request, assignment_id, login, submit_num)
+    ensure_can_comment(request, submit)
 
     delete_submit_comment(comment_id=comment_id, author=request.user)
