@@ -11,6 +11,36 @@ mimes = mime = magic.Magic(mime=True)
 
 DEFAULT_TIMEOUT = 5
 
+# Image formats that browsers can render directly.
+# Other image formats (e.g. TGA) are converted to PNG first.
+# SVG is intentionally not included, as it can contain scripts.
+BROWSER_IMAGE_MIMETYPES = {
+    "image/png",
+    "image/jpeg",
+    "image/gif",
+    "image/webp",
+    "image/bmp",
+    "image/avif",
+}
+
+
+def load_image(filename, mimetype):
+    """
+    Returns a (mimetype, data) pair of an image that can be displayed in a browser.
+    """
+    if mimetype in BROWSER_IMAGE_MIMETYPES:
+        with open(filename, "rb") as f:
+            return mimetype, f.read()
+
+    # Use the file extension as a format hint for ImageMagick (needed e.g. for TGA,
+    # which has no magic header), and only convert the first frame.
+    data = subprocess.check_output(
+        ["convert", f"{filename}[0]", "png:-"],
+        stderr=subprocess.PIPE,
+        timeout=DEFAULT_TIMEOUT,
+    )
+    return "image/png", data
+
 
 def display(patterns, out, delete=False):
     for pattern in patterns:
@@ -19,9 +49,15 @@ def display(patterns, out, delete=False):
             try:
                 mimetype = mimes.from_file(filename)
                 if mimetype.startswith("image/"):
-                    with open(filename, "rb") as f:
+                    try:
+                        mimetype, data = load_image(filename, mimetype)
                         out.write(
-                            f"<img src='data:image/webp;base64,{base64.b64encode(f.read()).decode('utf-8')}' />"
+                            f"<img src='data:{mimetype};base64,{base64.b64encode(data).decode('utf-8')}' />"
+                        )
+                    except subprocess.CalledProcessError as e:
+                        error = e.stderr.decode("utf-8", errors="ignore").strip()
+                        out.write(
+                            f"<p class='text-danger'>Failed to convert image {html.escape(filename)}: {html.escape(error)}</p>"
                         )
 
                     if delete:
