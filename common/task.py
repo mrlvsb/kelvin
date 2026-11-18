@@ -3,14 +3,38 @@ from typing import List
 
 from django.contrib.auth.models import User
 
+from .utils import is_teacher
 from .models import AssignedTask, Task
 
 
+DEFAULT_LOCKDOWN_BUFFER = datetime.timedelta(minutes=30)
+
+
+def has_comment_lockdown(user: User) -> bool:
+    """
+    Return true is the student is in "comment lockdown" mode, where they should not be allowed to view
+    or modify comments.
+    """
+    if is_teacher(user):
+        return False
+
+    exam_like_tasks = get_active_tasks_at(
+        user,
+        datetime.datetime.now(),
+        DEFAULT_LOCKDOWN_BUFFER,
+        [Task.TaskType.EXAM, Task.TaskType.LABORATORY],
+    )
+    return len(exam_like_tasks) > 0
+
+
 def get_active_tasks_at(
-    student: User, at_time: datetime.datetime, buffer: datetime.timedelta, type: Task.TaskType
+    student: User,
+    at_time: datetime.datetime,
+    buffer: datetime.timedelta,
+    types: List[Task.TaskType],
 ) -> List[AssignedTask]:
     """
-    Returns the *active* assigned tasks with the given task type.
+    Returns the *active* assigned tasks with the given task types.
     Time when a task is considered to be *active* is the time range [assigned_at - buffer, deadline + buffer].
     If this time range overlaps with `at_time`, the task is considered to be active.
 
@@ -25,7 +49,7 @@ def get_active_tasks_at(
     | marks time when the task is assigned
     """
     query = AssignedTask.objects.filter(
-        task__type=type,
+        task__type__in=tuple(types),
         assigned__lte=at_time + buffer,
         deadline__isnull=False,
         deadline__gte=at_time - buffer,

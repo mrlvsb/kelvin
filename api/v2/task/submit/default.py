@@ -9,6 +9,7 @@ from serde import to_dict
 
 from api.auth import get_submit_write_access
 from common.comment import comment_to_dto
+from common.task import has_comment_lockdown
 from common.dto import (
     AssignedSubmit,
     SubmitSources,
@@ -38,6 +39,10 @@ def fetch_submit_comments(
     General comments (not linked to files or lines) are returned separately.
     Notification state and edit permissions are annotated per comment.
     """
+
+    # Do not allow fetching comments at all during an active laboratory/exam
+    if has_comment_lockdown(requester):
+        return []
 
     summary_comments: List[CommentDTO] = []
 

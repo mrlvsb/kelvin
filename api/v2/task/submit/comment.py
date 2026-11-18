@@ -1,19 +1,16 @@
-import datetime
-
-from ninja import Router, Path, Body
-from ninja import Schema
+from ninja import Body, Path, Router, Schema
 from ninja.errors import HttpError
 from serde import to_dict
 
 from api.auth import get_submit_write_access
-from common.task import get_active_tasks_at
 from common.comment import (
     comment_to_dto,
     create_submit_comment,
-    update_submit_comment,
     delete_submit_comment,
+    update_submit_comment,
 )
-from common.models import Comment, Submit, Task
+from common.models import Comment, Submit
+from common.task import has_comment_lockdown
 from common.utils import is_teacher
 
 router = Router()
@@ -37,13 +34,7 @@ def ensure_can_comment(request, submit: Submit):
         return
     if not submit.assignment.clazz.semester.active:
         raise HttpError(403, "You cannot modify comments from an inactive semester.")
-    active_labs = get_active_tasks_at(
-        request.user,
-        datetime.datetime.now(),
-        datetime.timedelta(minutes=30),
-        Task.TaskType.LABORATORY,
-    )
-    if len(active_labs) > 0:
+    if has_comment_lockdown(request.user):
         raise HttpError(403, "You cannot modify comments during a laboratory.")
 
 
