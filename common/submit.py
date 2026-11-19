@@ -7,6 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import BadRequest
 from django.http import HttpRequest
 from django.urls import reverse
+from django.utils import timezone
 from notifications.models import Notification
 from notifications.signals import notify
 
@@ -15,7 +16,8 @@ from common.ai_review.processor import AI_REVIEW_COMMENT_AUTHOR, AI_REVIEW_COMME
 from common.dto import SubmitSources, ImageSource, VideoSource, TextSource, CommentDTO
 from common.evaluate import evaluate_submit
 from common.event_log import record_submit_event
-from common.models import AssignedTask, Submit
+from common.models import AssignedTask, Submit, Task
+from common.task import DEFAULT_LOCKDOWN_BUFFER, get_active_tasks_at
 from common.upload import upload_submit_files, mimedetector
 from common.utils import is_teacher, get_client_ip_address
 from evaluator.results import EvaluationResult
@@ -40,6 +42,16 @@ class SubmitRateLimited(Exception):
         self.time_until_limit_expires = time_until_limit_expires
 
 
+class SubmitToUnassignedTask(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class SubmitBeforeStart(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
 class SubmitPastHardDeadline(Exception):
     def __init__(self, message: str):
         super().__init__(message)
@@ -55,6 +67,11 @@ class SubmitFromUnauthorizedIPError(Exception):
         super().__init__(message)
 
 
+class UnrelatedSubmitDuringExam(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
 def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     """
     Creates a new submit for the given `assignment` and the user logged in the `request`.
@@ -63,15 +80,31 @@ def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     Optionally, the request can also contain a "paths" field that contains a string with a single
     path per line, assigning paths to the uploaded "solution" files.
     """
-    if (
-        assignment.has_hard_deadline()
-        and assignment.is_past_deadline()
-        and not is_teacher(request.user)
-    ):
-        raise SubmitPastHardDeadline("Submit was submitted after deadline")
+    user_is_teacher = is_teacher(request.user)
 
-    if not assignment.clazz.semester.active:
-        raise SubmitPastHardDeadline("Submit was submitted after the semester has ended")
+    if not user_is_teacher:
+        if not assignment.clazz.students.filter(pk=request.user.pk).exists():
+            raise SubmitToUnassignedTask("The task is not assigned to the user")
+
+        if assignment.assigned > timezone.now():
+            raise SubmitBeforeStart("Submit was submitted before the task has started")
+
+        if assignment.has_hard_deadline() and assignment.is_past_deadline():
+            raise SubmitPastHardDeadline("Submit was submitted after deadline")
+
+        if not assignment.clazz.semester.active:
+            raise SubmitPastHardDeadline("Submit was submitted after the semester has ended")
+
+        exam_like_tasks = get_active_tasks_at(
+            request.user,
+            timezone.now(),
+            DEFAULT_LOCKDOWN_BUFFER,
+            [Task.TaskType.EXAM, Task.TaskType.LABORATORY],
+        )
+        if len(exam_like_tasks) > 0 and assignment not in exam_like_tasks:
+            raise UnrelatedSubmitDuringExam(
+                "Cannot submit to unrelated tasks during an active exam or laboratory."
+            )
 
     # Get existing submits of the student
     submits = list(
@@ -137,7 +170,7 @@ def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
         verb="submitted",
     ).delete()
 
-    if not is_teacher(request.user):
+    if not user_is_teacher:
         notify.send(
             sender=request.user,
             recipient=[assignment.clazz.teacher],

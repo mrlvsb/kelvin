@@ -51,7 +51,17 @@ from common.models import (
     Comment,
 )
 from common.plagcheck.moss import PlagiarismMatch, moss_result
-from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline, is_file_small
+from common.submit import (
+    SubmitAfterFinal,
+    SubmitBeforeStart,
+    SubmitFromUnauthorizedIPError,
+    SubmitRateLimited,
+    SubmitToUnassignedTask,
+    UnrelatedSubmitDuringExam,
+    store_submit,
+    SubmitPastHardDeadline,
+    is_file_small,
+)
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher, assignment_ip_check
 from evaluator.results import EvaluationResult
@@ -311,6 +321,10 @@ def task_detail(
             raise HttpException403()
 
     assignment = get_object_or_404(AssignedTask, id=assignment_id)
+
+    if not user_is_teacher and not assignment.clazz.students.filter(pk=request.user.pk).exists():
+        raise HttpException403()
+
     eval_ctx = load_eval_ctx(
         assignment.task,
         login if login else request.user.username,
@@ -437,20 +451,26 @@ def task_detail(
         data["pipeline_result_icon"] = result_icon
 
     if request.method == "POST":
-        if is_announce:
-            return JsonResponse(
-                {
-                    "error": "Cannot upload submits before the task starts.",
-                },
-                status=400,
-            )
-
         try:
             submit = store_submit(request, assignment)
         except TooManyFilesError:
             return JsonResponse(
                 {
                     "error": f"You have uploaded too many files. The maximum allowed file count is {MAX_UPLOAD_FILECOUNT}.",
+                },
+                status=400,
+            )
+        except SubmitToUnassignedTask:
+            return JsonResponse(
+                {
+                    "error": "This task is not assigned to you.",
+                },
+                status=403,
+            )
+        except SubmitBeforeStart:
+            return JsonResponse(
+                {
+                    "error": "Cannot upload submits before the task starts.",
                 },
                 status=400,
             )
@@ -471,6 +491,27 @@ def task_detail(
                     "error": "Your submit was sent after the hard deadline, which is not allowed for this task.",
                 },
                 status=409,
+            )
+        except SubmitAfterFinal:
+            return JsonResponse(
+                {
+                    "error": "You have already marked a previous submit as final, so you cannot upload new submits.",
+                },
+                status=409,
+            )
+        except SubmitFromUnauthorizedIPError:
+            return JsonResponse(
+                {
+                    "error": "It is forbidden to upload solutions from your IP address.",
+                },
+                status=403,
+            )
+        except UnrelatedSubmitDuringExam:
+            return JsonResponse(
+                {
+                    "error": "You cannot submit to unrelated tasks during an active exam or laboratory.",
+                },
+                status=403,
             )
 
         return redirect(
@@ -608,8 +649,10 @@ def submit_diff(
     return resp
 
 
+@login_required
 def raw_test_content(request, task_name, test_name, file):
     task = get_object_or_404(Task, code=task_name)
+    check_is_task_accessible(request, task)
 
     username = request.user.username
     if is_teacher(request.user) and "student" in request.GET:

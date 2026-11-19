@@ -52,9 +52,12 @@ from common.models import (
 from common.submit import (
     SubmitRateLimited,
     store_submit,
+    SubmitBeforeStart,
     SubmitPastHardDeadline,
     SubmitAfterFinal,
     SubmitFromUnauthorizedIPError,
+    SubmitToUnassignedTask,
+    UnrelatedSubmitDuringExam,
 )
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher, points_to_color, inbus_search_user, user_from_inbus_person
@@ -1041,6 +1044,16 @@ def create_submit(request: django.http.HttpRequest, task_assignment: int) -> Jso
             },
             status=400,
         )
+    except SubmitToUnassignedTask:
+        return JsonResponse(
+            {"error": "This task is not assigned to you."},
+            status=403,
+        )
+    except SubmitBeforeStart:
+        return JsonResponse(
+            {"error": "Cannot upload submits before the task starts."},
+            status=400,
+        )
     except SubmitPastHardDeadline:
         return JsonResponse(
             {
@@ -1052,13 +1065,20 @@ def create_submit(request: django.http.HttpRequest, task_assignment: int) -> Jso
         return JsonResponse(
             {
                 "error": "The submission was sent after the final one, so it is not a valid submission."
-            }
+            },
+            status=400,
         )
     except SubmitFromUnauthorizedIPError:
         return JsonResponse(
             {
                 "error": "The submission was sent from IP address that is not on the list of allowed IP addresses."
-            }
+            },
+            status=403,
+        )
+    except UnrelatedSubmitDuringExam:
+        return JsonResponse(
+            {"error": "You cannot submit to unrelated tasks during an active exam or laboratory."},
+            status=403,
         )
 
     url = (
