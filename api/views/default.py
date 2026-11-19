@@ -56,6 +56,7 @@ from common.submit import (
     SubmitPastHardDeadline,
     SubmitAfterFinal,
     SubmitFromUnauthorizedIPError,
+    SubmitToUnassignedTask,
 )
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher, points_to_color, inbus_search_user, user_from_inbus_person
@@ -1041,6 +1042,11 @@ def create_submit(request: django.http.HttpRequest, task_assignment: int) -> Jso
                 "error": f"You need to wait at least {e.time_until_limit_expires.total_seconds():.0f}s before sending another submit."
             },
             status=400,
+        )
+    except SubmitToUnassignedTask:
+        return JsonResponse(
+            {"error": "This task is not assigned to you."},
+            status=403,
         )
     except SubmitBeforeStart:
         return JsonResponse(

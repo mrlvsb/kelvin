@@ -56,6 +56,7 @@ from common.submit import (
     SubmitBeforeStart,
     SubmitFromUnauthorizedIPError,
     SubmitRateLimited,
+    SubmitToUnassignedTask,
     store_submit,
     SubmitPastHardDeadline,
     is_file_small,
@@ -453,6 +454,13 @@ def task_detail(
                     "error": f"You have uploaded too many files. The maximum allowed file count is {MAX_UPLOAD_FILECOUNT}.",
                 },
                 status=400,
+            )
+        except SubmitToUnassignedTask:
+            return JsonResponse(
+                {
+                    "error": "This task is not assigned to you.",
+                },
+                status=403,
             )
         except SubmitBeforeStart:
             return JsonResponse(

@@ -41,6 +41,11 @@ class SubmitRateLimited(Exception):
         self.time_until_limit_expires = time_until_limit_expires
 
 
+class SubmitToUnassignedTask(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
 class SubmitBeforeStart(Exception):
     def __init__(self, message: str):
         super().__init__(message)
@@ -71,14 +76,18 @@ def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     """
     user_is_teacher = is_teacher(request.user)
 
-    if assignment.assigned > timezone.now() and not user_is_teacher:
-        raise SubmitBeforeStart("Submit was submitted before the task has started")
+    if not user_is_teacher:
+        if not assignment.clazz.students.filter(pk=request.user.pk).exists():
+            raise SubmitToUnassignedTask("The task is not assigned to the user")
 
-    if assignment.has_hard_deadline() and assignment.is_past_deadline() and not user_is_teacher:
-        raise SubmitPastHardDeadline("Submit was submitted after deadline")
+        if assignment.assigned > timezone.now():
+            raise SubmitBeforeStart("Submit was submitted before the task has started")
 
-    if not assignment.clazz.semester.active:
-        raise SubmitPastHardDeadline("Submit was submitted after the semester has ended")
+        if assignment.has_hard_deadline() and assignment.is_past_deadline():
+            raise SubmitPastHardDeadline("Submit was submitted after deadline")
+
+        if not assignment.clazz.semester.active:
+            raise SubmitPastHardDeadline("Submit was submitted after the semester has ended")
 
     # Get existing submits of the student
     submits = list(
