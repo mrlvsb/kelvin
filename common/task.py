@@ -2,6 +2,7 @@ import datetime
 from typing import List
 
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 from .utils import is_teacher
 from .models import AssignedTask, Task
@@ -20,7 +21,7 @@ def has_comment_lockdown(user: User) -> bool:
 
     exam_like_tasks = get_active_tasks_at(
         user,
-        datetime.datetime.now(),
+        timezone.now(),
         DEFAULT_LOCKDOWN_BUFFER,
         [Task.TaskType.EXAM, Task.TaskType.LABORATORY],
     )

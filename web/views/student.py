@@ -57,6 +57,7 @@ from common.submit import (
     SubmitFromUnauthorizedIPError,
     SubmitRateLimited,
     SubmitToUnassignedTask,
+    UnrelatedSubmitDuringExam,
     store_submit,
     SubmitPastHardDeadline,
     is_file_small,
@@ -502,6 +503,13 @@ def task_detail(
             return JsonResponse(
                 {
                     "error": "It is forbidden to upload solutions from your IP address.",
+                },
+                status=403,
+            )
+        except UnrelatedSubmitDuringExam:
+            return JsonResponse(
+                {
+                    "error": "You cannot submit to unrelated tasks during an active exam or laboratory.",
                 },
                 status=403,
             )

@@ -16,7 +16,8 @@ from common.ai_review.processor import AI_REVIEW_COMMENT_AUTHOR, AI_REVIEW_COMME
 from common.dto import SubmitSources, ImageSource, VideoSource, TextSource, CommentDTO
 from common.evaluate import evaluate_submit
 from common.event_log import record_submit_event
-from common.models import AssignedTask, Submit
+from common.models import AssignedTask, Submit, Task
+from common.task import DEFAULT_LOCKDOWN_BUFFER, get_active_tasks_at
 from common.upload import upload_submit_files, mimedetector
 from common.utils import is_teacher, get_client_ip_address
 from evaluator.results import EvaluationResult
@@ -66,6 +67,11 @@ class SubmitFromUnauthorizedIPError(Exception):
         super().__init__(message)
 
 
+class UnrelatedSubmitDuringExam(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
 def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     """
     Creates a new submit for the given `assignment` and the user logged in the `request`.
@@ -88,6 +94,17 @@ def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
 
         if not assignment.clazz.semester.active:
             raise SubmitPastHardDeadline("Submit was submitted after the semester has ended")
+
+        exam_like_tasks = get_active_tasks_at(
+            request.user,
+            timezone.now(),
+            DEFAULT_LOCKDOWN_BUFFER,
+            [Task.TaskType.EXAM, Task.TaskType.LABORATORY],
+        )
+        if len(exam_like_tasks) > 0 and assignment not in exam_like_tasks:
+            raise UnrelatedSubmitDuringExam(
+                "Cannot submit to unrelated tasks during an active exam or laboratory."
+            )
 
     # Get existing submits of the student
     submits = list(

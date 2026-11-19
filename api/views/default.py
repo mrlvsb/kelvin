@@ -57,6 +57,7 @@ from common.submit import (
     SubmitAfterFinal,
     SubmitFromUnauthorizedIPError,
     SubmitToUnassignedTask,
+    UnrelatedSubmitDuringExam,
 )
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher, points_to_color, inbus_search_user, user_from_inbus_person
@@ -1072,6 +1073,11 @@ def create_submit(request: django.http.HttpRequest, task_assignment: int) -> Jso
             {
                 "error": "The submission was sent from IP address that is not on the list of allowed IP addresses."
             },
+            status=403,
+        )
+    except UnrelatedSubmitDuringExam:
+        return JsonResponse(
+            {"error": "You cannot submit to unrelated tasks during an active exam or laboratory."},
             status=403,
         )
 
