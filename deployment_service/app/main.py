@@ -127,7 +127,8 @@ async def deploy(request: DeploymentRequest, response: Response):
         compose_path=get_settings().docker.compose_file_path,
         compose_env_file=get_settings().docker.compose_env_file,
         container_name=request.container_name,
-        healthcheck_url=str(request.healthcheck_url),
+        healthcheck_url=str(request.healthcheck_url) if request.healthcheck_url else None,
+        health_check_timeout=request.health_check_timeout,
     )
     try:
         logs = await manager.run()
