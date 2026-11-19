@@ -1058,13 +1058,15 @@ def create_submit(request: django.http.HttpRequest, task_assignment: int) -> Jso
         return JsonResponse(
             {
                 "error": "The submission was sent after the final one, so it is not a valid submission."
-            }
+            },
+            status=400,
         )
     except SubmitFromUnauthorizedIPError:
         return JsonResponse(
             {
                 "error": "The submission was sent from IP address that is not on the list of allowed IP addresses."
-            }
+            },
+            status=403,
         )
 
     url = (

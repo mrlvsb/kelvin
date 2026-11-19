@@ -52,7 +52,9 @@ from common.models import (
 )
 from common.plagcheck.moss import PlagiarismMatch, moss_result
 from common.submit import (
+    SubmitAfterFinal,
     SubmitBeforeStart,
+    SubmitFromUnauthorizedIPError,
     SubmitRateLimited,
     store_submit,
     SubmitPastHardDeadline,
@@ -476,6 +478,20 @@ def task_detail(
                     "error": "Your submit was sent after the hard deadline, which is not allowed for this task.",
                 },
                 status=409,
+            )
+        except SubmitAfterFinal:
+            return JsonResponse(
+                {
+                    "error": "You have already marked a previous submit as final, so you cannot upload new submits.",
+                },
+                status=409,
+            )
+        except SubmitFromUnauthorizedIPError:
+            return JsonResponse(
+                {
+                    "error": "It is forbidden to upload solutions from your IP address.",
+                },
+                status=403,
             )
 
         return redirect(
