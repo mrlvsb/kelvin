@@ -51,7 +51,13 @@ from common.models import (
     Comment,
 )
 from common.plagcheck.moss import PlagiarismMatch, moss_result
-from common.submit import SubmitRateLimited, store_submit, SubmitPastHardDeadline, is_file_small
+from common.submit import (
+    SubmitBeforeStart,
+    SubmitRateLimited,
+    store_submit,
+    SubmitPastHardDeadline,
+    is_file_small,
+)
 from common.upload import MAX_UPLOAD_FILECOUNT, TooManyFilesError
 from common.utils import is_teacher, assignment_ip_check
 from evaluator.results import EvaluationResult
@@ -437,20 +443,19 @@ def task_detail(
         data["pipeline_result_icon"] = result_icon
 
     if request.method == "POST":
-        if is_announce:
-            return JsonResponse(
-                {
-                    "error": "Cannot upload submits before the task starts.",
-                },
-                status=400,
-            )
-
         try:
             submit = store_submit(request, assignment)
         except TooManyFilesError:
             return JsonResponse(
                 {
                     "error": f"You have uploaded too many files. The maximum allowed file count is {MAX_UPLOAD_FILECOUNT}.",
+                },
+                status=400,
+            )
+        except SubmitBeforeStart:
+            return JsonResponse(
+                {
+                    "error": "Cannot upload submits before the task starts.",
                 },
                 status=400,
             )

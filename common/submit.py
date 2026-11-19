@@ -7,6 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import BadRequest
 from django.http import HttpRequest
 from django.urls import reverse
+from django.utils import timezone
 from notifications.models import Notification
 from notifications.signals import notify
 
@@ -40,6 +41,11 @@ class SubmitRateLimited(Exception):
         self.time_until_limit_expires = time_until_limit_expires
 
 
+class SubmitBeforeStart(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
 class SubmitPastHardDeadline(Exception):
     def __init__(self, message: str):
         super().__init__(message)
@@ -63,11 +69,12 @@ def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
     Optionally, the request can also contain a "paths" field that contains a string with a single
     path per line, assigning paths to the uploaded "solution" files.
     """
-    if (
-        assignment.has_hard_deadline()
-        and assignment.is_past_deadline()
-        and not is_teacher(request.user)
-    ):
+    user_is_teacher = is_teacher(request.user)
+
+    if assignment.assigned > timezone.now() and not user_is_teacher:
+        raise SubmitBeforeStart("Submit was submitted before the task has started")
+
+    if assignment.has_hard_deadline() and assignment.is_past_deadline() and not user_is_teacher:
         raise SubmitPastHardDeadline("Submit was submitted after deadline")
 
     if not assignment.clazz.semester.active:
@@ -137,7 +144,7 @@ def store_submit(request: HttpRequest, assignment: AssignedTask) -> Submit:
         verb="submitted",
     ).delete()
 
-    if not is_teacher(request.user):
+    if not user_is_teacher:
         notify.send(
             sender=request.user,
             recipient=[assignment.clazz.teacher],

@@ -52,6 +52,7 @@ from common.models import (
 from common.submit import (
     SubmitRateLimited,
     store_submit,
+    SubmitBeforeStart,
     SubmitPastHardDeadline,
     SubmitAfterFinal,
     SubmitFromUnauthorizedIPError,
@@ -1039,6 +1040,11 @@ def create_submit(request: django.http.HttpRequest, task_assignment: int) -> Jso
             {
                 "error": f"You need to wait at least {e.time_until_limit_expires.total_seconds():.0f}s before sending another submit."
             },
+            status=400,
+        )
+    except SubmitBeforeStart:
+        return JsonResponse(
+            {"error": "Cannot upload submits before the task starts."},
             status=400,
         )
     except SubmitPastHardDeadline:
