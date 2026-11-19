@@ -320,6 +320,10 @@ def task_detail(
             raise HttpException403()
 
     assignment = get_object_or_404(AssignedTask, id=assignment_id)
+
+    if not user_is_teacher and not assignment.clazz.students.filter(pk=request.user.pk).exists():
+        raise HttpException403()
+
     eval_ctx = load_eval_ctx(
         assignment.task,
         login if login else request.user.username,
@@ -637,8 +641,10 @@ def submit_diff(
     return resp
 
 
+@login_required
 def raw_test_content(request, task_name, test_name, file):
     task = get_object_or_404(Task, code=task_name)
+    check_is_task_accessible(request, task)
 
     username = request.user.username
     if is_teacher(request.user) and "student" in request.GET:
