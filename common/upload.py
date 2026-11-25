@@ -141,9 +141,14 @@ class TooManyFilesError(BaseException):
     pass
 
 
+ZIP_EXTENSIONS = (".zip",)
+TAR_EXTENSIONS = (".tar", ".tar.gz", ".tgz", ".tar.bz2", ".tbz2", ".tar.xz", ".txz")
+
+
 def upload_submit_files(submit: Submit, paths: List[str], files: List[UploadedFile]):
     uploader = None
     if len(paths) == 1:
+        name = paths[0].lower()
 
         def reset_file() -> UploadedFile:
             """
@@ -153,9 +158,12 @@ def upload_submit_files(submit: Submit, paths: List[str], files: List[UploadedFi
             files[0].seek(0)
             return files[0]
 
-        if zipfile.is_zipfile(reset_file()):
+        # Only extract files that are explicitly named as archives.
+        # Office documents (pptx, docx, odt) are zip files internally,
+        # but they have to be stored as-is.
+        if name.endswith(ZIP_EXTENSIONS) and zipfile.is_zipfile(reset_file()):
             uploader = ZipUploader(reset_file())
-        elif tarfile.is_tarfile(reset_file()):
+        elif name.endswith(TAR_EXTENSIONS) and tarfile.is_tarfile(reset_file()):
             uploader = TarUploader(reset_file())
 
     if uploader is None:
