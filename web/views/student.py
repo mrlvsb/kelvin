@@ -743,6 +743,9 @@ def task_asset(request: HttpRequest, task_name: str, path: str) -> HttpResponse:
     if any(p.startswith(".") for p in path.split("/")):
         raise HttpException403()
 
+    if os.path.isdir(path):
+        raise HttpException400()
+
     deny_files = ["config.yml", "tests.yml", "script.py", "solution.c", "solution.cpp"]
     if (
         ".." in path
